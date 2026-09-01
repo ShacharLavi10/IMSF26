@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <title>IMSF 2026 Delegation Portal</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- THEME TOGGLE SLIDER -->
+  <div class="theme-toggle-wrapper">
+    <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" role="switch" aria-checked="false" title="Switch between Dark and Light mode">
+      <span class="icon-slot sun-slot">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18.75a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-1.5a.75.75 0 01.75-.75zM6.166 18.894a.75.75 0 01-1.06-1.06l1.59-1.591a.75.75 0 111.061 1.06l-1.59 1.591zM2.25 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM5.106 6.166a.75.75 0 011.06-1.06l1.59 1.591a.75.75 0 11-1.06 1.06l-1.591-1.59z"/>
+        </svg>
+      </span>
+      <span class="icon-slot moon-slot">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 003.463-.69.75.75 0 01.981.98 10.503 10.503 0 01-9.694 6.46c-5.799 0-10.5-4.701-10.5-10.5 0-4.368 2.667-8.112 6.46-9.694a.75.75 0 01.818.162z"/>
+        </svg>
+      </span>
+      <span class="theme-slider-thumb"></span>
+    </button>
+  </div>
+
+  <!-- BACKGROUND LAYERS -->
+  <div class="bg-layer-base"></div>
+  <div class="bg-layer-noise"></div>
+  <div class="bg-layer-grid"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="container">
+    <header class="fade-up">
+      <h1>IMSF 2026 Delegation Portal</h1>
+    </header>
+
+    <!-- LOGIN -->
+    <div id="login-section" class="card fade-up" style="animation-delay: 0.1s;">
+      <div class="spotlight"></div>
+      <div class="card-content">
+        <div id="email-step">
+          <div class="input-group">
+            <label for="guest-email">Registered Email Address</label>
+            <input type="email" id="guest-email" placeholder="email@domain.com" required autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false">
+          </div>
+          <button class="primary" onclick="requestOTP()">Continue</button>
+        </div>
+        
+        <div id="otp-step" style="display: none;">
+          <div class="input-group">
+            <label for="guest-otp">One-Time Code (Sent to Email)</label>
+            <input type="text" id="guest-otp" placeholder="123456" required inputmode="numeric" maxlength="6" style="letter-spacing: 4px; font-weight: bold; text-align: center; font-size: 1.2rem;">
+          </div>
+          <button class="primary" onclick="verifyOTP()">Verify & Sign In</button>
+          <p style="text-align: center; font-size: 0.85rem; margin-top: 15px;">
+            <a href="javascript:void(0)" onclick="resetLogin()" style="color: var(--accent); text-decoration: none;">Use a different email</a>
+          </p>
+        </div>
+
+        <div id="login-loader" class="loader"></div>
+        <div id="login-error" class="alert alert-danger"></div>
+      </div>
+    </div>
+
+    <!-- PORTAL CONTENT -->
+    <div id="portal-content">
+      <div class="welcome-card fade-up" style="animation-delay: 0.1s;">
+        <h2 id="hello-message">Hello</h2>
+        <h3 id="welcome-message" style="font-size: 1.2rem; margin-top: 10px; font-weight: 500; color: var(--foreground-muted);">Please Complete Your Accommodation & Flight Details</h3>
+      </div>
+
+      <!-- CATEGORY NAVIGATION TABS (Shown when isComplete) -->
+      <div id="category-nav-wrapper" class="category-nav-wrapper fade-up" style="animation-delay: 0.15s;">
+        <div class="category-tabs" role="tablist">
+          <button id="tab-schedule" class="tab-btn active" onclick="switchCategoryTab('schedule')" role="tab" aria-selected="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>Schedule</span>
+          </button>
+          <button id="tab-flights" class="tab-btn" onclick="switchCategoryTab('flights')" role="tab" aria-selected="false">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+            <span>Flights</span>
+          </button>
+          <button id="tab-hotels" class="tab-btn" onclick="switchCategoryTab('hotels')" role="tab" aria-selected="false">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span>Accommodations</span>
+          </button>
+          <button id="tab-directory" class="tab-btn" onclick="switchCategoryTab('directory')" role="tab" aria-selected="false">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span>Guests</span>
+          </button>
+          <button id="tab-artists" class="tab-btn" onclick="switchCategoryTab('artists')" role="tab" aria-selected="false">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+            </svg>
+            <span>Artists</span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="bento-grid">
+        <!-- GENERAL ALERT (Shown if generalMissing is true) -->
+        <div id="general-alert-card" class="card fade-up" style="display: none; animation-delay: 0.1s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h4>Additional Information</h4>
+            <p class="desc" style="margin-bottom: 1rem;">Please provide the following details:</p>
+            <div id="general-missing-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;"></div>
+            <button class="primary" onclick="submitMissingInfo()">Submit Information</button>
+            <div id="missing-info-loader" class="loader"></div>
+            <div id="missing-info-alert" class="alert"></div>
+          </div>
+        </div>
+
+        <!-- MISSING FORMS (Shown if form is not submitted) -->
+        <div id="missing-hotel-card" class="card fade-up" style="display: none; animation-delay: 0.2s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h4>Accommodation Details</h4>
+            <p class="desc">Please submit your hosting preferences, biography, and photo.</p>
+            <a id="link-hotel-form" href="#" target="_blank" class="button primary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0.8rem; border-radius: 8px; background: var(--accent); color: #ffffff; font-weight: 600; width: 100%;">Submit Form</a>
+          </div>
+        </div>
+
+        <div id="missing-flight-card" class="card fade-up" style="display: none; animation-delay: 0.2s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h4>Flight Details</h4>
+            <p class="desc">Please submit your flight itinerary and passport scan.</p>
+            <a id="link-flight-form" href="#" target="_blank" class="button primary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0.8rem; border-radius: 8px; background: var(--accent); color: #ffffff; font-weight: 600; width: 100%;">Submit Form</a>
+          </div>
+        </div>
+
+        <!-- ACTIONS (Shown if incomplete and item missing) -->
+        <div id="bio-card" class="card fade-up" style="animation-delay: 0.3s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h4>Biography</h4>
+            <p class="desc">Please update your official English biography. At least 2 paragraphs about yourself and your company.</p>
+            <div class="input-group">
+              <textarea id="bio-input" rows="3" placeholder="Enter Biography"></textarea>
+            </div>
+            <button class="primary" onclick="submitBio()">Save Bio</button>
+            <div id="bio-loader" class="loader"></div>
+            <div id="bio-alert" class="alert"></div>
+          </div>
+        </div>
+
+        <div id="passport-card" class="card fade-up" style="animation-delay: 0.4s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h4>Passport Scan</h4>
+            <p class="desc">Upload a clear photo/scan of your passport page.</p>
+            <div class="input-group">
+              <input type="file" id="passport-file" accept="image/*,.pdf">
+            </div>
+            <button class="primary" onclick="uploadFile('passport')">Upload Passport</button>
+            <div id="passport-loader" class="loader"></div>
+            <div id="passport-alert" class="alert"></div>
+          </div>
+        </div>
+
+        <div id="photo-card" class="card fade-up" style="animation-delay: 0.5s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h4>Personal Photo</h4>
+            <p class="desc">High-resolution photo for accreditation badge.</p>
+            <div class="input-group">
+              <input type="file" id="photo-file" accept="image/*">
+            </div>
+            <button class="primary" onclick="uploadFile('photo')">Upload Photo</button>
+            <div id="photo-loader" class="loader"></div>
+            <div id="photo-alert" class="alert"></div>
+          </div>
+        </div>
+
+        <!-- CATEGORY 0: SCHEDULE -->
+        <div id="schedule-card" class="card col-span-3 fade-up" style="animation-delay: 0.15s; display: block;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h3>Daily Schedule</h3>
+            <div id="schedule-days-nav" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none;">
+              <!-- Day Pills injected here -->
+            </div>
+            <div id="schedule-container">
+              <div class="loader" id="schedule-loader" style="display: block;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORY 1: FLIGHT DETAILS -->
+        <div id="flights-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.2s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h3>Flight Details</h3>
+            <div id="flights-container">
+              <p class="empty-state">No flight information available.</p>
+            </div>
+            <div id="flights-pending-container" style="display: none;">
+              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="empty-category-title">Flight Details Processing</div>
+                <div class="empty-category-desc">We are finalizing your flight itinerary and it will be available here soon.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORY 2: HOTEL DETAILS (JERUSALEM & TEL AVIV RUBRICS) -->
+        <div id="hotels-card" class="card col-span-3 fade-up" style="animation-delay: 0.3s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h3>Accommodations</h3>
+            <div id="hotels-container" class="hotel-rubrics-grid">
+              <div class="rubric-card">
+                <div class="rubric-header">
+                  <div class="rubric-title">Jerusalem Accommodations</div>
+                  <span class="city-badge">Jerusalem</span>
+                </div>
+                <div id="hotel-jerusalem-content">
+                  <p class="empty-state">No accommodation details confirmed yet.</p>
+                </div>
+              </div>
+              <div class="rubric-card">
+                <div class="rubric-header">
+                  <div class="rubric-title">Tel Aviv Accommodations</div>
+                  <span class="city-badge">Tel Aviv</span>
+                </div>
+                <div id="hotel-telaviv-content">
+                  <p class="empty-state">No accommodation details confirmed yet.</p>
+                </div>
+              </div>
+            </div>
+            <div id="hotels-pending-container" style="display: none;">
+              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="empty-category-title">Accommodations Processing</div>
+                <div class="empty-category-desc">We are finalizing your accommodation details and they will be available here soon.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORY 3: GUESTS / DELEGATES DIRECTORY -->
+        <div id="directory-card" class="card col-span-3 fade-up" style="animation-delay: 0.4s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h3>Guests & Delegates</h3>
+            
+            <div id="directory-main-container">
+              <!-- DIRECTORY FILTERS -->
+              <div id="directory-filters" class="directory-filters" style="display: none;">
+                <div class="search-wrap">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input type="text" id="guest-search" placeholder="Search guests..." oninput="filterDirectory()">
+                  <button class="clear-search-btn" id="clear-search-btn" onclick="clearSearch()" aria-label="Clear search">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="filter-selects">
+                  <select id="guest-genre-filter" onchange="filterDirectory()">
+                    <option value="All">All Genres</option>
+                    <option value="Rock/Indie music">Rock/Indie</option>
+                    <option value="Jazz/World music">Jazz/World</option>
+                  </select>
+                  <select id="guest-country-filter" onchange="filterDirectory()">
+                    <option value="All">All Countries</option>
+                  </select>
+                </div>
+              </div>
+              <div id="directory-status" class="directory-status" style="display: none;"></div>
+  
+              <div class="directory-grid" id="directory-container">
+                <p class="empty-state">Directory loading...</p>
+              </div>
+            </div>
+
+            <div id="directory-pending-container" style="display: none;">
+              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="empty-category-title">Directory Processing</div>
+                <div class="empty-category-desc">The guest directory is being finalized and will be available here soon.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORY 4: ARTISTS -->
+        <div id="artists-card" class="card col-span-3 fade-up" style="animation-delay: 0.5s;">
+          <div class="spotlight"></div>
+          <div class="card-content">
+            <h3>Festival Artists</h3>
+            <div id="artists-container">
+              <div class="empty-category-card">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <div class="empty-category-title">Artist Lineup Coming Soon</div>
+                <div class="empty-category-desc">The official festival showcase lineup and artist profiles will be published here.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="notification-bell-container" class="live-updates-btn" onclick="toggleUpdatesPanel()" style="display: none;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+    <span id="updates-btn-text">Live Updates</span>
+    <span id="notification-badge" style="display: none;">NEW</span>
+  </div>
+
+  <div id="updates-overlay" class="updates-overlay" onclick="toggleUpdatesPanel()"></div>
+  <div id="updates-panel" class="updates-panel">
+    <div class="updates-header">
+      <h2>Live Updates</h2>
+      <button class="updates-close" onclick="toggleUpdatesPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="updates-body" id="updates-body">
+      <div class="loader" id="updates-loader" style="display: block; margin: 20px auto;"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+  <script>
+    let currentGuestEmail = "";
+    let globalDirectoryData = [];
+
+    function checkSessionOnLoad() {
+      const token = localStorage.getItem('guestSessionToken');
+      if (token) {
+        document.getElementById("login-loader").style.display = "block";
+        document.getElementById("email-step").style.display = "none";
+        google.script.run
+          .withSuccessHandler(onLoginSuccess)
+          .withFailureHandler(onLoginFailure)
+          .getGuestPortalData(token);
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', checkSessionOnLoad);
+
+    function switchCategoryTab(tabName) {
+      const tabs = ['schedule', 'flights', 'hotels', 'directory', 'artists'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        const card = document.getElementById(t + '-card');
+        if (btn) {
+          if (t === tabName) {
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            // Smoothly align selected tab into view on mobile horizontally
+            try {
+              btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } catch (e) {}
+          } else {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-selected', 'false');
+          }
+        }
+        if (card) {
+          card.style.display = (t === tabName) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function requestOTP() {
+      const emailInput = document.getElementById("guest-email").value.trim();
+      const errorDiv = document.getElementById("login-error");
+      const loader = document.getElementById("login-loader");
+      const reqBtn = document.querySelector('#email-step .primary');
+      
+      errorDiv.style.display = "none";
+      
+      if (!emailInput) {
+        errorDiv.innerText = "Please enter your email address.";
+        errorDiv.style.display = "block";
+        return;
+      }
+      
+      if (reqBtn) reqBtn.disabled = true;
+      loader.style.display = "block";
+      google.script.run
+        .withSuccessHandler(function(response) {
+          loader.style.display = "none";
+          if (reqBtn) reqBtn.disabled = false;
+          if (!response.success) {
+            errorDiv.innerText = response.message || "Email not registered.";
+            errorDiv.style.display = "block";
+            return;
+          }
+          document.getElementById("email-step").style.display = "none";
+          document.getElementById("otp-step").style.display = "block";
+        })
+        .withFailureHandler(function(err) {
+          loader.style.display = "none";
+          if (reqBtn) reqBtn.disabled = false;
+          errorDiv.innerText = "Error: " + err.message;
+          errorDiv.style.display = "block";
+        })
+        .generateOTP(emailInput);
+    }
+    
+    function verifyOTP() {
+      const emailInput = document.getElementById("guest-email").value.trim();
+      const otpInput = document.getElementById("guest-otp").value.trim();
+      const errorDiv = document.getElementById("login-error");
+      const loader = document.getElementById("login-loader");
+      const verifyBtn = document.querySelector('#otp-step .primary');
+      
+      errorDiv.style.display = "none";
+      
+      if (!otpInput) {
+        errorDiv.innerText = "Please enter the code.";
+        errorDiv.style.display = "block";
+        return;
+      }
+      
+      if (verifyBtn) verifyBtn.disabled = true;
+      loader.style.display = "block";
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (!response.success) {
+            loader.style.display = "none";
+            if (verifyBtn) verifyBtn.disabled = false;
+            errorDiv.innerText = response.message || "Invalid code.";
+            errorDiv.style.display = "block";
+            return;
+          }
+          
+          // Code is valid! Save token and load data.
+          localStorage.setItem('guestSessionToken', response.token);
+          google.script.run
+            .withSuccessHandler(function(res) {
+              if (verifyBtn) verifyBtn.disabled = false;
+              onLoginSuccess(res);
+            })
+            .withFailureHandler(function(err) {
+              if (verifyBtn) verifyBtn.disabled = false;
+              onLoginFailure(err);
+            })
+            .getGuestPortalData(response.token);
+        })
+        .withFailureHandler(function(err) {
+          loader.style.display = "none";
+          if (verifyBtn) verifyBtn.disabled = false;
+          errorDiv.innerText = "Error: " + err.message;
+          errorDiv.style.display = "block";
+        })
+        .verifyOTP(emailInput, otpInput);
+    }
+
+    function resetLogin() {
+      document.getElementById("email-step").style.display = "block";
+      document.getElementById("otp-step").style.display = "none";
+      document.getElementById("guest-otp").value = "";
+      document.getElementById("login-error").style.display = "none";
+    }
+
+    function onLoginSuccess(response) {
+      document.getElementById("login-loader").style.display = "none";
+      if (!response.success) {
+        const errorDiv = document.getElementById("login-error");
+        errorDiv.innerText = response.message || "Email not registered.";
+        errorDiv.style.display = "block";
+        
+        if (response.sessionExpired) {
+          localStorage.removeItem('guestSessionToken');
+          resetLogin();
+        }
+        
+        if (response.notFound) {
+          google.script.run.notifyTeamUnregistered(document.getElementById("guest-email").value.trim());
+        }
+        return;
+      }
+      currentGuestEmail = response.guestInfo.email;
+      document.getElementById("login-section").style.display = "none";
+      
+      const portalContent = document.getElementById("portal-content");
+      portalContent.style.display = "block";
+      
+      const isComplete = response.isComplete;
+      
+      if (isComplete) {
+        document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
+        document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
+        
+        // Hide missing details cards
+        if (document.getElementById("general-alert-card")) document.getElementById("general-alert-card").style.display = "none";
+        if (document.getElementById("missing-hotel-card")) document.getElementById("missing-hotel-card").style.display = "none";
+        if (document.getElementById("missing-flight-card")) document.getElementById("missing-flight-card").style.display = "none";
+        document.getElementById("bio-card").style.display = "none";
+        document.getElementById("passport-card").style.display = "none";
+        document.getElementById("photo-card").style.display = "none";
+        
+        const navWrapper = document.getElementById("category-nav-wrapper");
+        if (navWrapper) navWrapper.style.display = "flex";
+        switchCategoryTab('schedule');
+        
+        // Start live updates polling & fetch schedule
+        startLiveUpdatesPolling();
+        fetchSchedule();
+      } else {
+        document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
+        document.getElementById("welcome-message").innerText = `Please Complete Your Accommodation & Flight Details`;
+        const navWrapper = document.getElementById("category-nav-wrapper");
+        if (navWrapper) navWrapper.style.display = "none";
+
+        
+        // Hide all regular content cards
+        document.getElementById("schedule-card").style.display = "none";
+        document.getElementById("flights-card").style.display = "none";
+        document.getElementById("hotels-card").style.display = "none";
+        document.getElementById("directory-card").style.display = "none";
+        document.getElementById("artists-card").style.display = "none";
+        
+        // Set forms links
+        if (document.getElementById("link-hotel-form")) document.getElementById("link-hotel-form").href = response.forms.HOTEL;
+        if (document.getElementById("link-flight-form")) document.getElementById("link-flight-form").href = response.forms.FLIGHTS;
+        
+        // General Alert
+        const alertCard = document.getElementById("general-alert-card");
+        if (alertCard) {
+          if (response.checklist.generalMissing) {
+            alertCard.style.display = "block";
+            const formContainer = document.getElementById("general-missing-form");
+            if (formContainer) {
+              const items = response.checklist.generalMissingItems || ["Missing information required"];
+              let html = "";
+              items.forEach((item, index) => {
+                html += `
+                  <div class="input-group" style="margin-bottom: 0;">
+                    <label style="font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem;">${item}</label>
+                    <input type="text" class="missing-item-answer" data-question="${item.replace(/"/g, '&quot;')}" placeholder="Your answer...">
+                  </div>
+                `;
+              });
+              formContainer.innerHTML = html;
+            }
+          } else {
+            alertCard.style.display = "none";
+          }
+        }
+        
+        // Forms logic
+        const missingHotelCard = document.getElementById("missing-hotel-card");
+        const missingFlightCard = document.getElementById("missing-flight-card");
+        const bioCard = document.getElementById("bio-card");
+        const photoCard = document.getElementById("photo-card");
+        const passportCard = document.getElementById("passport-card");
+        
+        if (!response.checklist.hasHotelForm) {
+          if (missingHotelCard) missingHotelCard.style.display = "block";
+          bioCard.style.display = "none";
+          photoCard.style.display = "none";
+        } else {
+          if (missingHotelCard) missingHotelCard.style.display = "none";
+          bioCard.style.display = response.checklist.hasBio ? "none" : "block";
+          if (!response.checklist.hasBio && response.guestInfo.bio) {
+            document.getElementById("bio-input").value = response.guestInfo.bio;
+          }
+          photoCard.style.display = response.checklist.hasPhoto ? "none" : "block";
+        }
+        
+        if (!response.checklist.hasFlightForm) {
+          if (missingFlightCard) missingFlightCard.style.display = "block";
+          passportCard.style.display = "none";
+        } else {
+          if (missingFlightCard) missingFlightCard.style.display = "none";
+          passportCard.style.display = response.checklist.hasPassport ? "none" : "block";
+        }
+      }
+      if (response.checklist.approvalFlights) {
+        document.getElementById("flights-container").style.display = "block";
+        document.getElementById("flights-pending-container").style.display = "none";
+        renderBoardingPassData("flights-container", response.flightsData, "Flight itinerary pending confirmation.");
+      } else {
+        document.getElementById("flights-container").style.display = "none";
+        document.getElementById("flights-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalHotels) {
+        document.getElementById("hotels-container").style.display = "grid";
+        document.getElementById("hotels-pending-container").style.display = "none";
+        renderHotelData(response.hotelJerusalemData, response.hotelTelAvivData);
+      } else {
+        document.getElementById("hotels-container").style.display = "none";
+        document.getElementById("hotels-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalDirectory) {
+        document.getElementById("directory-main-container").style.display = "block";
+        document.getElementById("directory-pending-container").style.display = "none";
+        renderDirectory(response.allGuestsDirectory);
+      } else {
+        document.getElementById("directory-main-container").style.display = "none";
+        document.getElementById("directory-pending-container").style.display = "block";
+      }
+    }
+
+    function onLoginFailure(err) {
+      document.getElementById("login-loader").style.display = "none";
+      const errorDiv = document.getElementById("login-error");
+      errorDiv.innerText = "Connection error: " + err.message;
+      errorDiv.style.display = "block";
+    }
+
+
+    function renderTableData(containerId, dataArray, emptyText) {
+      const container = document.getElementById(containerId);
+      if (!dataArray || dataArray.length === 0) {
+        container.innerHTML = `<p class="empty-state">${emptyText}</p>`;
+        return;
+      }
+      let html = `<div class="info-list">`;
+      dataArray.forEach(item => {
+        if (item.value && item.value.trim() !== "") {
+          html += `
+            <div class="info-row">
+              <span class="info-label">${item.label}</span>
+              <span class="info-value">${item.value}</span>
+            </div>
+          `;
+        }
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function renderBoardingPassData(containerId, dataArray, emptyText) {
+      const container = document.getElementById(containerId);
+      if (!dataArray || dataArray.length === 0) {
+        container.innerHTML = `<p class="empty-state">${emptyText}</p>`;
+        return;
+      }
+      
+      let arrival = "TBD", origin = "TBD", departure = "TBD", dest = "TBD", ticketLink = null;
+      
+      dataArray.forEach(item => {
+        if (!item.value) return;
+        if (item.label === "Arrival Date") arrival = item.value;
+        if (item.label === "Origin / From") origin = item.value;
+        if (item.label === "Departure Date") departure = item.value;
+        if (item.label === "Destination / To") dest = item.value;
+        if (item.label === "Final Ticket Link") ticketLink = item.value;
+      });
+
+      let html = '';
+
+      if (ticketLink) {
+        html += `
+          <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
+            <a href="${ticketLink}" target="_blank" class="primary button-download-small" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              View E-Ticket
+            </a>
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="boarding-pass">
+          <div class="bp-header">
+            <span>OFFICIAL ITINERARY</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
+          </div>
+          <div class="bp-body">
+            <div class="bp-flight">
+              <div class="bp-label">INBOUND</div>
+              <div class="bp-route">
+                <span class="bp-city">${origin}</span>
+                <span class="bp-arrow">→</span>
+                <span class="bp-city">TLV</span>
+              </div>
+              <div class="bp-date">Arrival: ${arrival}</div>
+            </div>
+            <div class="bp-divider"></div>
+            <div class="bp-flight">
+              <div class="bp-label">OUTBOUND</div>
+              <div class="bp-route">
+                <span class="bp-city">TLV</span>
+                <span class="bp-arrow">→</span>
+                <span class="bp-city">${dest}</span>
+              </div>
+              <div class="bp-date">Departure: ${departure}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function renderHotelData(jerusalemData, telAvivData) {
+      const jlmContainer = document.getElementById("hotel-jerusalem-content");
+      const tlvContainer = document.getElementById("hotel-telaviv-content");
+      
+      const hasJlm = jerusalemData && jerusalemData.some(i => i.value && i.value.trim() !== "");
+      const hasTlv = telAvivData && telAvivData.some(i => i.value && i.value.trim() !== "");
+
+      if (hasJlm) {
+        let html = `<div class="info-list">`;
+        jerusalemData.forEach(item => {
+          if (item.value && item.value.trim() !== "") {
+            html += `
+              <div class="info-row">
+                <span class="info-label">${item.label}</span>
+                <span class="info-value">${item.value}</span>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+        jlmContainer.innerHTML = html;
+      } else {
+        jlmContainer.innerHTML = `<p class="empty-state">No Jerusalem accommodation details confirmed yet.</p>`;
+      }
+
+      if (hasTlv) {
+        let html = `<div class="info-list">`;
+        telAvivData.forEach(item => {
+          if (item.value && item.value.trim() !== "") {
+            html += `
+              <div class="info-row">
+                <span class="info-label">${item.label}</span>
+                <span class="info-value">${item.value}</span>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+        tlvContainer.innerHTML = html;
+      } else {
+        tlvContainer.innerHTML = `<p class="empty-state">No Tel Aviv accommodation details confirmed yet.</p>`;
+      }
+    }
+
+    function populateCountries(directoryArray) {
+      const countrySelect = document.getElementById('guest-country-filter');
+      const currentVal = countrySelect.value;
+      const countries = new Set();
+      directoryArray.forEach(g => {
+        if (g["Country"]) countries.add(g["Country"].trim());
+      });
+      const sortedCountries = Array.from(countries).filter(c => c).sort();
+      
+      let html = '<option value="All">All Countries</option>';
+      sortedCountries.forEach(c => {
+        html += `<option value="${c}">${c}</option>`;
+      });
+      countrySelect.innerHTML = html;
+      
+      if (sortedCountries.includes(currentVal)) {
+        countrySelect.value = currentVal;
+      }
+    }
+
+    function filterDirectory() {
+      const searchTxt = document.getElementById('guest-search').value.toLowerCase().trim();
+      const clearBtn = document.getElementById('clear-search-btn');
+      if (searchTxt) {
+        clearBtn.style.display = "flex";
+      } else {
+        clearBtn.style.display = "none";
+      }
+      
+      const genreVal = document.getElementById('guest-genre-filter').value;
+      const countryVal = document.getElementById('guest-country-filter').value;
+      
+      const filtered = globalDirectoryData.filter(guest => {
+        // Match Search
+        const searchStr = `${guest["First Name"] || ""} ${guest["Last Name"] || ""} ${guest["Company / Organization"] || ""} ${guest["Role / Title"] || ""} ${guest["Country"] || ""} ${guest["Biography"] || ""} ${guest["Genre / Style"] || ""}`.toLowerCase();
+        const matchesSearch = !searchTxt || searchStr.includes(searchTxt);
+        
+        // Match Genre
+        let matchesGenre = true;
+        const guestGenre = (guest["Genre / Style"] || "").toLowerCase();
+        if (genreVal !== "All") {
+          if (guestGenre.includes("both") || guestGenre.includes("all")) {
+            matchesGenre = true;
+          } else {
+            matchesGenre = guestGenre.includes(genreVal.split('/')[0].toLowerCase().trim()) || 
+                           guestGenre.includes(genreVal.toLowerCase().trim());
+          }
+        }
+        
+        // Match Country
+        let matchesCountry = true;
+        const guestCountry = (guest["Country"] || "").trim();
+        if (countryVal !== "All") {
+          matchesCountry = (guestCountry === countryVal);
+        }
+        
+        return matchesSearch && matchesGenre && matchesCountry;
+      });
+      
+      renderDirectoryCards(filtered);
+      
+      const statusDiv = document.getElementById('directory-status');
+      statusDiv.innerHTML = `Showing ${filtered.length} of ${globalDirectoryData.length} guests`;
+      if (filtered.length < globalDirectoryData.length) {
+        statusDiv.innerHTML += ` &nbsp;&middot;&nbsp; <a href="javascript:void(0)" onclick="resetFilters()" style="color: var(--accent); text-decoration: none; font-weight: 500;">Clear</a>`;
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('guest-search').value = "";
+      filterDirectory();
+    }
+    
+    function resetFilters() {
+      document.getElementById('guest-search').value = "";
+      document.getElementById('guest-genre-filter').value = "All";
+      document.getElementById('guest-country-filter').value = "All";
+      filterDirectory();
+    }
+
+    function renderDirectory(directoryArray) {
+      globalDirectoryData = directoryArray || [];
+      const container = document.getElementById("directory-container");
+      
+      if (globalDirectoryData.length === 0) {
+        container.innerHTML = `<p class="empty-state">Guest directory available soon.</p>`;
+        return;
+      }
+      
+      document.getElementById('directory-filters').style.display = "flex";
+      document.getElementById('directory-status').style.display = "block";
+      
+      populateCountries(globalDirectoryData);
+      filterDirectory();
+    }
+
+    function renderDirectoryCards(filteredArray) {
+      const container = document.getElementById("directory-container");
+      if (filteredArray.length === 0) {
+        container.innerHTML = `
+          <div class="empty-category-card" style="grid-column: 1 / -1; min-height: 200px;">
+            <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <div class="empty-category-title">No guests match your filters</div>
+            <button class="secondary" onclick="resetFilters()" style="width: auto; margin-top: 10px; min-height: 38px; font-size: 0.85rem;">Clear Filters</button>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = "";
+      filteredArray.forEach(guest => {
+        const div = document.createElement("div");
+        div.className = "guest-card";
+        
+        let genreHtml = "";
+        if (guest["Genre / Style"]) {
+          let g = guest["Genre / Style"];
+          if (g.toLowerCase().includes("both")) g = "All Genres";
+          genreHtml = `<span class="genre-pill">${g}</span>`;
+        }
+        
+        div.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <h5 style="margin-bottom: 0;">${guest["First Name"] || ""} ${guest["Last Name"] || ""}</h5>
+            ${genreHtml}
+          </div>
+          <p><strong>Country:</strong> <span>${guest["Country"] || "N/A"}</span></p>
+          <p><strong>Company:</strong> <span>${guest["Company / Organization"] || "N/A"}</span></p>
+          <p><strong>Role:</strong> <span>${guest["Role / Title"] || "N/A"}</span></p>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function submitBio() {
+      const bioText = document.getElementById("bio-input").value.trim();
+      const alertDiv = document.getElementById("bio-alert");
+      const loader = document.getElementById("bio-loader");
+      if (!bioText) return;
+      loader.style.display = "block";
+      alertDiv.style.display = "none";
+      google.script.run
+        .withSuccessHandler(res => {
+          loader.style.display = "none";
+          alertDiv.className = "alert alert-success";
+          alertDiv.innerText = "Biography updated!";
+          alertDiv.style.display = "block";
+        })
+        .withFailureHandler(err => {
+          loader.style.display = "none";
+          alertDiv.className = "alert alert-danger";
+          alertDiv.innerText = "Failed to update bio.";
+          alertDiv.style.display = "block";
+        })
+        .saveGuestBio(currentGuestEmail, bioText);
+    }
+
+    function submitMissingInfo() {
+      const inputs = document.querySelectorAll('.missing-item-answer');
+      let combinedAnswers = [];
+      let allEmpty = true;
+      inputs.forEach(input => {
+         if (input.value.trim()) {
+            combinedAnswers.push(`${input.getAttribute('data-question')}: ${input.value.trim()}`);
+            allEmpty = false;
+         }
+      });
+      if (allEmpty) return;
+      const text = combinedAnswers.join('\n');
+      
+      const alertDiv = document.getElementById("missing-info-alert");
+      const loader = document.getElementById("missing-info-loader");
+      loader.style.display = "block";
+      alertDiv.style.display = "none";
+      google.script.run
+        .withSuccessHandler(res => {
+          loader.style.display = "none";
+          if(res.success) {
+            alertDiv.className = "alert alert-success";
+            alertDiv.innerText = "Information submitted successfully!";
+            inputs.forEach(input => input.disabled = true);
+          } else {
+            alertDiv.className = "alert alert-danger";
+            alertDiv.innerText = "Failed: " + res.message;
+          }
+          alertDiv.style.display = "block";
+        })
+        .withFailureHandler(err => {
+          loader.style.display = "none";
+          alertDiv.className = "alert alert-danger";
+          alertDiv.innerText = "Error: " + err.message;
+          alertDiv.style.display = "block";
+        })
+        .submitGeneralMissingInfo(currentGuestEmail, text);
+    }
+
+    function compressImage(file, callback) {
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => callback(e.target.result);
+        reader.readAsDataURL(file);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const dataUrl = canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.8);
+          callback(dataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function uploadFile(type) {
+      const fileInput = document.getElementById(type === 'passport' ? 'passport-file' : 'photo-file');
+      const loader = document.getElementById(type === 'passport' ? 'passport-loader' : 'photo-loader');
+      const alertDiv = document.getElementById(type === 'passport' ? 'passport-alert' : 'photo-alert');
+      if (!fileInput.files || fileInput.files.length === 0) return;
+      const file = fileInput.files[0];
+      
+      loader.style.display = "block";
+      alertDiv.style.display = "none";
+      
+      compressImage(file, function(fileData) {
+        google.script.run
+          .withSuccessHandler(res => {
+            loader.style.display = "none";
+            if (res.success) {
+              alertDiv.className = "alert alert-success";
+              alertDiv.innerText = "Uploaded successfully!";
+            } else {
+              alertDiv.className = "alert alert-danger";
+              alertDiv.innerText = "Upload failed: " + res.error;
+            }
+            alertDiv.style.display = "block";
+          })
+          .withFailureHandler(err => {
+            loader.style.display = "none";
+            alertDiv.className = "alert alert-danger";
+            alertDiv.innerText = "Upload error: " + err.message;
+            alertDiv.style.display = "block";
+          })
+          .uploadGuestFile({
+            email: currentGuestEmail,
+            fileData: fileData,
+            fileName: file.name,
+            fileType: file.type,
+            uploadType: type
+          });
+      });
+    }
+
+    // SPOTLIGHT EFFECT
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      });
+    });
+
+    // THEME TOGGLE (SLIDER SWITCH)
+    function updateThemeUI(isLight) {
+      const toggleBtn = document.getElementById('theme-toggle');
+      if (isLight) {
+        document.body.classList.add('light-mode');
+        if (toggleBtn) {
+          toggleBtn.setAttribute('aria-checked', 'true');
+        }
+      } else {
+        document.body.classList.remove('light-mode');
+        if (toggleBtn) {
+          toggleBtn.setAttribute('aria-checked', 'false');
+        }
+      }
+    }
+
+    function initTheme() {
+      try {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+          updateThemeUI(true);
+        } else {
+          updateThemeUI(false);
+        }
+      } catch (e) {
+        updateThemeUI(false);
+      }
+    }
+
+    function toggleTheme() {
+      const isCurrentlyLight = document.body.classList.contains('light-mode');
+      const nextIsLight = !isCurrentlyLight;
+      updateThemeUI(nextIsLight);
+      try {
+        localStorage.setItem('theme', nextIsLight ? 'light' : 'dark');
+      } catch (e) {}
+    }
+
+    initTheme();
+
+    /* ================= LIVE UPDATES ================= */
+    let updatesPollingInterval = null;
+    let knownUpdateCount = 0;
+
+    function toggleUpdatesPanel() {
+      const panel = document.getElementById("updates-panel");
+      const overlay = document.getElementById("updates-overlay");
+      const isOpening = panel.style.left !== "0px";
+      
+      if (isOpening) {
+        panel.style.left = "0px";
+        overlay.style.display = "block";
+        setTimeout(() => overlay.style.opacity = "1", 10);
+        document.getElementById("notification-badge").style.display = "none";
+        document.getElementById("notification-bell-container").classList.remove("has-new");
+        
+        // Mark as read
+        if (window.currentUpdatesHash) {
+          localStorage.setItem('lastSeenUpdatesHash_' + currentGuestEmail, window.currentUpdatesHash);
+        }
+      } else {
+        panel.style.left = "-100%";
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.style.display = "none", 300);
+      }
+    }
+
+    function startLiveUpdatesPolling() {
+      fetchUpdates();
+      if (updatesPollingInterval) clearInterval(updatesPollingInterval);
+      updatesPollingInterval = setInterval(fetchUpdates, 30000); // Check every 30s
+    }
+
+    function fetchUpdates() {
+      if (!currentGuestEmail) return;
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.success && res.updates) {
+            renderUpdates(res.updates);
+          }
+        })
+        .getLiveUpdates(currentGuestEmail);
+    }
+
+    function renderUpdates(updates) {
+      document.getElementById("notification-bell-container").style.display = "flex";
+      const body = document.getElementById("updates-body");
+      
+      const currentHash = JSON.stringify(updates);
+      window.currentUpdatesHash = currentHash;
+      const storedHash = localStorage.getItem('lastSeenUpdatesHash_' + currentGuestEmail);
+      
+      if (updates.length > 0 && currentHash !== storedHash) {
+        document.getElementById("notification-badge").style.display = "inline-block";
+        document.getElementById("notification-bell-container").classList.add("has-new");
+      }
+      
+      if (updates.length === 0) {
+        body.innerHTML = `<p class="empty-state" style="text-align: center; margin-top: 40px;">No new updates at this time.</p>`;
+        return;
+      }
+      
+      let html = "";
+      updates.forEach(u => {
+        const isPersonal = u.type === 'personal';
+        html += `
+          <div class="update-msg ${isPersonal ? 'personal' : ''}">
+            <div class="update-msg-header">
+              ${isPersonal 
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> Private Message' 
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg> Announcement'}
+              <span class="update-msg-time">${u.timestampStr}</span>
+            </div>
+            <div class="update-msg-text">${u.message}</div>
+          </div>
+        `;
+      });
+      body.innerHTML = html;
+    }
+
+    /* ================= SCHEDULE ================= */
+    let scheduleDataCache = null;
+
+    function fetchSchedule() {
+      google.script.run
+        .withSuccessHandler(res => {
+          document.getElementById("schedule-loader").style.display = "none";
+          if (res.success && res.schedule) {
+            scheduleDataCache = res.schedule;
+            renderScheduleTabs();
+          } else {
+            document.getElementById("schedule-container").innerHTML = `<p class="empty-state">No schedule available.</p>`;
+          }
+        })
+        .getScheduleData();
+    }
+
+    function renderScheduleTabs() {
+      const dates = Object.keys(scheduleDataCache).sort();
+      const nav = document.getElementById("schedule-days-nav");
+      const container = document.getElementById("schedule-container");
+      
+      if (dates.length === 0) {
+        nav.style.display = "none";
+        container.innerHTML = `<p class="empty-state">Schedule will be published here.</p>`;
+        return;
+      }
+      
+      nav.style.display = "flex";
+      let html = "";
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      let activeDate = dates.includes(todayStr) ? todayStr : dates[0];
+      
+      dates.forEach(d => {
+        const dateObj = new Date(d);
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        const isActive = d === activeDate;
+        html += `<button class="schedule-pill ${isActive ? 'active' : ''}" onclick="selectScheduleDate('${d}')">${dayName}, ${monthDay}</button>`;
+      });
+      nav.innerHTML = html;
+      
+      renderScheduleForDate(activeDate);
+    }
+    
+    function selectScheduleDate(dateStr) {
+      const pills = document.querySelectorAll('.schedule-pill');
+      const dates = Object.keys(scheduleDataCache).sort();
+      const index = dates.indexOf(dateStr);
+      
+      pills.forEach((p, i) => {
+        if (i === index) {
+          p.classList.add('active');
+          p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          p.classList.remove('active');
+        }
+      });
+      
+      renderScheduleForDate(dateStr);
+    }
+    
+    function renderScheduleForDate(dateStr) {
+      const events = scheduleDataCache[dateStr] || [];
+      const container = document.getElementById("schedule-container");
+      
+      if (events.length === 0) {
+        container.innerHTML = `<p class="empty-state">No events scheduled for this day.</p>`;
+        return;
+      }
+      
+      let html = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 16px;">';
+      events.forEach(e => {
+        const timeText = e.endTime ? `${e.startTime}-${e.endTime}` : e.startTime;
+        
+        let titleHtml = e.title;
+        if (e.location && e.location.trim() !== "") {
+          let href = e.location.trim();
+          if (!href.startsWith('http')) {
+             href = 'https://' + href;
+          }
+          titleHtml = `<a href="${href}" target="_blank" class="event-title">${e.title}</a>`;
+        } else {
+          titleHtml = `<span class="event-title">${e.title}</span>`;
+        }
+        
+        html += `
+          <div class="schedule-event-inline fade-up">
+            <span class="event-time">${timeText}</span>
+            ${titleHtml}
+            ${e.description ? `<span class="event-desc">${e.description}</span>` : ''}
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
