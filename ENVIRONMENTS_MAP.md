@@ -1,4 +1,4 @@
-# IMSF 26 - Environments Architecture
+﻿# IMSF 26 - Environments Architecture
 
 מסמך זה מרכז ומסכם את ארכיטקטורת הסביבות של פרויקט IMSF 26, לאחר ההפרדה בין סביבת הפיתוח (Sandbox) לסביבת האמת (Production). 
 ההפרדה מבטיחה שכל הניסויים ופיתוחי הקוד יתבצעו במנותק לחלוטין מהנתונים החיים של הפסטיבל.
@@ -43,10 +43,11 @@
 
 ## ניהול סביבות בקבצים המקומיים (Local Workspace)
 
-בתיקיית הפרויקט במחשב המקומי (`C:\Users\Shachar Lavi\Desktop\IMSF 26`) יצרנו פיצול בהגדרות של ה-Clasp (הכלי שדוחף את הקוד לגוגל):
+בתיקיית הפרויקט במחשב המקומי (`C:\Users\Shachar Lavi\Desktop\IMSF 26 VERCEL`) יצרנו פיצול בהגדרות של ה-Clasp (הכלי שדוחף את הקוד לגוגל):
 
 1. **[`\.clasp-sandbox.json`](file:///C:/Users/Shachar%20Lavi/Desktop/IMSF%2026/.clasp-sandbox.json)**:
    ההגדרות של סביבת הניסוי. כרגע מוגדר כ-`.clasp.json` הפעיל. כל הפעלת פקודת `clasp push` תדחוף את הקוד לגיליון הניסוי.
 
 2. **[`\.clasp-prod.json`](file:///C:/Users/Shachar%20Lavi/Desktop/IMSF%2026/.clasp-prod.json)**:
    ההגדרות של סביבת האמת. כשנסיים את הפיתוח ונרצה לעדכן את המערכת החיה, כל מה שיש לעשות זה להחליף את תוכן ה-`.clasp.json` לתוכן של קובץ זה ולדחוף שוב.
+
