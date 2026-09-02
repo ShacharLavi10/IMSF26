@@ -368,7 +368,6 @@
 
     function closeWelcomeModal() {
       document.getElementById("welcome-modal-overlay").style.display = "none";
-      localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
     }
 
     function checkSessionOnLoad() {
@@ -529,12 +528,10 @@
       const isComplete = response.isComplete;
       
       if (isComplete) {
-        // Show Welcome Modal
-        if (!localStorage.getItem('welcomeModalSeen_' + currentGuestEmail)) {
-          console.log("Showing welcome modal to user: " + response.guestInfo.firstName);
-          document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
-          document.getElementById("welcome-modal-overlay").style.display = "flex";
-        }
+        // Show Welcome Modal ALWAYS
+        console.log("Showing welcome modal to user: " + response.guestInfo.firstName);
+        document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
+        document.getElementById("welcome-modal-overlay").style.display = "flex";
 
         document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
         document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
