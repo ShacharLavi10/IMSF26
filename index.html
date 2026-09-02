@@ -528,6 +528,13 @@
       const isComplete = response.isComplete;
       
       if (isComplete) {
+        // Show Welcome Modal
+        if (!localStorage.getItem('welcomeModalSeen_' + currentGuestEmail)) {
+          console.log("Showing welcome modal to user: " + response.guestInfo.firstName);
+          document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
+          document.getElementById("welcome-modal-overlay").style.display = "flex";
+        }
+
         document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
         document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
         
@@ -546,12 +553,6 @@
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
         fetchSchedule();
-        
-        // Show Welcome Modal
-        if (!localStorage.getItem('welcomeModalSeen_' + currentGuestEmail)) {
-          document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
-          document.getElementById("welcome-modal-overlay").style.display = "flex";
-        }
       } else {
         document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
         document.getElementById("welcome-message").innerText = `Please Complete Your Accommodation & Flight Details`;
