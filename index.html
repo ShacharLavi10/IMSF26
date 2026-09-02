@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>IMSF 2026 Delegation Portal</title>
-  <link rel="stylesheet" href="/style.css">
+  <?!= include('styles'); ?>
 </head>
 <body>
   <!-- THEME TOGGLE SLIDER -->
@@ -348,11 +348,28 @@
       <div class="loader" id="updates-loader" style="display: block; margin: 20px auto;"></div>
     </div>
   </div>
+  <!-- WELCOME MODAL -->
+  <div id="welcome-modal-overlay" class="modal-overlay" style="display: none;">
+    <div class="modal-container fade-up">
+      <div class="modal-content">
+        <h3 id="welcome-modal-title">Welcome</h3>
+        <p id="welcome-modal-text">
+          This portal was designed for you, to make all the information you need easily accessible in one place. Moving forward, it will also simplify your connections with artists and fellow delegates, ensuring seamless communication even after the festival. Enjoy (:
+        </p>
+        <button class="primary" onclick="closeWelcomeModal()" style="margin-top: 20px;">Let's Go</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/main.js"></script>
   <script>
     let currentGuestEmail = "";
     let globalDirectoryData = [];
+
+    function closeWelcomeModal() {
+      document.getElementById("welcome-modal-overlay").style.display = "none";
+      localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
+    }
 
     function checkSessionOnLoad() {
       const token = localStorage.getItem('guestSessionToken');
@@ -529,6 +546,12 @@
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
         fetchSchedule();
+        
+        // Show Welcome Modal
+        if (!localStorage.getItem('welcomeModalSeen_' + currentGuestEmail)) {
+          document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
+          document.getElementById("welcome-modal-overlay").style.display = "flex";
+        }
       } else {
         document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
         document.getElementById("welcome-message").innerText = `Please Complete Your Accommodation & Flight Details`;
@@ -1279,3 +1302,4 @@
   </script>
 </body>
 </html>
+
