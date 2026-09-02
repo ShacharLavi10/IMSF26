@@ -503,6 +503,7 @@
     }
 
     function onLoginSuccess(response) {
+      console.log("onLoginSuccess reached. Response:", response);
       document.getElementById("login-loader").style.display = "none";
       if (!response.success) {
         const errorDiv = document.getElementById("login-error");
