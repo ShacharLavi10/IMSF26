@@ -1,11 +1,11 @@
-﻿# IMSF 26 - Environments Architecture
+# IMSF 26 - Environments Architecture
 
 מסמך זה מרכז ומסכם את ארכיטקטורת הסביבות של פרויקט IMSF 26, לאחר ההפרדה בין סביבת הפיתוח (Sandbox) לסביבת האמת (Production). 
 ההפרדה מבטיחה שכל הניסויים ופיתוחי הקוד יתבצעו במנותק לחלוטין מהנתונים החיים של הפסטיבל.
 
 ## מנגנון הפיצול (Dynamic Environment Detection)
 
-בקובץ [`src/Config.gs`](file:///C:/Users/Shachar%20Lavi/Desktop/IMSF%2026/src/Config.gs) מוגדרת פונקציה חכמה שבודקת בזמן אמת מהו ה-`Script ID` שמריץ את הקוד:
+בסקריפט ה-Backend מוגדרת פונקציה חכמה שבודקת בזמן אמת מהו ה-`Script ID` שמריץ את הקוד:
 - אם הוא שווה ל-`1wFP1kbXUC-7dpdlghPGDPcv2AKtX0ZusEpTpkBIw6w4raDyikZkdvj3z`, המערכת מזהה שהיא בפרודקשן ומושכת את משאבי האמת.
 - אם הוא שווה ל-`1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW` (או כל מזהה אחר), המערכת מזהה שהיא ב-Sandbox ומושכת רק את משאבי הניסוי.
 
@@ -31,7 +31,7 @@
 
 | משאב | מזהה (ID) | קישור מהיר |
 | :--- | :--- | :--- |
-| **פורטל אורחים / Vercel (ניסוי)** | `imsf26sandbox` | [לפתיחת פורטל הניסוי ב-Vercel](https://imsf26sandbox.vercel.app/) |
+| **פורטל אורחים / Vercel (ניסוי)** | `imsf26sandbox` | [לחץ למעבר לאתר ב-Vercel](https://imsf26sandbox-git-sandbox-imsf-26.vercel.app/) |
 | **פורטל אורחים / Web App (ניסוי)** | `AKfycbydLP8CsZv1sE2faart0dViAe73zhldsXlbiX6FQ_T0qRxu8vz7lnd3qyjE24AtK61a` | [לפתיחת ה-Web App ב-Apps Script](https://script.google.com/macros/s/AKfycbydLP8CsZv1sE2faart0dViAe73zhldsXlbiX6FQ_T0qRxu8vz7lnd3qyjE24AtK61a/exec) |
 | **גיליון ניסויים ראשי (Google Sheets)** | `1Er377KhxxmpnagJY_7t0q4K3wfNxS4dKYWxAPHOmYNE` | [לפתיחת גיליון הניסוי](https://docs.google.com/spreadsheets/d/1Er377KhxxmpnagJY_7t0q4K3wfNxS4dKYWxAPHOmYNE/edit) |
 | **עורך הסקריפט הראשי (Apps Script)** | `1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW` | [לצפייה בסקריפט הניסוי](https://script.google.com/d/1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW/edit) |
@@ -41,13 +41,8 @@
 
 ---
 
-## ניהול סביבות בקבצים המקומיים (Local Workspace)
+## 💻 ניהול סביבות בקבצים המקומיים (Local Workspace: `IMSF 26 VERCEL`)
 
-בתיקיית הפרויקט במחשב המקומי (`C:\Users\Shachar Lavi\Desktop\IMSF 26 VERCEL`) יצרנו פיצול בהגדרות של ה-Clasp (הכלי שדוחף את הקוד לגוגל):
-
-1. **[`\.clasp-sandbox.json`](file:///C:/Users/Shachar%20Lavi/Desktop/IMSF%2026/.clasp-sandbox.json)**:
-   ההגדרות של סביבת הניסוי. כרגע מוגדר כ-`.clasp.json` הפעיל. כל הפעלת פקודת `clasp push` תדחוף את הקוד לגיליון הניסוי.
-
-2. **[`\.clasp-prod.json`](file:///C:/Users/Shachar%20Lavi/Desktop/IMSF%2026/.clasp-prod.json)**:
-   ההגדרות של סביבת האמת. כשנסיים את הפיתוח ונרצה לעדכן את המערכת החיה, כל מה שיש לעשות זה להחליף את תוכן ה-`.clasp.json` לתוכן של קובץ זה ולדחוף שוב.
-
+כל עבודת הפיתוח מתבצעת בתיקייה המקומית `C:\Users\Shachar Lavi\Desktop\IMSF 26 VERCEL`.
+- **Frontend**: ענף `sandbox` ב-GitHub מסונכרן אוטומטית עם Vercel Sandbox. ענף `main` מסונכרן עם Vercel Production.
+- **Backend API**: קובץ `PortalBackend-Vercel.gs` נפרס ל-Google Apps Script לפי המזהים לעיל.
