@@ -164,7 +164,9 @@
 
   /* CARDS */
   .card {
-    background: linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.06));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-radius: var(--radius-2xl);
     padding: clamp(20px, 4vw, 32px);
     position: relative;
