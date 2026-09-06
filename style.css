@@ -1523,3 +1523,50 @@
   line-height: 1.5;
   margin-bottom: 25px;
 }
+
+/* =========================================
+   NEW DESIGN OVERRIDES (ONBOARDING CARDS)
+   ========================================= */
+.main-logo {
+  max-width: 280px;
+  height: auto;
+  margin: 0 auto;
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+  transition: transform var(--transition-base);
+}
+@media (min-width: 768px) {
+  .main-logo { max-width: 380px; }
+}
+.main-logo:hover {
+  transform: scale(1.02);
+}
+
+body.light-mode .main-logo {
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+}
+
+#general-alert-card,
+#missing-hotel-card,
+#missing-flight-card,
+#bio-card,
+#passport-card,
+#photo-card {
+  --accent: #5e704a;
+  --accent-bright: #7c9062;
+  --accent-glow: rgba(94, 112, 74, 0.3);
+  --border-accent: rgba(94, 112, 74, 0.30);
+  --shadow-button: 0 0 0 1px rgba(94, 112, 74, 0.5), 0 4px 12px rgba(94, 112, 74, 0.3), inset 0 1px 0 0 rgba(255,255,255,0.2);
+  
+  background: linear-gradient(to bottom, rgba(124, 144, 98, 0.12), rgba(124, 144, 98, 0.03));
+}
+
+body.light-mode #general-alert-card,
+body.light-mode #missing-hotel-card,
+body.light-mode #missing-flight-card,
+body.light-mode #bio-card,
+body.light-mode #passport-card,
+body.light-mode #photo-card {
+  background: linear-gradient(to bottom, rgba(124, 144, 98, 0.08), rgba(124, 144, 98, 0.02));
+  border-color: rgba(124, 144, 98, 0.2);
+}
