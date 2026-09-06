@@ -64,7 +64,8 @@
   .bg-layer-base {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(ellipse at top, #0a0a0f 0%, #050506 50%, #020203 100%);
+    /* Warm orange/peach top right, deep olive middle, dark bottom */
+    background: radial-gradient(ellipse at top right, #382c22 0%, #1f271a 50%, #0c0e0b 100%);
     z-index: -4;
   }
   
@@ -101,7 +102,7 @@
     top: -10%; left: 50%;
     transform: translateX(-50%);
     width: 900px; height: 900px;
-    background: var(--accent);
+    background: #e9a978; /* peach */
     opacity: 0.25;
     filter: blur(150px);
     animation-duration: 12s;
@@ -109,13 +110,13 @@
   .blob-2 {
     top: 20%; left: -10%;
     width: 600px; height: 800px;
-    background: #8b5cf6;
+    background: #b4c28e; /* light green */
     animation-delay: -2s;
   }
   .blob-3 {
     bottom: -10%; right: -5%;
     width: 500px; height: 700px;
-    background: #3b82f6;
+    background: #7c9062; /* olive */
     opacity: 0.12;
     animation-delay: -5s;
   }
@@ -1014,8 +1015,8 @@
     -webkit-text-fill-color: transparent;
   }
   
-  body.light-mode .bg-layer-base { background: radial-gradient(ellipse at top, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); }
-  
+  body.light-mode .bg-layer-base { background: radial-gradient(ellipse at top right, #fdf8f5 0%, #eef0db 50%, #e0d7c6 100%); }
+    
   body.light-mode .bg-layer-grid {
     background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
                       linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
@@ -1546,25 +1547,4 @@ body.light-mode .main-logo {
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
 }
 
-#general-alert-card,
-#missing-hotel-card,
-#missing-flight-card,
-#bio-card,
-#passport-card,
-#photo-card {
-  /* Reverted to original purple buttons by removing accent variables */
-  /* New background: Warm orange/peach to light-green vibe with higher opacity to stand out on dark background */
-  background: linear-gradient(135deg, rgba(185, 198, 140, 0.35), rgba(240, 155, 100, 0.35));
-  border-color: rgba(240, 155, 100, 0.5);
-  box-shadow: 0 0 0 1px rgba(240, 155, 100, 0.4), 0 4px 30px rgba(240, 155, 100, 0.15);
-}
-
-body.light-mode #general-alert-card,
-body.light-mode #missing-hotel-card,
-body.light-mode #missing-flight-card,
-body.light-mode #bio-card,
-body.light-mode #passport-card,
-body.light-mode #photo-card {
-  background: linear-gradient(135deg, rgba(170, 180, 130, 0.1), rgba(220, 140, 90, 0.08));
-  border-color: rgba(220, 140, 90, 0.3);
-}
+/* We will change the global page background instead. */
