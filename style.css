@@ -1552,13 +1552,11 @@ body.light-mode .main-logo {
 #bio-card,
 #passport-card,
 #photo-card {
-  --accent: #5e704a;
-  --accent-bright: #7c9062;
-  --accent-glow: rgba(94, 112, 74, 0.3);
-  --border-accent: rgba(94, 112, 74, 0.30);
-  --shadow-button: 0 0 0 1px rgba(94, 112, 74, 0.5), 0 4px 12px rgba(94, 112, 74, 0.3), inset 0 1px 0 0 rgba(255,255,255,0.2);
-  
-  background: linear-gradient(to bottom, rgba(124, 144, 98, 0.12), rgba(124, 144, 98, 0.03));
+  /* Reverted to original purple buttons by removing accent variables */
+  /* New background: Warm orange/peach to light-green vibe from the right side of the logo */
+  background: linear-gradient(135deg, rgba(170, 180, 130, 0.15), rgba(220, 140, 90, 0.12));
+  border-color: rgba(220, 140, 90, 0.25);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 2px 20px rgba(0,0,0,0.4), 0 0 40px rgba(220,140,90,0.05);
 }
 
 body.light-mode #general-alert-card,
@@ -1567,6 +1565,6 @@ body.light-mode #missing-flight-card,
 body.light-mode #bio-card,
 body.light-mode #passport-card,
 body.light-mode #photo-card {
-  background: linear-gradient(to bottom, rgba(124, 144, 98, 0.08), rgba(124, 144, 98, 0.02));
-  border-color: rgba(124, 144, 98, 0.2);
+  background: linear-gradient(135deg, rgba(170, 180, 130, 0.1), rgba(220, 140, 90, 0.08));
+  border-color: rgba(220, 140, 90, 0.3);
 }
