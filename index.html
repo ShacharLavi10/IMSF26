@@ -536,7 +536,9 @@
           document.getElementById("welcome-modal-overlay").style.display = "flex";
         }
 
-        document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
+        const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
+
+        document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
         document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
         
         // Hide missing details cards
@@ -555,7 +557,8 @@
         startLiveUpdatesPolling();
         fetchSchedule();
       } else {
-        document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
+        const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
+        document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
         document.getElementById("welcome-message").innerText = `Please Complete Your Accommodation & Flight Details`;
         const navWrapper = document.getElementById("category-nav-wrapper");
         if (navWrapper) navWrapper.style.display = "none";
