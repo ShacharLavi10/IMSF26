@@ -1550,3 +1550,83 @@ body.light-mode .main-logo {
 }
 
 /* We will change the global page background instead. */
+
+/* =========================================
+   MUSICAL LOADER & LAZY LOAD STYLES
+   ========================================= */
+
+/* Musical Loader */
+.musical-loader-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  min-height: 150px;
+}
+.musical-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+.drummer-emoji {
+  display: inline-block;
+  animation: drum-bounce 0.4s infinite alternate cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: bottom center;
+}
+.music-note {
+  display: inline-block;
+  font-size: 1.8rem;
+  opacity: 0;
+}
+.music-note-1 {
+  animation: float-note 1.4s infinite linear;
+}
+.music-note-2 {
+  animation: float-note 1.4s infinite linear 0.7s;
+}
+.loader-text {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  animation: pulse-text 1.5s infinite;
+}
+
+@keyframes drum-bounce {
+  0% { transform: translateY(0) scaleY(1); }
+  100% { transform: translateY(-8px) scaleY(1.1); }
+}
+@keyframes float-note {
+  0% { transform: translateY(10px) scale(0.8) rotate(-15deg); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; transform: translateY(-20px) scale(1.1) rotate(15deg); }
+  100% { transform: translateY(-30px) scale(1.2) rotate(25deg); opacity: 0; }
+}
+@keyframes pulse-text {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Image Lazy Loading Placeholder (For Artists/Passports) */
+img {
+  color: transparent; /* Hides broken image alt text before load */
+  background: rgba(255, 255, 255, 0.05); /* Subtle skeleton color */
+}
+
+/* Specific class for artist profile pictures if they exist */
+.artist-img, .profile-img {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

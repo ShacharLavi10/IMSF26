@@ -189,12 +189,27 @@
         <div id="schedule-card" class="card col-span-3 fade-up" style="animation-delay: 0.15s; display: block;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Daily Schedule</h3>
+            <h3 style="justify-content: space-between;">
+              Daily Schedule
+              <button onclick="forceRefreshSchedule()" class="secondary" style="width: auto; min-height: unset; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; gap: 6px;" aria-label="Refresh Schedule">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 14px; height: 14px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Sync
+              </button>
+            </h3>
             <div id="schedule-days-nav" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none;">
               <!-- Day Pills injected here -->
             </div>
             <div id="schedule-container">
-              <div class="loader" id="schedule-loader" style="display: block;"></div>
+              <div id="schedule-loader-container" class="musical-loader-wrapper" style="display: flex;">
+                <div class="musical-loader">
+                  <span class="music-note music-note-1">🎵</span>
+                  <span class="drummer-emoji">🥁</span>
+                  <span class="music-note music-note-2">🎶</span>
+                </div>
+                <p class="loader-text">Warming up the amps...</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1206,19 +1221,96 @@
       body.innerHTML = html;
     }
 
+    /* ================= SESSION STORAGE & REFRESH LOGIC ================= */
+    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
+    function saveToCache(key, data) {
+      sessionStorage.setItem(key, JSON.stringify({
+        timestamp: Date.now(),
+        data: data
+      }));
+    }
+
+    function getFromCache(key) {
+      const cached = sessionStorage.getItem(key);
+      if (!cached) return null;
+      return JSON.parse(cached);
+    }
+
+    // When user leaves app and comes back, check if data is old. If so, refresh.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const scheduleCache = getFromCache('scheduleData');
+        if (scheduleCache) {
+          const age = Date.now() - scheduleCache.timestamp;
+          if (age > REFRESH_INTERVAL_MS) {
+            console.log("Data older than 2 minutes. Refreshing schedule in background...");
+            // Silently fetch and update the DOM
+            fetchSchedule(true, false);
+          }
+        }
+      }
+    });
+
     /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
 
-    function fetchSchedule() {
+    function forceRefreshSchedule() {
+      // Clear the cache manually and force a hard fetch with loader
+      sessionStorage.removeItem('scheduleData');
+      document.getElementById("schedule-container").innerHTML = `
+        <div id="schedule-loader-container" class="musical-loader-wrapper" style="display: flex;">
+          <div class="musical-loader">
+            <span class="music-note music-note-1">🎵</span>
+            <span class="drummer-emoji">🥁</span>
+            <span class="music-note music-note-2">🎶</span>
+          </div>
+          <p class="loader-text">Syncing fresh schedule...</p>
+        </div>
+      `;
+      fetchSchedule(false, true);
+    }
+
+    function fetchSchedule(isBackground = false, forceRefresh = false) {
+      if (!forceRefresh && !isBackground) {
+        const cached = getFromCache('scheduleData');
+        if (cached) {
+          scheduleDataCache = cached.data;
+          renderScheduleTabs();
+          
+          if (Date.now() - cached.timestamp > REFRESH_INTERVAL_MS) {
+            fetchSchedule(true, false); // Silently fetch in background
+          }
+          return;
+        }
+      }
+
+      if (!isBackground) {
+        const loader = document.getElementById("schedule-loader-container");
+        if(loader) loader.style.display = "flex";
+      }
+
       google.script.run
         .withSuccessHandler(res => {
-          document.getElementById("schedule-loader").style.display = "none";
+          if (!isBackground) {
+            const loader = document.getElementById("schedule-loader-container");
+            if(loader) loader.style.display = "none";
+          }
           if (res.success && res.schedule) {
             scheduleDataCache = res.schedule;
-            renderScheduleTabs();
-          } else {
+            saveToCache('scheduleData', scheduleDataCache);
+            renderScheduleTabs(); // This re-draws the HTML automatically!
+          } else if (!isBackground) {
             document.getElementById("schedule-container").innerHTML = `<p class="empty-state">No schedule available.</p>`;
           }
+        })
+        .withFailureHandler(err => {
+            console.error("Schedule fetch failed", err);
+            if (!isBackground) {
+                const loader = document.getElementById("schedule-loader-container");
+                if(loader) loader.style.display = "none";
+                document.getElementById("schedule-container").innerHTML = `<p class="empty-state" style="color: var(--accent);">Connection error. Showing offline version.</p>`;
+            }
         })
         .getScheduleData();
     }
