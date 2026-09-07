@@ -61,7 +61,7 @@
           </p>
         </div>
 
-        <div id="login-loader" class="loader"></div>
+        <div id="login-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
         <div id="login-error" class="alert alert-danger"></div>
       </div>
     </div>
@@ -118,7 +118,7 @@
             <p class="desc" style="margin-bottom: 1rem;">Please provide the following details:</p>
             <div id="general-missing-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;"></div>
             <button class="primary" onclick="submitMissingInfo()">Submit Information</button>
-            <div id="missing-info-loader" class="loader"></div>
+            <div id="missing-info-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
             <div id="missing-info-alert" class="alert"></div>
           </div>
         </div>
@@ -152,7 +152,7 @@
               <textarea id="bio-input" rows="3" placeholder="Enter Biography"></textarea>
             </div>
             <button class="primary" onclick="submitBio()">Save Bio</button>
-            <div id="bio-loader" class="loader"></div>
+            <div id="bio-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
             <div id="bio-alert" class="alert"></div>
           </div>
         </div>
@@ -166,7 +166,7 @@
               <input type="file" id="passport-file" accept="image/*,.pdf">
             </div>
             <button class="primary" onclick="uploadFile('passport')">Upload Passport</button>
-            <div id="passport-loader" class="loader"></div>
+            <div id="passport-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
             <div id="passport-alert" class="alert"></div>
           </div>
         </div>
@@ -180,7 +180,7 @@
               <input type="file" id="photo-file" accept="image/*">
             </div>
             <button class="primary" onclick="uploadFile('photo')">Upload Photo</button>
-            <div id="photo-loader" class="loader"></div>
+            <div id="photo-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
             <div id="photo-alert" class="alert"></div>
           </div>
         </div>
@@ -208,7 +208,7 @@
                   <span class="drummer-emoji">🥁</span>
                   <span class="music-note music-note-2">🎶</span>
                 </div>
-                <p class="loader-text">Warming up the amps...</p>
+                <p class="loader-text">Finishing sound check... bringing you in!</p>
               </div>
             </div>
           </div>
@@ -360,7 +360,7 @@
       </button>
     </div>
     <div class="updates-body" id="updates-body">
-      <div class="loader" id="updates-loader" style="display: block; margin: 20px auto;"></div>
+      <div id="updates-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
     </div>
   </div>
   <!-- WELCOME MODAL -->
@@ -1255,21 +1255,7 @@
     /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
 
-    function forceRefreshSchedule() {
-      // Clear the cache manually and force a hard fetch with loader
-      sessionStorage.removeItem('scheduleData');
-      document.getElementById("schedule-container").innerHTML = `
-        <div id="schedule-loader-container" class="musical-loader-wrapper" style="display: flex;">
-          <div class="musical-loader">
-            <span class="music-note music-note-1">🎵</span>
-            <span class="drummer-emoji">🥁</span>
-            <span class="music-note music-note-2">🎶</span>
-          </div>
-          <p class="loader-text">Syncing fresh schedule...</p>
-        </div>
-      `;
-      fetchSchedule(false, true);
-    }
+    
 
     function fetchSchedule(isBackground = false, forceRefresh = false) {
       if (!forceRefresh && !isBackground) {
