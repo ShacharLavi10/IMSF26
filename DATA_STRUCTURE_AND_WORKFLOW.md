@@ -245,6 +245,68 @@
 
 ---
 
+## 📝 8. גיליונות תגובות לטפסים (Forms Responses)
+
+כאן נשמרים הנתונים הגולמיים המגיעים מתוך טופסי גוגל. (הנתונים קיימים רק בסביבת האמת. סביבת Sandbox עדיין ללא טפסים).
+
+### א. תגובות לטופס טיסות
+* **Spreadsheet Link:** [קישור לקובץ (גיליון תגובות טופס טיסות)](https://docs.google.com/spreadsheets/d/1LpUNMEOwNXzByH9Z2tuGfQlCb3BROvh_YLa1ls-3Cgc/edit?gid=375148200#gid=375148200)
+
+| עמודה | כותרת / שאלה בטופס |
+| :---: | :--- |
+| **A** | חותמת זמן |
+| **B** | Name |
+| **C** | Middle name |
+| **D** | Surname |
+| **E** | Origin Country |
+| **F** | E-Mail address |
+| **G** | Photo of your passport |
+| **H** | Date of arrival to Israel |
+| **I** | Which city are you arriving from? |
+| **J** | Date of departure from Israel |
+| **K** | Which city are you flying to? |
+| **L** | Food preferences |
+| **M** | If there is any allergies please let us know |
+| **N** | Seat preferences |
+| **O** | Do you have any other flight preferences you'd like to share? |
+
+### ב. תגובות לטופס אירוח (Hosting)
+* **Spreadsheet Link:** [קישור לקובץ (גיליון תגובות טופס אירוח)](https://docs.google.com/spreadsheets/d/1dlktIgPSQUVwK5X_17o6d8QsRc-rHsFAeQcSu4QCVK8/edit?gid=94154051#gid=94154051)
+
+| עמודה | כותרת / שאלה בטופס |
+| :---: | :--- |
+| **A** | חותמת זמן |
+| **B** | How should we address you? |
+| **C** | First Name |
+| **D** | Surname |
+| **E** | Origin Country |
+| **F** | City |
+| **G** | Email address |
+| **H** | Phone No |
+| **I** | Are you interested mostly in: |
+| **J** | Company/ Organization Name |
+| **K** | Organization Type |
+| **L** | Position in the organization |
+| **M** | Company Website link |
+| **N** | Festival Web/Youtube link/Additional link |
+| **O** | Facebook link |
+| **P** | Instagram link |
+| **Q** | Write a short, professional yet easygoing bio... |
+| **R** | Personal Photo |
+| **S** | please share with us if you had work and collaborate with Israeli artists... |
+| **T** | Please let us know if you will be staying for the entire duration... |
+| **U** | Do you need additional nights? |
+| **V** | If you answered YES Please specify the dates for additional nights... |
+| **W** | Regarding the additional nights, will you be traveling alone? |
+| **X** | Who will you travel with? |
+| **Y** | Full name of your accompany |
+| **Z** | Mail of your accompany |
+| **AA** | Passport of your accompany |
+| **AB** | In terms of hotels, please advise whether your accompany would: |
+| **AC** | Do you have any specifications regarding food to share with us? |
+
+---
+
 ## 🏗️ ארכיטקטורת המערכת החדשה (החל מספטמבר 2026)
 
 המערכת עברה שדרוג משמעותי והופרדה (Decoupled) לשני חלקים עצמאיים כדי לאפשר גמישות, מהירות וניהול תקין של סביבות:

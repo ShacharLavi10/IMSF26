@@ -61,7 +61,7 @@
           </p>
         </div>
 
-        <div id="login-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
+        <div id="login-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
         <div id="login-error" class="alert alert-danger"></div>
       </div>
     </div>
@@ -118,7 +118,7 @@
             <p class="desc" style="margin-bottom: 1rem;">Please provide the following details:</p>
             <div id="general-missing-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;"></div>
             <button class="primary" onclick="submitMissingInfo()">Submit Information</button>
-            <div id="missing-info-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
+            <div id="missing-info-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
             <div id="missing-info-alert" class="alert"></div>
           </div>
         </div>
@@ -152,7 +152,7 @@
               <textarea id="bio-input" rows="3" placeholder="Enter Biography"></textarea>
             </div>
             <button class="primary" onclick="submitBio()">Save Bio</button>
-            <div id="bio-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
+            <div id="bio-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
             <div id="bio-alert" class="alert"></div>
           </div>
         </div>
@@ -166,7 +166,7 @@
               <input type="file" id="passport-file" accept="image/*,.pdf">
             </div>
             <button class="primary" onclick="uploadFile('passport')">Upload Passport</button>
-            <div id="passport-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
+            <div id="passport-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
             <div id="passport-alert" class="alert"></div>
           </div>
         </div>
@@ -180,7 +180,7 @@
               <input type="file" id="photo-file" accept="image/*">
             </div>
             <button class="primary" onclick="uploadFile('photo')">Upload Photo</button>
-            <div id="photo-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
+            <div id="photo-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
             <div id="photo-alert" class="alert"></div>
           </div>
         </div>
@@ -208,7 +208,7 @@
                   <span class="drummer-emoji">🥁</span>
                   <span class="music-note music-note-2">🎶</span>
                 </div>
-                <p class="loader-text">Finishing sound check... bringing you in!</p>
+                <p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p>
               </div>
             </div>
           </div>
@@ -360,7 +360,7 @@
       </button>
     </div>
     <div class="updates-body" id="updates-body">
-      <div id="updates-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing the sound check... taking you in!</p></div></div>
+      <div id="updates-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
     </div>
   </div>
   <!-- WELCOME MODAL -->
@@ -1257,46 +1257,24 @@
 
     
 
-    function fetchSchedule(isBackground = false, forceRefresh = false) {
-      if (!forceRefresh && !isBackground) {
-        const cached = getFromCache('scheduleData');
-        if (cached) {
-          scheduleDataCache = cached.data;
-          renderScheduleTabs();
-          
-          if (Date.now() - cached.timestamp > REFRESH_INTERVAL_MS) {
-            fetchSchedule(true, false); // Silently fetch in background
-          }
-          return;
-        }
-      }
-
-      if (!isBackground) {
-        const loader = document.getElementById("schedule-loader-container");
-        if(loader) loader.style.display = "flex";
-      }
+    function fetchSchedule() {
+      const loader = document.getElementById("schedule-loader-container");
+      if(loader) loader.style.display = "flex";
 
       google.script.run
         .withSuccessHandler(res => {
-          if (!isBackground) {
-            const loader = document.getElementById("schedule-loader-container");
-            if(loader) loader.style.display = "none";
-          }
+          if(loader) loader.style.display = "none";
           if (res.success && res.schedule) {
             scheduleDataCache = res.schedule;
-            saveToCache('scheduleData', scheduleDataCache);
-            renderScheduleTabs(); // This re-draws the HTML automatically!
-          } else if (!isBackground) {
+            renderScheduleTabs();
+          } else {
             document.getElementById("schedule-container").innerHTML = `<p class="empty-state">No schedule available.</p>`;
           }
         })
         .withFailureHandler(err => {
             console.error("Schedule fetch failed", err);
-            if (!isBackground) {
-                const loader = document.getElementById("schedule-loader-container");
-                if(loader) loader.style.display = "none";
-                document.getElementById("schedule-container").innerHTML = `<p class="empty-state" style="color: var(--accent);">Connection error. Showing offline version.</p>`;
-            }
+            if(loader) loader.style.display = "none";
+            document.getElementById("schedule-container").innerHTML = `<p class="empty-state" style="color: var(--accent);">Connection error. Showing offline version.</p>`;
         })
         .getScheduleData();
     }

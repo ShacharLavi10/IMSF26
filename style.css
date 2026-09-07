@@ -1590,6 +1590,8 @@ body.light-mode .main-logo {
 }
 .loader-text {
   color: var(--accent);
+  text-align: center;
+  line-height: 1.4;
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.05em;
