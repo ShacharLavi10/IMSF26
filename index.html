@@ -314,20 +314,117 @@
         </div>
 
         <!-- CATEGORY 4: ARTISTS -->
-        <div id="artists-card" class="card col-span-3 fade-up" style="animation-delay: 0.5s;">
+        <div id="artists-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.5s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Festival Artists</h3>
+            <h3 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              Festival Artists
+            </h3>
+            
+            <!-- LIVE SCHEDULE BANNER (Happening Now) -->
+            <div id="artists-live-banner" class="live-banner" style="display: none;">
+              <div class="live-indicator"><span class="pulse"></span> LIVE NOW</div>
+              <div class="live-content" id="live-banner-content">
+                <!-- Dynamically injected live sets -->
+              </div>
+            </div>
+
             <div id="artists-container">
-              <div class="empty-category-card">
-                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                </svg>
-                <div class="empty-category-title">Artist Lineup Coming Soon</div>
-                <div class="empty-category-desc">The official festival showcase lineup and artist profiles will be published here.</div>
+              <!-- ARTISTS FILTERS -->
+              <div class="directory-filters" style="margin-bottom: 16px;">
+                <div class="search-wrap">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input type="text" id="artist-search" placeholder="Search artists..." oninput="filterArtists()">
+                  <button class="clear-search-btn" id="clear-artist-search-btn" onclick="clearArtistSearch()" aria-label="Clear search">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="filter-selects" style="display: flex; gap: 8px;">
+                  <select id="artist-genre-filter" onchange="filterArtists()" style="flex: 1;">
+                    <option value="All">All Genres</option>
+                    <!-- Genres populated dynamically -->
+                  </select>
+                  <button id="artist-fav-filter-btn" class="fav-filter-btn" onclick="toggleFavFilter()" aria-label="Show Favorites">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- EXPORT BRIEFCASE BUTTON (Shown when favorites exist/active) -->
+              <div id="export-briefcase-container" style="display: none; text-align: center; margin-bottom: 16px;">
+                <button class="primary button-download-small" onclick="exportBriefcase()" style="width: auto; margin: 0 auto;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Export My Briefcase
+                </button>
+              </div>
+
+              <!-- ARTISTS GRID -->
+              <div class="artists-grid" id="artists-grid">
+                <!-- Artist cards injected here -->
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARTIST BOTTOM SHEET MODAL -->
+  <div id="artist-sheet-overlay" class="sheet-overlay" onclick="closeArtistSheet()"></div>
+  <div id="artist-bottom-sheet" class="bottom-sheet">
+    <div class="sheet-handle" onclick="closeArtistSheet()"></div>
+    <div class="sheet-header-image" id="sheet-artist-img">
+      <button class="sheet-close-btn" onclick="closeArtistSheet()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <button class="sheet-fav-btn" id="sheet-fav-btn" onclick="toggleSheetFav(event)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" id="sheet-fav-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+      </button>
+    </div>
+    <div class="sheet-content">
+      <div class="sheet-title-row">
+        <div>
+          <h2 id="sheet-artist-name">Artist Name</h2>
+          <span class="sheet-genre" id="sheet-artist-genre">Genre</span>
+        </div>
+      </div>
+
+      <!-- PRIVATE NOTES -->
+      <div class="sheet-section private-notes-section">
+        <h4 class="section-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          Private Notes
+        </h4>
+        <textarea id="sheet-private-note" placeholder="Write your private thoughts here... (Saved automatically)" oninput="savePrivateNote()"></textarea>
+      </div>
+
+      <!-- MEDIA EMBED -->
+      <div class="sheet-section" id="sheet-media-container" style="display: none;">
+        <div id="sheet-embed-wrapper" class="embed-wrapper"></div>
+      </div>
+
+      <!-- BIO -->
+      <div class="sheet-section">
+        <h4 class="section-title">About</h4>
+        <p class="sheet-bio" id="sheet-artist-bio">Biography text goes here...</p>
+      </div>
+
+      <!-- BAND MEMBERS -->
+      <div class="sheet-section" id="sheet-members-section">
+        <h4 class="section-title">Band Members</h4>
+        <div class="sheet-members" id="sheet-artist-members"></div>
+      </div>
+
+      <!-- EXTERNAL LINKS -->
+      <div class="sheet-section">
+        <h4 class="section-title">Links</h4>
+        <div class="sheet-links" id="sheet-artist-links">
         </div>
       </div>
     </div>
@@ -1353,6 +1450,293 @@
       html += '</div>';
       container.innerHTML = html;
     }
+    /* ========================================================= */
+    /* ARTISTS UI LOGIC                                          */
+    /* ========================================================= */
+    const MOCK_ARTISTS = [
+      {
+        id: "a1",
+        name: "ECHO",
+        genre: "Hip Hop",
+        image: "https://images.unsplash.com/photo-1516280440502-a2fc9863c87a?auto=format&fit=crop&w=800&q=80",
+        bio: "ECHO is a prominent Israeli female MC and vocalist, pushing the boundaries of local hip hop with sharp lyrics and heavy beats.",
+        members: "Echo (Vocals), DJ Mesh (Turntables/Production)",
+        spotify: "https://open.spotify.com/embed/artist/3t58T3A2cZSQd3qJ8mPZ0L?utm_source=generator",
+        socialLinks: [
+          { label: "Instagram", url: "#" },
+          { label: "YouTube", url: "#" }
+        ]
+      },
+      {
+        id: "a2",
+        name: "Noga Erez",
+        genre: "Electro Pop",
+        image: "https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?auto=format&fit=crop&w=800&q=80",
+        bio: "Noga Erez creates bold, politically conscious electro-pop, blending sharp rap delivery with heavy bass lines and quirky samples.",
+        members: "Noga Erez (Vocals/Production), Ori Rousso (Production/Keys)",
+        spotify: "https://open.spotify.com/embed/artist/2v1A14W04eZ7K99xGkZ2sS?utm_source=generator",
+        socialLinks: [
+          { label: "Website", url: "#" },
+          { label: "Instagram", url: "#" }
+        ]
+      },
+      {
+        id: "a3",
+        name: "Yemen Blues",
+        genre: "World / Jazz",
+        image: "https://images.unsplash.com/photo-1501612780327-45045538702b?auto=format&fit=crop&w=800&q=80",
+        bio: "Led by Ravid Kahalani, Yemen Blues combines traditional Yemenite melodies with West African grooves, jazz, and funk.",
+        members: "Ravid Kahalani (Vocals/Gimbri), Rony Iwryn (Percussion), Shanir Ezra Blumenkranz (Bass/Oud)",
+        spotify: "https://open.spotify.com/embed/artist/4X9NIn1qMOnP9rY0uL8e0H?utm_source=generator",
+        socialLinks: [
+          { label: "Instagram", url: "#" }
+        ]
+      },
+      {
+        id: "a4",
+        name: "Tigris",
+        genre: "World",
+        image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+        bio: "Tigris plays instrumental grooves inspired by West African and Caribbean music, mixed with psychedelic surf rock elements.",
+        members: "Ilan Smilan (Guitar), Roy Chen (Drums), Amir Sadot (Bass)",
+        spotify: "https://open.spotify.com/embed/artist/3P6n4hV9nJv7H4eT8nL5V9?utm_source=generator",
+        socialLinks: [
+          { label: "Facebook", url: "#" }
+        ]
+      },
+      {
+        id: "a5",
+        name: "Tatran",
+        genre: "Jazz / Rock",
+        image: "https://images.unsplash.com/photo-1493225457124-a1a2a5f5f9af?auto=format&fit=crop&w=800&q=80",
+        bio: "An instrumental power trio that produces a unique blend of post-rock, modern jazz, and classical music elements.",
+        members: "Offir Benjaminov (Bass), Tamuz Dekel (Guitar), Dan Mayo (Drums)",
+        spotify: "https://open.spotify.com/embed/artist/1G2QG8jN3wXJ0tQx2n9hQz?utm_source=generator",
+        socialLinks: [
+          { label: "Instagram", url: "#" }
+        ]
+      }
+    ];
+
+    let showFavsOnly = false;
+    let currentOpenArtistId = null;
+
+    // Load favorites from local storage for now
+    function getFavorites() {
+      try {
+        const stored = localStorage.getItem('artist_favs_' + currentGuestEmail);
+        return stored ? JSON.parse(stored) : {};
+      } catch(e) { return {}; }
+    }
+    function saveFavorites(favs) {
+      localStorage.setItem('artist_favs_' + currentGuestEmail, JSON.stringify(favs));
+    }
+
+    // Load notes from local storage
+    function getPrivateNote(artistId) {
+      try {
+        const stored = localStorage.getItem(`artist_note_${currentGuestEmail}_${artistId}`);
+        return stored || "";
+      } catch(e) { return ""; }
+    }
+    function savePrivateNoteLocally(artistId, note) {
+      localStorage.setItem(`artist_note_${currentGuestEmail}_${artistId}`, note);
+    }
+
+    // Initialize Artists UI
+    function initArtistsUI() {
+      // Setup Genre Filter
+      const genreSelect = document.getElementById('artist-genre-filter');
+      const genres = new Set(MOCK_ARTISTS.map(a => a.genre));
+      let genreHtml = '<option value="All">All Genres</option>';
+      genres.forEach(g => { genreHtml += `<option value="${g}">${g}</option>`; });
+      genreSelect.innerHTML = genreHtml;
+
+      // Setup Live Banner (Mock)
+      const liveBanner = document.getElementById('artists-live-banner');
+      const liveContent = document.getElementById('live-banner-content');
+      // For mock, just show the first artist as live
+      liveContent.innerHTML = `<b>${MOCK_ARTISTS[0].name}</b> is playing now at Main Stage`;
+      liveBanner.style.display = 'flex';
+
+      renderArtistsGrid(MOCK_ARTISTS);
+    }
+
+    function renderArtistsGrid(artists) {
+      const grid = document.getElementById('artists-grid');
+      const favs = getFavorites();
+      
+      if (artists.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0; color: var(--foreground-muted);">No artists found.</div>`;
+        return;
+      }
+
+      let html = '';
+      artists.forEach(artist => {
+        const isFav = !!favs[artist.id];
+        html += `
+          <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
+            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </button>
+            <div class="artist-card-overlay">
+              <div class="artist-card-name">${artist.name}</div>
+              <div class="artist-card-genre">${artist.genre}</div>
+            </div>
+          </div>
+        `;
+      });
+      grid.innerHTML = html;
+
+      // Handle Export Briefcase visibility
+      const hasFavs = Object.keys(favs).length > 0;
+      document.getElementById('export-briefcase-container').style.display = hasFavs ? 'block' : 'none';
+    }
+
+    function toggleCardFav(event, artistId) {
+      event.stopPropagation(); // prevent opening sheet
+      const favs = getFavorites();
+      if (favs[artistId]) {
+        delete favs[artistId];
+      } else {
+        favs[artistId] = true;
+      }
+      saveFavorites(favs);
+      filterArtists(); // Re-render grid
+    }
+
+    function filterArtists() {
+      const searchTxt = document.getElementById('artist-search').value.toLowerCase().trim();
+      const genreVal = document.getElementById('artist-genre-filter').value;
+      const clearBtn = document.getElementById('clear-artist-search-btn');
+      const favs = getFavorites();
+
+      clearBtn.style.display = searchTxt ? 'flex' : 'none';
+
+      const filtered = MOCK_ARTISTS.filter(a => {
+        const matchesSearch = !searchTxt || a.name.toLowerCase().includes(searchTxt) || a.genre.toLowerCase().includes(searchTxt);
+        const matchesGenre = genreVal === 'All' || a.genre === genreVal;
+        const matchesFav = !showFavsOnly || !!favs[a.id];
+        return matchesSearch && matchesGenre && matchesFav;
+      });
+
+      renderArtistsGrid(filtered);
+    }
+
+    function clearArtistSearch() {
+      document.getElementById('artist-search').value = "";
+      filterArtists();
+    }
+
+    function toggleFavFilter() {
+      showFavsOnly = !showFavsOnly;
+      const btn = document.getElementById('artist-fav-filter-btn');
+      if (showFavsOnly) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+      filterArtists();
+    }
+
+    // Bottom Sheet
+    function openArtistSheet(artistId) {
+      currentOpenArtistId = artistId;
+      const artist = MOCK_ARTISTS.find(a => a.id === artistId);
+      if (!artist) return;
+
+      const favs = getFavorites();
+      const isFav = !!favs[artistId];
+
+      document.getElementById('sheet-artist-img').style.backgroundImage = `url('${artist.image}')`;
+      document.getElementById('sheet-artist-name').innerText = artist.name;
+      document.getElementById('sheet-artist-genre').innerText = artist.genre;
+      document.getElementById('sheet-artist-bio').innerText = artist.bio;
+      document.getElementById('sheet-artist-members').innerText = artist.members;
+      
+      const favBtn = document.getElementById('sheet-fav-btn');
+      if (isFav) {
+        favBtn.classList.add('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
+      } else {
+        favBtn.classList.remove('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'none');
+      }
+
+      // Notes
+      document.getElementById('sheet-private-note').value = getPrivateNote(artistId);
+
+      // Media Embed
+      const mediaContainer = document.getElementById('sheet-media-container');
+      const embedWrapper = document.getElementById('sheet-embed-wrapper');
+      if (artist.spotify) {
+        embedWrapper.innerHTML = `<iframe src="${artist.spotify}" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>`;
+        embedWrapper.className = "embed-wrapper spotify-embed";
+        mediaContainer.style.display = 'block';
+      } else {
+        embedWrapper.innerHTML = '';
+        mediaContainer.style.display = 'none';
+      }
+
+      // Links
+      const linksContainer = document.getElementById('sheet-artist-links');
+      if (artist.socialLinks && artist.socialLinks.length > 0) {
+        linksContainer.innerHTML = artist.socialLinks.map(link => 
+          `<a href="${link.url}" target="_blank" class="sheet-link-btn">${link.label}</a>`
+        ).join('');
+      } else {
+        linksContainer.innerHTML = '';
+      }
+
+      // Show
+      document.getElementById('artist-sheet-overlay').classList.add('active');
+      document.getElementById('artist-bottom-sheet').classList.add('active');
+      document.body.style.overflow = 'hidden'; // prevent bg scrolling
+    }
+
+    function closeArtistSheet() {
+      document.getElementById('artist-sheet-overlay').classList.remove('active');
+      document.getElementById('artist-bottom-sheet').classList.remove('active');
+      document.body.style.overflow = '';
+      currentOpenArtistId = null;
+      // Re-render grid to reflect any favorite changes from sheet
+      filterArtists();
+    }
+
+    function toggleSheetFav(event) {
+      if (!currentOpenArtistId) return;
+      event.stopPropagation();
+      const favs = getFavorites();
+      const favBtn = document.getElementById('sheet-fav-btn');
+      
+      if (favs[currentOpenArtistId]) {
+        delete favs[currentOpenArtistId];
+        favBtn.classList.remove('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'none');
+      } else {
+        favs[currentOpenArtistId] = true;
+        favBtn.classList.add('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
+      }
+      saveFavorites(favs);
+    }
+
+    function savePrivateNote() {
+      if (!currentOpenArtistId) return;
+      const note = document.getElementById('sheet-private-note').value;
+      savePrivateNoteLocally(currentOpenArtistId, note);
+    }
+
+    function exportBriefcase() {
+      alert("This will generate and download a PDF summarizing your liked artists and private notes!");
+    }
+
+    // Call init when app is ready (simulating here by hooking into DOMContentLoaded or similar, 
+    // but since we rely on login success to show portal, let's call it onLoginSuccess or here globally for dev)
+    document.addEventListener('DOMContentLoaded', () => {
+      initArtistsUI();
+    });
+
   </script>
 </body>
 </html>

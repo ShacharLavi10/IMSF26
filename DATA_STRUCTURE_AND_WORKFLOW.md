@@ -103,9 +103,22 @@
 
 ### גיליון ד': `טיסות - שיקוף` (Flights Mirror)
 גיליון פנימי בקובץ הראשי המשקף את נתוני הטיסות מגיליון "עדכוני טיסות" לצורך הצגתם בפורטל האורח.
+
 ---
 
-### גיליון ה': `מידע כללי`
+### גיליון ה': `הערות אורחים` (Guest Notes & Favorites)
+גיליון לאגירת המידע שהאורחים מסמנים בלשונית האמנים בפורטל (Favorites & Private Notes). מנוהל ומסונכרן לפי סדר המיילים בגיליון המאסטר.
+
+| עמודה | שם עמודה מדויק בגיליון | תפקיד / לוגיקה |
+| :---: | :--- | :--- |
+| **A** | `מייל אורח` | מפתח ראשי (מיושר לפי סדר השורות ב-`אורחים`) |
+| **B** | `שם מלא` | נוסחה לשאיבת השם מהמאסטר (לנוחות קריאה בלבד) |
+| **C** | `נתוני מועדפים` | עמודה טכנית שמכילה את הנתונים הגולמיים בפורמט JSON כפי שהם מתקבלים מהפורטל. |
+| **D** | `תצוגה קריאה` | עמודה שנוצרת/מתעדכנת אוטומטית ע"י הסקריפט, המציגה בצורה נקייה וקריאה את האמנים שהאורח סימן וההערות שלו (עם ירידות שורות). |
+
+---
+
+### גיליון ו': `מידע כללי`
 גיליון מידע כללי וריכוז נתונים טכניים/לוגיסטיים עבור ההפקה.
 
 | עמודה | שם עמודה מדויק בגיליון | תפקיד / תוכן |
@@ -307,6 +320,49 @@
 
 ---
 
+## 🎸 9. קובץ האומנים (Artists Spreadsheet - Mirror)
+
+קובץ זה מכיל את כלל המידע השיווקי, האמנותי והטכני אודות האמנים המשתתפים בפסטיבל (לצורך הצגה בלשונית אמנים בפורטל, הפקת חוברות, פלייליסטים ועוד).
+
+* **Spreadsheet Link:** [קישור לקובץ האמנים](https://docs.google.com/spreadsheets/d/13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ/edit?gid=0#gid=0)
+* **Spreadsheet ID:** `13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ`
+* **הערת סנכרון וסביבות:** קובץ זה מהווה שיקוף (Mirror) ישיר מקובץ העבודה המקורי של צוות האמנות/הפקה. הוא משמש **באופן זהה** הן בסביבת האמת (Production) והן בסביבת הניסוי (Sandbox).
+
+| עמודה | שם עמודה מדויק בגיליון | תפקיד ומשמעות עסקית |
+| :---: | :--- | :--- |
+| **A** | `שם האמן באנגלית` | שם האמן/הרכב רשמי באנגלית (Artist Name EN) |
+| **B** | `שם האמן בעברית` | שם האמן/הרכב בעברית (Artist Name HE) |
+| **C** | `איש/אשת קשר` | איש קשר מנהל/בוקינג בישראל |
+| **D** | `טלפון איש קשר` | טלפון נייד לתיאומים |
+| **E** | `דוא״ל` | כתובת אימייל ליצירת קשר |
+| **F** | `ניהול בחו״ל – פרטי קשר` | סוכנות / מנהל בחו"ל ופרטי קשר |
+| **G** | `קומוניקט בעברית` | טקסט יח"צ / קומוניקט רשמי בעברית |
+| **H** | `קומוניקט באנגלית` | טקסט יח"צ / ביוגרפיה רשמית באנגלית |
+| **I** | `חברי ההרכב בעברית (שם – תפקיד/כלי)` | פירוט הנגנים והכלים בעברית |
+| **J** | `חברי ההרכב באנגלית (Name – Role/Instrument)` | פירוט הנגנים והכלים באנגלית |
+| **K** | `מספר הנגנים בהרכב` | כמות נגנים על הבמה |
+| **L** | `מספר הנגנים ואנשי הצוות` | סה"כ משלחת האמן (כולל סאונד, מנהל וכד') |
+| **M** | `מספר הנגנים ואנשי הצוות המגיעים לאירוע (אנשי מקצוע בלבד)` | כמות מקבלי תגי הפקה/אמנים |
+| **N** | `קישור YouTube 1` | קישור קליפ / הופעה חיה ראשון |
+| **O** | `קישור YouTube 2` | קישור קליפ / הופעה חיה שני |
+| **P** | `תמונה באיכות דפוס + קרדיט צלם בשם הקובץ` | קישור לתמונה ברזולוציה גבוהה (Print) |
+| **Q** | `קובץ MP3` | קובץ אודיו להאזנה/הורדה |
+| **R** | `תמונת יח״צ` | תמונת יח"צ ראשית לשימוש דיגיטלי/פורטל |
+| **S** | `Spotify` | קישור לפרופיל Spotify של האמן |
+| **T** | `Facebook` | קישור לדף פייסבוק |
+| **U** | `Instagram` | קישור לפרופיל אינסטגרם |
+| **V** | `מפרט טכני מלא – קישור` | קישור ל-Rider / מפרט טכני ובמה |
+| **W** | `הופעות בירושלים בנובמבר–דצמבר (תאריך, אירוע ומקום)` | לוח הופעות מקומי סביב הפסטיבל |
+| **X** | `שיר לפלייליסט Spotify 1` | שיר נבחר 1 לפלייליסט הרשמי של הפסטיבל |
+| **Y** | `שיר לפלייליסט Spotify 2` | שיר נבחר 2 לפלייליסט הרשמי של הפסטיבל |
+| **Z** | `מפרט טכני / הערות טכניות` | הערות במה, בקשות מיוחדות ודגשים טכניים |
+| **AA** | `ז'אנר` | תגיות ז'אנר (למשל: Rock, Jazz & World) לסינון בפורטל |
+| **AB** | `יום הופעה בפסטיבל` | תאריך/יום בו האמן מופיע בפסטיבל |
+| **AC** | `שעת עלייה לבמה` | שעת ההופעה |
+| **AD** | `במה / מיקום` | הלוקיישן בו האמן יופיע |
+
+---
+
 ## 🏗️ ארכיטקטורת המערכת החדשה (החל מספטמבר 2026)
 
 המערכת עברה שדרוג משמעותי והופרדה (Decoupled) לשני חלקים עצמאיים כדי לאפשר גמישות, מהירות וניהול תקין של סביבות:
@@ -370,6 +426,7 @@
 | **גיליון אורחים ראשי (Google Sheets)** | `17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos` | [לפתיחת הגיליון האמיתי](https://docs.google.com/spreadsheets/d/17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos/edit) |
 | **עורך הסקריפט הראשי (Apps Script)** | `1wFP1kbXUC-7dpdlghPGDPcv2AKtX0ZusEpTpkBIw6w4raDyikZkdvj3z` | [לצפייה בסקריפט האמיתי](https://script.google.com/d/1wFP1kbXUC-7dpdlghPGDPcv2AKtX0ZusEpTpkBIw6w4raDyikZkdvj3z/edit) |
 | **גיליון טיסות ענת** | `1UDzPjGWdvjJ1yOQHmORY-itX0yr52BMOkSrdac3t95M` | [לצפייה בגיליון](https://docs.google.com/spreadsheets/d/1UDzPjGWdvjJ1yOQHmORY-itX0yr52BMOkSrdac3t95M) |
+| **גיליון אמנים (שיקוף משותף)** | `13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ` | [לצפייה בגיליון](https://docs.google.com/spreadsheets/d/13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ/edit?gid=0#gid=0) |
 | **תיקיית תמונות דרכון** | `1gHSfIH1175u09sQEtp5gOSI_oNF6WrDUqUnxUPT4umwKNM-J0dxeNLI3qYQBqcevujCWq6rI` | [לפתיחת התיקייה](https://drive.google.com/drive/folders/1gHSfIH1175u09sQEtp5gOSI_oNF6WrDUqUnxUPT4umwKNM-J0dxeNLI3qYQBqcevujCWq6rI) |
 | **תיקיית תמונות אישיות** | `1ia1t0xqowQbYKjsYQl9PRy396dDNr7fXbKXzr20suy9waDJEcxMcvYDtb7w3J_d3Q_b8w6c9` | [לפתיחת התיקייה](https://drive.google.com/drive/folders/1ia1t0xqowQbYKjsYQl9PRy396dDNr7fXbKXzr20suy9waDJEcxMcvYDtb7w3J_d3Q_b8w6c9) |
 
@@ -385,6 +442,7 @@
 | **גיליון ניסויים ראשי (Google Sheets)** | `1Er377KhxxmpnagJY_7t0q4K3wfNxS4dKYWxAPHOmYNE` | [לפתיחת גיליון הניסוי](https://docs.google.com/spreadsheets/d/1Er377KhxxmpnagJY_7t0q4K3wfNxS4dKYWxAPHOmYNE/edit) |
 | **עורך הסקריפט הראשי (Apps Script)** | `1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW` | [לצפייה בסקריפט הניסוי](https://script.google.com/d/1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW/edit) |
 | **גיליון טיסות ענת (מדומה)** | `1mrKQ-10d1wLSjY3pjPyDO6dY8UZ9k-IiePXOOWTYBZY` | [לצפייה בגיליון המדומה](https://docs.google.com/spreadsheets/d/1mrKQ-10d1wLSjY3pjPyDO6dY8UZ9k-IiePXOOWTYBZY/edit) |
+| **גיליון אמנים (שיקוף משותף)** | `13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ` | [לצפייה בגיליון](https://docs.google.com/spreadsheets/d/13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ/edit?gid=0#gid=0) |
 | **תיקיית תמונות דרכון (מדומה)** | `1loqPR_oRFxvrznzYGrsaNqhTJbtbe8lr` | [לפתיחת התיקייה](https://drive.google.com/drive/folders/1loqPR_oRFxvrznzYGrsaNqhTJbtbe8lr) |
 | **תיקיית תמונות אישיות (מדומה)** | `1-eKETDgCwA0tTennT6egrpfROpLeGzse` | [לפתיחת התיקייה](https://drive.google.com/drive/folders/1-eKETDgCwA0tTennT6egrpfROpLeGzse) |
 

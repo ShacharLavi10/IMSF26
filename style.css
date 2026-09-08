@@ -1632,3 +1632,361 @@ img {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ========================================================= */
+/* ARTISTS UI - GRID & CARDS                                 */
+/* ========================================================= */
+.artists-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (min-width: 600px) {
+  .artists-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+.artist-card {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  cursor: pointer;
+  background-color: #1a1a1e;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-default);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.artist-card:active {
+  transform: scale(0.97);
+}
+.artist-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+}
+.artist-card-name {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+.artist-card-genre {
+  color: var(--accent-bright);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+/* HEART BUTTON (Fav) */
+.fav-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fav-btn:active {
+  transform: scale(0.8);
+}
+.fav-btn.active {
+  color: #ef4444; /* Red heart */
+}
+.fav-btn.active svg {
+  fill: #ef4444;
+  stroke: #ef4444;
+}
+
+/* LIVE BANNER */
+.live-banner {
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.02));
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-xl);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.live-indicator {
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.pulse {
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulse-red 1.5s infinite;
+}
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.live-content {
+  font-size: 0.85rem;
+  color: var(--foreground);
+  line-height: 1.4;
+}
+
+/* FAV FILTER BUTTON */
+.fav-filter-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-default);
+  color: var(--foreground-muted);
+  border-radius: var(--radius-lg);
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fav-filter-btn.active {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+.fav-filter-btn.active svg {
+  fill: #ef4444;
+}
+
+/* ========================================================= */
+/* BOTTOM SHEET MODAL                                        */
+/* ========================================================= */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sheet-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--background-elevated);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  z-index: 1001;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+  border-top: 1px solid var(--border-default);
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.bottom-sheet.active {
+  transform: translateY(0);
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 5px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+  margin: 12px auto;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sheet-header-image {
+  width: 100%;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  flex-shrink: 0;
+}
+.sheet-header-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 50%, var(--background-elevated) 100%);
+}
+
+.sheet-close-btn, .sheet-fav-btn {
+  position: absolute;
+  top: 16px;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+}
+.sheet-close-btn { left: 16px; }
+.sheet-fav-btn { right: 16px; }
+.sheet-fav-btn.active { color: #ef4444; }
+.sheet-fav-btn.active svg { fill: #ef4444; }
+
+.sheet-content {
+  padding: 0 20px 30px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheet-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: -10px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+}
+.sheet-title-row h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.sheet-genre {
+  color: var(--accent-bright);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sheet-section {
+  margin-bottom: 24px;
+}
+.sheet-section .section-title {
+  color: var(--foreground-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+/* Private Notes Textarea */
+.private-notes-section textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border-hover);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  color: var(--foreground);
+  font-family: var(--font-stack);
+  font-size: 0.9rem;
+  resize: none;
+  min-height: 80px;
+  transition: border-color 0.2s;
+}
+.private-notes-section textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  border-style: solid;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sheet-bio {
+  font-size: 0.95rem;
+  color: var(--foreground-subtle);
+  line-height: 1.6;
+}
+
+.sheet-members {
+  font-size: 0.9rem;
+  color: var(--foreground);
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  border: 1px solid var(--border-default);
+}
+
+.embed-wrapper {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 ratio */
+  height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #000;
+}
+.embed-wrapper.spotify-embed {
+  padding-bottom: 152px; /* Fixed height for spotify */
+}
+.embed-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.sheet-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sheet-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  color: var(--foreground);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.sheet-link-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
