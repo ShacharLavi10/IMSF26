@@ -348,10 +348,11 @@
                     <option value="All">All Genres</option>
                     <!-- Genres populated dynamically -->
                   </select>
-                  <button id="artist-fav-filter-btn" class="fav-filter-btn" onclick="toggleFavFilter()" aria-label="Show Favorites">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <button id="artist-fav-filter-btn" class="fav-filter-btn" onclick="toggleFavFilter()" aria-label="Show Favorites" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: auto; padding: 4px 12px; gap: 4px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
+                    <span style="font-size: 0.65rem; font-weight: 600; line-height: 1;">My Favorites</span>
                   </button>
                 </div>
               </div>
@@ -383,30 +384,18 @@
       <button class="sheet-close-btn" onclick="closeArtistSheet()">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
-      <button class="sheet-fav-btn" id="sheet-fav-btn" onclick="toggleSheetFav(event)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" id="sheet-fav-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-      </button>
     </div>
     <div class="sheet-content">
       <div class="sheet-title-row">
-        <div>
-          <h2 id="sheet-artist-name">Artist Name</h2>
-          <span class="sheet-genre" id="sheet-artist-genre">Genre</span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+          <div>
+            <h2 id="sheet-artist-name">Artist Name</h2>
+            <span class="sheet-genre" id="sheet-artist-genre">Genre</span>
+          </div>
+          <button class="sheet-fav-btn-inline" id="sheet-fav-btn" onclick="toggleSheetFav(event)" style="background: transparent; border: none; padding: 0; color: var(--foreground-muted); cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="sheet-fav-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+          </button>
         </div>
-      </div>
-
-      <!-- PRIVATE NOTES -->
-      <div class="sheet-section private-notes-section">
-        <h4 class="section-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-          Private Notes
-        </h4>
-        <textarea id="sheet-private-note" placeholder="Write your private thoughts here... (Saved automatically)" oninput="savePrivateNote()"></textarea>
-      </div>
-
-      <!-- MEDIA EMBED -->
-      <div class="sheet-section" id="sheet-media-container" style="display: none;">
-        <div id="sheet-embed-wrapper" class="embed-wrapper"></div>
       </div>
 
       <!-- BIO -->
@@ -421,11 +410,25 @@
         <div class="sheet-members" id="sheet-artist-members"></div>
       </div>
 
+      <!-- MEDIA EMBED -->
+      <div class="sheet-section" id="sheet-media-container" style="display: none;">
+        <div id="sheet-embed-wrapper" class="embed-wrapper"></div>
+      </div>
+
       <!-- EXTERNAL LINKS -->
       <div class="sheet-section">
         <h4 class="section-title">Links</h4>
         <div class="sheet-links" id="sheet-artist-links">
         </div>
+      </div>
+
+      <!-- PRIVATE NOTES -->
+      <div class="sheet-section private-notes-section">
+        <h4 class="section-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          Private Notes
+        </h4>
+        <textarea id="sheet-private-note" placeholder="Write your private thoughts here... (Saved automatically)" oninput="savePrivateNote()"></textarea>
       </div>
     </div>
   </div>
