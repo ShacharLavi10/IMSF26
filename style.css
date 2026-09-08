@@ -1702,21 +1702,22 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
   cursor: pointer;
   z-index: 2;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));
 }
+.fav-btn svg {
+  fill: #ffffff;
+  stroke: #000000;
+  transition: fill 0.2s;
+}
 .fav-btn:active {
   transform: scale(0.8);
 }
-.fav-btn.active {
-  color: #ef4444; /* Red heart */
-}
 .fav-btn.active svg {
   fill: #ef4444;
-  stroke: #ef4444;
+  stroke: #000000;
 }
 
 /* HEART BUTTON INLINE IN SHEET */
