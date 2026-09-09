@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>IMSF 2026 Delegation Portal</title>
-  <link rel="stylesheet" href="/style.css">
+  <?!= include('styles'); ?>
 </head>
 <body>
   <!-- THEME TOGGLE SLIDER -->
@@ -35,7 +35,7 @@
 
   <div class="container">
     <header class="fade-up">
-      <img src="imsf-logo.png" alt="IMSF 2026 Showcase Festival" class="main-logo" />
+      <h1>IMSF 2026 Delegation Portal</h1>
     </header>
 
     <!-- LOGIN -->
@@ -61,7 +61,7 @@
           </p>
         </div>
 
-        <div id="login-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
+        <div id="login-loader" class="loader"></div>
         <div id="login-error" class="alert alert-danger"></div>
       </div>
     </div>
@@ -118,7 +118,7 @@
             <p class="desc" style="margin-bottom: 1rem;">Please provide the following details:</p>
             <div id="general-missing-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;"></div>
             <button class="primary" onclick="submitMissingInfo()">Submit Information</button>
-            <div id="missing-info-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
+            <div id="missing-info-loader" class="loader"></div>
             <div id="missing-info-alert" class="alert"></div>
           </div>
         </div>
@@ -152,7 +152,7 @@
               <textarea id="bio-input" rows="3" placeholder="Enter Biography"></textarea>
             </div>
             <button class="primary" onclick="submitBio()">Save Bio</button>
-            <div id="bio-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
+            <div id="bio-loader" class="loader"></div>
             <div id="bio-alert" class="alert"></div>
           </div>
         </div>
@@ -166,7 +166,7 @@
               <input type="file" id="passport-file" accept="image/*,.pdf">
             </div>
             <button class="primary" onclick="uploadFile('passport')">Upload Passport</button>
-            <div id="passport-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
+            <div id="passport-loader" class="loader"></div>
             <div id="passport-alert" class="alert"></div>
           </div>
         </div>
@@ -180,7 +180,7 @@
               <input type="file" id="photo-file" accept="image/*">
             </div>
             <button class="primary" onclick="uploadFile('photo')">Upload Photo</button>
-            <div id="photo-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
+            <div id="photo-loader" class="loader"></div>
             <div id="photo-alert" class="alert"></div>
           </div>
         </div>
@@ -194,14 +194,7 @@
               <!-- Day Pills injected here -->
             </div>
             <div id="schedule-container">
-              <div id="schedule-loader-container" class="musical-loader-wrapper" style="display: flex;">
-                <div class="musical-loader">
-                  <span class="music-note music-note-1">🎵</span>
-                  <span class="drummer-emoji">🥁</span>
-                  <span class="music-note music-note-2">🎶</span>
-                </div>
-                <p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p>
-              </div>
+              <div class="loader" id="schedule-loader" style="display: block;"></div>
             </div>
           </div>
         </div>
@@ -314,121 +307,21 @@
         </div>
 
         <!-- CATEGORY 4: ARTISTS -->
-        <div id="artists-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.5s;">
+        <div id="artists-card" class="card col-span-3 fade-up" style="animation-delay: 0.5s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              Festival Artists
-            </h3>
-            
-            <!-- LIVE SCHEDULE BANNER (Happening Now) -->
-            <div id="artists-live-banner" class="live-banner" style="display: none;">
-              <div class="live-indicator"><span class="pulse"></span> LIVE NOW</div>
-              <div class="live-content" id="live-banner-content">
-                <!-- Dynamically injected live sets -->
-              </div>
-            </div>
-
+            <h3>Festival Artists</h3>
             <div id="artists-container">
-              <!-- ARTISTS FILTERS -->
-              <div class="directory-filters" style="margin-bottom: 16px;">
-                <div class="search-wrap">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input type="text" id="artist-search" placeholder="Search artists..." oninput="filterArtists()">
-                  <button class="clear-search-btn" id="clear-artist-search-btn" onclick="clearArtistSearch()" aria-label="Clear search">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                <div class="filter-selects" style="display: flex; gap: 8px;">
-                  <select id="artist-genre-filter" onchange="filterArtists()" style="flex: 1;">
-                    <option value="All">All Genres</option>
-                    <!-- Genres populated dynamically -->
-                  </select>
-                  <button id="artist-fav-filter-btn" class="fav-filter-btn" onclick="toggleFavFilter()" aria-label="Show Favorites" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: auto; padding: 4px 12px; gap: 4px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                    <span style="font-size: 0.65rem; font-weight: 600; line-height: 1;">My Favorites</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- EXPORT BRIEFCASE BUTTON (Shown when favorites exist/active) -->
-              <div id="export-briefcase-container" style="display: none; text-align: center; margin-bottom: 16px;">
-                <button class="primary button-download-small" onclick="exportBriefcase()" style="width: auto; margin: 0 auto;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                  Export My Briefcase
-                </button>
-              </div>
-
-              <!-- ARTISTS GRID -->
-              <div class="artists-grid" id="artists-grid">
-                <!-- Artist cards injected here -->
+              <div class="empty-category-card">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+                <div class="empty-category-title">Artist Lineup Coming Soon</div>
+                <div class="empty-category-desc">The official festival showcase lineup and artist profiles will be published here.</div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ARTIST BOTTOM SHEET MODAL -->
-  <div id="artist-sheet-overlay" class="sheet-overlay" onclick="closeArtistSheet()"></div>
-  <div id="artist-bottom-sheet" class="bottom-sheet">
-    <div class="sheet-handle" onclick="closeArtistSheet()"></div>
-    <div class="sheet-header-image" id="sheet-artist-img">
-      <button class="sheet-close-btn" onclick="closeArtistSheet()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="sheet-content">
-      <div class="sheet-title-row">
-        <div style="display: flex; flex-direction: column; width: 100%;">
-          <div style="display: flex; align-items: center; justify-content: flex-start; gap: 8px;">
-            <button class="sheet-fav-btn-inline" id="sheet-fav-btn" onclick="toggleSheetFav(event)" style="background: transparent; border: none; padding: 0; color: var(--foreground-muted); cursor: pointer; display: flex; align-items: center;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="sheet-fav-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-            </button>
-            <h2 id="sheet-artist-name" style="margin-bottom: 0;">Artist Name</h2>
-          </div>
-          <span class="sheet-genre" id="sheet-artist-genre" style="margin-top: 4px;">Genre</span>
-        </div>
-      </div>
-
-      <!-- BIO -->
-      <div class="sheet-section">
-        <h4 class="section-title">About</h4>
-        <p class="sheet-bio" id="sheet-artist-bio">Biography text goes here...</p>
-      </div>
-
-      <!-- BAND MEMBERS -->
-      <div class="sheet-section" id="sheet-members-section">
-        <h4 class="section-title">Band Members</h4>
-        <div class="sheet-members" id="sheet-artist-members"></div>
-      </div>
-
-      <!-- MEDIA EMBED -->
-      <div class="sheet-section" id="sheet-media-container" style="display: none;">
-        <div id="sheet-embed-wrapper" class="embed-wrapper"></div>
-      </div>
-
-      <!-- EXTERNAL LINKS -->
-      <div class="sheet-section">
-        <h4 class="section-title">Links</h4>
-        <div class="sheet-links" id="sheet-artist-links">
-        </div>
-      </div>
-
-      <!-- PRIVATE NOTES -->
-      <div class="sheet-section private-notes-section">
-        <h4 class="section-title">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-          Private Notes
-        </h4>
-        <textarea id="sheet-private-note" placeholder="Write your private thoughts here... (Saved automatically)" oninput="savePrivateNote()"></textarea>
       </div>
     </div>
   </div>
@@ -452,31 +345,13 @@
       </button>
     </div>
     <div class="updates-body" id="updates-body">
-      <div id="updates-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
-    </div>
-  </div>
-  <!-- WELCOME MODAL -->
-  <div id="welcome-modal-overlay" class="modal-overlay" style="display: none;">
-    <div class="modal-container fade-up">
-      <div class="modal-content">
-        <h3 id="welcome-modal-title">Welcome</h3>
-        <p id="welcome-modal-text">
-          This portal was designed for you, to make all the information you need easily accessible in one place. Moving forward, it will also simplify your connections with artists and fellow delegates, ensuring seamless communication even after the festival. Enjoy (:
-        </p>
-        <button class="primary" onclick="closeWelcomeModal()" style="margin-top: 20px;">Let's Go</button>
-      </div>
+      <div class="loader" id="updates-loader" style="display: block; margin: 20px auto;"></div>
     </div>
   </div>
 
-  <script type="module" src="/main.js"></script>
   <script>
     let currentGuestEmail = "";
     let globalDirectoryData = [];
-
-    function closeWelcomeModal() {
-      document.getElementById("welcome-modal-overlay").style.display = "none";
-      localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
-    }
 
     function checkSessionOnLoad() {
       const token = localStorage.getItem('guestSessionToken');
@@ -610,7 +485,6 @@
     }
 
     function onLoginSuccess(response) {
-      console.log("onLoginSuccess reached. Response:", response);
       document.getElementById("login-loader").style.display = "none";
       if (!response.success) {
         const errorDiv = document.getElementById("login-error");
@@ -636,16 +510,7 @@
       const isComplete = response.isComplete;
       
       if (isComplete) {
-        // Show Welcome Modal only once
-        if (!localStorage.getItem('welcomeModalSeen_' + currentGuestEmail)) {
-          console.log("Showing welcome modal to user: " + response.guestInfo.firstName);
-          document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
-          document.getElementById("welcome-modal-overlay").style.display = "flex";
-        }
-
-        const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
-
-        document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
+        document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
         document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
         
         // Hide missing details cards
@@ -663,11 +528,8 @@
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
         fetchSchedule();
-        fetchArtistsData();
       } else {
-        const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
-
-        document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
+        document.getElementById("hello-message").innerText = `Hello ${response.guestInfo.firstName}`;
         document.getElementById("welcome-message").innerText = `Please Complete Your Accommodation & Flight Details`;
         const navWrapper = document.getElementById("category-nav-wrapper");
         if (navWrapper) navWrapper.style.display = "none";
@@ -1314,60 +1176,19 @@
       body.innerHTML = html;
     }
 
-    /* ================= SESSION STORAGE & REFRESH LOGIC ================= */
-    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
-
-    function saveToCache(key, data) {
-      sessionStorage.setItem(key, JSON.stringify({
-        timestamp: Date.now(),
-        data: data
-      }));
-    }
-
-    function getFromCache(key) {
-      const cached = sessionStorage.getItem(key);
-      if (!cached) return null;
-      return JSON.parse(cached);
-    }
-
-    // When user leaves app and comes back, check if data is old. If so, refresh.
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        const scheduleCache = getFromCache('scheduleData');
-        if (scheduleCache) {
-          const age = Date.now() - scheduleCache.timestamp;
-          if (age > REFRESH_INTERVAL_MS) {
-            console.log("Data older than 2 minutes. Refreshing schedule in background...");
-            // Silently fetch and update the DOM
-            fetchSchedule(true, false);
-          }
-        }
-      }
-    });
-
     /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
 
-    
-
     function fetchSchedule() {
-      const loader = document.getElementById("schedule-loader-container");
-      if(loader) loader.style.display = "flex";
-
       google.script.run
         .withSuccessHandler(res => {
-          if(loader) loader.style.display = "none";
+          document.getElementById("schedule-loader").style.display = "none";
           if (res.success && res.schedule) {
             scheduleDataCache = res.schedule;
             renderScheduleTabs();
           } else {
             document.getElementById("schedule-container").innerHTML = `<p class="empty-state">No schedule available.</p>`;
           }
-        })
-        .withFailureHandler(err => {
-            console.error("Schedule fetch failed", err);
-            if(loader) loader.style.display = "none";
-            document.getElementById("schedule-container").innerHTML = `<p class="empty-state" style="color: var(--accent);">Connection error. Showing offline version.</p>`;
         })
         .getScheduleData();
     }
@@ -1454,252 +1275,6 @@
       html += '</div>';
       container.innerHTML = html;
     }
-    /* ========================================================= */
-    /* ARTISTS UI LOGIC                                          */
-    /* ========================================================= */
-    let globalArtistsData = [];
-    let showFavsOnly = false;
-    let currentOpenArtistId = null;
-
-    // Load favorites from local storage for now
-    function getFavorites() {
-      try {
-        const stored = localStorage.getItem('artist_favs_' + currentGuestEmail);
-        return stored ? JSON.parse(stored) : {};
-      } catch(e) { return {}; }
-    }
-    function saveFavorites(favs) {
-      localStorage.setItem('artist_favs_' + currentGuestEmail, JSON.stringify(favs));
-    }
-
-    // Load notes from local storage
-    function getPrivateNote(artistId) {
-      try {
-        const stored = localStorage.getItem(`artist_note_${currentGuestEmail}_${artistId}`);
-        return stored || "";
-      } catch(e) { return ""; }
-    }
-    function savePrivateNoteLocally(artistId, note) {
-      localStorage.setItem(`artist_note_${currentGuestEmail}_${artistId}`, note);
-    }
-
-    function fetchArtistsData() {
-      const grid = document.getElementById('artists-grid');
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0;">
-        <div class="musical-loader-wrapper" style="display: flex; margin: 0 auto;">
-          <div class="musical-loader">
-            <span class="music-note music-note-1">🎵</span>
-            <span class="drummer-emoji">🥁</span>
-            <span class="music-note music-note-2">🎶</span>
-          </div>
-        </div>
-      </div>`;
-      
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (res.success && res.artists) {
-            globalArtistsData = res.artists;
-            initArtistsUI();
-          } else {
-            grid.innerHTML = `<p class="empty-state">Failed to load artists.</p>`;
-          }
-        })
-        .withFailureHandler(function(err) {
-          grid.innerHTML = `<p class="empty-state">Failed to load artists.</p>`;
-        })
-        .getArtistsData();
-    }
-
-    // Initialize Artists UI
-    function initArtistsUI() {
-      // Setup Genre Filter
-      const genreSelect = document.getElementById('artist-genre-filter');
-      const genres = new Set(globalArtistsData.map(a => a.genre).filter(g => g));
-      let genreHtml = '<option value="All">All Genres</option>';
-      genres.forEach(g => { genreHtml += `<option value="${g}">${g}</option>`; });
-      genreSelect.innerHTML = genreHtml;
-
-      // Setup Live Banner
-      const liveBanner = document.getElementById('artists-live-banner');
-      liveBanner.style.display = 'none';
-
-      renderArtistsGrid(globalArtistsData);
-    }
-
-    function renderArtistsGrid(artists) {
-      const grid = document.getElementById('artists-grid');
-      const favs = getFavorites();
-      
-      if (artists.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0; color: var(--foreground-muted);">No artists found.</div>`;
-        return;
-      }
-
-      let html = '';
-      artists.forEach(artist => {
-        const isFav = !!favs[artist.id];
-        html += `
-          <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
-            <div class="artist-card-overlay">
-              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 2px;">
-                <div class="artist-card-name" style="margin-bottom: 0;">${artist.name}</div>
-                <button class="fav-btn-inline ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                </button>
-              </div>
-              <div class="artist-card-genre">${artist.genre}</div>
-            </div>
-          </div>
-        `;
-      });
-      grid.innerHTML = html;
-
-      // Handle Export Briefcase visibility
-      const hasFavs = Object.keys(favs).length > 0;
-      document.getElementById('export-briefcase-container').style.display = hasFavs ? 'block' : 'none';
-    }
-
-    function toggleCardFav(event, artistId) {
-      event.stopPropagation(); // prevent opening sheet
-      const favs = getFavorites();
-      if (favs[artistId]) {
-        delete favs[artistId];
-      } else {
-        favs[artistId] = true;
-      }
-      saveFavorites(favs);
-      filterArtists(); // Re-render grid
-    }
-
-    function filterArtists() {
-      const searchTxt = document.getElementById('artist-search').value.toLowerCase().trim();
-      const genreVal = document.getElementById('artist-genre-filter').value;
-      const clearBtn = document.getElementById('clear-artist-search-btn');
-      const favs = getFavorites();
-
-      clearBtn.style.display = searchTxt ? 'flex' : 'none';
-
-      const filtered = globalArtistsData.filter(a => {
-        const matchesSearch = !searchTxt || a.name.toLowerCase().includes(searchTxt) || a.genre.toLowerCase().includes(searchTxt);
-        const matchesGenre = genreVal === 'All' || a.genre === genreVal;
-        const matchesFav = !showFavsOnly || !!favs[a.id];
-        return matchesSearch && matchesGenre && matchesFav;
-      });
-
-      renderArtistsGrid(filtered);
-    }
-
-    function clearArtistSearch() {
-      document.getElementById('artist-search').value = "";
-      filterArtists();
-    }
-
-    function toggleFavFilter() {
-      showFavsOnly = !showFavsOnly;
-      const btn = document.getElementById('artist-fav-filter-btn');
-      if (showFavsOnly) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-      filterArtists();
-    }
-
-    // Bottom Sheet
-    function openArtistSheet(artistId) {
-      currentOpenArtistId = artistId;
-      const artist = globalArtistsData.find(a => a.id === artistId);
-      if (!artist) return;
-
-      const favs = getFavorites();
-      const isFav = !!favs[artistId];
-
-      document.getElementById('sheet-artist-img').style.backgroundImage = `url('${artist.image}')`;
-      document.getElementById('sheet-artist-name').innerText = artist.name;
-      document.getElementById('sheet-artist-genre').innerText = artist.genre;
-      document.getElementById('sheet-artist-bio').innerText = artist.bio;
-      document.getElementById('sheet-artist-members').innerText = artist.members;
-      
-      const favBtn = document.getElementById('sheet-fav-btn');
-      if (isFav) {
-        favBtn.classList.add('active');
-        document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
-      } else {
-        favBtn.classList.remove('active');
-        document.getElementById('sheet-fav-icon').setAttribute('fill', 'none');
-      }
-
-      // Notes
-      document.getElementById('sheet-private-note').value = getPrivateNote(artistId);
-
-      // Media Embed
-      const mediaContainer = document.getElementById('sheet-media-container');
-      const embedWrapper = document.getElementById('sheet-embed-wrapper');
-      if (artist.spotify) {
-        embedWrapper.innerHTML = `<iframe src="${artist.spotify}" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>`;
-        embedWrapper.className = "embed-wrapper spotify-embed";
-        mediaContainer.style.display = 'block';
-      } else {
-        embedWrapper.innerHTML = '';
-        mediaContainer.style.display = 'none';
-      }
-
-      // Links
-      const linksContainer = document.getElementById('sheet-artist-links');
-      if (artist.socialLinks && artist.socialLinks.length > 0) {
-        linksContainer.innerHTML = artist.socialLinks.map(link => 
-          `<a href="${link.url}" target="_blank" class="sheet-link-btn">${link.label}</a>`
-        ).join('');
-      } else {
-        linksContainer.innerHTML = '';
-      }
-
-      // Show
-      document.getElementById('artist-sheet-overlay').classList.add('active');
-      document.getElementById('artist-bottom-sheet').classList.add('active');
-      document.body.style.overflow = 'hidden'; // prevent bg scrolling
-    }
-
-    function closeArtistSheet() {
-      document.getElementById('artist-sheet-overlay').classList.remove('active');
-      document.getElementById('artist-bottom-sheet').classList.remove('active');
-      document.body.style.overflow = '';
-      currentOpenArtistId = null;
-      // Re-render grid to reflect any favorite changes from sheet
-      filterArtists();
-    }
-
-    function toggleSheetFav(event) {
-      if (!currentOpenArtistId) return;
-      event.stopPropagation();
-      const favs = getFavorites();
-      const favBtn = document.getElementById('sheet-fav-btn');
-      
-      if (favs[currentOpenArtistId]) {
-        delete favs[currentOpenArtistId];
-        favBtn.classList.remove('active');
-        document.getElementById('sheet-fav-icon').setAttribute('fill', 'none');
-      } else {
-        favs[currentOpenArtistId] = true;
-        favBtn.classList.add('active');
-        document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
-      }
-      saveFavorites(favs);
-    }
-
-    function savePrivateNote() {
-      if (!currentOpenArtistId) return;
-      const note = document.getElementById('sheet-private-note').value;
-      savePrivateNoteLocally(currentOpenArtistId, note);
-    }
-
-    function exportBriefcase() {
-      alert("This will generate and download a PDF summarizing your liked artists and private notes!");
-    }
-
-    // Removed redundant initArtistsUI call, handled by fetchArtistsData in onLoginSuccess
-
   </script>
 </body>
 </html>
-
