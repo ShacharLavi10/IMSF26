@@ -1238,7 +1238,7 @@
     let updatesPollingInterval = null;
     let knownUpdateCount = 0;
 
-    function toggleUpdatesPanel() {
+    function toggleUpdatesPanel(isHashChange) {
       const panel = document.getElementById("updates-panel");
       const overlay = document.getElementById("updates-overlay");
       const isOpening = panel.style.left !== "0px";
@@ -1254,10 +1254,16 @@
         if (window.currentUpdatesHash) {
           localStorage.setItem('lastSeenUpdatesHash_' + currentGuestEmail, window.currentUpdatesHash);
         }
+        
+        window.location.hash = "updates";
       } else {
         panel.style.left = "-100%";
         overlay.style.opacity = "0";
         setTimeout(() => overlay.style.display = "none", 300);
+        
+        if (isHashChange !== true && window.location.hash === "#updates") {
+          history.back();
+        }
       }
     }
 
@@ -1675,6 +1681,10 @@
       // If the hash is no longer #sheet, but the sheet is open, close it.
       if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
         closeArtistSheet(true);
+      }
+      // If the hash is no longer #updates, but the updates panel is open, close it.
+      if (window.location.hash !== "#updates" && document.getElementById('updates-panel').style.left === "0px") {
+        toggleUpdatesPanel(true);
       }
     });
 
