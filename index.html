@@ -1501,11 +1501,11 @@
             globalArtistsData = res.artists;
             initArtistsUI();
           } else {
-            grid.innerHTML = `<p class="empty-state">Failed to load artists.</p>`;
+            grid.innerHTML = `<p class="empty-state">Failed to load artists. ${res.message || 'Unknown server error'}</p>`;
           }
         })
         .withFailureHandler(function(err) {
-          grid.innerHTML = `<p class="empty-state">Failed to load artists.</p>`;
+          grid.innerHTML = `<p class="empty-state">Failed to load artists. ${err.message || 'Connection error'}</p>`;
         })
         .getArtistsData();
     }
