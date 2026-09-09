@@ -1,4 +1,4 @@
-﻿function getArtistsData() {
+function getArtistsData() {
   try {
     const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
     if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
@@ -29,22 +29,31 @@
       const name = idxNameEn >= 0 ? String(row[idxNameEn]).trim() : "";
       if (!name) continue;
       
+      let imageUrl = idxImage >= 0 ? String(row[idxImage]).trim() : "";
+      if (imageUrl.includes("drive.google.com")) {
+        const match = imageUrl.match(/[-\w]{25,}/);
+        if (match) {
+          imageUrl = "https://drive.google.com/uc?export=view&id=" + match[0];
+        }
+      }
+
       const artist = {
         id: "artist_" + i,
         name: name,
         genre: idxGenre >= 0 ? String(row[idxGenre]).trim() : "",
-        image: idxImage >= 0 ? String(row[idxImage]).trim() : "",
+        image: imageUrl,
         bio: idxBioEn >= 0 ? String(row[idxBioEn]).trim() : "",
         members: idxMembersEn >= 0 ? String(row[idxMembersEn]).trim() : "",
-        spotify: idxSpotify >= 0 ? String(row[idxSpotify]).trim() : "",
         socialLinks: []
       };
       
+      const spotify = idxSpotify >= 0 ? String(row[idxSpotify]).trim() : "";
       const fb = idxFacebook >= 0 ? String(row[idxFacebook]).trim() : "";
       const ig = idxInstagram >= 0 ? String(row[idxInstagram]).trim() : "";
       const yt1 = idxYoutube1 >= 0 ? String(row[idxYoutube1]).trim() : "";
       const yt2 = idxYoutube2 >= 0 ? String(row[idxYoutube2]).trim() : "";
       
+      if (spotify) artist.socialLinks.push({ label: "Spotify", url: spotify });
       if (ig) artist.socialLinks.push({ label: "Instagram", url: ig });
       if (fb) artist.socialLinks.push({ label: "Facebook", url: fb });
       if (yt1) artist.socialLinks.push({ label: "YouTube 1", url: yt1 });

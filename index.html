@@ -389,10 +389,10 @@
       <div class="sheet-title-row">
         <div style="display: flex; flex-direction: column; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: flex-start; gap: 8px;">
+            <h2 id="sheet-artist-name" style="margin-bottom: 0;">Artist Name</h2>
             <button class="sheet-fav-btn-inline" id="sheet-fav-btn" onclick="toggleSheetFav(event)" style="background: transparent; border: none; padding: 0; color: var(--foreground-muted); cursor: pointer; display: flex; align-items: center;">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="sheet-fav-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
             </button>
-            <h2 id="sheet-artist-name" style="margin-bottom: 0;">Artist Name</h2>
           </div>
           <span class="sheet-genre" id="sheet-artist-genre" style="margin-top: 4px;">Genre</span>
         </div>
@@ -1498,7 +1498,7 @@
       google.script.run
         .withSuccessHandler(function(res) {
           if (res.success && res.artists) {
-            globalArtistsData = res.artists;
+            globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           } else {
             grid.innerHTML = `<p class="empty-state">Failed to load artists. ${res.message || 'Unknown server error'}</p>`;
@@ -1632,17 +1632,11 @@
       // Notes
       document.getElementById('sheet-private-note').value = getPrivateNote(artistId);
 
-      // Media Embed
+      // Media Embed - Removed Spotify Embed
       const mediaContainer = document.getElementById('sheet-media-container');
       const embedWrapper = document.getElementById('sheet-embed-wrapper');
-      if (artist.spotify) {
-        embedWrapper.innerHTML = `<iframe src="${artist.spotify}" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>`;
-        embedWrapper.className = "embed-wrapper spotify-embed";
-        mediaContainer.style.display = 'block';
-      } else {
-        embedWrapper.innerHTML = '';
-        mediaContainer.style.display = 'none';
-      }
+      embedWrapper.innerHTML = '';
+      mediaContainer.style.display = 'none';
 
       // Links
       const linksContainer = document.getElementById('sheet-artist-links');
