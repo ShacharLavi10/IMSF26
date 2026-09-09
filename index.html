@@ -1652,16 +1652,31 @@
       document.getElementById('artist-sheet-overlay').classList.add('active');
       document.getElementById('artist-bottom-sheet').classList.add('active');
       document.body.style.overflow = 'hidden'; // prevent bg scrolling
+      
+      // Setting hash creates a reliable history entry on all mobile browsers
+      window.location.hash = "sheet";
     }
 
-    function closeArtistSheet() {
+    function closeArtistSheet(isHashChange) {
       document.getElementById('artist-sheet-overlay').classList.remove('active');
       document.getElementById('artist-bottom-sheet').classList.remove('active');
       document.body.style.overflow = '';
       currentOpenArtistId = null;
       // Re-render grid to reflect any favorite changes from sheet
       filterArtists();
+      
+      // If we closed it manually via the X or overlay, we must clean up the hash
+      if (isHashChange !== true && window.location.hash === "#sheet") {
+        history.back();
+      }
     }
+
+    window.addEventListener('hashchange', function() {
+      // If the hash is no longer #sheet, but the sheet is open, close it.
+      if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+        closeArtistSheet(true);
+      }
+    });
 
     function toggleSheetFav(event) {
       if (!currentOpenArtistId) return;
