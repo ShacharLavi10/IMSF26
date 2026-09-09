@@ -1579,11 +1579,13 @@
         const isFav = !!favs[artist.id];
         html += `
           <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
-            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            </button>
             <div class="artist-card-overlay">
-              <div class="artist-card-name">${artist.name}</div>
+              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 2px;">
+                <button class="fav-btn-inline ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                </button>
+                <div class="artist-card-name" style="margin-bottom: 0;">${artist.name}</div>
+              </div>
               <div class="artist-card-genre">${artist.genre}</div>
             </div>
           </div>
