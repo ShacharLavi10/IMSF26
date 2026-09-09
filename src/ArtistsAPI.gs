@@ -33,7 +33,7 @@ function getArtistsData() {
       if (imageUrl.includes("drive.google.com")) {
         const match = imageUrl.match(/[-\w]{25,}/);
         if (match) {
-          imageUrl = "https://drive.google.com/uc?export=view&id=" + match[0];
+          imageUrl = "https://drive.google.com/thumbnail?id=" + match[0] + "&sz=w800";
         }
       }
 
