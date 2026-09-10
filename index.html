@@ -443,7 +443,7 @@
       </button>
     </div>
     <div class="sheet-content">
-      <div class="sheet-title-row">
+      <div class="sheet-title-row" style="margin-top: 5px;">
         <div style="display: flex; flex-direction: column; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
             <h2 id="sheet-guest-name" style="margin-bottom: 0;">Guest Name</h2>
@@ -475,10 +475,9 @@
       <div class="sheet-section">
         <h4 class="section-title">Contact</h4>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          <a id="sheet-guest-email" href="#" class="button secondary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0.8rem; border-radius: 8px; gap: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            <span id="sheet-guest-email-text">Email</span>
-          </a>
+          <p id="sheet-guest-email-container" style="display: none; margin-bottom: 0;">
+            <a id="sheet-guest-email" href="#" style="color: var(--accent-bright); text-decoration: underline; font-size: 0.95rem;">Email Address</a>
+          </p>
           <a id="sheet-guest-phone" href="#" class="button secondary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0.8rem; border-radius: 8px; gap: 8px; display: none;">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
             <span id="sheet-guest-phone-text">Phone</span>
@@ -1086,8 +1085,8 @@
                 <div class="artist-card-name" style="margin-bottom: 0;">${fullName}</div>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div class="artist-card-genre" style="opacity: 0.8; font-size: 0.75rem;">${country}</div>
-                <div class="artist-card-genre">${genreText}</div>
+                <div style="color: #fff; font-size: 0.8rem; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${country}</div>
+                <div style="color: #fff; font-size: 0.75rem; font-weight: 400; text-shadow: 0 1px 3px rgba(0,0,0,0.8); opacity: 0.9;">${genreText}</div>
               </div>
             </div>
           </div>
@@ -1126,12 +1125,14 @@
       document.getElementById('sheet-guest-bio').innerText = guest["Biography"] || "No biography available.";
       
       const email = guest["Email"] || "";
-      const emailBtn = document.getElementById('sheet-guest-email');
+      const emailContainer = document.getElementById('sheet-guest-email-container');
+      const emailLink = document.getElementById('sheet-guest-email');
       if (email) {
-        emailBtn.style.display = 'inline-flex';
-        emailBtn.href = 'mailto:' + email;
+        emailContainer.style.display = 'block';
+        emailLink.href = 'mailto:' + email;
+        emailLink.innerText = email;
       } else {
-        emailBtn.style.display = 'none';
+        emailContainer.style.display = 'none';
       }
       
       const phone = guest["Phone"] || "";
