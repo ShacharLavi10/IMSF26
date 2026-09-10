@@ -83,6 +83,9 @@ const MAPPINGS = {
     { key: "שם חברה", altKeys: ["שם חברה"], label: "Company / Organization" },
     { key: "תפקיד", altKeys: ["תפקיד"], label: "Role / Title" },
     { key: "ביוגרפיה אנגלית", altKeys: ["ביוגרפיה אנגלית"], label: "Biography" },
-    { key: "ז'אנר", altKeys: ["ז'אנר"], label: "Genre / Style" }
+    { key: "ז'אנר", altKeys: ["ז'אנר"], label: "Genre / Style" },
+    { key: "טלפון", altKeys: ["טלפון"], label: "Phone" },
+    { key: "לינק לאתר", altKeys: ["לינק לאתר"], label: "Website" },
+    { key: "לינק לתמונה אישית", altKeys: ["לינק לתמונה אישית"], label: "Photo" }
   ]
 };

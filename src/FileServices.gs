@@ -50,6 +50,12 @@ function uploadGuestFile(dataObj) {
       if (targetColIdx !== -1) {
         sheet.getRange(rowIndex + 1, targetColIdx + 1).setValue(true);
       }
+      if (uploadType === 'photo') {
+        const urlColIdx = headers.indexOf("לינק לתמונה אישית");
+        if (urlColIdx !== -1) {
+          sheet.getRange(rowIndex + 1, urlColIdx + 1).setValue(file.getUrl());
+        }
+      }
     }
     return { success: true, fileUrl: file.getUrl() };
   } catch (err) {
