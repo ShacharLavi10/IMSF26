@@ -1071,15 +1071,17 @@
         let genreText = guest["Genre / Style"] || "";
         if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
         
-        const photoUrl = guest["Photo"] || 'https://via.placeholder.com/400x400/111111/ffffff?text=Guest';
+        const photoUrl = guest["Photo"] ? guest["Photo"] : '';
         const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim();
         const country = guest["Country"] || "N/A";
         
         // Pass index to openGuestSheet so we can easily find the guest in globalDirectoryData
         const originalIndex = globalDirectoryData.indexOf(guest);
         
+        const bgStyle = photoUrl ? `background-image: url('${photoUrl}')` : `background-color: #000`;
+        
         html += `
-          <div class="artist-card" style="background-image: url('${photoUrl}')" onclick="openGuestSheet(${originalIndex})">
+          <div class="artist-card" style="${bgStyle}" onclick="openGuestSheet(${originalIndex})">
             <div class="artist-card-overlay">
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 2px;">
                 <div class="artist-card-name" style="margin-bottom: 0;">${fullName}</div>
@@ -1100,12 +1102,20 @@
       const guest = globalDirectoryData[index];
       if (!guest) return;
       
-      const photoUrl = guest["Photo"] || 'https://via.placeholder.com/800x800/111111/ffffff?text=Guest';
+      const photoUrl = guest["Photo"] ? guest["Photo"] : '';
       const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim();
       let genreText = guest["Genre / Style"] || "";
       if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
       
-      document.getElementById('sheet-guest-img').style.backgroundImage = `url('${photoUrl}')`;
+      const imgEl = document.getElementById('sheet-guest-img');
+      if (photoUrl) {
+        imgEl.style.backgroundImage = `url('${photoUrl}')`;
+        imgEl.style.backgroundColor = 'transparent';
+      } else {
+        imgEl.style.backgroundImage = 'none';
+        imgEl.style.backgroundColor = '#000';
+      }
+      
       document.getElementById('sheet-guest-name').innerText = fullName;
       document.getElementById('sheet-guest-genre').innerText = genreText;
       document.getElementById('sheet-guest-country').innerText = guest["Country"] || "N/A";
