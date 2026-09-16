@@ -103,42 +103,48 @@ function verifyOTP(email, code) {
   }
 }
 
+function validateSession(sessionToken) {
+  if (!sessionToken) return { success: false, sessionExpired: true, message: "Session token is required." };
+  
+  const authSheet = getOrCreateAuthSheet();
+  const authData = authSheet.getDataRange().getValues();
+  
+  let tokenRowIdx = -1;
+  let sessionData = null;
+  
+  for (let i = 1; i < authData.length; i++) {
+    if (authData[i][1] === sessionToken) {
+      tokenRowIdx = i;
+      sessionData = {
+        email: authData[i][0],
+        lastActive: parseInt(authData[i][2], 10)
+      };
+      break;
+    }
+  }
+  
+  if (!sessionData) return { success: false, sessionExpired: true, message: "Invalid or expired session." };
+  
+  const now = new Date().getTime();
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+  
+  if (now - sessionData.lastActive > SEVEN_DAYS_MS) {
+    authSheet.deleteRow(tokenRowIdx + 1);
+    return { success: false, sessionExpired: true, message: "Session expired. Please log in again." };
+  }
+  
+  // Extend session (Update LastActive)
+  authSheet.getRange(tokenRowIdx + 1, 3).setValue(now);
+  
+  return { success: true, email: sessionData.email };
+}
 
 function getGuestPortalData(sessionToken) {
   try {
-    if (!sessionToken) return { success: false, sessionExpired: true, message: "Session token is required." };
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
     
-    const authSheet = getOrCreateAuthSheet();
-    const authData = authSheet.getDataRange().getValues();
-    
-    let tokenRowIdx = -1;
-    let sessionData = null;
-    
-    for (let i = 1; i < authData.length; i++) {
-      if (authData[i][1] === sessionToken) {
-        tokenRowIdx = i;
-        sessionData = {
-          email: authData[i][0],
-          lastActive: parseInt(authData[i][2], 10)
-        };
-        break;
-      }
-    }
-    
-    if (!sessionData) return { success: false, sessionExpired: true, message: "Invalid or expired session." };
-    
-    const now = new Date().getTime();
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    
-    if (now - sessionData.lastActive > SEVEN_DAYS_MS) {
-      authSheet.deleteRow(tokenRowIdx + 1);
-      return { success: false, sessionExpired: true, message: "Session expired. Please log in again." };
-    }
-    
-    // Extend session (Update LastActive)
-    authSheet.getRange(tokenRowIdx + 1, 3).setValue(now);
-    
-    const cleanEmail = sessionData.email;
+    const cleanEmail = sessionRes.email;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
     
@@ -392,10 +398,11 @@ function getScheduleData() {
 /**
  * Fetch Live Updates (Global + Personal)
  */
-function getLiveUpdates(email) {
+function getLiveUpdates(sessionToken) {
   try {
-    if (!email) return { success: false, message: 'Email missing' };
-    const cleanEmail = email.toString().trim().toLowerCase();
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const cleanEmail = sessionRes.email;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     
     const updates = [];

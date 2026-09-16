@@ -3,7 +3,10 @@
  */
 function uploadGuestFile(dataObj) {
   try {
-    const { email, fileData, fileName, fileType, uploadType } = dataObj;
+    const { sessionToken, fileData, fileName, fileType, uploadType } = dataObj;
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const email = sessionRes.email;
     const folderId = uploadType === 'passport' ? CONFIG.PASSPORT_FOLDER_ID : CONFIG.PHOTO_FOLDER_ID;
     
     let folder = (folderId && folderId !== "") ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
@@ -63,8 +66,11 @@ function uploadGuestFile(dataObj) {
   }
 }
 
-function saveGuestBio(email, bioText) {
+function saveGuestBio(sessionToken, bioText) {
   try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const email = sessionRes.email;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
     const data = sheet.getDataRange().getValues();
@@ -97,8 +103,11 @@ function saveGuestBio(email, bioText) {
   }
 }
 
-function submitGeneralMissingInfo(email, text) {
+function submitGeneralMissingInfo(sessionToken, text) {
   try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const email = sessionRes.email;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
     const data = sheet.getDataRange().getValues();

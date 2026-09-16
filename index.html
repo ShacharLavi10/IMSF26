@@ -1185,7 +1185,7 @@
           alertDiv.innerText = "Failed to update bio.";
           alertDiv.style.display = "block";
         })
-        .saveGuestBio(currentGuestEmail, bioText);
+        .saveGuestBio(localStorage.getItem('guestSessionToken'), bioText);
     }
 
     function submitMissingInfo() {
@@ -1224,7 +1224,7 @@
           alertDiv.innerText = "Error: " + err.message;
           alertDiv.style.display = "block";
         })
-        .submitGeneralMissingInfo(currentGuestEmail, text);
+        .submitGeneralMissingInfo(localStorage.getItem('guestSessionToken'), text);
     }
 
     function compressImage(file, callback) {
@@ -1302,7 +1302,7 @@
             alertDiv.style.display = "block";
           })
           .uploadGuestFile({
-            email: currentGuestEmail,
+            sessionToken: localStorage.getItem('guestSessionToken'),
             fileData: fileData,
             fileName: file.name,
             fileType: file.type,
@@ -1409,7 +1409,7 @@
             renderUpdates(res.updates);
           }
         })
-        .getLiveUpdates(currentGuestEmail);
+        .getLiveUpdates(localStorage.getItem('guestSessionToken'));
     }
 
     function renderUpdates(updates) {

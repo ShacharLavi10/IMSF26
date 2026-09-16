@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Exposure Festival 2026 - Vercel API Backend
  * 
  * Replace your existing doGet() with this doPost(e) function.
@@ -38,7 +38,8 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ error: err.toString() }))
+    console.error("API Error in doPost:", err.toString(), err.stack);
+    return ContentService.createTextOutput(JSON.stringify({ error: "Internal Server Error" }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
