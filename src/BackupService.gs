@@ -32,6 +32,12 @@ function createDailyBackup() {
       }
     }
     
+    // Trash old backups in this folder to prevent endless accumulation
+    const oldFiles = backupFolder.getFiles();
+    while (oldFiles.hasNext()) {
+      oldFiles.next().setTrashed(true);
+    }
+    
     file.makeCopy(`BACKUP_MASTER_${dateStr}`, backupFolder);
     
     if (CONFIG.ANAT_SPREADSHEET_ID && CONFIG.ANAT_SPREADSHEET_ID !== 'YOUR_ANAT_SPREADSHEET_ID_HERE') {
