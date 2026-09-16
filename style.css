@@ -264,6 +264,11 @@
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3), inset 0 2px 4px rgba(0,0,0,0.2);
   }
+
+  ::placeholder {
+    color: var(--foreground-muted);
+    opacity: 1;
+  }
   .input-group input[type="file"] {
     padding: 12px;
     background: rgba(255,255,255,0.03);
@@ -929,7 +934,8 @@
     border: 1px solid var(--border-default);
     background: rgba(255, 255, 255, 0.03);
     color: var(--foreground);
-    font-size: 0.95rem;
+    font-size: 16px;
+    font-weight: 500;
     font-family: var(--font-stack);
     outline: none;
     transition: all var(--transition-fast);
