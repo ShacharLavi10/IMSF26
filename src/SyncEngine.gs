@@ -22,10 +22,19 @@ function syncAllSheets(spreadsheet) {
   const masterData = masterSheet.getDataRange().getValues();
   if (masterData.length < 2) return;
   
-  let masterHeaderRowIdx = masterData[0].indexOf(CONFIG.EMAIL_COL) !== -1 ? 0 : (masterData[1] && masterData[1].indexOf(CONFIG.EMAIL_COL) !== -1 ? 1 : -1);
+  let masterHeaderRowIdx = -1;
+  let emailColIndex = -1;
+  for (let r = 0; r < Math.min(3, masterData.length); r++) {
+    for (let c = 0; c < masterData[r].length; c++) {
+      if (String(masterData[r][c]).trim().toLowerCase() === CONFIG.EMAIL_COL.trim().toLowerCase()) {
+        masterHeaderRowIdx = r;
+        emailColIndex = c;
+        break;
+      }
+    }
+    if (masterHeaderRowIdx !== -1) break;
+  }
   if (masterHeaderRowIdx === -1) return;
-  
-  const emailColIndex = masterData[masterHeaderRowIdx].indexOf(CONFIG.EMAIL_COL);
   const masterEmailOrder = [];
   for (let i = masterHeaderRowIdx + 1; i < masterData.length; i++) {
     const email = masterData[i][emailColIndex];
@@ -49,10 +58,19 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
   const values = range.getValues();
   const formulas = range.getFormulas();
   
-  let headerRowIdx = values[0].indexOf(CONFIG.EMAIL_COL) !== -1 ? 0 : (values[1] && values[1].indexOf(CONFIG.EMAIL_COL) !== -1 ? 1 : -1);
+  let headerRowIdx = -1;
+  let emailColIndex = -1;
+  for (let r = 0; r < Math.min(3, values.length); r++) {
+    for (let c = 0; c < values[r].length; c++) {
+      if (String(values[r][c]).trim().toLowerCase() === CONFIG.EMAIL_COL.trim().toLowerCase()) {
+        headerRowIdx = r;
+        emailColIndex = c;
+        break;
+      }
+    }
+    if (headerRowIdx !== -1) break;
+  }
   if (headerRowIdx === -1) return;
-  
-  const emailColIndex = values[headerRowIdx].indexOf(CONFIG.EMAIL_COL);
   const startDataRowIdx = headerRowIdx + 1;
   
   const combinedRows = [];
@@ -102,7 +120,8 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
   });
   
   targetSheet.clearContents();
-  targetSheet.getRange(1, 1, finalValues.length, lastCol).setValues(finalValues);
+  const maxCol = Math.max(lastCol, finalValues[0] ? finalValues[0].length : 1);
+  targetSheet.getRange(1, 1, finalValues.length, maxCol).setValues(finalValues);
   for (let r = startDataRowIdx; r < finalFormulas.length; r++) {
     for (let c = 0; c < lastCol; c++) {
       if (finalFormulas[r][c] !== "") targetSheet.getRange(r + 1, c + 1).setFormula(finalFormulas[r][c]);
@@ -120,10 +139,19 @@ function syncAnatSheetWithMasterOrder() {
   const masterData = masterSheet.getDataRange().getValues();
   if (masterData.length < 2) return;
 
-  let masterHeaderRowIdx = masterData[0].indexOf(CONFIG.EMAIL_COL) !== -1 ? 0 : (masterData[1] && masterData[1].indexOf(CONFIG.EMAIL_COL) !== -1 ? 1 : -1);
+  let masterHeaderRowIdx = -1;
+  let emailColIndex = -1;
+  for (let r = 0; r < Math.min(3, masterData.length); r++) {
+    for (let c = 0; c < masterData[r].length; c++) {
+      if (String(masterData[r][c]).trim().toLowerCase() === CONFIG.EMAIL_COL.trim().toLowerCase()) {
+        masterHeaderRowIdx = r;
+        emailColIndex = c;
+        break;
+      }
+    }
+    if (masterHeaderRowIdx !== -1) break;
+  }
   if (masterHeaderRowIdx === -1) return;
-
-  const emailColIndex = masterData[masterHeaderRowIdx].indexOf(CONFIG.EMAIL_COL);
   const masterEmailOrder = [];
   for (let i = masterHeaderRowIdx + 1; i < masterData.length; i++) {
     const email = masterData[i][emailColIndex];
@@ -143,10 +171,19 @@ function syncAnatSheetWithMasterOrder() {
     const values = range.getValues();
     const formulas = range.getFormulas();
 
-    let headerRowIdx = values[0].indexOf(CONFIG.EMAIL_COL) !== -1 ? 0 : (values[1] && values[1].indexOf(CONFIG.EMAIL_COL) !== -1 ? 1 : -1);
+    let headerRowIdx = -1;
+    let targetEmailColIdx = -1;
+    for (let r = 0; r < Math.min(3, values.length); r++) {
+      for (let c = 0; c < values[r].length; c++) {
+        if (String(values[r][c]).trim().toLowerCase() === CONFIG.EMAIL_COL.trim().toLowerCase()) {
+          headerRowIdx = r;
+          targetEmailColIdx = c;
+          break;
+        }
+      }
+      if (headerRowIdx !== -1) break;
+    }
     if (headerRowIdx === -1) return;
-
-    const targetEmailColIdx = values[headerRowIdx].indexOf(CONFIG.EMAIL_COL);
     const startDataRowIdx = headerRowIdx + 1;
 
     const combinedRows = [];
@@ -199,7 +236,8 @@ function syncAnatSheetWithMasterOrder() {
     });
 
     targetSheet.clearContents();
-    targetSheet.getRange(1, 1, finalValues.length, lastCol).setValues(finalValues);
+    const maxCol = Math.max(lastCol, finalValues[0] ? finalValues[0].length : 1);
+    targetSheet.getRange(1, 1, finalValues.length, maxCol).setValues(finalValues);
     for (let r = startDataRowIdx; r < finalFormulas.length; r++) {
       for (let c = 0; c < lastCol; c++) {
         if (finalFormulas[r][c] !== "") targetSheet.getRange(r + 1, c + 1).setFormula(finalFormulas[r][c]);
