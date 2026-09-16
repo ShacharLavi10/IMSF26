@@ -11,25 +11,15 @@ function createDailyBackup() {
     const fileId = ss.getId();
     const file = DriveApp.getFileById(fileId);
     
-    const parents = file.getParents();
-    let backupFolder = null;
-    let parentFolder = null;
+    const parentFolderId = "1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz";
+    const parentFolder = DriveApp.getFolderById(parentFolderId);
     
-    if (parents.hasNext()) {
-      parentFolder = parents.next();
-      const folders = parentFolder.getFoldersByName('IMSF 2026 Backups');
-      if (folders.hasNext()) {
-        backupFolder = folders.next();
-      } else {
-        backupFolder = parentFolder.createFolder('IMSF 2026 Backups');
-      }
+    let backupFolder = null;
+    const folders = parentFolder.getFoldersByName('IMSF 2026 Backups');
+    if (folders.hasNext()) {
+      backupFolder = folders.next();
     } else {
-      const folders = DriveApp.getFoldersByName('IMSF 2026 Backups');
-      if (folders.hasNext()) {
-        backupFolder = folders.next();
-      } else {
-        backupFolder = DriveApp.createFolder('IMSF 2026 Backups');
-      }
+      backupFolder = parentFolder.createFolder('IMSF 2026 Backups');
     }
     
     // Trash old backups in this folder to prevent endless accumulation
