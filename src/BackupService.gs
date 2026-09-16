@@ -1,0 +1,52 @@
+/**
+ * BackupService.gs
+ * Handles automated daily backups of the main and flight sheets.
+ */
+
+function createDailyBackup() {
+  const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd_HH-mm');
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  try {
+    const fileId = ss.getId();
+    const file = DriveApp.getFileById(fileId);
+    
+    const parents = file.getParents();
+    let backupFolder = null;
+    let parentFolder = null;
+    
+    if (parents.hasNext()) {
+      parentFolder = parents.next();
+      const folders = parentFolder.getFoldersByName('IMSF 2026 Backups');
+      if (folders.hasNext()) {
+        backupFolder = folders.next();
+      } else {
+        backupFolder = parentFolder.createFolder('IMSF 2026 Backups');
+      }
+    } else {
+      const folders = DriveApp.getFoldersByName('IMSF 2026 Backups');
+      if (folders.hasNext()) {
+        backupFolder = folders.next();
+      } else {
+        backupFolder = DriveApp.createFolder('IMSF 2026 Backups');
+      }
+    }
+    
+    file.makeCopy(`BACKUP_MASTER_${dateStr}`, backupFolder);
+    
+    if (CONFIG.ANAT_SPREADSHEET_ID && CONFIG.ANAT_SPREADSHEET_ID !== 'YOUR_ANAT_SPREADSHEET_ID_HERE') {
+      try {
+        const anatFile = DriveApp.getFileById(CONFIG.ANAT_SPREADSHEET_ID);
+        anatFile.makeCopy(`BACKUP_FLIGHTS_${dateStr}`, backupFolder);
+      } catch (e) {
+        Logger.log('Failed to backup Anat sheet: ' + e.toString());
+      }
+    }
+    
+    Logger.log('Backup completed successfully.');
+    
+  } catch (err) {
+    Logger.log('Error in daily backup: ' + err.toString());
+  }
+}
+
