@@ -2115,3 +2115,4 @@ img {
   cursor: zoom-in;
 }
 
+body:not(.light-mode) .blob { display: none; }

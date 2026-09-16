@@ -1,4 +1,4 @@
-﻿const GAS_API_URL = import.meta.env.VITE_GAS_API_URL;
+const GAS_API_URL = import.meta.env.VITE_GAS_API_URL;
 
 window.google = {
   script: {
@@ -49,7 +49,18 @@ window.google = {
                   headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
                 
-                const result = await response.json();
+                const responseText = await response.text();
+                let result;
+                try {
+                  result = JSON.parse(responseText);
+                } catch (parseError) {
+                  if (responseText.trim().startsWith('<')) {
+                    throw new Error("Temporary server error (Google Apps Script returned an HTML page instead of data). Please try again.");
+                  } else {
+                    throw new Error("Invalid response format: " + parseError.message);
+                  }
+                }
+
                 if (result.error) {
                   if (state.failureHandler) state.failureHandler(new Error(result.error));
                 } else {
