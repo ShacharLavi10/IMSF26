@@ -43,7 +43,7 @@ function syncAllSheets(spreadsheet) {
 function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
   const lastRow = targetSheet.getLastRow();
   const lastCol = targetSheet.getLastColumn();
-  if (lastRow < 2 || lastCol < 1) return;
+  if (lastRow < 1 || lastCol < 1) return;
   
   const range = targetSheet.getRange(1, 1, lastRow, lastCol);
   const values = range.getValues();
@@ -137,7 +137,7 @@ function syncAnatSheetWithMasterOrder() {
     const targetSheet = targetSS.getSheetByName(CONFIG.ANAT_SHEET_NAME) || targetSS.getSheets()[0];
     const lastRow = targetSheet.getLastRow();
     const lastCol = targetSheet.getLastColumn();
-    if (lastRow < 2 || lastCol < 1) return;
+    if (lastRow < 1 || lastCol < 1) return;
 
     const range = targetSheet.getRange(1, 1, lastRow, lastCol);
     const values = range.getValues();
@@ -170,8 +170,8 @@ function syncAnatSheetWithMasterOrder() {
         newRow[targetEmailColIdx] = { val: masterEmail, form: "" };
         
         const targetRowIndex = combinedRows.length + startDataRowIdx + 1;
-        newRow[1] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!A:A"), ""))` };
-        newRow[2] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!B:B"), ""))` };
+        newRow[1] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!B:B"), ""))` };
+        newRow[2] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!A:A"), ""))` };
         
         combinedRows.push(newRow);
       }

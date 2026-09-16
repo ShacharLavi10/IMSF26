@@ -61,10 +61,10 @@ const CONFIG = {
 
 const MAPPINGS = {
   FLIGHTS: [
-    { key: "תאריך נחיתה", altKeys: ["תאריך נחיתה", "תאריך הגעה"], label: "Arrival Date" },
-    { key: "מאיפה?", altKeys: ["מאיפה?", "מאיפה"], label: "Origin / From" },
-    { key: "תאריך המראה", altKeys: ["תאריך המראה", "תאריך יציאה"], label: "Departure Date" },
-    { key: "לאן?", altKeys: ["לאן?", "לאן"], label: "Destination / To" },
+    { key: "הגעה לישראל", altKeys: ["תאריך נחיתה", "תאריך הגעה", "הגעה לישראל"], label: "Arrival Date" },
+    { key: "יעד הגעה", altKeys: ["מאיפה?", "מאיפה", "יעד", "יעד הגעה"], label: "Origin / From" },
+    { key: "חזרה מישראל", altKeys: ["תאריך המראה", "תאריך יציאה", "חזרה מישראל"], label: "Departure Date" },
+    { key: "יעד חזרה", altKeys: ["לאן?", "לאן", "יעד", "יעד חזרה"], label: "Destination / To" },
     { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "לינק לכרטיס", "כרטיס סופי", "לינק כרטיס"], label: "Final Ticket Link" }
   ],
   HOTELS: [

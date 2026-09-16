@@ -90,15 +90,15 @@ function setupProductionDashboard() {
   dashSheet.getRange("E7").setValue("רשימה שמית (דינמית):").setFontWeight("bold");
   dashSheet.getRange("E8").setFormula(
     `=IF(F6="חסר טופס טיסות", FILTER('אורחים'!A2:B, 'אורחים'!O2:O=FALSE), ` +
-    `IF(F6="ממתינים להצעה", FILTER('אורחים'!A2:B, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!M2:M")=TRUE, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!N2:N")=FALSE), ` +
-    `IF(F6="טרם אישרו כרטיס", FILTER('אורחים'!A2:B, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!N2:N")=TRUE, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!R2:R")=FALSE), ` +
-    `IF(F6="מחכים לכרטיס סופי", FILTER('אורחים'!A2:B, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!R2:R")=TRUE, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!S2:S")=FALSE), ""))))`
+    `IF(F6="ממתינים להצעה", FILTER('אורחים'!A2:B, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!N2:N")=TRUE, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!P2:P")=FALSE), ` +
+    `IF(F6="טרם אישרו כרטיס", FILTER('אורחים'!A2:B, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!P2:P")=TRUE, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!T2:T")=FALSE), ` +
+    `IF(F6="מחכים לכרטיס סופי", FILTER('אורחים'!A2:B, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!T2:T")=TRUE, IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!U2:U")=FALSE), ""))))`
   );
 
   setSubHeader("E20", "עלות משוערת סה\"כ ($):");
-  dashSheet.getRange("F20").setFormula(`=SUM(IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!O2:O"))`);
+  dashSheet.getRange("F20").setFormula(`=SUM(IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!Q2:Q"))`);
   setSubHeader("E21", "עלות סופית סה\"כ ($):");
-  dashSheet.getRange("F21").setFormula(`=SUM(IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!X2:X"))`);
+  dashSheet.getRange("F21").setFormula(`=SUM(IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!Z2:Z"))`);
   setSubHeader("E22", "השתתפות אורחים ($):");
   dashSheet.getRange("F22").setFormula(`=SUM(IMPORTRANGE("${anatUrlId}", "'עדכוני טיסות'!AD2:AD"))`);
 

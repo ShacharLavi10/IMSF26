@@ -48,14 +48,14 @@ function generateOTP(email) {
         <h1 style="font-size: 36px; letter-spacing: 5px; color: #333; background: #f4f4f4; padding: 10px; border-radius: 5px; display: inline-block;">${otpCode}</h1>
         <p>This code will expire in 15 minutes.</p>
         <br><br>
-        <p style="font-size: 12px; color: #888;">Exposure Festival 2026</p>
+        <p style="font-size: 12px; color: #888;">Israel Music Showcase Festival 2026</p>
       </div>
     `;
     
-    MailApp.sendEmail({
-      to: cleanEmail,
-      subject: "IMSF 2026 Portal Code is here",
-      htmlBody: htmlBody
+    GmailApp.sendEmail(cleanEmail, "IMSF 2026 Portal Code is here", "", {
+      htmlBody: htmlBody,
+      from: "imsfhost@gmail.com",
+      name: "Israel Music Showcase Festival 2026"
     });
     
     return { success: true, message: "OTP sent successfully." };
