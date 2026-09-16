@@ -1871,9 +1871,62 @@
       alert("This will generate and download a PDF summarizing your liked artists and private notes!");
     }
 
-    // Removed redundant initArtistsUI call, handled by fetchArtistsData in onLoginSuccess
+    // FULLSCREEN IMAGE VIEWER LOGIC
+    function openImageViewerFromBg(event, el) {
+      if (event && event.target.closest('button')) return;
+      const bg = el.style.backgroundImage;
+      if (!bg || bg === 'none') return;
+      const match = bg.match(/url\(['"]?(.*?)['"]?\)/);
+      if (match && match[1]) {
+        let url = match[1];
+        // Remove thumbnail resize parameter if possible to show high res
+        if (url.includes('drive.google.com/thumbnail')) {
+          url = url.replace('&sz=w800', '&sz=w2000');
+        }
+        const viewer = document.getElementById('fullscreen-image-viewer');
+        const img = document.getElementById('fullscreen-image');
+        img.src = url;
+        viewer.style.display = 'flex';
+        setTimeout(() => viewer.classList.add('active'), 10);
+        history.pushState({ imageViewer: true }, "");
+      }
+    }
 
+    function closeImageViewer(fromHistory = false) {
+      const viewer = document.getElementById('fullscreen-image-viewer');
+      viewer.classList.remove('active');
+      setTimeout(() => {
+        viewer.style.display = 'none';
+        document.getElementById('fullscreen-image').src = "";
+      }, 300);
+      
+      if (!fromHistory && history.state && history.state.imageViewer) {
+        history.back();
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const viewer = document.getElementById('fullscreen-image-viewer');
+      if (viewer && viewer.style.display !== 'none') {
+        closeImageViewer(true);
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('sheet-artist-img').addEventListener('click', function(e) {
+        openImageViewerFromBg(e, this);
+      });
+      document.getElementById('sheet-guest-img').addEventListener('click', function(e) {
+        openImageViewerFromBg(e, this);
+      });
+    });
   </script>
+
+  <!-- FULLSCREEN IMAGE VIEWER -->
+  <div id="fullscreen-image-viewer" class="fullscreen-viewer" onclick="closeImageViewer()">
+    <span class="viewer-close">&times;</span>
+    <img id="fullscreen-image" src="" alt="Full Screen">
+  </div>
 </body>
 </html>
 

@@ -2058,3 +2058,54 @@ img {
   background: rgba(255,255,255,0.1);
 }
 
+/* FULLSCREEN IMAGE VIEWER */
+.fullscreen-viewer {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.95);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.fullscreen-viewer.active {
+  opacity: 1;
+}
+.fullscreen-viewer img {
+  max-width: 95%;
+  max-height: 95%;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+.viewer-close {
+  position: absolute;
+  top: max(20px, env(safe-area-inset-top));
+  right: 20px;
+  color: rgba(255,255,255,0.7);
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 10001;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.3);
+  transition: all 0.2s;
+}
+.viewer-close:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+}
+.sheet-header-image {
+  cursor: zoom-in;
+}
+
