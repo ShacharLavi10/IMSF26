@@ -194,7 +194,8 @@ function getGuestPortalData(sessionToken) {
       generalMissing: Boolean(getColVal(CONFIG.CHECKBOXES.GENERAL_MISSING)),
       approvalFlights: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_FLIGHTS)),
       approvalHotels: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_HOTELS)),
-      approvalDirectory: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_DIRECTORY))
+      approvalDirectory: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_DIRECTORY)),
+      approvalSchedule: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_SCHEDULE))
     };
     
     let rawMissingText = String(getColVal(CONFIG.GENERAL_MISSING_TEXT_COL) || "");

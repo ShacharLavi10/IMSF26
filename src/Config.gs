@@ -45,7 +45,8 @@ const CONFIG = {
     GENERAL_MISSING: "חסר משהו כללי?",
     APPROVAL_FLIGHTS: "אישור טיסות", // עמודה עבור אישור הצגת לשונית טיסות
     APPROVAL_HOTELS: "אישור מלונות", // עמודה עבור אישור הצגת לשונית מלונות
-    APPROVAL_DIRECTORY: "אישור משלחת" // עמודה עבור אישור הצגת לשונית משלחת
+    APPROVAL_DIRECTORY: "אישור משלחת", // עמודה עבור אישור הצגת לשונית משלחת
+    APPROVAL_SCHEDULE: "לו\"ז" // עמודה עבור אישור הצגת לשונית לו"ז
   },
   GENERAL_MISSING_TEXT_COL: "מה חסר כללי?",
   BIO_DRAFT_COL: "ביוגרפיה טיוטה מהאתר",

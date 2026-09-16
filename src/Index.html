@@ -196,6 +196,15 @@
             <div id="schedule-container">
               <div class="loader" id="schedule-loader" style="display: block;"></div>
             </div>
+            <div id="schedule-pending-container" style="display: none;">
+              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="empty-category-title">Schedule Processing</div>
+                <div class="empty-category-desc">We are finalizing the schedule and it will be available here soon.</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -598,6 +607,16 @@
           passportCard.style.display = response.checklist.hasPassport ? "none" : "block";
         }
       }
+      if (response.checklist.approvalSchedule) {
+        document.getElementById("schedule-days-nav").style.display = "flex";
+        document.getElementById("schedule-container").style.display = "block";
+        document.getElementById("schedule-pending-container").style.display = "none";
+      } else {
+        document.getElementById("schedule-days-nav").style.display = "none";
+        document.getElementById("schedule-container").style.display = "none";
+        document.getElementById("schedule-pending-container").style.display = "block";
+      }
+
       if (response.checklist.approvalFlights) {
         document.getElementById("flights-container").style.display = "block";
         document.getElementById("flights-pending-container").style.display = "none";
