@@ -1718,7 +1718,7 @@ img {
   cursor: pointer;
   background-color: #1a1a1e;
   background-size: cover;
-  background-position: center;
+  background-position: center 20%;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   border: 1px solid var(--border-default);
   transition: transform 0.2s, box-shadow 0.2s;
