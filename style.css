@@ -65,7 +65,7 @@
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     /* Warm orange/peach top right, deep olive middle, dark bottom */
-    background: radial-gradient(ellipse at top right, #382c22 0%, #1f271a 50%, #0c0e0b 100%);
+    background: radial-gradient(ellipse at top right, #1e1e24 0%, #121216 50%, #08080a 100%);
     z-index: -4;
   }
   
