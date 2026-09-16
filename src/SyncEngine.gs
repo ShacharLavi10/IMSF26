@@ -112,6 +112,7 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
     const currentRowNum = idx + startDataRowIdx + 1;
     row.forEach((cell, cIdx) => {
       let fStr = cell.form;
+      if (cIdx === emailColIndex) fStr = ""; // Force email to be a static value
       if (fStr && (cIdx === 1 || cIdx === 2)) fStr = fStr.replace(/A\d+/g, `A${currentRowNum}`);
       if (fStr !== "") { rowForm.push(fStr); rowVal.push(""); } 
       else { rowForm.push(""); rowVal.push(cell.val); }
@@ -228,6 +229,7 @@ function syncAnatSheetWithMasterOrder() {
       const currentRowNum = idx + startDataRowIdx + 1;
       row.forEach((cell, cIdx) => {
         let fStr = cell.form;
+        if (cIdx === targetEmailColIdx) fStr = ""; // Force email to be a static value
         if (fStr && (cIdx === 1 || cIdx === 2)) fStr = fStr.replace(/A\d+/g, `A${currentRowNum}`);
         if (fStr !== "") { rowForm.push(fStr); rowVal.push(""); } 
         else { rowForm.push(""); rowVal.push(cell.val); }
