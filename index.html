@@ -83,8 +83,8 @@
             <span>Schedule</span>
           </button>
           <button id="tab-flights" class="tab-btn" onclick="switchCategoryTab('flights')" role="tab" aria-selected="false">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L3 8l6 5.3-3.7 3.7-2.6-.7-1.2 1.2 4 1.5 1.5 4 1.2-1.2-.7-2.6 3.7-3.7 5.3 6h1.2c.4-.2.7-.6.6-1.1z"/>
             </svg>
             <span>Flights</span>
           </button>
@@ -457,12 +457,10 @@
       <div class="sheet-section">
         <h4 class="section-title">Organization</h4>
         <p id="sheet-guest-company" style="font-weight: 600; margin-bottom: 4px;">Company Name</p>
+        <p id="sheet-guest-website-section" style="margin-bottom: 4px; display: none;">
+          <a id="sheet-guest-website" href="#" target="_blank" style="color: var(--accent-bright); text-decoration: underline; font-size: 0.9rem; word-break: break-all;">Website URL</a>
+        </p>
         <p id="sheet-guest-role" style="font-size: 0.9rem; color: var(--foreground-muted);">Role</p>
-      </div>
-      
-      <!-- WEBSITE -->
-      <div class="sheet-section" id="sheet-guest-website-section" style="display: none;">
-        <a id="sheet-guest-website" href="#" target="_blank" class="button primary" style="width: 100%; display: inline-flex; justify-content: center; align-items: center; text-decoration: none; border-radius: 8px; padding: 0.8rem; font-weight: 600;">Visit Website</a>
       </div>
 
       <!-- BIO -->
@@ -478,10 +476,9 @@
           <p id="sheet-guest-email-container" style="display: none; margin-bottom: 0;">
             <a id="sheet-guest-email" href="#" style="color: var(--accent-bright); text-decoration: underline; font-size: 0.95rem;">Email Address</a>
           </p>
-          <a id="sheet-guest-phone" href="#" class="button secondary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0.8rem; border-radius: 8px; gap: 8px; display: none;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-            <span id="sheet-guest-phone-text">Phone</span>
-          </a>
+          <p id="sheet-guest-phone-container" style="display: none; margin-bottom: 0;">
+            <a id="sheet-guest-phone" href="#" target="_blank" style="color: var(--accent-bright); text-decoration: underline; font-size: 0.95rem;">Phone Number</a>
+          </p>
         </div>
       </div>
     </div>
@@ -1051,6 +1048,16 @@
       filterDirectory();
     }
 
+    function getThumbnailUrl(url) {
+      if (url && url.includes("drive.google.com")) {
+        const match = url.match(/[-\w]{25,}/);
+        if (match) {
+          return "https://drive.google.com/thumbnail?id=" + match[0] + "&sz=w800";
+        }
+      }
+      return url;
+    }
+
     function renderDirectoryCards(filteredArray) {
       const container = document.getElementById("directory-container");
       if (filteredArray.length === 0) {
@@ -1071,7 +1078,7 @@
         let genreText = guest["Genre / Style"] || "";
         if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
         
-        const photoUrl = guest["Photo"] ? guest["Photo"] : '';
+        const photoUrl = guest["Photo"] ? getThumbnailUrl(guest["Photo"]) : '';
         const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim();
         const country = guest["Country"] || "N/A";
         
@@ -1102,7 +1109,7 @@
       const guest = globalDirectoryData[index];
       if (!guest) return;
       
-      const photoUrl = guest["Photo"] ? guest["Photo"] : '';
+      const photoUrl = guest["Photo"] ? getThumbnailUrl(guest["Photo"]) : '';
       const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim();
       let genreText = guest["Genre / Style"] || "";
       if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
@@ -1125,9 +1132,11 @@
       
       const website = guest["Website"] || "";
       const websiteSection = document.getElementById('sheet-guest-website-section');
+      const websiteLink = document.getElementById('sheet-guest-website');
       if (website) {
         websiteSection.style.display = 'block';
-        document.getElementById('sheet-guest-website').href = website.startsWith('http') ? website : 'https://' + website;
+        websiteLink.href = website.startsWith('http') ? website : 'https://' + website;
+        websiteLink.innerText = websiteLink.href;
       } else {
         websiteSection.style.display = 'none';
       }
@@ -1146,23 +1155,37 @@
       }
       
       const phone = guest["Phone"] || "";
-      const phoneBtn = document.getElementById('sheet-guest-phone');
+      const phoneContainer = document.getElementById('sheet-guest-phone-container');
+      const phoneLink = document.getElementById('sheet-guest-phone');
       if (phone) {
-        phoneBtn.style.display = 'inline-flex';
-        phoneBtn.href = 'tel:' + phone;
+        phoneContainer.style.display = 'block';
+        let cleanPhone = String(phone).replace(/[^0-9+]/g, '');
+        if (cleanPhone.startsWith('0')) {
+          cleanPhone = '972' + cleanPhone.substring(1);
+        } else {
+          cleanPhone = cleanPhone.replace('+', '');
+        }
+        phoneLink.href = 'https://wa.me/' + cleanPhone;
+        phoneLink.innerText = phone;
       } else {
-        phoneBtn.style.display = 'none';
+        phoneContainer.style.display = 'none';
       }
 
       document.getElementById('guest-sheet-overlay').classList.add('active');
       document.getElementById('guest-bottom-sheet').classList.add('active');
       document.body.style.overflow = 'hidden';
+      
+      window.location.hash = "guestsheet";
     }
 
-    function closeGuestSheet() {
+    function closeGuestSheet(isHashChange) {
       document.getElementById('guest-sheet-overlay').classList.remove('active');
       document.getElementById('guest-bottom-sheet').classList.remove('active');
       document.body.style.overflow = '';
+      
+      if (isHashChange !== true && window.location.hash === "#guestsheet") {
+        history.back();
+      }
     }
 
     function submitBio() {
@@ -1806,9 +1829,13 @@
     }
 
     window.addEventListener('hashchange', function() {
-      // If the hash is no longer #sheet, but the sheet is open, close it.
+      // If the hash is no longer #sheet, but the artist sheet is open, close it.
       if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
         closeArtistSheet(true);
+      }
+      // If the hash is no longer #guestsheet, but the guest sheet is open, close it.
+      if (window.location.hash !== "#guestsheet" && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
+        closeGuestSheet(true);
       }
       // If the hash is no longer #updates, but the updates panel is open, close it.
       if (window.location.hash !== "#updates" && document.getElementById('updates-panel').style.left === "0px") {
