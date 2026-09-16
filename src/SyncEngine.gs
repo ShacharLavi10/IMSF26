@@ -80,7 +80,7 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
 
     const rowObj = [];
     for (let c = 0; c < lastCol; c++) {
-      rowObj.push({ val: values[r][c], form: formulas[r][c] });
+      rowObj.push({ val: values[r][c], form: formulas[r][c], oldRow: r + 1 });
     }
     combinedRows.push(rowObj);
   }
@@ -113,7 +113,13 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
     row.forEach((cell, cIdx) => {
       let fStr = cell.form;
       if (cIdx === emailColIndex) fStr = ""; // Force email to be a static value
-      if (fStr && (cIdx === 1 || cIdx === 2)) fStr = fStr.replace(/A\d+/g, `A${currentRowNum}`);
+      if (fStr) {
+        const oldRow = cell.oldRow;
+        if (oldRow) {
+          const regex = new RegExp(`(?<![!:])(\\$?[A-Za-z]+\\$?)(${oldRow})(?![0-9:])`, 'gi');
+          fStr = fStr.replace(regex, `$1${currentRowNum}`);
+        }
+      }
       if (fStr !== "") { rowForm.push(fStr); rowVal.push(""); } 
       else { rowForm.push(""); rowVal.push(cell.val); }
     });
@@ -194,7 +200,7 @@ function syncAnatSheetWithMasterOrder() {
 
       const rowObj = [];
       for (let c = 0; c < lastCol; c++) {
-        rowObj.push({ val: values[r][c], form: formulas[r][c] });
+        rowObj.push({ val: values[r][c], form: formulas[r][c], oldRow: r + 1 });
       }
       combinedRows.push(rowObj);
     }
@@ -230,7 +236,13 @@ function syncAnatSheetWithMasterOrder() {
       row.forEach((cell, cIdx) => {
         let fStr = cell.form;
         if (cIdx === targetEmailColIdx) fStr = ""; // Force email to be a static value
-        if (fStr && (cIdx === 1 || cIdx === 2)) fStr = fStr.replace(/A\d+/g, `A${currentRowNum}`);
+        if (fStr) {
+          const oldRow = cell.oldRow;
+          if (oldRow) {
+            const regex = new RegExp(`(?<![!:])(\\$?[A-Za-z]+\\$?)(${oldRow})(?![0-9:])`, 'gi');
+            fStr = fStr.replace(regex, `$1${currentRowNum}`);
+          }
+        }
         if (fStr !== "") { rowForm.push(fStr); rowVal.push(""); } 
         else { rowForm.push(""); rowVal.push(cell.val); }
       });
