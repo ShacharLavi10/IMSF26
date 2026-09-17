@@ -496,3 +496,23 @@ function getLiveUpdates(sessionToken) {
     return { success: false, message: err.toString() };
   }
 }
+
+function getDebugChecklist(email) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+  const data = masterSheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).trim().toLowerCase());
+  const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+  let row = data.find(r => String(r[emailIdx]).trim().toLowerCase() === email.toLowerCase());
+  if (!row) return { error: "Not found" };
+  const getColVal = h => {
+    const i = headers.indexOf(h.toLowerCase());
+    return i !== -1 ? row[i] : false;
+  };
+  return {
+    approvalFlights: getColVal("אישור טיסות"),
+    approvalSchedule: getColVal(CONFIG.CHECKBOXES.APPROVAL_SCHEDULE),
+    fallbackSchedule1: getColVal("אישור לו\"ז"),
+    fallbackSchedule2: getColVal("אישור לוז")
+  };
+}
