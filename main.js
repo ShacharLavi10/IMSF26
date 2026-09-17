@@ -64,6 +64,9 @@ window.google = {
                 if (result.error) {
                   if (state.failureHandler) state.failureHandler(new Error(result.error));
                 } else {
+                  if (result.data === undefined) {
+                    throw new Error("Backend returned JSON without 'data': " + JSON.stringify(result));
+                  }
                   if (state.successHandler) state.successHandler(result.data);
                 }
               } catch (e) {
