@@ -205,6 +205,7 @@ function getGuestPortalData(sessionToken) {
         let translated = LanguageApp.translate(rawMissingText, 'he', 'en');
         missingItemsArray = translated.split(',').map(item => item.trim()).filter(item => item.length > 0);
       } catch(e) {
+        // Fallback if translation fails
         missingItemsArray = rawMissingText.split(',').map(item => item.trim()).filter(item => item.length > 0);
       }
     }
@@ -224,7 +225,7 @@ function getGuestPortalData(sessionToken) {
     const flightsData = fetchMappedData(ss.getSheetByName(CONFIG.FLIGHTS_SHEET), cleanEmail, MAPPINGS.FLIGHTS);
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const hotelTelAvivData = fetchMappedData(ss.getSheetByName(CONFIG.TELAVIV_SHEET), cleanEmail, MAPPINGS.HOTELS);
-    const allGuestsDirectory = fetchAllGuestsDirectory(masterData, MAPPINGS.GUESTS_DIRECTORY);
+    const allGuestsDirectory = fetchAllGuestsDirectory(masterSheet, MAPPINGS.GUESTS_DIRECTORY);
       const scheduleRes = getScheduleData();
       const scheduleData = scheduleRes.success ? scheduleRes.schedule : null;
     
@@ -237,8 +238,7 @@ function getGuestPortalData(sessionToken) {
       flightsData: flightsData,
       hotelJerusalemData: hotelJerusalemData,
       hotelTelAvivData: hotelTelAvivData,
-      allGuestsDirectory: allGuestsDirectory,
-      scheduleData: scheduleData
+      allGuestsDirectory: allGuestsDirectory
     };
   } catch (err) {
     return { success: false, message: "Server Error: " + err.toString() };
@@ -293,10 +293,10 @@ function fetchMappedData(sheet, email, mappingArray) {
   return [];
 }
 
-function fetchAllGuestsDirectory(masterData, mappingArray) {
-  if (!masterData || masterData.length < 2) return [];
+function fetchAllGuestsDirectory(masterSheet, mappingArray) {
+  if (!masterSheet) return [];
   try {
-    const data = masterData;
+    const data = masterSheet.getDataRange().getValues();
     if (data.length < 2) return [];
 
     let headerRowIdx = -1;
@@ -470,12 +470,12 @@ function getLiveUpdates(sessionToken) {
               const parts = msg.split(',');
               parts.forEach((part, pIdx) => {
                 let trimmed = part.trim();
-                  if (trimmed) {
-                    try {
-                      trimmed = LanguageApp.translate(trimmed, '', 'en');
-                    } catch(e) {}
-                    
-                    updates.push({
+                if (trimmed) {
+                  try {
+                    trimmed = LanguageApp.translate(trimmed, '', 'en');
+                  } catch(e) {}
+                  
+                  updates.push({
                     type: 'global',
                     message: trimmed,
                     timestamp: new Date().getTime() - (data.length - i) - (pIdx * 0.1),

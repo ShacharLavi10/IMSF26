@@ -1532,27 +1532,7 @@
 
     
 
-    function fetchSchedule() {
-      const loader = document.getElementById("schedule-loader-container");
-      if(loader) loader.style.display = "flex";
-
-      google.script.run
-        .withSuccessHandler(res => {
-          if(loader) loader.style.display = "none";
-          if (res.success && res.schedule) {
-            scheduleDataCache = res.schedule;
-            renderScheduleTabs();
-          } else {
-            document.getElementById("schedule-container").innerHTML = `<p class="empty-state">No schedule available.</p>`;
-          }
-        })
-        .withFailureHandler(err => {
-            console.error("Schedule fetch failed", err);
-            if(loader) loader.style.display = "none";
-            document.getElementById("schedule-container").innerHTML = `<p class="empty-state" style="color: var(--accent);">Connection error. Showing offline version.</p>`;
-        })
-        .getScheduleData();
-    }
+    
 
     function renderScheduleTabs() {
       const dates = Object.keys(scheduleDataCache).sort();
