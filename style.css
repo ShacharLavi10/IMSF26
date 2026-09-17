@@ -434,14 +434,14 @@
       justify-content: center;
     }
     .category-tabs {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-default);
+      background: transparent;
+      border: none;
       border-radius: 9999px;
-      padding: 4px;
-      gap: 4px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      padding: 0;
+      gap: 12px;
+      box-shadow: none;
       max-width: fit-content;
-      justify-content: flex-start;
+      justify-content: center;
     }
     .tab-btn {
       flex-direction: row;
