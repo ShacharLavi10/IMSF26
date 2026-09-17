@@ -194,7 +194,7 @@
               <!-- Day Pills injected here -->
             </div>
             <div id="schedule-container">
-              <div id="schedule-loader-container" class="musical-loader-wrapper" style="display: flex;">
+              <div id="schedule-loader-container" class="musical-loader-wrapper" style="display: flex; flex-direction: column;">
                 <div class="musical-loader">
                   <span class="music-note music-note-1">🎵</span>
                   <span class="drummer-emoji">🥁</span>
@@ -1663,12 +1663,13 @@
     function fetchArtistsData() {
       const grid = document.getElementById('artists-grid');
       grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0;">
-        <div class="musical-loader-wrapper" style="display: flex; margin: 0 auto;">
+        <div class="musical-loader-wrapper" style="display: flex; margin: 0 auto; flex-direction: column;">
           <div class="musical-loader">
             <span class="music-note music-note-1">🎵</span>
             <span class="drummer-emoji">🥁</span>
             <span class="music-note music-note-2">🎶</span>
           </div>
+          <p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p>
         </div>
       </div>`;
       

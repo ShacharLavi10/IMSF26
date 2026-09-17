@@ -1140,9 +1140,9 @@
 
   @media (min-width: 768px) {
     body.light-mode .category-tabs {
-      background: rgba(0, 0, 0, 0.04);
-      border-color: rgba(0, 0, 0, 0.08);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      background: transparent;
+      border: none;
+      box-shadow: none;
     }
     body.light-mode .tab-btn {
       color: var(--foreground-muted);
