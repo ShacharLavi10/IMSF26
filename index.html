@@ -723,7 +723,6 @@
         
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
-        fetchSchedule();
         fetchArtistsData();
       } else {
         const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
@@ -798,6 +797,12 @@
         }
       }
       if (response.checklist.approvalSchedule) {
+          if (response.scheduleData) {
+            scheduleDataCache = response.scheduleData;
+            const loader = document.getElementById('schedule-loader-container');
+            if (loader) loader.style.display = 'none';
+            renderScheduleTabs();
+          }
         document.getElementById("schedule-days-nav").style.display = "flex";
         document.getElementById("schedule-container").style.display = "block";
         document.getElementById("schedule-pending-container").style.display = "none";

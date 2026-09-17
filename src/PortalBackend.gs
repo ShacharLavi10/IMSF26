@@ -226,6 +226,8 @@ function getGuestPortalData(sessionToken) {
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const hotelTelAvivData = fetchMappedData(ss.getSheetByName(CONFIG.TELAVIV_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const allGuestsDirectory = fetchAllGuestsDirectory(masterSheet, MAPPINGS.GUESTS_DIRECTORY);
+      const scheduleRes = getScheduleData();
+      const scheduleData = scheduleRes.success ? scheduleRes.schedule : null;
     
     return {
       success: true,
