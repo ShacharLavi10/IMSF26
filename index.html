@@ -109,67 +109,44 @@
         </div>
       </div>
       
-      <!-- MAIN CONTENT AREA -->
-      <div class="col-span-3">
-        <!-- WELCOME CARD -->
-        <div class="card profile-header fade-up">
+      <div class="bento-grid">
+        <!-- GENERAL ALERT (Shown if generalMissing is true) -->
+        <div id="general-alert-card" class="card fade-up" style="display: none; animation-delay: 0.1s;">
           <div class="spotlight"></div>
-          <div class="card-content" style="position: relative; z-index: 1;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <h2 id="hello-message">Hello Guest</h2>
-                <p id="welcome-message" class="desc">Welcome to your Personal Page</p>
-              </div>
-              <button class="logout-btn" onclick="logout()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                </svg>
-                Logout
-              </button>
-            </div>
+          <div class="card-content">
+            <h4>Additional Information</h4>
+            <p class="desc" style="margin-bottom: 1rem;">Please provide the following details:</p>
+            <div id="general-missing-form" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem;"></div>
+            <button class="primary" onclick="submitMissingInfo()">Submit Information</button>
+            <div id="missing-info-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
+            <div id="missing-info-alert" class="alert"></div>
           </div>
         </div>
 
-        <!-- ALERTS -->
-        <div id="general-alert-card" class="card fade-up" style="display: none; animation-delay: 0.1s; border-left: 4px solid var(--accent-orange);">
+        <!-- MISSING FORMS (Shown if form is not submitted) -->
+        <div id="missing-hotel-card" class="card fade-up" style="display: none; animation-delay: 0.2s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h4 style="color: var(--accent-orange); display: flex; align-items: center; gap: 8px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              Missing Details
-            </h4>
-            <p class="desc" style="margin-bottom: 15px;">Please provide the following missing information:</p>
-            <div id="general-missing-form" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px;">
-              <!-- Input fields injected here -->
-            </div>
-            <button class="primary" onclick="submitGeneralMissing()">Submit Information</button>
-            <div id="general-alert-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
-            <div id="general-alert-msg" class="alert"></div>
+            <h4>Accommodation Details</h4>
+            <p class="desc">Please submit your hosting preferences, biography, and photo.</p>
+            <a id="link-hotel-form" href="#" target="_blank" class="button primary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0.8rem; border-radius: 8px; background: var(--accent); color: #ffffff; font-weight: 600; width: 100%;">Submit Form</a>
           </div>
         </div>
 
-        <div id="missing-hotel-card" class="card fade-up" style="display: none; animation-delay: 0.2s; border-left: 4px solid var(--accent-orange);">
+        <div id="missing-flight-card" class="card fade-up" style="display: none; animation-delay: 0.2s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h4 style="color: var(--accent-orange);">Accommodation Form Required</h4>
-            <p class="desc">We are missing your accommodation preferences. Please fill out the form.</p>
-            <a href="#" target="_blank" id="link-hotel-form" class="primary" style="text-decoration: none; display: inline-block; text-align: center;">Open Form</a>
+            <h4>Flight Details</h4>
+            <p class="desc">Please submit your flight itinerary and passport scan.</p>
+            <a id="link-flight-form" href="#" target="_blank" class="button primary" style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 0.8rem; border-radius: 8px; background: var(--accent); color: #ffffff; font-weight: 600; width: 100%;">Submit Form</a>
           </div>
         </div>
 
-        <div id="missing-flight-card" class="card fade-up" style="display: none; animation-delay: 0.3s; border-left: 4px solid var(--accent-orange);">
+        <!-- ACTIONS (Shown if incomplete and item missing) -->
+        <div id="bio-card" class="card fade-up" style="animation-delay: 0.3s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h4 style="color: var(--accent-orange);">Flight Details Required</h4>
-            <p class="desc">Please submit your flight details to arrange airport transfers.</p>
-            <a href="#" target="_blank" id="link-flight-form" class="primary" style="text-decoration: none; display: inline-block; text-align: center;">Open Form</a>
-          </div>
-        </div>
-
-        <div id="bio-card" class="card fade-up" style="animation-delay: 0.4s;">
-          <div class="spotlight"></div>
-          <div class="card-content">
-            <h4>Professional Biography</h4>
+            <h4>Biography</h4>
             <p class="desc">Please provide more information about your role in the company, what the company does, and more details about your past roles and achievements.</p>
             <div class="input-group">
               <textarea id="bio-input" rows="3" placeholder="Enter Biography"></textarea>
@@ -837,7 +814,7 @@
         } else {
           const loader = document.getElementById('schedule-loader-container');
           if (loader) loader.style.display = 'none';
-          document.getElementById('schedule-container').innerHTML = '<p class="empty-state">Schedule will be published here.</p>';
+          document.getElementById('schedule-container').innerHTML = '<p class="empty-state">Itinerary will be published here.</p>';
         }
         document.getElementById("schedule-days-nav").style.display = "flex";
         document.getElementById("schedule-container").style.display = "block";
@@ -1085,7 +1062,7 @@
       renderDirectoryCards(filtered);
       
       const statusDiv = document.getElementById('directory-status');
-      statusDiv.innerHTML = `Showing ${filtered.length} of ${globalDirectoryData.length} guests`;
+      statusDiv.innerHTML = `Showing ${filtered.length} of ${globalDirectoryData.length} delegates`;
       if (filtered.length < globalDirectoryData.length) {
         statusDiv.innerHTML += ` &nbsp;&middot;&nbsp; <a href="javascript:void(0)" onclick="resetFilters()" style="color: var(--accent); text-decoration: none; font-weight: 500;">Clear</a>`;
       }
