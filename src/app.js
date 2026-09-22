@@ -1406,3 +1406,30 @@ let currentGuestEmail = "";
         openImageViewerFromBg(e, this);
       });
     });
+
+
+/* --- GLOBAL EXPORTS FOR INLINE HTML EVENTS --- */
+window.closeWelcomeModal = closeWelcomeModal;
+window.switchCategoryTab = switchCategoryTab;
+window.requestOTP = requestOTP;
+window.verifyOTP = verifyOTP;
+window.resetLogin = resetLogin;
+window.submitMissingInfo = submitMissingInfo;
+window.submitBio = submitBio;
+window.uploadFile = uploadFile;
+window.filterDirectory = filterDirectory;
+window.clearSearch = clearSearch;
+window.filterArtists = filterArtists;
+window.clearArtistSearch = clearArtistSearch;
+window.toggleFavFilter = toggleFavFilter;
+window.exportBriefcase = exportBriefcase;
+window.closeArtistSheet = closeArtistSheet;
+window.toggleSheetFav = toggleSheetFav;
+window.savePrivateNote = savePrivateNote;
+window.closeGuestSheet = closeGuestSheet;
+window.toggleUpdatesPanel = toggleUpdatesPanel;
+window.toggleTheme = toggleTheme;
+window.openImageViewerFromBg = openImageViewerFromBg;
+window.closeImageViewer = closeImageViewer;
+window.openGuestSheet = openGuestSheet;
+window.openArtistSheet = openArtistSheet;
