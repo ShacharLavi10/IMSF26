@@ -380,6 +380,16 @@
                 <!-- Artist cards injected here -->
               </div>
             </div>
+            
+            <div id="artists-pending-container" style="display: none;">
+              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="empty-category-title">Festival Lineup Processing</div>
+                <div class="empty-category-desc">We are finalizing the artists lineup and it will be available here soon.</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -723,7 +733,6 @@
         
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
-        fetchArtistsData();
       } else {
         const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
 
@@ -841,6 +850,16 @@
       } else {
         document.getElementById("directory-main-container").style.display = "none";
         document.getElementById("directory-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalArtists) {
+        document.getElementById("artists-container").style.display = "block";
+        document.getElementById("artists-pending-container").style.display = "none";
+        // Fetch only if approved to avoid unnecessary requests and endless loading if the tab is hidden
+        fetchArtistsData();
+      } else {
+        document.getElementById("artists-container").style.display = "none";
+        document.getElementById("artists-pending-container").style.display = "block";
       }
     }
 
@@ -1668,11 +1687,11 @@
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           } else {
-            grid.innerHTML = `<p class="empty-state">Failed to load artists. ${res.message || 'Unknown server error'}</p>`;
+            grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
           }
         })
         .withFailureHandler(function(err) {
-          grid.innerHTML = `<p class="empty-state">Failed to load artists. ${err.message || 'Connection error'}</p>`;
+          grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
         })
         .getArtistsData();
     }

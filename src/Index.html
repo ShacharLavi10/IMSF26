@@ -329,6 +329,15 @@
                 <div class="empty-category-desc">The official festival showcase lineup and artist profiles will be published here.</div>
               </div>
             </div>
+            <div id="artists-pending-container" style="display: none;">
+              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="empty-category-title">Festival Lineup Processing</div>
+                <div class="empty-category-desc">We are finalizing the artists lineup and it will be available here soon.</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -642,6 +651,14 @@
       } else {
         document.getElementById("directory-main-container").style.display = "none";
         document.getElementById("directory-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalArtists) {
+        document.getElementById("artists-container").style.display = "block";
+        document.getElementById("artists-pending-container").style.display = "none";
+      } else {
+        document.getElementById("artists-container").style.display = "none";
+        document.getElementById("artists-pending-container").style.display = "block";
       }
     }
 
