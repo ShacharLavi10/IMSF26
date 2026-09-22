@@ -1,0 +1,1408 @@
+let currentGuestEmail = "";
+    let globalDirectoryData = [];
+
+    function closeWelcomeModal() {
+      document.getElementById("welcome-modal-overlay").style.display = "none";
+      localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
+    }
+
+    function checkSessionOnLoad() {
+      const token = localStorage.getItem('guestSessionToken');
+      if (token) {
+        document.getElementById("login-loader").style.display = "block";
+        document.getElementById("email-step").style.display = "none";
+        google.script.run
+          .withSuccessHandler(onLoginSuccess)
+          .withFailureHandler(onLoginFailure)
+          .getGuestPortalData(token);
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', checkSessionOnLoad);
+
+    function switchCategoryTab(tabName) {
+      const tabs = ['schedule', 'flights', 'hotels', 'directory', 'artists'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        const card = document.getElementById(t + '-card');
+        if (btn) {
+          if (t === tabName) {
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            // Smoothly align selected tab into view on mobile horizontally
+            try {
+              btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } catch (e) {}
+          } else {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-selected', 'false');
+          }
+        }
+        if (card) {
+          card.style.display = (t === tabName) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function requestOTP() {
+      const emailInput = document.getElementById("guest-email").value.trim();
+      const errorDiv = document.getElementById("login-error");
+      const loader = document.getElementById("login-loader");
+      const reqBtn = document.querySelector('#email-step .primary');
+      
+      errorDiv.style.display = "none";
+      
+      if (!emailInput) {
+        errorDiv.innerText = "Please enter your email address.";
+        errorDiv.style.display = "block";
+        return;
+      }
+      
+      if (reqBtn) reqBtn.disabled = true;
+      loader.style.display = "block";
+      google.script.run
+        .withSuccessHandler(function(response) {
+          loader.style.display = "none";
+          if (reqBtn) reqBtn.disabled = false;
+          if (!response.success) {
+            errorDiv.innerText = response.message || "Email not registered.";
+            errorDiv.style.display = "block";
+            return;
+          }
+          document.getElementById("email-step").style.display = "none";
+          document.getElementById("otp-step").style.display = "block";
+        })
+        .withFailureHandler(function(err) {
+          loader.style.display = "none";
+          if (reqBtn) reqBtn.disabled = false;
+          errorDiv.innerText = "Error: " + err.message;
+          errorDiv.style.display = "block";
+        })
+        .generateOTP(emailInput);
+    }
+    
+    function verifyOTP() {
+      const emailInput = document.getElementById("guest-email").value.trim();
+      const otpInput = document.getElementById("guest-otp").value.trim();
+      const errorDiv = document.getElementById("login-error");
+      const loader = document.getElementById("login-loader");
+      const verifyBtn = document.querySelector('#otp-step .primary');
+      
+      errorDiv.style.display = "none";
+      
+      if (!otpInput) {
+        errorDiv.innerText = "Please enter the code.";
+        errorDiv.style.display = "block";
+        return;
+      }
+      
+      if (verifyBtn) verifyBtn.disabled = true;
+      loader.style.display = "block";
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (!response.success) {
+            loader.style.display = "none";
+            if (verifyBtn) verifyBtn.disabled = false;
+            errorDiv.innerText = response.message || "Invalid code.";
+            errorDiv.style.display = "block";
+            return;
+          }
+          
+          // Code is valid! Save token and load data.
+          localStorage.setItem('guestSessionToken', response.token);
+          google.script.run
+            .withSuccessHandler(function(res) {
+              if (verifyBtn) verifyBtn.disabled = false;
+              onLoginSuccess(res);
+            })
+            .withFailureHandler(function(err) {
+              if (verifyBtn) verifyBtn.disabled = false;
+              onLoginFailure(err);
+            })
+            .getGuestPortalData(response.token);
+        })
+        .withFailureHandler(function(err) {
+          loader.style.display = "none";
+          if (verifyBtn) verifyBtn.disabled = false;
+          errorDiv.innerText = "Error: " + err.message;
+          errorDiv.style.display = "block";
+        })
+        .verifyOTP(emailInput, otpInput);
+    }
+
+    function resetLogin() {
+      document.getElementById("email-step").style.display = "block";
+      document.getElementById("otp-step").style.display = "none";
+      document.getElementById("guest-otp").value = "";
+      document.getElementById("login-error").style.display = "none";
+    }
+
+    function onLoginSuccess(response) {
+      console.log("onLoginSuccess reached. Response:", response);
+      document.getElementById("login-loader").style.display = "none";
+      if (!response.success) {
+        const errorDiv = document.getElementById("login-error");
+        errorDiv.innerText = response.message || "Email not registered.";
+        errorDiv.style.display = "block";
+        
+        if (response.sessionExpired) {
+          localStorage.removeItem('guestSessionToken');
+          resetLogin();
+        }
+        
+        if (response.notFound) {
+          google.script.run.notifyTeamUnregistered(document.getElementById("guest-email").value.trim());
+        }
+        return;
+      }
+      currentGuestEmail = response.guestInfo.email;
+      document.getElementById("login-section").style.display = "none";
+      
+      const portalContent = document.getElementById("portal-content");
+      portalContent.style.display = "block";
+      
+      const isComplete = response.isComplete;
+      
+      if (isComplete) {
+        // Show Welcome Modal only once
+        if (!localStorage.getItem('welcomeModalSeen_' + currentGuestEmail)) {
+          console.log("Showing welcome modal to user: " + response.guestInfo.firstName);
+          document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
+          document.getElementById("welcome-modal-overlay").style.display = "flex";
+        }
+
+        const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
+
+        document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
+        document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
+        
+        // Hide missing details cards
+        if (document.getElementById("general-alert-card")) document.getElementById("general-alert-card").style.display = "none";
+        if (document.getElementById("missing-hotel-card")) document.getElementById("missing-hotel-card").style.display = "none";
+        if (document.getElementById("missing-flight-card")) document.getElementById("missing-flight-card").style.display = "none";
+        document.getElementById("bio-card").style.display = "none";
+        document.getElementById("passport-card").style.display = "none";
+        document.getElementById("photo-card").style.display = "none";
+        
+        const navWrapper = document.getElementById("category-nav-wrapper");
+        if (navWrapper) navWrapper.style.display = "flex";
+        switchCategoryTab('schedule');
+        
+        // Start live updates polling & fetch schedule
+        startLiveUpdatesPolling();
+      } else {
+        const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
+
+        document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
+        document.getElementById("welcome-message").innerText = `Please Complete Your Accommodation & Flight Details`;
+        const navWrapper = document.getElementById("category-nav-wrapper");
+        if (navWrapper) navWrapper.style.display = "none";
+
+        
+        // Hide all regular content cards
+        document.getElementById("schedule-card").style.display = "none";
+        document.getElementById("flights-card").style.display = "none";
+        document.getElementById("hotels-card").style.display = "none";
+        document.getElementById("directory-card").style.display = "none";
+        document.getElementById("artists-card").style.display = "none";
+        
+        // Set forms links
+        if (document.getElementById("link-hotel-form")) document.getElementById("link-hotel-form").href = response.forms.HOTEL;
+        if (document.getElementById("link-flight-form")) document.getElementById("link-flight-form").href = response.forms.FLIGHTS;
+        
+        // General Alert
+        const alertCard = document.getElementById("general-alert-card");
+        if (alertCard) {
+          if (response.checklist.generalMissing) {
+            alertCard.style.display = "block";
+            const formContainer = document.getElementById("general-missing-form");
+            if (formContainer) {
+              const items = response.checklist.generalMissingItems || ["Missing information required"];
+              let html = "";
+              items.forEach((item, index) => {
+                html += `
+                  <div class="input-group" style="margin-bottom: 0;">
+                    <label style="font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem;">${item}</label>
+                    <input type="text" class="missing-item-answer" data-question="${item.replace(/"/g, '&quot;')}" placeholder="Your answer...">
+                  </div>
+                `;
+              });
+              formContainer.innerHTML = html;
+            }
+          } else {
+            alertCard.style.display = "none";
+          }
+        }
+        
+        // Forms logic
+        const missingHotelCard = document.getElementById("missing-hotel-card");
+        const missingFlightCard = document.getElementById("missing-flight-card");
+        const bioCard = document.getElementById("bio-card");
+        const photoCard = document.getElementById("photo-card");
+        const passportCard = document.getElementById("passport-card");
+        
+        if (!response.checklist.hasHotelForm) {
+          if (missingHotelCard) missingHotelCard.style.display = "block";
+          bioCard.style.display = "none";
+          photoCard.style.display = "none";
+        } else {
+          if (missingHotelCard) missingHotelCard.style.display = "none";
+          bioCard.style.display = response.checklist.hasBio ? "none" : "block";
+          if (!response.checklist.hasBio && response.guestInfo.bio) {
+            document.getElementById("bio-input").value = response.guestInfo.bio;
+          }
+          photoCard.style.display = response.checklist.hasPhoto ? "none" : "block";
+        }
+        
+        if (!response.checklist.hasFlightForm) {
+          if (missingFlightCard) missingFlightCard.style.display = "block";
+          passportCard.style.display = "none";
+        } else {
+          if (missingFlightCard) missingFlightCard.style.display = "none";
+          passportCard.style.display = response.checklist.hasPassport ? "none" : "block";
+        }
+      }
+      if (response.checklist.approvalSchedule) {
+        if (response.scheduleData) {
+          scheduleDataCache = response.scheduleData;
+          const loader = document.getElementById('schedule-loader-container');
+          if (loader) loader.style.display = 'none';
+          renderScheduleTabs();
+        } else {
+          const loader = document.getElementById('schedule-loader-container');
+          if (loader) loader.style.display = 'none';
+          document.getElementById('schedule-container').innerHTML = '<p class="empty-state">Itinerary will be published here.</p>';
+        }
+        document.getElementById("schedule-days-nav").style.display = "flex";
+        document.getElementById("schedule-container").style.display = "block";
+        document.getElementById("schedule-pending-container").style.display = "none";
+      } else {
+        document.getElementById("schedule-days-nav").style.display = "none";
+        document.getElementById("schedule-container").style.display = "none";
+        document.getElementById("schedule-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalFlights) {
+        document.getElementById("flights-container").style.display = "block";
+        document.getElementById("flights-pending-container").style.display = "none";
+        renderBoardingPassData("flights-container", response.flightsData, "Flight itinerary pending confirmation.");
+      } else {
+        document.getElementById("flights-container").style.display = "none";
+        document.getElementById("flights-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalHotels) {
+        document.getElementById("hotels-container").style.display = "grid";
+        document.getElementById("hotels-pending-container").style.display = "none";
+        renderHotelData(response.hotelJerusalemData, response.hotelTelAvivData);
+      } else {
+        document.getElementById("hotels-container").style.display = "none";
+        document.getElementById("hotels-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalDirectory) {
+        document.getElementById("directory-main-container").style.display = "block";
+        document.getElementById("directory-pending-container").style.display = "none";
+        renderDirectory(response.allGuestsDirectory);
+      } else {
+        document.getElementById("directory-main-container").style.display = "none";
+        document.getElementById("directory-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalArtists) {
+        document.getElementById("artists-container").style.display = "block";
+        document.getElementById("artists-pending-container").style.display = "none";
+        // Fetch only if approved to avoid unnecessary requests and endless loading if the tab is hidden
+        fetchArtistsData();
+      } else {
+        document.getElementById("artists-container").style.display = "none";
+        document.getElementById("artists-pending-container").style.display = "block";
+      }
+    }
+
+    function onLoginFailure(err) {
+      document.getElementById("login-loader").style.display = "none";
+      const errorDiv = document.getElementById("login-error");
+      errorDiv.innerText = "Connection error: " + err.message;
+      errorDiv.style.display = "block";
+    }
+
+
+    function renderTableData(containerId, dataArray, emptyText) {
+      const container = document.getElementById(containerId);
+      if (!dataArray || dataArray.length === 0) {
+        container.innerHTML = `<p class="empty-state">${emptyText}</p>`;
+        return;
+      }
+      let html = `<div class="info-list">`;
+      dataArray.forEach(item => {
+        if (item.value && item.value.trim() !== "") {
+          html += `
+            <div class="info-row">
+              <span class="info-label">${item.label}</span>
+              <span class="info-value">${item.value}</span>
+            </div>
+          `;
+        }
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function renderBoardingPassData(containerId, dataArray, emptyText) {
+      const container = document.getElementById(containerId);
+      if (!dataArray || dataArray.length === 0) {
+        container.innerHTML = `<p class="empty-state">${emptyText}</p>`;
+        return;
+      }
+      
+      let arrival = "TBD", origin = "TBD", departure = "TBD", dest = "TBD", ticketLink = null;
+      
+      dataArray.forEach(item => {
+        if (!item.value) return;
+        if (item.label === "Arrival Date") arrival = item.value;
+        if (item.label === "Origin / From") origin = item.value;
+        if (item.label === "Departure Date") departure = item.value;
+        if (item.label === "Destination / To") dest = item.value;
+        if (item.label === "Final Ticket Link") ticketLink = item.value;
+      });
+
+      let html = '';
+
+      if (ticketLink) {
+        html += `
+          <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
+            <a href="${ticketLink}" target="_blank" class="primary button-download-small" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              View E-Ticket
+            </a>
+          </div>
+        `;
+      }
+
+      html += `
+        <div class="boarding-pass">
+          <div class="bp-header">
+            <span>OFFICIAL ITINERARY</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
+          </div>
+          <div class="bp-body">
+            <div class="bp-flight">
+              <div class="bp-label">INBOUND</div>
+              <div class="bp-route">
+                <span class="bp-city">${origin}</span>
+                <span class="bp-arrow">→</span>
+                <span class="bp-city">TLV</span>
+              </div>
+              <div class="bp-date">Arrival: ${arrival}</div>
+            </div>
+            <div class="bp-divider"></div>
+            <div class="bp-flight">
+              <div class="bp-label">OUTBOUND</div>
+              <div class="bp-route">
+                <span class="bp-city">TLV</span>
+                <span class="bp-arrow">→</span>
+                <span class="bp-city">${dest}</span>
+              </div>
+              <div class="bp-date">Departure: ${departure}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function renderHotelData(jerusalemData, telAvivData) {
+      const jlmContainer = document.getElementById("hotel-jerusalem-content");
+      const tlvContainer = document.getElementById("hotel-telaviv-content");
+      
+      const hasJlm = jerusalemData && jerusalemData.some(i => i.value && i.value.trim() !== "");
+      const hasTlv = telAvivData && telAvivData.some(i => i.value && i.value.trim() !== "");
+
+      if (hasJlm) {
+        let html = `<div class="info-list">`;
+        jerusalemData.forEach(item => {
+          if (item.value && item.value.trim() !== "") {
+            html += `
+              <div class="info-row">
+                <span class="info-label">${item.label}</span>
+                <span class="info-value">${item.value}</span>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+        jlmContainer.innerHTML = html;
+      } else {
+        jlmContainer.innerHTML = `<p class="empty-state">No Jerusalem accommodation details confirmed yet.</p>`;
+      }
+
+      if (hasTlv) {
+        let html = `<div class="info-list">`;
+        telAvivData.forEach(item => {
+          if (item.value && item.value.trim() !== "") {
+            html += `
+              <div class="info-row">
+                <span class="info-label">${item.label}</span>
+                <span class="info-value">${item.value}</span>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+        tlvContainer.innerHTML = html;
+      } else {
+        tlvContainer.innerHTML = `<p class="empty-state">No Tel Aviv accommodation details confirmed yet.</p>`;
+      }
+    }
+
+    function populateCountries(directoryArray) {
+      const countrySelect = document.getElementById('guest-country-filter');
+      const currentVal = countrySelect.value;
+      const countries = new Set();
+      directoryArray.forEach(g => {
+        if (g["Country"]) countries.add(g["Country"].trim());
+      });
+      const sortedCountries = Array.from(countries).filter(c => c).sort();
+      
+      let html = '<option value="All">All Countries</option>';
+      sortedCountries.forEach(c => {
+        html += `<option value="${c}">${c}</option>`;
+      });
+      countrySelect.innerHTML = html;
+      
+      if (sortedCountries.includes(currentVal)) {
+        countrySelect.value = currentVal;
+      }
+    }
+
+    function filterDirectory() {
+      const searchTxt = document.getElementById('guest-search').value.toLowerCase().trim();
+      const clearBtn = document.getElementById('clear-search-btn');
+      if (searchTxt) {
+        clearBtn.style.display = "flex";
+      } else {
+        clearBtn.style.display = "none";
+      }
+      
+      const genreVal = document.getElementById('guest-genre-filter').value;
+      const countryVal = document.getElementById('guest-country-filter').value;
+      
+      const filtered = globalDirectoryData.filter(guest => {
+        // Match Search
+        const searchStr = `${guest["First Name"] || ""} ${guest["Last Name"] || ""} ${guest["Company / Organization"] || ""} ${guest["Role / Title"] || ""} ${guest["Country"] || ""} ${guest["Biography"] || ""} ${guest["Genre / Style"] || ""}`.toLowerCase();
+        const matchesSearch = !searchTxt || searchStr.includes(searchTxt);
+        
+        // Match Genre
+        let matchesGenre = true;
+        const guestGenre = (guest["Genre / Style"] || "").toLowerCase();
+        if (genreVal !== "All") {
+          if (guestGenre.includes("both") || guestGenre.includes("all")) {
+            matchesGenre = true;
+          } else {
+            matchesGenre = guestGenre.includes(genreVal.split('/')[0].toLowerCase().trim()) || 
+                           guestGenre.includes(genreVal.toLowerCase().trim());
+          }
+        }
+        
+        // Match Country
+        let matchesCountry = true;
+        const guestCountry = (guest["Country"] || "").trim();
+        if (countryVal !== "All") {
+          matchesCountry = (guestCountry === countryVal);
+        }
+        
+        return matchesSearch && matchesGenre && matchesCountry;
+      });
+      
+      renderDirectoryCards(filtered);
+      
+      const statusDiv = document.getElementById('directory-status');
+      statusDiv.innerHTML = `Showing ${filtered.length} of ${globalDirectoryData.length} delegates`;
+      if (filtered.length < globalDirectoryData.length) {
+        statusDiv.innerHTML += ` &nbsp;&middot;&nbsp; <a href="javascript:void(0)" onclick="resetFilters()" style="color: var(--accent); text-decoration: none; font-weight: 500;">Clear</a>`;
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('guest-search').value = "";
+      filterDirectory();
+    }
+    
+    function resetFilters() {
+      document.getElementById('guest-search').value = "";
+      document.getElementById('guest-genre-filter').value = "All";
+      document.getElementById('guest-country-filter').value = "All";
+      filterDirectory();
+    }
+
+    function renderDirectory(directoryArray) {
+      globalDirectoryData = directoryArray || [];
+      const container = document.getElementById("directory-container");
+      
+      if (globalDirectoryData.length === 0) {
+        container.innerHTML = `<p class="empty-state">Delegate directory available soon.</p>`;
+        return;
+      }
+      
+      document.getElementById('directory-filters').style.display = "flex";
+      document.getElementById('directory-status').style.display = "block";
+      
+      populateCountries(globalDirectoryData);
+      filterDirectory();
+    }
+
+    function getThumbnailUrl(url) {
+      if (url && url.includes("drive.google.com")) {
+        const match = url.match(/[-\w]{25,}/);
+        if (match) {
+          return "https://drive.google.com/thumbnail?id=" + match[0] + "&sz=w800";
+        }
+      }
+      return url;
+    }
+
+    function renderDirectoryCards(filteredArray) {
+      const container = document.getElementById("directory-container");
+      if (filteredArray.length === 0) {
+        container.innerHTML = `
+          <div class="empty-category-card" style="grid-column: 1 / -1; min-height: 200px;">
+            <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <div class="empty-category-title">No delegates match your filters</div>
+            <button class="secondary" onclick="resetFilters()" style="width: auto; margin-top: 10px; min-height: 38px; font-size: 0.85rem;">Clear Filters</button>
+          </div>
+        `;
+        return;
+      }
+      
+      let html = '';
+      filteredArray.forEach((guest, idx) => {
+        let genreText = guest["Genre / Style"] || "";
+        if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
+        
+        const photoUrl = guest["Photo"] ? getThumbnailUrl(guest["Photo"]) : '';
+        const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim();
+        const country = guest["Country"] || "N/A";
+        
+        // Pass index to openGuestSheet so we can easily find the guest in globalDirectoryData
+        const originalIndex = globalDirectoryData.indexOf(guest);
+        
+        const bgStyle = photoUrl ? `background-image: url('${photoUrl}')` : `background-color: #000`;
+        
+        html += `
+          <div class="artist-card" style="${bgStyle}" onclick="openGuestSheet(${originalIndex})">
+            <div class="artist-card-overlay">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 2px;">
+                <div class="artist-card-name" style="margin-bottom: 0;">${fullName}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="color: #fff; font-size: 0.8rem; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${country}</div>
+                <div style="color: #fff; font-size: 0.75rem; font-weight: 400; text-shadow: 0 1px 3px rgba(0,0,0,0.8); opacity: 0.9;">${genreText}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      container.className = "artists-grid";
+    }
+
+    function openGuestSheet(index) {
+      const guest = globalDirectoryData[index];
+      if (!guest) return;
+      
+      const photoUrl = guest["Photo"] ? getThumbnailUrl(guest["Photo"]) : '';
+      const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim();
+      let genreText = guest["Genre / Style"] || "";
+      if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
+      
+      const imgEl = document.getElementById('sheet-guest-img');
+      if (photoUrl) {
+        imgEl.style.backgroundImage = `url('${photoUrl}')`;
+        imgEl.style.backgroundColor = 'transparent';
+      } else {
+        imgEl.style.backgroundImage = 'none';
+        imgEl.style.backgroundColor = '#000';
+      }
+      
+      document.getElementById('sheet-guest-name').innerText = fullName;
+      document.getElementById('sheet-guest-genre').innerText = genreText;
+      document.getElementById('sheet-guest-country').innerText = guest["Country"] || "N/A";
+      
+      document.getElementById('sheet-guest-company').innerText = guest["Company / Organization"] || "Independent";
+      document.getElementById('sheet-guest-role').innerText = guest["Role / Title"] || "";
+      
+      const website = guest["Website"] || "";
+      const websiteSection = document.getElementById('sheet-guest-website-section');
+      const websiteLink = document.getElementById('sheet-guest-website');
+      if (website) {
+        websiteSection.style.display = 'block';
+        websiteLink.href = website.startsWith('http') ? website : 'https://' + website;
+        websiteLink.innerText = websiteLink.href;
+      } else {
+        websiteSection.style.display = 'none';
+      }
+      
+      document.getElementById('sheet-guest-bio').innerText = guest["Biography"] || "No biography available.";
+      
+      const email = guest["Email"] || "";
+      const emailContainer = document.getElementById('sheet-guest-email-container');
+      const emailLink = document.getElementById('sheet-guest-email');
+      if (email) {
+        emailContainer.style.display = 'block';
+        emailLink.href = 'mailto:' + email;
+        emailLink.innerText = email;
+      } else {
+        emailContainer.style.display = 'none';
+      }
+      
+      const phone = guest["Phone"] || "";
+      const phoneContainer = document.getElementById('sheet-guest-phone-container');
+      const phoneLink = document.getElementById('sheet-guest-phone');
+      if (phone) {
+        phoneContainer.style.display = 'block';
+        let cleanPhone = String(phone).replace(/[^0-9+]/g, '');
+        if (cleanPhone.startsWith('0')) {
+          cleanPhone = '972' + cleanPhone.substring(1);
+        } else {
+          cleanPhone = cleanPhone.replace('+', '');
+        }
+        phoneLink.href = 'https://wa.me/' + cleanPhone;
+        phoneLink.innerText = phone;
+      } else {
+        phoneContainer.style.display = 'none';
+      }
+
+      document.getElementById('guest-sheet-overlay').classList.add('active');
+      document.getElementById('guest-bottom-sheet').classList.add('active');
+      document.body.style.overflow = 'hidden';
+      
+      window.location.hash = "guestsheet";
+    }
+
+    function closeGuestSheet(isHashChange) {
+      document.getElementById('guest-sheet-overlay').classList.remove('active');
+      document.getElementById('guest-bottom-sheet').classList.remove('active');
+      document.body.style.overflow = '';
+      
+      if (isHashChange !== true && window.location.hash === "#guestsheet") {
+        history.back();
+      }
+    }
+
+    function submitBio() {
+      const bioText = document.getElementById("bio-input").value.trim();
+      const alertDiv = document.getElementById("bio-alert");
+      const loader = document.getElementById("bio-loader");
+      if (!bioText) return;
+      loader.style.display = "block";
+      alertDiv.style.display = "none";
+      google.script.run
+        .withSuccessHandler(res => {
+          loader.style.display = "none";
+          alertDiv.className = "alert alert-success";
+          alertDiv.innerText = "Biography updated!";
+          alertDiv.style.display = "block";
+        })
+        .withFailureHandler(err => {
+          loader.style.display = "none";
+          alertDiv.className = "alert alert-danger";
+          alertDiv.innerText = "Failed to update bio.";
+          alertDiv.style.display = "block";
+        })
+        .saveGuestBio(localStorage.getItem('guestSessionToken'), bioText);
+    }
+
+    function submitMissingInfo() {
+      const inputs = document.querySelectorAll('.missing-item-answer');
+      let combinedAnswers = [];
+      let allEmpty = true;
+      inputs.forEach(input => {
+         if (input.value.trim()) {
+            combinedAnswers.push(`${input.getAttribute('data-question')}: ${input.value.trim()}`);
+            allEmpty = false;
+         }
+      });
+      if (allEmpty) return;
+      const text = combinedAnswers.join('\n');
+      
+      const alertDiv = document.getElementById("missing-info-alert");
+      const loader = document.getElementById("missing-info-loader");
+      loader.style.display = "block";
+      alertDiv.style.display = "none";
+      google.script.run
+        .withSuccessHandler(res => {
+          loader.style.display = "none";
+          if(res.success) {
+            alertDiv.className = "alert alert-success";
+            alertDiv.innerText = "Information submitted successfully!";
+            inputs.forEach(input => input.disabled = true);
+          } else {
+            alertDiv.className = "alert alert-danger";
+            alertDiv.innerText = "Failed: " + res.message;
+          }
+          alertDiv.style.display = "block";
+        })
+        .withFailureHandler(err => {
+          loader.style.display = "none";
+          alertDiv.className = "alert alert-danger";
+          alertDiv.innerText = "Error: " + err.message;
+          alertDiv.style.display = "block";
+        })
+        .submitGeneralMissingInfo(localStorage.getItem('guestSessionToken'), text);
+    }
+
+    function compressImage(file, callback) {
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => callback(e.target.result);
+        reader.readAsDataURL(file);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const dataUrl = canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.8);
+          callback(dataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function uploadFile(type) {
+      const fileInput = document.getElementById(type === 'passport' ? 'passport-file' : 'photo-file');
+      const loader = document.getElementById(type === 'passport' ? 'passport-loader' : 'photo-loader');
+      const alertDiv = document.getElementById(type === 'passport' ? 'passport-alert' : 'photo-alert');
+      if (!fileInput.files || fileInput.files.length === 0) return;
+      const file = fileInput.files[0];
+      
+      loader.style.display = "block";
+      alertDiv.style.display = "none";
+      
+      compressImage(file, function(fileData) {
+        google.script.run
+          .withSuccessHandler(res => {
+            loader.style.display = "none";
+            if (res.success) {
+              alertDiv.className = "alert alert-success";
+              alertDiv.innerText = "Uploaded successfully!";
+            } else {
+              alertDiv.className = "alert alert-danger";
+              alertDiv.innerText = "Upload failed: " + res.error;
+            }
+            alertDiv.style.display = "block";
+          })
+          .withFailureHandler(err => {
+            loader.style.display = "none";
+            alertDiv.className = "alert alert-danger";
+            alertDiv.innerText = "Upload error: " + err.message;
+            alertDiv.style.display = "block";
+          })
+          .uploadGuestFile({
+            sessionToken: localStorage.getItem('guestSessionToken'),
+            fileData: fileData,
+            fileName: file.name,
+            fileType: file.type,
+            uploadType: type
+          });
+      });
+    }
+
+    // SPOTLIGHT EFFECT
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      });
+    });
+
+    // THEME TOGGLE (SLIDER SWITCH)
+    function updateThemeUI(isLight) {
+      const toggleBtn = document.getElementById('theme-toggle');
+      if (isLight) {
+        document.body.classList.add('light-mode');
+        if (toggleBtn) {
+          toggleBtn.setAttribute('aria-checked', 'true');
+        }
+      } else {
+        document.body.classList.remove('light-mode');
+        if (toggleBtn) {
+          toggleBtn.setAttribute('aria-checked', 'false');
+        }
+      }
+    }
+
+    function initTheme() {
+      try {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+          updateThemeUI(true);
+        } else {
+          updateThemeUI(false);
+        }
+      } catch (e) {
+        updateThemeUI(false);
+      }
+    }
+
+    function toggleTheme() {
+      const isCurrentlyLight = document.body.classList.contains('light-mode');
+      const nextIsLight = !isCurrentlyLight;
+      updateThemeUI(nextIsLight);
+      try {
+        localStorage.setItem('theme', nextIsLight ? 'light' : 'dark');
+      } catch (e) {}
+    }
+
+    initTheme();
+
+    /* ================= LIVE UPDATES ================= */
+    let updatesPollingInterval = null;
+    let knownUpdateCount = 0;
+
+    function toggleUpdatesPanel(isHashChange) {
+      const panel = document.getElementById("updates-panel");
+      const overlay = document.getElementById("updates-overlay");
+      const isOpening = panel.style.left !== "0px";
+      
+      if (isOpening) {
+        panel.style.left = "0px";
+        overlay.style.display = "block";
+        setTimeout(() => overlay.style.opacity = "1", 10);
+        document.getElementById("notification-badge").style.display = "none";
+        document.getElementById("notification-bell-container").classList.remove("has-new");
+        
+        // Mark as read
+        if (window.currentUpdatesHash) {
+          localStorage.setItem('lastSeenUpdatesHash_' + currentGuestEmail, window.currentUpdatesHash);
+        }
+        
+        window.location.hash = "updates";
+      } else {
+        panel.style.left = "-100%";
+        overlay.style.opacity = "0";
+        setTimeout(() => overlay.style.display = "none", 300);
+        
+        if (isHashChange !== true && window.location.hash === "#updates") {
+          history.back();
+        }
+      }
+    }
+
+    function startLiveUpdatesPolling() {
+      fetchUpdates();
+      if (updatesPollingInterval) clearInterval(updatesPollingInterval);
+      updatesPollingInterval = setInterval(fetchUpdates, 30000); // Check every 30s
+    }
+
+    function fetchUpdates() {
+      if (!currentGuestEmail) return;
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.success && res.updates) {
+            renderUpdates(res.updates);
+          }
+        })
+        .getLiveUpdates(localStorage.getItem('guestSessionToken'));
+    }
+
+    function renderUpdates(updates) {
+      document.getElementById("notification-bell-container").style.display = "flex";
+      const body = document.getElementById("updates-body");
+      
+      const currentHash = JSON.stringify(updates);
+      window.currentUpdatesHash = currentHash;
+      const storedHash = localStorage.getItem('lastSeenUpdatesHash_' + currentGuestEmail);
+      
+      if (updates.length > 0 && currentHash !== storedHash) {
+        document.getElementById("notification-badge").style.display = "inline-block";
+        document.getElementById("notification-bell-container").classList.add("has-new");
+      }
+      
+      if (updates.length === 0) {
+        body.innerHTML = `<p class="empty-state" style="text-align: center; margin-top: 40px;">No new updates at this time.</p>`;
+        return;
+      }
+      
+      let html = "";
+      updates.forEach(u => {
+        const isPersonal = u.type === 'personal';
+        html += `
+          <div class="update-msg ${isPersonal ? 'personal' : ''}">
+            <div class="update-msg-header">
+              ${isPersonal 
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> Private Message' 
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg> Announcement'}
+              <span class="update-msg-time">${u.timestampStr}</span>
+            </div>
+            <div class="update-msg-text">${u.message}</div>
+          </div>
+        `;
+      });
+      body.innerHTML = html;
+    }
+
+    /* ================= SESSION STORAGE & REFRESH LOGIC ================= */
+    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
+    function saveToCache(key, data) {
+      sessionStorage.setItem(key, JSON.stringify({
+        timestamp: Date.now(),
+        data: data
+      }));
+    }
+
+    function getFromCache(key) {
+      const cached = sessionStorage.getItem(key);
+      if (!cached) return null;
+      return JSON.parse(cached);
+    }
+
+    // When user leaves app and comes back, check if data is old. If so, refresh.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        const scheduleCache = getFromCache('scheduleData');
+        if (scheduleCache) {
+          const age = Date.now() - scheduleCache.timestamp;
+          if (age > REFRESH_INTERVAL_MS) {
+            console.log("Data older than 2 minutes. Refreshing schedule in background...");
+            // Silently fetch and update the DOM
+            fetchSchedule(true, false);
+          }
+        }
+      }
+    });
+
+    /* ================= SCHEDULE ================= */
+    let scheduleDataCache = null;
+
+    
+
+    
+
+    function renderScheduleTabs() {
+      const dates = Object.keys(scheduleDataCache).sort();
+      const nav = document.getElementById("schedule-days-nav");
+      const container = document.getElementById("schedule-container");
+      
+      if (dates.length === 0) {
+        nav.style.display = "none";
+        container.innerHTML = `<p class="empty-state">Itinerary will be published here.</p>`;
+        return;
+      }
+      
+      nav.style.display = "flex";
+      let html = "";
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      let activeDate = dates.includes(todayStr) ? todayStr : dates[0];
+      
+      dates.forEach(d => {
+        const dateObj = new Date(d);
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        const isActive = d === activeDate;
+        html += `<button class="schedule-pill ${isActive ? 'active' : ''}" onclick="selectScheduleDate('${d}')">${dayName}, ${monthDay}</button>`;
+      });
+      nav.innerHTML = html;
+      
+      renderScheduleForDate(activeDate);
+    }
+    
+    function selectScheduleDate(dateStr) {
+      const pills = document.querySelectorAll('.schedule-pill');
+      const dates = Object.keys(scheduleDataCache).sort();
+      const index = dates.indexOf(dateStr);
+      
+      pills.forEach((p, i) => {
+        if (i === index) {
+          p.classList.add('active');
+          p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          p.classList.remove('active');
+        }
+      });
+      
+      renderScheduleForDate(dateStr);
+    }
+    
+    function renderScheduleForDate(dateStr) {
+      const events = scheduleDataCache[dateStr] || [];
+      const container = document.getElementById("schedule-container");
+      
+      if (events.length === 0) {
+        container.innerHTML = `<p class="empty-state">No events scheduled for this day.</p>`;
+        return;
+      }
+      
+      let html = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 16px;">';
+      events.forEach(e => {
+        const timeText = e.endTime ? `${e.startTime}-${e.endTime}` : e.startTime;
+        
+        let titleHtml = e.title;
+        if (e.location && e.location.trim() !== "") {
+          let href = e.location.trim();
+          if (!href.startsWith('http')) {
+             href = 'https://' + href;
+          }
+          titleHtml = `<a href="${href}" target="_blank" class="event-title">${e.title}</a>`;
+        } else {
+          titleHtml = `<span class="event-title">${e.title}</span>`;
+        }
+        
+        html += `
+          <div class="schedule-event-inline fade-up">
+            <span class="event-time">${timeText}</span>
+            ${titleHtml}
+            ${e.description ? `<span class="event-desc">${e.description}</span>` : ''}
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+    /* ========================================================= */
+    /* ARTISTS UI LOGIC                                          */
+    /* ========================================================= */
+    let globalArtistsData = [];
+    let showFavsOnly = false;
+    let currentOpenArtistId = null;
+
+    // Load favorites from local storage for now
+    function getFavorites() {
+      try {
+        const stored = localStorage.getItem('artist_favs_' + currentGuestEmail);
+        return stored ? JSON.parse(stored) : {};
+      } catch(e) { return {}; }
+    }
+    function saveFavorites(favs) {
+      localStorage.setItem('artist_favs_' + currentGuestEmail, JSON.stringify(favs));
+    }
+
+    // Load notes from local storage
+    function getPrivateNote(artistId) {
+      try {
+        const stored = localStorage.getItem(`artist_note_${currentGuestEmail}_${artistId}`);
+        return stored || "";
+      } catch(e) { return ""; }
+    }
+    function savePrivateNoteLocally(artistId, note) {
+      localStorage.setItem(`artist_note_${currentGuestEmail}_${artistId}`, note);
+    }
+
+    function fetchArtistsData() {
+      const grid = document.getElementById('artists-grid');
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0;">
+        <div class="musical-loader-wrapper" style="display: flex; margin: 0 auto; flex-direction: column;">
+          <div class="musical-loader">
+            <span class="music-note music-note-1">🎵</span>
+            <span class="drummer-emoji">🥁</span>
+            <span class="music-note music-note-2">🎶</span>
+          </div>
+          <p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p>
+        </div>
+      </div>`;
+      
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res.success && res.artists) {
+            globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
+            initArtistsUI();
+          } else {
+            grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
+          }
+        })
+        .withFailureHandler(function(err) {
+          grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
+        })
+        .getArtistsData();
+    }
+
+    // Initialize Artists UI
+    function initArtistsUI() {
+      // Setup Genre Filter
+      const genreSelect = document.getElementById('artist-genre-filter');
+      const genres = new Set(globalArtistsData.map(a => a.genre).filter(g => g));
+      let genreHtml = '<option value="All">All Genres</option>';
+      genres.forEach(g => { genreHtml += `<option value="${g}">${g}</option>`; });
+      genreSelect.innerHTML = genreHtml;
+
+      // Setup Live Banner
+      const liveBanner = document.getElementById('artists-live-banner');
+      liveBanner.style.display = 'none';
+
+      renderArtistsGrid(globalArtistsData);
+    }
+
+    function renderArtistsGrid(artists) {
+      const grid = document.getElementById('artists-grid');
+      const favs = getFavorites();
+      
+      if (artists.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0; color: var(--foreground-muted);">No artists found.</div>`;
+        return;
+      }
+
+      let html = '';
+      artists.forEach(artist => {
+        const isFav = !!favs[artist.id];
+        html += `
+          <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
+            <div class="artist-card-overlay">
+              <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 2px;">
+                <div class="artist-card-name" style="margin-bottom: 0;">${artist.name}</div>
+                <button class="fav-btn-inline ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                </button>
+              </div>
+              <div class="artist-card-genre">${artist.genre}</div>
+            </div>
+          </div>
+        `;
+      });
+      grid.innerHTML = html;
+
+      // Handle Export Briefcase visibility
+      const hasFavs = Object.keys(favs).length > 0;
+      document.getElementById('export-briefcase-container').style.display = hasFavs ? 'block' : 'none';
+    }
+
+    function toggleCardFav(event, artistId) {
+      event.stopPropagation(); // prevent opening sheet
+      const favs = getFavorites();
+      if (favs[artistId]) {
+        delete favs[artistId];
+      } else {
+        favs[artistId] = true;
+      }
+      saveFavorites(favs);
+      filterArtists(); // Re-render grid
+    }
+
+    function filterArtists() {
+      const searchTxt = document.getElementById('artist-search').value.toLowerCase().trim();
+      const genreVal = document.getElementById('artist-genre-filter').value;
+      const clearBtn = document.getElementById('clear-artist-search-btn');
+      const favs = getFavorites();
+
+      clearBtn.style.display = searchTxt ? 'flex' : 'none';
+
+      const filtered = globalArtistsData.filter(a => {
+        const matchesSearch = !searchTxt || a.name.toLowerCase().includes(searchTxt) || a.genre.toLowerCase().includes(searchTxt);
+        const matchesGenre = genreVal === 'All' || a.genre === genreVal;
+        const matchesFav = !showFavsOnly || !!favs[a.id];
+        return matchesSearch && matchesGenre && matchesFav;
+      });
+
+      renderArtistsGrid(filtered);
+    }
+
+    function clearArtistSearch() {
+      document.getElementById('artist-search').value = "";
+      filterArtists();
+    }
+
+    function toggleFavFilter() {
+      showFavsOnly = !showFavsOnly;
+      const btn = document.getElementById('artist-fav-filter-btn');
+      if (showFavsOnly) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+      filterArtists();
+    }
+
+    // Bottom Sheet
+    function openArtistSheet(artistId) {
+      currentOpenArtistId = artistId;
+      const artist = globalArtistsData.find(a => a.id === artistId);
+      if (!artist) return;
+
+      const favs = getFavorites();
+      const isFav = !!favs[artistId];
+
+      document.getElementById('sheet-artist-img').style.backgroundImage = `url('${artist.image}')`;
+      document.getElementById('sheet-artist-name').innerText = artist.name;
+      document.getElementById('sheet-artist-genre').innerText = artist.genre;
+      document.getElementById('sheet-artist-bio').innerText = artist.bio;
+      document.getElementById('sheet-artist-members').innerText = artist.members;
+      
+      const favBtn = document.getElementById('sheet-fav-btn');
+      if (isFav) {
+        favBtn.classList.add('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
+      } else {
+        favBtn.classList.remove('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'none');
+      }
+
+      // Notes
+      document.getElementById('sheet-private-note').value = getPrivateNote(artistId);
+
+      // Media Embed - Removed Spotify Embed
+      const mediaContainer = document.getElementById('sheet-media-container');
+      const embedWrapper = document.getElementById('sheet-embed-wrapper');
+      embedWrapper.innerHTML = '';
+      mediaContainer.style.display = 'none';
+
+      // Links
+      const linksContainer = document.getElementById('sheet-artist-links');
+      if (artist.socialLinks && artist.socialLinks.length > 0) {
+        linksContainer.innerHTML = artist.socialLinks.map(link => 
+          `<a href="${link.url}" target="_blank" class="sheet-link-btn">${link.label}</a>`
+        ).join('');
+      } else {
+        linksContainer.innerHTML = '';
+      }
+
+      // Show
+      document.getElementById('artist-sheet-overlay').classList.add('active');
+      document.getElementById('artist-bottom-sheet').classList.add('active');
+      document.body.style.overflow = 'hidden'; // prevent bg scrolling
+      
+      // Setting hash creates a reliable history entry on all mobile browsers
+      window.location.hash = "sheet";
+    }
+
+    function closeArtistSheet(isHashChange) {
+      document.getElementById('artist-sheet-overlay').classList.remove('active');
+      document.getElementById('artist-bottom-sheet').classList.remove('active');
+      document.body.style.overflow = '';
+      currentOpenArtistId = null;
+      // Re-render grid to reflect any favorite changes from sheet
+      filterArtists();
+      
+      // If we closed it manually via the X or overlay, we must clean up the hash
+      if (isHashChange !== true && window.location.hash === "#sheet") {
+        history.back();
+      }
+    }
+
+    window.addEventListener('hashchange', function() {
+      // If the hash is no longer #sheet, but the artist sheet is open, close it.
+      if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+        closeArtistSheet(true);
+      }
+      // If the hash is no longer #guestsheet, but the guest sheet is open, close it.
+      if (window.location.hash !== "#guestsheet" && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
+        closeGuestSheet(true);
+      }
+      // If the hash is no longer #updates, but the updates panel is open, close it.
+      if (window.location.hash !== "#updates" && document.getElementById('updates-panel').style.left === "0px") {
+        toggleUpdatesPanel(true);
+      }
+    });
+
+    function toggleSheetFav(event) {
+      if (!currentOpenArtistId) return;
+      event.stopPropagation();
+      const favs = getFavorites();
+      const favBtn = document.getElementById('sheet-fav-btn');
+      
+      if (favs[currentOpenArtistId]) {
+        delete favs[currentOpenArtistId];
+        favBtn.classList.remove('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'none');
+      } else {
+        favs[currentOpenArtistId] = true;
+        favBtn.classList.add('active');
+        document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
+      }
+      saveFavorites(favs);
+    }
+
+    function savePrivateNote() {
+      if (!currentOpenArtistId) return;
+      const note = document.getElementById('sheet-private-note').value;
+      savePrivateNoteLocally(currentOpenArtistId, note);
+    }
+
+    function exportBriefcase() {
+      alert("This will generate and download a PDF summarizing your liked artists and private notes!");
+    }
+
+    // FULLSCREEN IMAGE VIEWER LOGIC
+    function openImageViewerFromBg(event, el) {
+      if (event && event.target.closest('button')) return;
+      const bg = el.style.backgroundImage;
+      if (!bg || bg === 'none') return;
+      const match = bg.match(/url\(['"]?(.*?)['"]?\)/);
+      if (match && match[1]) {
+        let url = match[1];
+        // Remove thumbnail resize parameter if possible to show high res
+        if (url.includes('drive.google.com/thumbnail')) {
+          url = url.replace('&sz=w800', '&sz=w2000');
+        }
+        const viewer = document.getElementById('fullscreen-image-viewer');
+        const img = document.getElementById('fullscreen-image');
+        img.src = url;
+        viewer.style.display = 'flex';
+        setTimeout(() => viewer.classList.add('active'), 10);
+        history.pushState({ imageViewer: true }, "");
+      }
+    }
+
+    function closeImageViewer(fromHistory = false) {
+      const viewer = document.getElementById('fullscreen-image-viewer');
+      viewer.classList.remove('active');
+      setTimeout(() => {
+        viewer.style.display = 'none';
+        document.getElementById('fullscreen-image').src = "";
+      }, 300);
+      
+      if (!fromHistory && history.state && history.state.imageViewer) {
+        history.back();
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const viewer = document.getElementById('fullscreen-image-viewer');
+      if (viewer && viewer.style.display !== 'none') {
+        closeImageViewer(true);
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('sheet-artist-img').addEventListener('click', function(e) {
+        openImageViewerFromBg(e, this);
+      });
+      document.getElementById('sheet-guest-img').addEventListener('click', function(e) {
+        openImageViewerFromBg(e, this);
+      });
+    });
