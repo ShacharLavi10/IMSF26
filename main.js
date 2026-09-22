@@ -70,7 +70,8 @@ window.google = {
                   if (state.successHandler) state.successHandler(result.data);
                 }
               } catch (e) {
-                if (state.failureHandler) state.failureHandler(e);
+                const genericError = new Error("Oops, there's a connection error. Please try refreshing the page.");
+                if (state.failureHandler) state.failureHandler(genericError);
               }
             };
           }
