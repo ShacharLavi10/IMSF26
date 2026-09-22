@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>IMSF 2026 Delegation Portal</title>
-  <link rel="stylesheet" href="/style.css?v=4">
+  <link rel="stylesheet" href="/style.css?v=5">
 </head>
 <body>
   <!-- THEME TOGGLE SLIDER -->
@@ -80,7 +80,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <span>Schedule</span>
+            <span>Itinerary</span>
           </button>
           <button id="tab-flights" class="tab-btn" onclick="switchCategoryTab('flights')" role="tab" aria-selected="false">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -98,7 +98,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            <span>Guests</span>
+            <span>Delegates</span>
           </button>
           <button id="tab-artists" class="tab-btn" onclick="switchCategoryTab('artists')" role="tab" aria-selected="false">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -189,7 +189,7 @@
         <div id="schedule-card" class="card col-span-3 fade-up" style="animation-delay: 0.15s; display: block;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Daily Schedule</h3>
+            <h3>Itinerary</h3>
             <div id="schedule-days-nav" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none;">
               <!-- Day Pills injected here -->
             </div>
@@ -209,8 +209,8 @@
                 <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <div class="empty-category-title">Schedule Processing</div>
-                <div class="empty-category-desc">We are finalizing the schedule and it will be available here soon.</div>
+                <div class="empty-category-title">Itinerary Processing</div>
+                <div class="empty-category-desc">We are finalizing the itinerary and it will be available here soon.</div>
               </div>
             </div>
           </div>
@@ -277,7 +277,7 @@
         <div id="directory-card" class="card col-span-3 fade-up" style="animation-delay: 0.4s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Guests & Delegates</h3>
+            <h3>Delegates</h3>
             
             <div id="directory-main-container">
               <!-- DIRECTORY FILTERS -->
@@ -286,7 +286,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <input type="text" id="guest-search" placeholder="Search guests..." oninput="filterDirectory()">
+                  <input type="text" id="guest-search" placeholder="Search delegates..." oninput="filterDirectory()">
                   <button class="clear-search-btn" id="clear-search-btn" onclick="clearSearch()" aria-label="Clear search">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -378,6 +378,16 @@
               <!-- ARTISTS GRID -->
               <div class="artists-grid" id="artists-grid">
                 <!-- Artist cards injected here -->
+              </div>
+            </div>
+            
+            <div id="artists-pending-container" style="display: none;">
+              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
+                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="empty-category-title">Festival Lineup Processing</div>
+                <div class="empty-category-desc">We are finalizing the artists lineup and it will be available here soon.</div>
               </div>
             </div>
           </div>
@@ -723,7 +733,6 @@
         
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
-        fetchArtistsData();
       } else {
         const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
 
@@ -805,7 +814,7 @@
         } else {
           const loader = document.getElementById('schedule-loader-container');
           if (loader) loader.style.display = 'none';
-          document.getElementById('schedule-container').innerHTML = '<p class="empty-state">Schedule will be published here.</p>';
+          document.getElementById('schedule-container').innerHTML = '<p class="empty-state">Itinerary will be published here.</p>';
         }
         document.getElementById("schedule-days-nav").style.display = "flex";
         document.getElementById("schedule-container").style.display = "block";
@@ -841,6 +850,16 @@
       } else {
         document.getElementById("directory-main-container").style.display = "none";
         document.getElementById("directory-pending-container").style.display = "block";
+      }
+
+      if (response.checklist.approvalArtists) {
+        document.getElementById("artists-container").style.display = "block";
+        document.getElementById("artists-pending-container").style.display = "none";
+        // Fetch only if approved to avoid unnecessary requests and endless loading if the tab is hidden
+        fetchArtistsData();
+      } else {
+        document.getElementById("artists-container").style.display = "none";
+        document.getElementById("artists-pending-container").style.display = "block";
       }
     }
 
@@ -1043,7 +1062,7 @@
       renderDirectoryCards(filtered);
       
       const statusDiv = document.getElementById('directory-status');
-      statusDiv.innerHTML = `Showing ${filtered.length} of ${globalDirectoryData.length} guests`;
+      statusDiv.innerHTML = `Showing ${filtered.length} of ${globalDirectoryData.length} delegates`;
       if (filtered.length < globalDirectoryData.length) {
         statusDiv.innerHTML += ` &nbsp;&middot;&nbsp; <a href="javascript:void(0)" onclick="resetFilters()" style="color: var(--accent); text-decoration: none; font-weight: 500;">Clear</a>`;
       }
@@ -1066,7 +1085,7 @@
       const container = document.getElementById("directory-container");
       
       if (globalDirectoryData.length === 0) {
-        container.innerHTML = `<p class="empty-state">Guest directory available soon.</p>`;
+        container.innerHTML = `<p class="empty-state">Delegate directory available soon.</p>`;
         return;
       }
       
@@ -1095,7 +1114,7 @@
             <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <div class="empty-category-title">No guests match your filters</div>
+            <div class="empty-category-title">No delegates match your filters</div>
             <button class="secondary" onclick="resetFilters()" style="width: auto; margin-top: 10px; min-height: 38px; font-size: 0.85rem;">Clear Filters</button>
           </div>
         `;
@@ -1545,7 +1564,7 @@
       
       if (dates.length === 0) {
         nav.style.display = "none";
-        container.innerHTML = `<p class="empty-state">Schedule will be published here.</p>`;
+        container.innerHTML = `<p class="empty-state">Itinerary will be published here.</p>`;
         return;
       }
       
@@ -1668,11 +1687,11 @@
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           } else {
-            grid.innerHTML = `<p class="empty-state">Failed to load artists. ${res.message || 'Unknown server error'}</p>`;
+            grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
           }
         })
         .withFailureHandler(function(err) {
-          grid.innerHTML = `<p class="empty-state">Failed to load artists. ${err.message || 'Connection error'}</p>`;
+          grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
         })
         .getArtistsData();
     }

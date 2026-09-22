@@ -55,7 +55,7 @@ window.google = {
                   result = JSON.parse(responseText);
                 } catch (parseError) {
                   if (responseText.trim().startsWith('<')) {
-                    throw new Error("Temporary server error (Google Apps Script returned an HTML page instead of data). Please try again.");
+                    throw new Error("The artists lineup is currently being updated. Please check back shortly.");
                   } else {
                     throw new Error("Invalid response format: " + parseError.message);
                   }
