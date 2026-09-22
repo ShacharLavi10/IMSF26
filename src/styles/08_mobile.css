@@ -1,0 +1,42 @@
+/* EXTRA MOBILE ADAPTATIONS (< 480px) */
+@media (max-width: 480px) {
+    .container {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    
+    .card {
+      padding: 18px 14px;
+      border-radius: var(--radius-xl);
+    }
+    .card::before {
+      border-radius: var(--radius-xl);
+    }
+
+    
+
+    .info-row {
+      padding: 11px 13px;
+      gap: 10px;
+      min-height: 44px;
+    }
+    .info-label {
+      font-size: 0.82rem;
+    }
+    .info-value {
+      font-size: 0.88rem;
+    }
+
+    .info-table th {
+      width: 48%;
+      font-size: 0.88rem;
+    }
+    .info-table td {
+      font-size: 0.88rem;
+    }
+
+    .item-status {
+      padding: 12px 14px;
+      font-size: 0.88rem;
+    }
+  }

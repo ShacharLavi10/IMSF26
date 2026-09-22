@@ -1,0 +1,86 @@
+/* FORMS & INPUTS - MOBILE OPTIMIZED */
+.input-group { 
+    margin-bottom: 20px; 
+    text-align: left; 
+  }
+  .input-group label { 
+    display: block; 
+    margin-bottom: 8px; 
+    color: var(--foreground-muted); 
+    font-size: 0.875rem; 
+    font-weight: 500; 
+  }
+  .input-group input, .input-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #0F0F12;
+    color: var(--foreground);
+    font-size: 16px; /* Prevents auto-zoom on iOS */
+    font-family: var(--font-stack);
+    outline: none;
+    transition: all var(--transition-fast);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    -webkit-appearance: none;
+  }
+  .input-group input:focus, .input-group textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3), inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  ::placeholder {
+    color: var(--foreground-muted);
+    opacity: 1;
+  }
+  .input-group input[type="file"] {
+    padding: 12px;
+    background: rgba(255,255,255,0.03);
+    font-size: 0.85rem;
+    cursor: pointer;
+    min-height: 48px;
+  }
+  
+  /* BUTTONS - ERGONOMIC TOUCH TARGETS */
+  button {
+    width: 100%;
+    min-height: 48px;
+    padding: 14px 20px;
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    font-family: var(--font-stack);
+    touch-action: manipulation;
+    user-select: none;
+  }
+  button.primary {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: var(--shadow-button);
+    position: relative;
+    overflow: hidden;
+  }
+  button.primary:hover {
+    background: var(--accent-bright);
+  }
+  button.primary:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 0 1px rgba(167, 139, 250,0.5), inset 0 1px 0 0 rgba(255,255,255,0.2);
+  }
+  button.secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--foreground);
+    box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.1), inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  button.secondary:hover {
+    background: rgba(255, 255, 255, 0.09);
+  }
+  button.secondary:active {
+    transform: scale(0.98);
+  }

@@ -1,0 +1,42 @@
+/* TYPOGRAPHY & LAYOUT */
+.container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: clamp(32px, 6vw, 64px) clamp(16px, 4vw, 24px);
+    padding-top: max(clamp(64px, 10vw, 80px), calc(env(safe-area-inset-top) + 64px));
+    /* Added extra padding bottom on mobile to account for the bottom navigation bar */
+    padding-bottom: max(100px, calc(env(safe-area-inset-bottom) + 80px));
+    position: relative;
+    z-index: 1;
+  }
+  
+  @media (min-width: 768px) {
+    .container {
+      padding-bottom: max(clamp(32px, 6vw, 64px), calc(env(safe-area-inset-bottom) + 24px));
+    }
+  }
+
+  header { 
+    text-align: center; 
+    margin-bottom: clamp(24px, 5vw, 56px);
+    padding-top: 60px;
+  }
+  header h1 {
+    font-size: clamp(1.75rem, 6vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    padding-bottom: 0.1em;
+    background: linear-gradient(to bottom, #ffffff, rgba(255, 255, 255, 0.75));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    word-break: break-word;
+  }
+  header p {
+    color: var(--accent);
+    font-size: clamp(0.95rem, 2.5vw, 1.125rem);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }

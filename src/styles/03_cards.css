@@ -1,0 +1,64 @@
+/* CARDS */
+.card {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.06));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: var(--radius-2xl);
+    padding: clamp(20px, 4vw, 32px);
+    position: relative;
+    box-shadow: var(--shadow-card), var(--shadow-inner);
+    transition: transform var(--transition-fast), box-shadow var(--transition-base), border-color var(--transition-base);
+    overflow: hidden;
+  }
+  
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card-hover), var(--shadow-inner);
+    }
+    .card:hover::before {
+      background: linear-gradient(to bottom, var(--border-accent), transparent);
+    }
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-2xl);
+    padding: 1px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: background var(--transition-base);
+  }
+
+  .spotlight {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity var(--transition-base);
+    background: radial-gradient(600px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(167, 139, 250, 0.1), transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .card:hover .spotlight { opacity: 1; }
+  .card-content { position: relative; z-index: 1; }
+
+  /* BENTO GRID */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(16px, 3vw, 24px);
+    margin-bottom: 24px;
+  }
+  @media (min-width: 768px) {
+    .bento-grid { grid-template-columns: repeat(2, 1fr); }
+    .col-span-2 { grid-column: span 2; }
+  }
+  @media (min-width: 1024px) {
+    .bento-grid { grid-template-columns: repeat(3, 1fr); }
+    .col-span-3 { grid-column: span 3; }
+  }
