@@ -18,7 +18,9 @@ let currentGuestEmail = "";
       }
     }
     
-    document.addEventListener('DOMContentLoaded', checkSessionOnLoad);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('DOMContentLoaded', checkSessionOnLoad);
+    }
 
     function switchCategoryTab(tabName) {
       const tabs = ['schedule', 'flights', 'hotels', 'directory', 'artists'];
