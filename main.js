@@ -55,7 +55,7 @@ window.google = {
                   result = JSON.parse(responseText);
                 } catch (parseError) {
                   if (responseText.trim().startsWith('<')) {
-                    throw new Error("The artists lineup is currently being updated. Please check back shortly.");
+                    throw new Error("Oops, there's a connection error. Please try refreshing the page.");
                   } else {
                     throw new Error("Invalid response format: " + parseError.message);
                   }
@@ -70,7 +70,8 @@ window.google = {
                   if (state.successHandler) state.successHandler(result.data);
                 }
               } catch (e) {
-                if (state.failureHandler) state.failureHandler(e);
+                const genericError = new Error("Oops, there's a connection error. Please try refreshing the page.");
+                if (state.failureHandler) state.failureHandler(genericError);
               }
             };
           }

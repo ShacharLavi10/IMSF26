@@ -18,7 +18,9 @@ let currentGuestEmail = "";
       }
     }
     
-    document.addEventListener('DOMContentLoaded', checkSessionOnLoad);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('DOMContentLoaded', checkSessionOnLoad);
+    }
 
     function switchCategoryTab(tabName) {
       const tabs = ['schedule', 'flights', 'hotels', 'directory', 'artists'];
@@ -1144,10 +1146,12 @@ let currentGuestEmail = "";
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           } else {
+            console.error("Artists fetch returned success:false. Message:", res.message);
             grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
           }
         })
         .withFailureHandler(function(err) {
+          console.error("Artists fetch failed:", err);
           grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
         })
         .getArtistsData();
