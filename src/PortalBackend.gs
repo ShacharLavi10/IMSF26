@@ -180,7 +180,7 @@ function getGuestPortalData(sessionToken) {
     if (!guestRow) return { success: false, notFound: true, message: "Email not found." };
     
     const getColVal = (headerName) => {
-      const idx = headers.indexOf(headerName.toLowerCase());
+      const idx = headers.indexOf(String(headerName).trim().toLowerCase());
       return idx !== -1 ? guestRow[idx] : false;
     };
     
@@ -196,7 +196,7 @@ function getGuestPortalData(sessionToken) {
       approvalHotels: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_HOTELS)),
       approvalDirectory: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_DIRECTORY)),
       approvalSchedule: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_SCHEDULE) || getColVal("אישור לו\"ז") || getColVal("אישור לוז")),
-      approvalArtists: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_ARTISTS) || getColVal("אישור אומנים") || getColVal("אישור אמנים"))
+      approvalArtists: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_ARTISTS) || getColVal("אישור אומנים") || getColVal("אישור אמנים") || getColVal("אישור הצגת לשונית אומנים"))
     };
     
     let rawMissingText = String(getColVal(CONFIG.GENERAL_MISSING_TEXT_COL) || "");
