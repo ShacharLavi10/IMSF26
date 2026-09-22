@@ -22,56 +22,59 @@ window.google = {
                 return;
               }
 
-              try {
-                // Convert File/Blob arguments to base64 automatically
-                const processedArgs = await Promise.all(args.map(async arg => {
-                  // This is a naive check. If the user passes a form element containing a file, it won't be caught here.
-                  // But based on common GAS patterns, they usually pass the form object directly to google.script.run
-                  if (arg instanceof File || arg instanceof Blob) {
-                    return new Promise((resolve) => {
-                      const reader = new FileReader();
-                      reader.onloadend = () => resolve({ __isFile: true, name: arg.name, type: arg.type, data: reader.result });
-                      reader.readAsDataURL(arg);
-                    });
-                  }
-                  
-                  // Check if it's an HTMLFormElement (GAS can take forms directly)
-                  if (arg instanceof HTMLFormElement) {
-                     // For this project, if they send a form, we need to extract inputs. 
-                     // Let's hope they just pass strings/files.
-                  }
-                  return arg;
-                }));
-
-                const response = await fetch(GAS_API_URL, {
-                  method: 'POST',
-                  body: JSON.stringify({ method: prop, args: processedArgs }),
-                  headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                });
-                
-                const responseText = await response.text();
-                let result;
+              let attempt = 0;
+              const maxRetries = 3;
+              let success = false;
+              
+              while (attempt < maxRetries && !success) {
+                attempt++;
                 try {
-                  result = JSON.parse(responseText);
-                } catch (parseError) {
-                  if (responseText.trim().startsWith('<')) {
-                    throw new Error("Oops, there's a connection error. Please try refreshing the page.");
-                  } else {
-                    throw new Error("Invalid response format: " + parseError.message);
-                  }
-                }
+                  const processedArgs = await Promise.all(args.map(async arg => {
+                    if (arg instanceof File || arg instanceof Blob) {
+                      return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve({ __isFile: true, name: arg.name, type: arg.type, data: reader.result });
+                        reader.readAsDataURL(arg);
+                      });
+                    }
+                    return arg;
+                  }));
 
-                if (result.error) {
-                  if (state.failureHandler) state.failureHandler(new Error(result.error));
-                } else {
-                  if (result.data === undefined) {
-                    throw new Error("Backend returned JSON without 'data': " + JSON.stringify(result));
+                  const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ method: prop, args: processedArgs }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                  });
+                  
+                  const responseText = await response.text();
+                  let result;
+                  try {
+                    result = JSON.parse(responseText);
+                  } catch (parseError) {
+                    throw new Error("HTML_ERROR");
                   }
-                  if (state.successHandler) state.successHandler(result.data);
+
+                  if (result.error) {
+                    if (result.error === "Internal Server Error") {
+                      throw new Error("INTERNAL_ERROR");
+                    }
+                    if (state.failureHandler) state.failureHandler(new Error(result.error));
+                    success = true;
+                  } else {
+                    if (result.data === undefined) {
+                      throw new Error("Backend returned JSON without 'data': " + JSON.stringify(result));
+                    }
+                    if (state.successHandler) state.successHandler(result.data);
+                    success = true;
+                  }
+                } catch (e) {
+                  if (attempt >= maxRetries) {
+                    const genericError = new Error("Oops, there's a connection error. Please try refreshing the page.");
+                    if (state.failureHandler) state.failureHandler(genericError);
+                  } else {
+                    await new Promise(r => setTimeout(r, 1000 * attempt)); // Backoff
+                  }
                 }
-              } catch (e) {
-                const genericError = new Error("Oops, there's a connection error. Please try refreshing the page.");
-                if (state.failureHandler) state.failureHandler(genericError);
               }
             };
           }
