@@ -218,6 +218,7 @@ function getGuestPortalData(sessionToken) {
                        checklist.hasPhoto && 
                        !checklist.generalMissing;
                        
+    const isAdmin = String(getColVal("?????") || "").trim() === "???? ?????";
     const firstName = String(getColVal(CONFIG.FIRST_NAME_COL) || "");
     const lastName = String(getColVal(CONFIG.LAST_NAME_COL) || "");
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
@@ -231,7 +232,7 @@ function getGuestPortalData(sessionToken) {
     
     return {
       success: true,
-      guestInfo: { email: cleanEmail, firstName: firstName, lastName: lastName, rowIndex: rowIndex, bio: bioText },
+      guestInfo: { email: cleanEmail, firstName: firstName, lastName: lastName, rowIndex: rowIndex, bio: bioText, isAdmin: isAdmin },
       checklist: checklist,
       forms: CONFIG.FORMS,
       isComplete: isComplete,
@@ -327,7 +328,7 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
         }
         guestObj[item.label] = String(val !== undefined && val !== null ? val : "");
       });
-      if (guestObj["First Name"] || guestObj["Last Name"]) guestsList.push(guestObj);
+      if (guestObj["Role / Title"] !== "???? ?????" && (guestObj["First Name"] || guestObj["Last Name"])) guestsList.push(guestObj);
     }
     return guestsList;
   } catch (e) {

@@ -23,7 +23,7 @@ let currentGuestEmail = "";
     }
 
     function switchCategoryTab(tabName) {
-      const tabs = ['schedule', 'flights', 'hotels', 'directory', 'artists'];
+      const tabs = ['admin', 'schedule', 'flights', 'hotels', 'directory', 'artists'];
       tabs.forEach(t => {
         const btn = document.getElementById('tab-' + t);
         const card = document.getElementById(t + '-card');
@@ -158,6 +158,11 @@ let currentGuestEmail = "";
         return;
       }
       currentGuestEmail = response.guestInfo.email;
+      
+      if (response.guestInfo.isAdmin) {
+        document.getElementById("tab-admin").style.display = "block";
+      }
+
       document.getElementById("login-section").style.display = "none";
       
       const portalContent = document.getElementById("portal-content");
