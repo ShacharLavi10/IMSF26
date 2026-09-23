@@ -639,13 +639,17 @@ let currentGuestEmail = "";
       
       const website = guest["Website"] || "";
       const websiteSection = document.getElementById('sheet-guest-website-section');
-      const websiteLink = document.getElementById('sheet-guest-website');
       if (website) {
         websiteSection.style.display = 'block';
-        websiteLink.href = website.startsWith('http') ? website : 'https://' + website;
-        websiteLink.innerText = websiteLink.href;
+        const urls = website.split(/\r?\n/).filter(u => u.trim() !== "");
+        websiteSection.innerHTML = urls.map(u => {
+          const urlStr = u.trim();
+          const href = urlStr.startsWith('http') ? urlStr : 'https://' + urlStr;
+          return `<a href="${href}" target="_blank" style="color: var(--accent-bright); text-decoration: underline; font-size: 0.9rem; word-break: break-all; display: block; margin-bottom: 4px;">${urlStr}</a>`;
+        }).join('');
       } else {
         websiteSection.style.display = 'none';
+        websiteSection.innerHTML = '';
       }
       
       document.getElementById('sheet-guest-bio').innerText = guest["Biography"] || "No biography available.";
@@ -1288,9 +1292,14 @@ let currentGuestEmail = "";
       // Links
       const linksContainer = document.getElementById('sheet-artist-links');
       if (artist.socialLinks && artist.socialLinks.length > 0) {
-        linksContainer.innerHTML = artist.socialLinks.map(link => 
-          `<a href="${link.url}" target="_blank" class="sheet-link-btn">${link.label}</a>`
-        ).join('');
+        linksContainer.innerHTML = artist.socialLinks.flatMap(link => {
+          const urls = link.url.split(/\r?\n/).filter(u => u.trim() !== "");
+          return urls.map(u => {
+            const urlStr = u.trim();
+            const href = urlStr.startsWith('http') ? urlStr : 'https://' + urlStr;
+            return `<a href="${href}" target="_blank" class="sheet-link-btn">${link.label}</a>`;
+          });
+        }).join('');
       } else {
         linksContainer.innerHTML = '';
       }
