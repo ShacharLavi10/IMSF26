@@ -520,3 +520,59 @@ function getDebugChecklist(email) {
     fallbackSchedule2: getColVal("אישור לוז")
   };
 }
+
+function getAdminDashboardData(sessionToken) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const cleanEmail = sessionRes.email;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: 'Master sheet not found.' };
+    
+    const masterData = masterSheet.getDataRange().getValues();
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(3, masterData.length); r++) {
+      if (masterData[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: 'Header not found.' };
+    
+    const headers = masterData[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    
+    let isAdmin = false;
+    for (let i = headerRowIdx + 1; i < masterData.length; i++) {
+      if (masterData[i][emailIdx] && String(masterData[i][emailIdx]).trim().toLowerCase() === cleanEmail) {
+        if (roleIdx !== -1 && String(masterData[i][roleIdx]).trim() === "הפקה חשיפה") {
+          isAdmin = true;
+        }
+        break;
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: 'Unauthorized. Admins only.' };
+    
+    // Fetch full data for admin
+    const getSheetData = (sheetName) => {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return null;
+      const data = sheet.getDataRange().getValues();
+      return data.map(row => row.map(cell => (cell instanceof Date) ? Utilities.formatDate(cell, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm') : cell));
+    };
+    
+    return {
+      success: true,
+      guests: getSheetData(CONFIG.MASTER_SHEET),
+      flights: getSheetData(CONFIG.FLIGHTS_SHEET),
+      hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
+      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET)
+    };
+  } catch (err) {
+    return { success: false, message: 'Server Error: ' + err.toString() };
+  }
+}
