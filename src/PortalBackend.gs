@@ -570,7 +570,9 @@ function getAdminDashboardData(sessionToken) {
       guests: getSheetData(CONFIG.MASTER_SHEET),
       flights: getSheetData(CONFIG.FLIGHTS_SHEET),
       hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
-      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET)
+      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
+      infoSheet: getSheetData('מידע כללי'),
+      dashboardStats: getSheetData('דשבורד הפקה')
     };
   } catch (err) {
     return { success: false, message: 'Server Error: ' + err.toString() };
