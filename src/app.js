@@ -42,6 +42,9 @@ let currentGuestEmail = "";
         }
         if (card) {
           card.style.display = (t === tabName) ? 'block' : 'none';
+        if (t === 'admin' && tabName === 'admin') {
+          loadAdminDashboard();
+        }
         }
       });
     }
@@ -1451,3 +1454,117 @@ window.openImageViewerFromBg = openImageViewerFromBg;
 window.closeImageViewer = closeImageViewer;
 window.openGuestSheet = openGuestSheet;
 window.openArtistSheet = openArtistSheet;
+
+
+let adminDataLoaded = false;
+let adminData = null;
+
+function loadAdminDashboard() {
+  if (adminDataLoaded) return;
+  
+  const container = document.getElementById("admin-dashboard-container");
+  container.innerHTML = '<div style="text-align:center; padding: 40px;"><div class="musical-loader"></div><p>Loading production data...</p></div>';
+  
+  const token = localStorage.getItem('guestSessionToken');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) {
+        container.innerHTML = '<p class="error-text">Failed to load admin data: ' + res.message + '</p>';
+        return;
+      }
+      adminData = res;
+      adminDataLoaded = true;
+      renderAdminDashboard();
+    })
+    .withFailureHandler(function(err) {
+      container.innerHTML = '<p class="error-text">Error: ' + err.toString() + '</p>';
+    })
+    .getAdminDashboardData(token);
+}
+
+function renderAdminDashboard() {
+  const container = document.getElementById("admin-dashboard-container");
+  if (!adminData || !adminData.dashboardStats) return;
+  
+  // Find key stats from dashboardStats sheet
+  const stats = adminData.dashboardStats;
+  let html = '<div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">';
+  
+  // Look for total guests (B3 usually)
+  let totalGuests = "-";
+  let hotelMissing = "-";
+  
+  try {
+     totalGuests = stats[2][1] || "-"; // Row 3 Col B (0-indexed: 2, 1)
+     hotelMissing = stats[5][1] || "-"; // Row 6 Col B
+  } catch(e) {}
+  
+  html += `
+    <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+      <h3 style="margin: 0; font-size: 24px; color: var(--accent-bright);">${totalGuests}</h3>
+      <p style="margin: 5px 0 0; font-size: 12px; color: var(--foreground-muted);">Total Guests</p>
+    </div>
+    <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+      <h3 style="margin: 0; font-size: 24px; color: var(--accent-bright);">${hotelMissing}</h3>
+      <p style="margin: 5px 0 0; font-size: 12px; color: var(--foreground-muted);">Missing Hotel Form</p>
+    </div>
+  `;
+  html += '</div>';
+  
+  // Search Bar
+  html += `
+    <div style="margin-bottom: 20px;">
+      <input type="text" id="admin-guest-search" placeholder="Search guests by name or email..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground);" onkeyup="filterAdminGuests(this.value)">
+    </div>
+    <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+  `;
+  
+  container.innerHTML = html;
+  filterAdminGuests("");
+}
+
+function filterAdminGuests(query) {
+  const listContainer = document.getElementById("admin-guest-list");
+  if (!listContainer || !adminData || !adminData.guests) return;
+  
+  const q = query.toLowerCase().trim();
+  const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
+  const firstNameIdx = headers.indexOf("שם פרטי");
+  const lastNameIdx = headers.indexOf("שם משפחה");
+  const emailIdx = headers.indexOf("מייל אורח");
+  
+  let html = "";
+  let count = 0;
+  
+  for (let i = 1; i < adminData.guests.length; i++) {
+    const row = adminData.guests[i];
+    const fname = String(row[firstNameIdx] || "");
+    const lname = String(row[lastNameIdx] || "");
+    const email = String(row[emailIdx] || "");
+    const fullName = fname + " " + lname;
+    
+    if (fullName.toLowerCase().includes(q) || email.toLowerCase().includes(q)) {
+      html += `
+        <div style="background: var(--surface); padding: 10px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
+          <div>
+            <div style="font-weight: 600;">${fullName}</div>
+            <div style="font-size: 12px; color: var(--foreground-muted);">${email}</div>
+          </div>
+          <button class="secondary" style="padding: 6px 12px; font-size: 12px;" onclick="viewAdminGuestDetails(${i})">View Details</button>
+        </div>
+      `;
+      count++;
+      if (count > 20) break; // limit to 20 for performance
+    }
+  }
+  
+  if (count === 0) {
+    html = '<p style="color: var(--foreground-muted); text-align: center;">No guests found.</p>';
+  }
+  
+  listContainer.innerHTML = html;
+}
+
+function viewAdminGuestDetails(rowIndex) {
+  alert("Guest Details (Coming Soon for row " + rowIndex + ")");
+}
