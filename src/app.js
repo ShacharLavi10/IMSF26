@@ -1552,7 +1552,7 @@ function renderAdminDashboard() {
     flightArrivals = adminData.flights.length > 1 ? adminData.flights.length - 1 : 0;
   }
 
-  html += \`
+  html += `
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px;">
       
       <!-- Alert Center -->
@@ -1589,7 +1589,7 @@ function renderAdminDashboard() {
       </div>
       
     </div>
-  \`;
+  `;
 
   // Search Bar & Guest List
   html += `
