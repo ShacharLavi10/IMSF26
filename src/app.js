@@ -1459,30 +1459,6 @@ window.openArtistSheet = openArtistSheet;
 let adminDataLoaded = false;
 let adminData = null;
 
-function loadAdminDashboard() {
-  if (adminDataLoaded) return;
-  
-  const container = document.getElementById("admin-dashboard-container");
-  container.innerHTML = '<div style="text-align:center; padding: 40px;"><div class="musical-loader"></div><p>Loading production data...</p></div>';
-  
-  const token = localStorage.getItem('guestSessionToken');
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (!res.success) {
-        container.innerHTML = '<p class="error-text">Failed to load admin data: ' + res.message + '</p>';
-        return;
-      }
-      adminData = res;
-      adminDataLoaded = true;
-      renderAdminDashboard();
-    })
-    .withFailureHandler(function(err) {
-      container.innerHTML = '<p class="error-text">Error: ' + err.toString() + '</p>';
-    })
-    .getAdminDashboardData(token);
-}
-
-
 function renderAdminDashboard() {
   const container = document.getElementById("admin-dashboard-container");
   if (!adminData || !adminData.guests) return;
