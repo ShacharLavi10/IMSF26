@@ -1763,7 +1763,7 @@ function viewAdminGuestDetails(rowIndex) {
     <div style="background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
       <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Actions</h4>
       <div style="display: flex; flex-direction: column; gap: 10px;">
-         <button class="secondary" style="width: 100%; justify-content: center;" onclick="alert('Impersonation mode coming soon!')">
+         <button class="secondary" style="width: 100%; justify-content: center;" onclick="impersonateGuest('${email}')">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
            View Portal as ${fname}
          </button>
@@ -1791,3 +1791,37 @@ window.sendAdminAlert = function() {
     document.getElementById('admin-alert-msg').value = '';
   }
 };
+
+
+window.impersonateGuest = function(targetEmail) {
+  if (!confirm('Are you sure you want to view the portal as ' + targetEmail + '?')) return;
+  const adminToken = localStorage.getItem('guestSessionToken');
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res.success) { alert('Error: ' + res.message); return; }
+      localStorage.setItem('originalAdminToken', adminToken);
+      localStorage.setItem('guestSessionToken', res.token);
+      window.location.reload();
+    })
+    .withFailureHandler(err => alert('Error: ' + err))
+    .impersonateGuest(adminToken, targetEmail);
+};
+
+window.returnToAdmin = function() {
+  const adminToken = localStorage.getItem('originalAdminToken');
+  if (adminToken) {
+    localStorage.setItem('guestSessionToken', adminToken);
+    localStorage.removeItem('originalAdminToken');
+    window.location.reload();
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('originalAdminToken')) {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: #dc2626; color: white; text-align: center; padding: 12px; z-index: 99999; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);';
+    banner.innerHTML = '🕵️‍♂️ VIEWING PORTAL AS GUEST &nbsp;&bull;&nbsp; <u style="margin-left: 10px;">Return to Admin</u>';
+    banner.onclick = window.returnToAdmin;
+    document.body.appendChild(banner);
+  }
+});
