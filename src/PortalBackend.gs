@@ -578,3 +578,69 @@ function getAdminDashboardData(sessionToken) {
     return { success: false, message: 'Server Error: ' + err.toString() };
   }
 }
+
+
+/**
+ * Send a global alert (Admin Only)
+ */
+function sendAdminAlert(sessionToken, message) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // 1. Verify Admin
+    const guestsSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    const data = guestsSheet.getDataRange().getValues();
+    
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(3, data.length); r++) {
+      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: "Headers not found" };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    
+    let isAdmin = false;
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      if (String(data[i][emailIdx]).trim().toLowerCase() === sessionRes.email) {
+        if (roleIdx !== -1 && String(data[i][roleIdx]).trim() === "הפקה חשיפה") {
+          isAdmin = true;
+        }
+        break;
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: "Unauthorized. Admin only." };
+    
+    // 2. Add message to 'מידע כללי' -> 'הודעה לכולם'
+    const infoSheet = ss.getSheetByName('מידע כללי');
+    if (!infoSheet) return { success: false, message: "'מידע כללי' sheet missing." };
+    
+    const infoData = infoSheet.getDataRange().getValues();
+    const infoHeaders = infoData[0].map(h => String(h).trim());
+    const msgIdx = infoHeaders.indexOf('הודעה לכולם');
+    if (msgIdx === -1) return { success: false, message: "Column not found." };
+    
+    let targetRow = infoData.length + 1;
+    for (let i = 1; i < infoData.length; i++) {
+      if (!String(infoData[i][msgIdx]).trim()) {
+        targetRow = i + 1;
+        break;
+      }
+    }
+    
+    infoSheet.getRange(targetRow, msgIdx + 1).setValue(message);
+    
+    return { success: true };
+    
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
