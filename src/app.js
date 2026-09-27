@@ -1519,6 +1519,78 @@ function renderAdminDashboard() {
     </div>
   `;
   
+  // -- ALERT CENTER & LOGISTICS --
+  let hotelJlmCount = 0;
+  let hotelTlvCount = 0;
+  let flightArrivals = 0;
+  
+  if (adminData.hotelJlm) {
+    const h = adminData.hotelJlm[0].map(x => String(x).trim().toLowerCase());
+    const nightCol = h.indexOf("סה\"כ לילות");
+    if (nightCol !== -1) {
+      for (let i = 1; i < adminData.hotelJlm.length; i++) {
+        hotelJlmCount += Number(adminData.hotelJlm[i][nightCol]) || 0;
+      }
+    } else {
+      hotelJlmCount = adminData.hotelJlm.length - 1;
+    }
+  }
+  
+  if (adminData.hotelTlv) {
+    const h = adminData.hotelTlv[0].map(x => String(x).trim().toLowerCase());
+    const nightCol = h.indexOf("סה\"כ לילות");
+    if (nightCol !== -1) {
+      for (let i = 1; i < adminData.hotelTlv.length; i++) {
+        hotelTlvCount += Number(adminData.hotelTlv[i][nightCol]) || 0;
+      }
+    } else {
+      hotelTlvCount = adminData.hotelTlv.length - 1;
+    }
+  }
+  
+  if (adminData.flights) {
+    flightArrivals = adminData.flights.length > 1 ? adminData.flights.length - 1 : 0;
+  }
+
+  html += \`
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px;">
+      
+      <!-- Alert Center -->
+      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+        <h3 style="margin: 0 0 15px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          Live Alert Center
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--foreground-muted); margin-bottom: 15px;">Send a push notification to all delegates. (Will appear in their updates bell).</p>
+        <textarea id="admin-alert-msg" placeholder="Type your announcement here..." style="width: 100%; height: 80px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); margin-bottom: 10px; resize: none; font-family: inherit;"></textarea>
+        <button class="primary" style="width: 100%; justify-content: center;" onclick="sendAdminAlert()">Send Global Alert</button>
+      </div>
+      
+      <!-- Logistics -->
+      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+        <h3 style="margin: 0 0 15px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          Logistics Summary
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+            <span style="color: var(--foreground-muted);">Tel Aviv Hotel</span>
+            <span style="font-weight: 600;">\${hotelTlvCount} Nights</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+            <span style="color: var(--foreground-muted);">Jerusalem Hotel</span>
+            <span style="font-weight: 600;">\${hotelJlmCount} Nights</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+            <span style="color: var(--foreground-muted);">Flights Handled</span>
+            <span style="font-weight: 600;">\${flightArrivals} Delegates</span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  \`;
+
   // Search Bar & Guest List
   html += `
     <h3 style="margin-top: 30px; margin-bottom: 15px; font-size: 1.2rem;">Guest Management</h3>
@@ -1708,3 +1780,14 @@ window.loadAdminDashboard = loadAdminDashboard;
 window.filterAdminGuests = filterAdminGuests;
 window.viewAdminGuestDetails = viewAdminGuestDetails;
 window.closeAdminModal = closeAdminModal;
+
+
+window.sendAdminAlert = function() {
+  const msg = document.getElementById('admin-alert-msg').value.trim();
+  if (!msg) { alert('Please type a message first.'); return; }
+  
+  if (confirm('Are you sure you want to send this alert to ALL delegates?')) {
+    alert('Backend endpoint for sending global alerts will be connected soon!\n\nMessage: ' + msg);
+    document.getElementById('admin-alert-msg').value = '';
+  }
+};
