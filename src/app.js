@@ -1491,7 +1491,7 @@ function renderAdminDashboard() {
   }
   
   let html = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
       <h3 style="margin:0; font-size: 1.5rem;">Production Overview</h3>
       <button class="primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="loadAdminDashboard(true)">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -1703,3 +1703,8 @@ function viewAdminGuestDetails(rowIndex) {
   document.getElementById('admin-modal-overlay').classList.add('show');
   document.getElementById('admin-bottom-sheet').classList.add('open');
 }
+
+window.loadAdminDashboard = loadAdminDashboard;
+window.filterAdminGuests = filterAdminGuests;
+window.viewAdminGuestDetails = viewAdminGuestDetails;
+window.closeAdminModal = closeAdminModal;
