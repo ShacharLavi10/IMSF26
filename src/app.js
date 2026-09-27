@@ -1482,45 +1482,110 @@ function loadAdminDashboard() {
     .getAdminDashboardData(token);
 }
 
+
 function renderAdminDashboard() {
   const container = document.getElementById("admin-dashboard-container");
-  if (!adminData || !adminData.dashboardStats) return;
+  if (!adminData || !adminData.guests) return;
   
-  // Find key stats from dashboardStats sheet
-  const stats = adminData.dashboardStats;
-  let html = '<div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">';
+  const guests = adminData.guests;
+  const headers = guests[0].map(h => String(h).trim().toLowerCase());
   
-  // Look for total guests (B3 usually)
-  let totalGuests = "-";
-  let hotelMissing = "-";
+  const hHotel = headers.indexOf("התקבל טופס אירוח?");
+  const hFlight = headers.indexOf("התקבל טופס טיסות?");
+  const hPassport = headers.indexOf("יש תמונת דרכון?");
+  const hRole = headers.indexOf("תפקיד");
   
-  try {
-     totalGuests = stats[2][1] || "-"; // Row 3 Col B (0-indexed: 2, 1)
-     hotelMissing = stats[5][1] || "-"; // Row 6 Col B
-  } catch(e) {}
+  let totalGuests = 0;
+  let missingHotel = 0;
+  let missingFlight = 0;
+  let missingPassport = 0;
   
-  html += `
-    <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-      <h3 style="margin: 0; font-size: 24px; color: var(--accent-bright);">${totalGuests}</h3>
-      <p style="margin: 5px 0 0; font-size: 12px; color: var(--foreground-muted);">Total Guests</p>
+  for (let i = 1; i < guests.length; i++) {
+    const row = guests[i];
+    if (!row[headers.indexOf("שם פרטי")] && !row[headers.indexOf("שם משפחה")]) continue; // Skip empty
+    
+    // Ignore admins
+    if (hRole !== -1 && String(row[hRole]).trim() === "הפקה חשיפה") continue;
+    
+    totalGuests++;
+    
+    if (hHotel !== -1 && row[hHotel] !== true && String(row[hHotel]).toLowerCase() !== 'true') missingHotel++;
+    if (hFlight !== -1 && row[hFlight] !== true && String(row[hFlight]).toLowerCase() !== 'true') missingFlight++;
+    if (hPassport !== -1 && row[hPassport] !== true && String(row[hPassport]).toLowerCase() !== 'true') missingPassport++;
+  }
+  
+  let html = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin:0; font-size: 1.5rem;">Production Overview</h3>
+      <button class="primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="loadAdminDashboard(true)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Refresh Data
+      </button>
     </div>
-    <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-      <h3 style="margin: 0; font-size: 24px; color: var(--accent-bright);">${hotelMissing}</h3>
-      <p style="margin: 5px 0 0; font-size: 12px; color: var(--foreground-muted);">Missing Hotel Form</p>
+    
+    <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 30px;">
+      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+        <h3 style="margin: 0; font-size: 28px; color: var(--accent-bright);">${totalGuests}</h3>
+        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Total Delegates</p>
+      </div>
+      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+        <h3 style="margin: 0; font-size: 28px; color: #f59e0b;">${missingHotel}</h3>
+        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Hotel Form</p>
+      </div>
+      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+        <h3 style="margin: 0; font-size: 28px; color: #ef4444;">${missingFlight}</h3>
+        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Flights</p>
+      </div>
+      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+        <h3 style="margin: 0; font-size: 28px; color: #8b5cf6;">${missingPassport}</h3>
+        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Passport</p>
+      </div>
     </div>
   `;
-  html += '</div>';
   
-  // Search Bar
+  // Search Bar & Guest List
   html += `
-    <div style="margin-bottom: 20px;">
-      <input type="text" id="admin-guest-search" placeholder="Search guests by name or email..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground);" onkeyup="filterAdminGuests(this.value)">
+    <h3 style="margin-top: 30px; margin-bottom: 15px; font-size: 1.2rem;">Guest Management</h3>
+    <div style="margin-bottom: 15px; position: relative;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 12px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" id="admin-guest-search" placeholder="Search by name, email, or company..." style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); font-size: 1rem;" onkeyup="filterAdminGuests(this.value)">
     </div>
-    <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
+    
+    <!-- Admin Modal (Hidden by default) -->
+    <div id="admin-modal-overlay" class="sheet-overlay" onclick="closeAdminModal()"></div>
+    <div id="admin-bottom-sheet" class="bottom-sheet">
+      <div class="sheet-handle" onclick="closeAdminModal()"></div>
+      <div class="sheet-content" id="admin-modal-content" style="padding-top: 10px;">
+      </div>
+    </div>
   `;
   
   container.innerHTML = html;
   filterAdminGuests("");
+}
+
+function loadAdminDashboard(forceRefresh = false) {
+  if (adminDataLoaded && !forceRefresh) return;
+  
+  const container = document.getElementById("admin-dashboard-container");
+  container.innerHTML = '<div style="text-align:center; padding: 40px;"><div class="musical-loader-wrapper" style="display:block;"><div class="musical-loader"><span class="music-note music-note-1">dYZ</span><span class="drummer-emoji">dY?</span><span class="music-note music-note-2">dYZ </span></div><p class="loader-text">Loading production data...</p></div></div>';
+  
+  const token = localStorage.getItem('guestSessionToken');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) {
+        container.innerHTML = '<p class="error-text">Failed to load admin data: ' + res.message + '</p>';
+        return;
+      }
+      adminData = res;
+      adminDataLoaded = true;
+      renderAdminDashboard();
+    })
+    .withFailureHandler(function(err) {
+      container.innerHTML = '<p class="error-text">Error: ' + err.toString() + '</p>';
+    })
+    .getAdminDashboardData(token);
 }
 
 function filterAdminGuests(query) {
@@ -1532,6 +1597,8 @@ function filterAdminGuests(query) {
   const firstNameIdx = headers.indexOf("שם פרטי");
   const lastNameIdx = headers.indexOf("שם משפחה");
   const emailIdx = headers.indexOf("מייל אורח");
+  const companyIdx = headers.indexOf("שם חברה");
+  const hHotel = headers.indexOf("התקבל טופס אירוח?");
   
   let html = "";
   let count = 0;
@@ -1541,30 +1608,122 @@ function filterAdminGuests(query) {
     const fname = String(row[firstNameIdx] || "");
     const lname = String(row[lastNameIdx] || "");
     const email = String(row[emailIdx] || "");
+    const company = String(row[companyIdx] || "");
+    if (!fname && !lname) continue;
+    
     const fullName = fname + " " + lname;
     
-    if (fullName.toLowerCase().includes(q) || email.toLowerCase().includes(q)) {
+    if (fullName.toLowerCase().includes(q) || email.toLowerCase().includes(q) || company.toLowerCase().includes(q)) {
+      
+      const hasHotel = hHotel !== -1 && (row[hHotel] === true || String(row[hHotel]).toLowerCase() === 'true');
+      const statusDot = hasHotel ? '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:6px;" title="All Good"></span>' : '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-right:6px;" title="Missing Forms"></span>';
+      
       html += `
-        <div style="background: var(--surface); padding: 10px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);">
-          <div>
-            <div style="font-weight: 600;">${fullName}</div>
-            <div style="font-size: 12px; color: var(--foreground-muted);">${email}</div>
+        <div style="background: var(--surface); padding: 12px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); cursor: pointer; transition: transform 0.2s;" onclick="viewAdminGuestDetails(${i})" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="flex-grow: 1; overflow: hidden;">
+            <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center;">${statusDot}${fullName}</div>
+            <div style="font-size: 12px; color: var(--foreground-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${company ? company + ' • ' : ''}${email}</div>
           </div>
-          <button class="secondary" style="padding: 6px 12px; font-size: 12px;" onclick="viewAdminGuestDetails(${i})">View Details</button>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--foreground-muted); margin-left: 10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </div>
       `;
       count++;
-      if (count > 20) break; // limit to 20 for performance
     }
   }
   
   if (count === 0) {
-    html = '<p style="color: var(--foreground-muted); text-align: center;">No guests found.</p>';
+    html = '<p style="color: var(--foreground-muted); text-align: center; padding: 20px;">No delegates match your search.</p>';
   }
   
   listContainer.innerHTML = html;
 }
 
+function closeAdminModal() {
+  document.getElementById('admin-bottom-sheet').classList.remove('open');
+  document.getElementById('admin-modal-overlay').classList.remove('show');
+}
+
 function viewAdminGuestDetails(rowIndex) {
-  alert("Guest Details (Coming Soon for row " + rowIndex + ")");
+  const row = adminData.guests[rowIndex];
+  const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
+  
+  const val = (colName) => {
+    const idx = headers.indexOf(colName.toLowerCase());
+    return idx !== -1 ? row[idx] : '';
+  };
+  
+  const fname = val("שם פרטי");
+  const lname = val("שם משפחה");
+  const fullName = fname + " " + lname;
+  const email = val("מייל אורח");
+  const phone = val("טלפון");
+  const company = val("שם חברה");
+  const role = val("תפקיד");
+  const country = val("מדינה");
+  
+  const hasHotel = val("התקבל טופס אירוח?") === true || String(val("התקבל טופס אירוח?")).toLowerCase() === 'true';
+  const hasFlight = val("התקבל טופס טיסות?") === true || String(val("התקבל טופס טיסות?")).toLowerCase() === 'true';
+  const hasPassport = val("יש תמונת דרכון?") === true || String(val("יש תמונת דרכון?")).toLowerCase() === 'true';
+  
+  let tagsHtml = '';
+  tagsHtml += hasHotel ? '<span class="status-tag success">Hotel ✓</span>' : '<span class="status-tag warning">Hotel ✗</span>';
+  tagsHtml += hasFlight ? '<span class="status-tag success">Flights ✓</span>' : '<span class="status-tag warning">Flights ✗</span>';
+  tagsHtml += hasPassport ? '<span class="status-tag success">Passport ✓</span>' : '<span class="status-tag danger">Passport ✗</span>';
+
+  let waBtn = '';
+  if (phone) {
+    let cleanPhone = String(phone).replace(/\D/g, '');
+    waBtn = `<a href="https://wa.me/${cleanPhone}" target="_blank" class="wa-btn" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #25D366; color: white; padding: 10px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Message on WhatsApp
+    </a>`;
+  }
+
+  const html = `
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+      <div>
+        <h2 style="margin: 0; font-size: 1.4rem;">${fullName}</h2>
+        <div style="color: var(--accent-bright); font-weight: 500; font-size: 0.95rem;">${role ? role + ' @ ' : ''}${company}</div>
+        <div style="color: var(--foreground-muted); font-size: 0.85rem; margin-top: 2px;">${country}</div>
+      </div>
+      <button class="sheet-close-btn" onclick="closeAdminModal()" style="background:var(--surface); border:1px solid var(--border); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--foreground);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+      ${tagsHtml}
+    </div>
+    
+    <div style="background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
+      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Contact Info</h4>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-bright);"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <a href="mailto:${email}" style="color: var(--foreground); text-decoration: none;">${email}</a>
+        </div>
+        ${phone ? `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-bright);"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          <a href="tel:${phone}" style="color: var(--foreground); text-decoration: none;">${phone}</a>
+        </div>
+        ` : ''}
+      </div>
+      ${waBtn}
+    </div>
+    
+    <div style="background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Actions</h4>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+         <button class="secondary" style="width: 100%; justify-content: center;" onclick="alert('Impersonation mode coming soon!')">
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+           View Portal as ${fname}
+         </button>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('admin-modal-content').innerHTML = html;
+  document.getElementById('admin-modal-overlay').classList.add('show');
+  document.getElementById('admin-bottom-sheet').classList.add('open');
 }
