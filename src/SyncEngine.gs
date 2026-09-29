@@ -267,7 +267,7 @@ function syncAnatSheetWithMasterOrder() {
       }
     }
     if (emailBackgrounds.length > 0) {
-      targetSheet.getRange(startDataRowIdx + 1, emailColIndex + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
+      targetSheet.getRange(startDataRowIdx + 1, targetEmailColIdx + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
     }
   } catch (err) {
     Logger.log("Error syncing Anat sheet order: " + err.toString());
