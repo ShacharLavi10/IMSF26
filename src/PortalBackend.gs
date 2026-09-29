@@ -218,6 +218,7 @@ function getGuestPortalData(sessionToken) {
                        checklist.hasPhoto && 
                        !checklist.generalMissing;
                        
+    const isAdmin = String(getColVal("תפקיד") || "").trim() === "הפקה חשיפה";
     const firstName = String(getColVal(CONFIG.FIRST_NAME_COL) || "");
     const lastName = String(getColVal(CONFIG.LAST_NAME_COL) || "");
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
@@ -231,7 +232,7 @@ function getGuestPortalData(sessionToken) {
     
     return {
       success: true,
-      guestInfo: { email: cleanEmail, firstName: firstName, lastName: lastName, rowIndex: rowIndex, bio: bioText },
+      guestInfo: { email: cleanEmail, firstName: firstName, lastName: lastName, rowIndex: rowIndex, bio: bioText, isAdmin: isAdmin },
       checklist: checklist,
       forms: CONFIG.FORMS,
       isComplete: isComplete,
@@ -327,7 +328,7 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
         }
         guestObj[item.label] = String(val !== undefined && val !== null ? val : "");
       });
-      if (guestObj["First Name"] || guestObj["Last Name"]) guestsList.push(guestObj);
+      if (guestObj["Role / Title"] !== "הפקה חשיפה" && (guestObj["First Name"] || guestObj["Last Name"])) guestsList.push(guestObj);
     }
     return guestsList;
   } catch (e) {
@@ -518,4 +519,181 @@ function getDebugChecklist(email) {
     fallbackSchedule1: getColVal("אישור לו\"ז"),
     fallbackSchedule2: getColVal("אישור לוז")
   };
+}
+
+function getAdminDashboardData(sessionToken) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const cleanEmail = sessionRes.email;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: 'Master sheet not found.' };
+    
+    const masterData = masterSheet.getDataRange().getValues();
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(3, masterData.length); r++) {
+      if (masterData[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: 'Header not found.' };
+    
+    const headers = masterData[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    
+    let isAdmin = false;
+    for (let i = headerRowIdx + 1; i < masterData.length; i++) {
+      if (masterData[i][emailIdx] && String(masterData[i][emailIdx]).trim().toLowerCase() === cleanEmail) {
+        if (roleIdx !== -1 && String(masterData[i][roleIdx]).trim() === "הפקה חשיפה") {
+          isAdmin = true;
+        }
+        break;
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: 'Unauthorized. Admins only.' };
+    
+    // Fetch full data for admin
+    const getSheetData = (sheetName) => {
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return null;
+      const data = sheet.getDataRange().getValues();
+      return data.map(row => row.map(cell => (cell instanceof Date) ? Utilities.formatDate(cell, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm') : cell));
+    };
+    
+    return {
+      success: true,
+      guests: getSheetData(CONFIG.MASTER_SHEET),
+      flights: getSheetData(CONFIG.FLIGHTS_SHEET),
+      hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
+      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
+      infoSheet: getSheetData('מידע כללי'),
+      dashboardStats: getSheetData('דשבורד הפקה')
+    };
+  } catch (err) {
+    return { success: false, message: 'Server Error: ' + err.toString() };
+  }
+}
+
+
+/**
+ * Send a global alert (Admin Only)
+ */
+function sendAdminAlert(sessionToken, message) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    // 1. Verify Admin
+    const guestsSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    const data = guestsSheet.getDataRange().getValues();
+    
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(3, data.length); r++) {
+      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: "Headers not found" };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    
+    let isAdmin = false;
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      if (String(data[i][emailIdx]).trim().toLowerCase() === sessionRes.email) {
+        if (roleIdx !== -1 && String(data[i][roleIdx]).trim() === "הפקה חשיפה") {
+          isAdmin = true;
+        }
+        break;
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: "Unauthorized. Admin only." };
+    
+    // 2. Add message to 'מידע כללי' -> 'הודעה לכולם'
+    const infoSheet = ss.getSheetByName('מידע כללי');
+    if (!infoSheet) return { success: false, message: "'מידע כללי' sheet missing." };
+    
+    const infoData = infoSheet.getDataRange().getValues();
+    const infoHeaders = infoData[0].map(h => String(h).trim());
+    const msgIdx = infoHeaders.indexOf('הודעה לכולם');
+    if (msgIdx === -1) return { success: false, message: "Column not found." };
+    
+    let targetRow = infoData.length + 1;
+    for (let i = 1; i < infoData.length; i++) {
+      if (!String(infoData[i][msgIdx]).trim()) {
+        targetRow = i + 1;
+        break;
+      }
+    }
+    
+    infoSheet.getRange(targetRow, msgIdx + 1).setValue(message);
+    
+    return { success: true };
+    
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+
+/**
+ * Impersonate Guest (Admin Only)
+ */
+function impersonateGuest(sessionToken, targetEmail) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const guestsSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    const data = guestsSheet.getDataRange().getValues();
+    
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(3, data.length); r++) {
+      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: "Headers not found" };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    
+    let isAdmin = false;
+    let targetExists = false;
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      const rowEmail = String(data[i][emailIdx]).trim().toLowerCase();
+      if (rowEmail === sessionRes.email) {
+        if (roleIdx !== -1 && String(data[i][roleIdx]).trim() === "הפקה חשיפה") isAdmin = true;
+      }
+      if (rowEmail === targetEmail.trim().toLowerCase()) {
+        targetExists = true;
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: "Unauthorized. Admin only." };
+    if (!targetExists) return { success: false, message: "Guest not found." };
+    
+    // Generate a valid token for targetEmail
+    const fakeToken = Utilities.base64Encode(targetEmail.trim().toLowerCase() + "|||" + new Date().getTime());
+    // Save to Cache so validateSession works
+    CacheService.getScriptCache().put("SESSION_" + fakeToken, targetEmail.trim().toLowerCase(), 21600);
+    
+    return { success: true, token: fakeToken };
+    
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
 }

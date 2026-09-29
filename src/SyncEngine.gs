@@ -76,13 +76,14 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
   const combinedRows = [];
   for (let r = startDataRowIdx; r < values.length; r++) {
     const emailVal = values[r][emailColIndex] ? values[r][emailColIndex].toString().trim().toLowerCase() : "";
-    if (emailVal !== "" && !masterEmailOrder.includes(emailVal)) continue;
+    const isDeleted = (emailVal !== "" && !masterEmailOrder.includes(emailVal));
 
     const rowObj = [];
     for (let c = 0; c < lastCol; c++) {
       rowObj.push({ val: values[r][c], form: formulas[r][c], oldRow: r + 1 });
     }
-    combinedRows.push(rowObj);
+    rowObj.isDeleted = isDeleted;
+      combinedRows.push(rowObj);
   }
   
   const existingTargetEmails = combinedRows.map(row => row[emailColIndex].val ? row[emailColIndex].val.toString().trim().toLowerCase() : "");
@@ -105,10 +106,12 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
   });
   
   const finalValues = values.slice(0, startDataRowIdx);
-  const finalFormulas = formulas.slice(0, startDataRowIdx);
-  
-  combinedRows.forEach((row, idx) => {
-    const rowVal = []; const rowForm = [];
+    const finalFormulas = formulas.slice(0, startDataRowIdx);
+    const emailBackgrounds = [];
+
+    combinedRows.forEach((row, idx) => {
+      emailBackgrounds.push([row.isDeleted ? "#ffcccc" : null]);
+      const rowVal = []; const rowForm = [];
     const currentRowNum = idx + startDataRowIdx + 1;
     row.forEach((cell, cIdx) => {
       let fStr = cell.form;
@@ -132,9 +135,12 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder) {
   for (let r = startDataRowIdx; r < finalFormulas.length; r++) {
     for (let c = 0; c < lastCol; c++) {
       if (finalFormulas[r][c] !== "") targetSheet.getRange(r + 1, c + 1).setFormula(finalFormulas[r][c]);
+      }
+    }
+    if (emailBackgrounds.length > 0) {
+      targetSheet.getRange(startDataRowIdx + 1, emailColIndex + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
     }
   }
-}
 
 function syncAnatSheetWithMasterOrder() {
   if (!CONFIG.ANAT_SPREADSHEET_ID || CONFIG.ANAT_SPREADSHEET_ID === "YOUR_ANAT_SPREADSHEET_ID_HERE") return;
@@ -196,12 +202,13 @@ function syncAnatSheetWithMasterOrder() {
     const combinedRows = [];
     for (let r = startDataRowIdx; r < values.length; r++) {
       const emailVal = values[r][targetEmailColIdx] ? values[r][targetEmailColIdx].toString().trim().toLowerCase() : "";
-      if (emailVal !== "" && !masterEmailOrder.includes(emailVal)) continue;
+      const isDeleted = (emailVal !== "" && !masterEmailOrder.includes(emailVal));
 
       const rowObj = [];
       for (let c = 0; c < lastCol; c++) {
         rowObj.push({ val: values[r][c], form: formulas[r][c], oldRow: r + 1 });
       }
+      rowObj.isDeleted = isDeleted;
       combinedRows.push(rowObj);
     }
 
@@ -229,8 +236,10 @@ function syncAnatSheetWithMasterOrder() {
 
     const finalValues = values.slice(0, startDataRowIdx);
     const finalFormulas = formulas.slice(0, startDataRowIdx);
+    const emailBackgrounds = [];
 
     combinedRows.forEach((row, idx) => {
+      emailBackgrounds.push([row.isDeleted ? "#ffcccc" : null]);
       const rowVal = []; const rowForm = [];
       const currentRowNum = idx + startDataRowIdx + 1;
       row.forEach((cell, cIdx) => {
@@ -256,6 +265,9 @@ function syncAnatSheetWithMasterOrder() {
       for (let c = 0; c < lastCol; c++) {
         if (finalFormulas[r][c] !== "") targetSheet.getRange(r + 1, c + 1).setFormula(finalFormulas[r][c]);
       }
+    }
+    if (emailBackgrounds.length > 0) {
+      targetSheet.getRange(startDataRowIdx + 1, emailColIndex + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
     }
   } catch (err) {
     Logger.log("Error syncing Anat sheet order: " + err.toString());
