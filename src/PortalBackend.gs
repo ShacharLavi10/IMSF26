@@ -644,3 +644,56 @@ function sendAdminAlert(sessionToken, message) {
     return { success: false, message: e.toString() };
   }
 }
+
+
+/**
+ * Impersonate Guest (Admin Only)
+ */
+function impersonateGuest(sessionToken, targetEmail) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const guestsSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    const data = guestsSheet.getDataRange().getValues();
+    
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(3, data.length); r++) {
+      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: "Headers not found" };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    
+    let isAdmin = false;
+    let targetExists = false;
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      const rowEmail = String(data[i][emailIdx]).trim().toLowerCase();
+      if (rowEmail === sessionRes.email) {
+        if (roleIdx !== -1 && String(data[i][roleIdx]).trim() === "הפקה חשיפה") isAdmin = true;
+      }
+      if (rowEmail === targetEmail.trim().toLowerCase()) {
+        targetExists = true;
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: "Unauthorized. Admin only." };
+    if (!targetExists) return { success: false, message: "Guest not found." };
+    
+    // Generate a valid token for targetEmail
+    const fakeToken = Utilities.base64Encode(targetEmail.trim().toLowerCase() + "|||" + new Date().getTime());
+    // Save to Cache so validateSession works
+    CacheService.getScriptCache().put("SESSION_" + fakeToken, targetEmail.trim().toLowerCase(), 21600);
+    
+    return { success: true, token: fakeToken };
+    
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
