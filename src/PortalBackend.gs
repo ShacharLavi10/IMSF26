@@ -226,9 +226,21 @@ function getGuestPortalData(sessionToken) {
     const flightsData = fetchMappedData(ss.getSheetByName(CONFIG.FLIGHTS_SHEET), cleanEmail, MAPPINGS.FLIGHTS);
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const hotelTelAvivData = fetchMappedData(ss.getSheetByName(CONFIG.TELAVIV_SHEET), cleanEmail, MAPPINGS.HOTELS);
-    const allGuestsDirectory = fetchAllGuestsDirectory(masterData, MAPPINGS.GUESTS_DIRECTORY);
-      const scheduleRes = getScheduleData(isAdmin);
-      const scheduleData = scheduleRes.success ? scheduleRes.schedule : null;
+    let allGuestsDirectory = null;
+    const dirCacheKey = 'global_guests_directory';
+    const cachedDir = CacheService.getScriptCache().get(dirCacheKey);
+    
+    if (cachedDir && !isAdmin) {
+      allGuestsDirectory = JSON.parse(cachedDir);
+    } else {
+      allGuestsDirectory = fetchAllGuestsDirectory(masterData, MAPPINGS.GUESTS_DIRECTORY);
+      try {
+        CacheService.getScriptCache().put(dirCacheKey, JSON.stringify(allGuestsDirectory), 300);
+      } catch(e) {}
+    }
+    
+    const scheduleRes = getScheduleData(isAdmin);
+    const scheduleData = scheduleRes.success ? scheduleRes.schedule : null;
     
     return {
       success: true,
