@@ -227,7 +227,7 @@ function getGuestPortalData(sessionToken) {
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const hotelTelAvivData = fetchMappedData(ss.getSheetByName(CONFIG.TELAVIV_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const allGuestsDirectory = fetchAllGuestsDirectory(masterData, MAPPINGS.GUESTS_DIRECTORY);
-      const scheduleRes = getScheduleData();
+      const scheduleRes = getScheduleData(isAdmin);
       const scheduleData = scheduleRes.success ? scheduleRes.schedule : null;
     
     return {
@@ -339,8 +339,18 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
 /**
  * Fetch and group the Daily Schedule
  */
-function getScheduleData() {
+function getScheduleData(forceRefresh) {
   try {
+    const cache = CacheService.getScriptCache();
+    const cacheKey = 'global_schedule_data';
+    
+    if (!forceRefresh) {
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return { success: true, schedule: JSON.parse(cached) };
+      }
+    }
+
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName('לו"ז פסטיבל');
     if (!sheet) return { success: false, message: 'Schedule sheet not found' };
@@ -392,6 +402,13 @@ function getScheduleData() {
         scheduleByDate[dateStr] = [];
       }
       scheduleByDate[dateStr].push(event);
+    }
+    
+    try {
+      // Store in cache for 1 minute (60 seconds)
+      cache.put(cacheKey, JSON.stringify(scheduleByDate), 60);
+    } catch (e) {
+      // Ignore cache limit errors
     }
     
     return { success: true, schedule: scheduleByDate };

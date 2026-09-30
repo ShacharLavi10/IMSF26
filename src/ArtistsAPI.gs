@@ -1,5 +1,15 @@
-function getArtistsData() {
+function getArtistsData(forceRefresh) {
   try {
+    const cache = CacheService.getScriptCache();
+    const cacheKey = 'global_artists_data';
+    
+    if (!forceRefresh) {
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return { success: true, artists: JSON.parse(cached) };
+      }
+    }
+
     const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
     if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
     
@@ -60,6 +70,13 @@ function getArtistsData() {
       if (yt2) artist.socialLinks.push({ label: "YouTube 2", url: yt2 });
       
       artists.push(artist);
+    }
+    
+    try {
+      // Store in cache for 5 minutes (300 seconds)
+      cache.put(cacheKey, JSON.stringify(artists), 300);
+    } catch (e) {
+      // Ignore cache limit errors if data is too large
     }
     
     return { success: true, artists: artists };

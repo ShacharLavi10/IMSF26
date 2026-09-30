@@ -9,11 +9,29 @@ let currentGuestEmail = "";
     function checkSessionOnLoad() {
       const token = localStorage.getItem('guestSessionToken');
       if (token) {
-        document.getElementById("login-loader").style.display = "block";
         document.getElementById("email-step").style.display = "none";
+        
+        const cached = localStorage.getItem('swr_portalData_' + token);
+        if (cached) {
+          try {
+            onLoginSuccess(JSON.parse(cached), true);
+          } catch(e) {
+            document.getElementById("login-loader").style.display = "block";
+          }
+        } else {
+          document.getElementById("login-loader").style.display = "block";
+        }
+        
         google.script.run
-          .withSuccessHandler(onLoginSuccess)
-          .withFailureHandler(onLoginFailure)
+          .withSuccessHandler(function(res) {
+            if (res && res.success) {
+              localStorage.setItem('swr_portalData_' + token, JSON.stringify(res));
+            }
+            onLoginSuccess(res, false);
+          })
+          .withFailureHandler(function(err) {
+            if (!cached) onLoginFailure(err);
+          })
           .getGuestPortalData(token);
       }
     }
@@ -118,7 +136,10 @@ let currentGuestEmail = "";
           google.script.run
             .withSuccessHandler(function(res) {
               if (verifyBtn) verifyBtn.disabled = false;
-              onLoginSuccess(res);
+              if (res && res.success) {
+                localStorage.setItem('swr_portalData_' + response.token, JSON.stringify(res));
+              }
+              onLoginSuccess(res, false);
             })
             .withFailureHandler(function(err) {
               if (verifyBtn) verifyBtn.disabled = false;
@@ -142,8 +163,10 @@ let currentGuestEmail = "";
       document.getElementById("login-error").style.display = "none";
     }
 
-    function onLoginSuccess(response) {
-      console.log("onLoginSuccess reached. Response:", response);
+    function onLoginSuccess(response, isFromCache = false) {
+      if (!isFromCache) console.log("Fresh data loaded from server.");
+      else console.log("Loaded from cache instantly.");
+      
       document.getElementById("login-loader").style.display = "none";
       if (!response.success) {
         const errorDiv = document.getElementById("login-error");
@@ -152,6 +175,7 @@ let currentGuestEmail = "";
         
         if (response.sessionExpired) {
           localStorage.removeItem('guestSessionToken');
+          localStorage.removeItem('swr_portalData_' + localStorage.getItem('guestSessionToken'));
           resetLogin();
         }
         
@@ -1141,30 +1165,38 @@ let currentGuestEmail = "";
 
     function fetchArtistsData() {
       const grid = document.getElementById('artists-grid');
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0;">
-        <div class="musical-loader-wrapper" style="display: flex; margin: 0 auto; flex-direction: column;">
-          <div class="musical-loader">
-            <span class="music-note music-note-1">🎵</span>
-            <span class="drummer-emoji">🥁</span>
-            <span class="music-note music-note-2">🎶</span>
+      
+      const cached = localStorage.getItem('swr_artistsData');
+      if (cached) {
+        try {
+          globalArtistsData = JSON.parse(cached).sort((a, b) => a.name.localeCompare(b.name));
+          initArtistsUI();
+        } catch(e) {}
+      } else {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0;">
+          <div class="musical-loader-wrapper" style="display: flex; margin: 0 auto; flex-direction: column;">
+            <div class="musical-loader">
+              <span class="music-note music-note-1">🎵</span>
+              <span class="drummer-emoji">🥁</span>
+              <span class="music-note music-note-2">🎶</span>
+            </div>
+            <p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p>
           </div>
-          <p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p>
-        </div>
-      </div>`;
+        </div>`;
+      }
       
       google.script.run
         .withSuccessHandler(function(res) {
           if (res.success && res.artists) {
+            localStorage.setItem('swr_artistsData', JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           } else {
-            console.error("Artists fetch returned success:false. Message:", res.message);
-            grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
+            if (!cached) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
           }
         })
         .withFailureHandler(function(err) {
-          console.error("Artists fetch failed:", err);
-          grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
+          if (!cached) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
         })
         .getArtistsData();
     }
