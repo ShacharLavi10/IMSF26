@@ -1719,8 +1719,9 @@ function filterAdminGuests(query) {
 }
 
 function closeAdminModal() {
-  document.getElementById('admin-bottom-sheet').classList.remove('open');
-  document.getElementById('admin-modal-overlay').classList.remove('show');
+  document.getElementById('admin-bottom-sheet').classList.remove('active');
+  document.getElementById('admin-modal-overlay').classList.remove('active');
+  document.body.style.overflow = '';
 }
 
 function viewAdminGuestDetails(rowIndex) {
@@ -1804,8 +1805,9 @@ function viewAdminGuestDetails(rowIndex) {
   `;
   
   document.getElementById('admin-modal-content').innerHTML = html;
-  document.getElementById('admin-modal-overlay').classList.add('show');
-  document.getElementById('admin-bottom-sheet').classList.add('open');
+  document.getElementById('admin-modal-overlay').classList.add('active');
+  document.getElementById('admin-bottom-sheet').classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 window.loadAdminDashboard = loadAdminDashboard;
