@@ -1741,14 +1741,16 @@ function viewAdminGuestDetails(rowIndex) {
   const company = val("שם חברה");
   const role = val("תפקיד");
   const country = val("מדינה");
+  const personalMsg = val("הודעה אישית בפורטל");
+  const prodNotes = val("הערות");
   
   const hasHotel = val("התקבל טופס אירוח?") === true || String(val("התקבל טופס אירוח?")).toLowerCase() === 'true';
   const hasFlight = val("התקבל טופס טיסות?") === true || String(val("התקבל טופס טיסות?")).toLowerCase() === 'true';
   const hasPassport = val("יש תמונת דרכון?") === true || String(val("יש תמונת דרכון?")).toLowerCase() === 'true';
   
   let tagsHtml = '';
-  tagsHtml += hasHotel ? '<span class="status-tag success">Hotel ✓</span>' : '<span class="status-tag warning">Hotel ✗</span>';
-  tagsHtml += hasFlight ? '<span class="status-tag success">Flights ✓</span>' : '<span class="status-tag warning">Flights ✗</span>';
+  tagsHtml += hasHotel ? '<span class="status-tag success" style="margin-right:6px;">Hotel ✓</span>' : '<span class="status-tag danger" style="margin-right:6px;">Hotel ✗</span>';
+  tagsHtml += hasFlight ? '<span class="status-tag success" style="margin-right:6px;">Flights ✓</span>' : '<span class="status-tag danger" style="margin-right:6px;">Flights ✗</span>';
   tagsHtml += hasPassport ? '<span class="status-tag success">Passport ✓</span>' : '<span class="status-tag danger">Passport ✗</span>';
 
   let waBtn = '';
@@ -1759,6 +1761,72 @@ function viewAdminGuestDetails(rowIndex) {
       Message on WhatsApp
     </a>`;
   }
+
+  // Fetch linked data
+  const getRowByEmail = (sheetData) => {
+    if (!sheetData || sheetData.length < 2) return null;
+    const h = sheetData[0].map(x => String(x).trim().toLowerCase());
+    const eIdx = h.indexOf("מייל אורח");
+    if (eIdx === -1) return null;
+    const lowerEmail = email.toLowerCase();
+    for (let i = 1; i < sheetData.length; i++) {
+      if (String(sheetData[i][eIdx]).trim().toLowerCase() === lowerEmail) {
+        const obj = {};
+        h.forEach((key, idx) => { obj[key] = sheetData[i][idx]; });
+        return obj;
+      }
+    }
+    return null;
+  };
+
+  const fData = getRowByEmail(adminData.flights);
+  const hjData = getRowByEmail(adminData.hotelJlm);
+  const htData = getRowByEmail(adminData.hotelTlv);
+
+  // Flight HTML
+  let flightHtml = '<p style="color:var(--foreground-muted); font-size:0.9rem;">No flight info</p>';
+  if (fData) {
+    flightHtml = `
+      <div style="font-size:0.9rem; margin-bottom: 8px;">
+        <div style="margin-bottom: 4px;"><b>In:</b> ${fData['הגעה לישראל'] || '?'} ✈️ ${fData['יעד הגעה'] || '?'}</div>
+        <div style="margin-bottom: 4px;"><b>Out:</b> ${fData['חזרה מישראל'] || '?'} ✈️ ${fData['יעד חזרה'] || '?'}</div>
+        ${fData['הערות טיסות'] ? `<div style="margin-top:4px; color:var(--accent-bright);">Notes: ${fData['הערות טיסות']}</div>` : ''}
+        ${fData['לינק כרטיס סופי'] ? `<a href="${fData['לינק כרטיס סופי']}" target="_blank" style="color:var(--accent); text-decoration:underline; display:inline-block; margin-top:4px;">View E-Ticket</a>` : ''}
+      </div>
+    `;
+  }
+
+  // Hotel HTML
+  const formatHotel = (data, title) => {
+    if (!data) return '';
+    const checkin = data['תאריך הגעה'] || '';
+    const checkout = data['תאריך יציאה'] || '';
+    if (!checkin && !checkout) return '';
+    
+    // Find money columns
+    let moneyText = '';
+    Object.keys(data).forEach(k => {
+      if ((k.includes('תשלום') || k.includes('אורח') || k.includes('כסף') || k.includes('חיוב')) && data[k]) {
+        if (!k.includes('מייל') && !k.includes('שם') && !k.includes('תאריך')) {
+          moneyText += `<div style="margin-bottom: 4px;"><b>${k}:</b> <span style="color:#ef4444; font-weight:bold;">${data[k]}</span></div>`;
+        }
+      }
+    });
+
+    return `
+      <div style="font-size:0.9rem; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+        <strong style="color:var(--foreground); display:block; margin-bottom: 4px;">${title}</strong>
+        <div style="margin-bottom: 4px;"><b>In:</b> ${checkin} | <b>Out:</b> ${checkout}</div>
+        <div style="margin-bottom: 4px;"><b>Room:</b> ${data['סוג חדר'] || '?'}</div>
+        ${data['צריך הזמנה לויזה?'] ? `<div style="margin-bottom: 4px;"><b>Visa Required:</b> ${data['צריך הזמנה לויזה?']}</div>` : ''}
+        ${data['הערות'] ? `<div style="color:var(--accent-bright); margin-bottom: 4px;">Notes: ${data['הערות']}</div>` : ''}
+        ${moneyText}
+      </div>
+    `;
+  };
+
+  const formattedHotels = formatHotel(hjData, 'Jerusalem Hotel') + formatHotel(htData, 'Tel Aviv Hotel');
+  const hotelHtml = formattedHotels || '<p style="color:var(--foreground-muted); font-size:0.9rem;">No hotel info</p>';
 
   const html = `
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
@@ -1772,10 +1840,37 @@ function viewAdminGuestDetails(rowIndex) {
       </button>
     </div>
     
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+    <div style="margin-bottom: 20px;">
       ${tagsHtml}
     </div>
+
+    <!-- Personal Message -->
+    <div style="background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
+      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Personal Portal Message</h4>
+      <textarea id="admin-personal-msg" rows="2" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--background); color:var(--foreground); font-family:inherit; resize:vertical; margin-bottom:8px;" placeholder="Message shown to guest...">${personalMsg}</textarea>
+      <button class="primary" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; width:auto;" onclick="savePersonalMessage('${email}')">Save Message</button>
+      <div id="admin-msg-status" style="font-size:0.8rem; margin-top:4px; display:none;"></div>
+    </div>
     
+    <!-- Flights & Hotels -->
+    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
+      <div style="background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">✈️ Flights</h4>
+        ${flightHtml}
+      </div>
+      <div style="background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">🏨 Accommodations</h4>
+        ${hotelHtml}
+      </div>
+    </div>
+
+    <!-- Production Notes -->
+    <div style="background: #fef9c3; color: #854d0e; padding: 15px; border-radius: 8px; border: 1px solid #fde047; margin-bottom: 20px;">
+      <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Internal Notes</h4>
+      <p style="margin:0; font-size: 0.9rem; white-space: pre-wrap;">${prodNotes || 'No internal notes.'}</p>
+    </div>
+    
+    <!-- Contact Info -->
     <div style="background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
       <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Contact Info</h4>
       <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1808,6 +1903,45 @@ function viewAdminGuestDetails(rowIndex) {
   document.getElementById('admin-modal-overlay').classList.add('active');
   document.getElementById('admin-bottom-sheet').classList.add('active');
   document.body.style.overflow = 'hidden';
+}
+
+window.savePersonalMessage = function(guestEmail) {
+  const msg = document.getElementById('admin-personal-msg').value;
+  const statusDiv = document.getElementById('admin-msg-status');
+  statusDiv.style.display = 'block';
+  statusDiv.style.color = 'var(--foreground-muted)';
+  statusDiv.innerText = 'Saving...';
+  
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.success) {
+        statusDiv.style.color = '#10b981';
+        statusDiv.innerText = 'Message saved!';
+        
+        // Update local adminData cache
+        const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
+        const emailIdx = headers.indexOf("מייל אורח");
+        const msgIdx = headers.indexOf("הודעה אישית בפורטל");
+        if (emailIdx !== -1 && msgIdx !== -1) {
+          for (let i = 1; i < adminData.guests.length; i++) {
+            if (String(adminData.guests[i][emailIdx]).trim().toLowerCase() === guestEmail.toLowerCase()) {
+              adminData.guests[i][msgIdx] = msg;
+              break;
+            }
+          }
+        }
+      } else {
+        statusDiv.style.color = '#ef4444';
+        statusDiv.innerText = 'Error: ' + res.message;
+      }
+      setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    })
+    .withFailureHandler(err => {
+      statusDiv.style.color = '#ef4444';
+      statusDiv.innerText = 'Error: ' + err;
+      setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    })
+    .updatePersonalMessage(localStorage.getItem('guestSessionToken'), guestEmail, msg);
 }
 
 window.loadAdminDashboard = loadAdminDashboard;
