@@ -45,24 +45,17 @@ function triggerFlightParsing(e) {
   const col = range.getColumn();
   const row = range.getRow();
   
-  // Let's assume column O (15) is the Checkbox for "פענוח אוטומטי"
-  const PARSE_CHECKBOX_COL = 15; // O
-  const TICKET_LINK_COL = 13; // M
+  const TICKET_LINK_COL = 13; // עמודה M - לינק כרטיס סופי
+  const value = String(range.getValue()).trim();
   
-  if (col === PARSE_CHECKBOX_COL && range.getValue() === true) {
-    const ticketLink = sheet.getRange(row, TICKET_LINK_COL).getValue();
+  // אם העריכה קרתה בעמודת הלינק, ויש שם לינק לדרייב
+  if (col === TICKET_LINK_COL && value.includes("drive.google.com")) {
     
-    if (!ticketLink) {
-      SpreadsheetApp.getActiveSpreadsheet().toast("חסר לינק לכרטיס הטיסה", "שגיאה", 5);
-      range.setValue(false);
-      return;
-    }
-    
-    SpreadsheetApp.getActiveSpreadsheet().toast("מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
+    SpreadsheetApp.getActiveSpreadsheet().toast("מזהה לינק חדש! מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
     
     try {
-      const fileId = extractDriveId(ticketLink);
-      if (!fileId) throw new Error("לא זוהה לינק תקין של Google Drive");
+      const fileId = extractDriveId(value);
+      if (!fileId) throw new Error("לא זוהה מזהה קובץ תקין מתוך הלינק של גוגל דרייב");
       
       const file = DriveApp.getFileById(fileId);
       const mimeType = file.getMimeType();
@@ -71,7 +64,7 @@ function triggerFlightParsing(e) {
       if (mimeType === MimeType.PDF || mimeType.startsWith("image/")) {
         base64Data = Utilities.base64Encode(file.getBlob().getBytes());
       } else {
-        throw new Error("הקובץ חייב להיות PDF או תמונה");
+        throw new Error("הקובץ חייב להיות מסוג PDF או תמונה");
       }
       
       const extractedData = callGeminiAPI(base64Data, mimeType);
@@ -90,15 +83,13 @@ function triggerFlightParsing(e) {
         sheet.getRange(row, 10).setValue(extractedData.departureFlight || "");
         sheet.getRange(row, 11).setValue(extractedData.departureAirline || "");
         
-        SpreadsheetApp.getActiveSpreadsheet().toast("הפענוח הושלם בהצלחה!", "הצלחה", 5);
-        range.setValue(false); // Uncheck the box
+        SpreadsheetApp.getActiveSpreadsheet().toast("הפענוח הושלם בהצלחה והשורה עודכנה!", "הצלחה", 5);
       } else {
-        throw new Error("לא הצלחתי לזהות נתונים בכרטיס");
+        throw new Error("ה-AI לא הצליח לזהות נתונים תקינים בכרטיס הטיסה");
       }
       
     } catch (err) {
       SpreadsheetApp.getActiveSpreadsheet().toast(err.message, "שגיאה בפענוח", 8);
-      range.setValue(false);
     }
   }
 }
