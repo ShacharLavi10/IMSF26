@@ -68,6 +68,10 @@ function processAllTicketsBulk() {
         } catch (e) {
           Logger.log(`Failed to process row ${rowNum}: ${e.message}`);
         }
+        
+        // Sleep for 5 seconds between tickets to respect the 15 Requests Per Minute free tier quota
+        Utilities.sleep(5000);
+        
       } else {
         skippedHasDateCount++;
       }
