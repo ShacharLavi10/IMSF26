@@ -1014,36 +1014,7 @@ let currentGuestEmail = "";
       body.innerHTML = html;
     }
 
-    /* ================= SESSION STORAGE & REFRESH LOGIC ================= */
-    const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
-
-    function saveToCache(key, data) {
-      sessionStorage.setItem(key, JSON.stringify({
-        timestamp: Date.now(),
-        data: data
-      }));
-    }
-
-    function getFromCache(key) {
-      const cached = sessionStorage.getItem(key);
-      if (!cached) return null;
-      return JSON.parse(cached);
-    }
-
-    // When user leaves app and comes back, check if data is old. If so, refresh.
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        const scheduleCache = getFromCache('scheduleData');
-        if (scheduleCache) {
-          const age = Date.now() - scheduleCache.timestamp;
-          if (age > REFRESH_INTERVAL_MS) {
-            console.log("Data older than 2 minutes. Refreshing schedule in background...");
-            // Silently fetch and update the DOM
-            fetchSchedule(true, false);
-          }
-        }
-      }
-    });
+    /* ================= SCHEDULE ================= */
 
     /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
@@ -1762,12 +1733,13 @@ function viewAdminGuestDetails(rowIndex) {
     </a>`;
   }
 
-  // Fetch linked data
   const getRowByEmail = (sheetData) => {
     if (!sheetData || sheetData.length < 2) return null;
     const h = sheetData[0].map(x => String(x).trim().toLowerCase());
-    const eIdx = h.indexOf("מייל אורח");
+    let eIdx = h.indexOf("מייל אורח");
+    if (eIdx === -1) eIdx = h.findIndex(col => col.includes("מייל") || col.includes("email"));
     if (eIdx === -1) return null;
+    
     const lowerEmail = email.toLowerCase();
     for (let i = 1; i < sheetData.length; i++) {
       if (String(sheetData[i][eIdx]).trim().toLowerCase() === lowerEmail) {
@@ -1786,13 +1758,48 @@ function viewAdminGuestDetails(rowIndex) {
   // Flight HTML
   let flightHtml = '<p style="color:var(--foreground-muted); font-size:0.9rem;">No flight info</p>';
   if (fData) {
+    const inboundOrigin = fData['מאיפה יוצא?'] || fData['יעד הגעה'] || '?';
+    const inboundDate = fData['הגעה לישראל'] || '?';
+    const outboundDest = fData['יעד חזרה'] || '?';
+    const outboundDate = fData['חזרה מישראל'] || '?';
+    
     flightHtml = `
-      <div style="font-size:0.9rem; margin-bottom: 8px;">
-        <div style="margin-bottom: 4px;"><b>In:</b> ${fData['הגעה לישראל'] || '?'} ✈️ ${fData['יעד הגעה'] || '?'}</div>
-        <div style="margin-bottom: 4px;"><b>Out:</b> ${fData['חזרה מישראל'] || '?'} ✈️ ${fData['יעד חזרה'] || '?'}</div>
-        ${fData['הערות טיסות'] ? `<div style="margin-top:4px; color:var(--accent-bright);">Notes: ${fData['הערות טיסות']}</div>` : ''}
-        ${fData['לינק כרטיס סופי'] ? `<a href="${fData['לינק כרטיס סופי']}" target="_blank" style="color:var(--accent); text-decoration:underline; display:inline-block; margin-top:4px;">View E-Ticket</a>` : ''}
+      ${fData['לינק כרטיס סופי'] ? `
+        <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
+          <a href="${fData['לינק כרטיס סופי']}" target="_blank" class="primary button-download-small" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            View E-Ticket
+          </a>
+        </div>
+      ` : ''}
+      <div class="boarding-pass" style="margin-bottom: 8px;">
+        <div class="bp-header">
+          <span>FLIGHT ITINERARY</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
+        </div>
+        <div class="bp-body">
+          <div class="bp-flight">
+            <div class="bp-label">INBOUND</div>
+            <div class="bp-route">
+              <span class="bp-city">${inboundOrigin}</span>
+              <span class="bp-arrow">→</span>
+              <span class="bp-city">TLV</span>
+            </div>
+            <div class="bp-date">Arrival: ${inboundDate}</div>
+          </div>
+          <div class="bp-divider"></div>
+          <div class="bp-flight">
+            <div class="bp-label">OUTBOUND</div>
+            <div class="bp-route">
+              <span class="bp-city">TLV</span>
+              <span class="bp-arrow">→</span>
+              <span class="bp-city">${outboundDest}</span>
+            </div>
+            <div class="bp-date">Departure: ${outboundDate}</div>
+          </div>
+        </div>
       </div>
+      ${fData['הערות טיסות'] ? `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${fData['הערות טיסות']}</div>` : ''}
     `;
   }
 
