@@ -2,6 +2,76 @@
  * Exposure Festival 2026 - Flight PDF Parser using Gemini AI
  */
 
+function processAllTicketsBulk() {
+  const ui = SpreadsheetApp.getUi();
+  const anatId = CONFIG.ANAT_SPREADSHEET_ID;
+  if (!anatId || anatId === "YOUR_ANAT_SPREADSHEET_ID_HERE") {
+    ui.alert("שגיאה: ANAT_SPREADSHEET_ID לא מוגדר בקונפיגורציה.");
+    return;
+  }
+  
+  const anatSs = SpreadsheetApp.openById(anatId);
+  const sheet = anatSs.getSheetByName("טבלת טיסות");
+  if (!sheet) {
+    ui.alert("שגיאה: לא נמצא גיליון בשם 'טבלת טיסות' בקובץ של ענת.");
+    return;
+  }
+  
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return;
+  
+  const headers = data[0];
+  const linkColIdx = headers.findIndex(h => String(h).includes("לינק"));
+  
+  if (linkColIdx === -1) {
+    ui.alert("שגיאה: לא נמצאה עמודה שמכילה את המילה 'לינק' בשורת הכותרות.");
+    return;
+  }
+  
+  let processedCount = 0;
+  
+  for (let i = 1; i < data.length; i++) {
+    const rowNum = i + 1;
+    const link = String(data[i][linkColIdx]).trim();
+    const existingDate = String(data[i][3]).trim(); // Column D (index 3)
+    
+    // Process if there's a drive link and we haven't filled the data yet
+    if (link.includes("drive.google.com") && !existingDate) {
+      try {
+        const fileId = extractDriveId(link);
+        if (fileId) {
+          const file = DriveApp.getFileById(fileId);
+          const mime = file.getMimeType();
+          const base64Data = Utilities.base64Encode(file.getBlob().getBytes());
+          const extractedData = callGeminiAPI(base64Data, mime);
+          
+          if (extractedData && !extractedData.error) {
+            sheet.getRange(rowNum, 4).setValue(extractedData.arrivalDate || "");
+            sheet.getRange(rowNum, 5).setValue(extractedData.arrivalTime || "");
+            sheet.getRange(rowNum, 6).setValue(extractedData.arrivalFlight || "");
+            sheet.getRange(rowNum, 7).setValue(extractedData.arrivalAirline || "");
+            
+            sheet.getRange(rowNum, 8).setValue(extractedData.departureDate || "");
+            sheet.getRange(rowNum, 9).setValue(extractedData.departureTime || "");
+            sheet.getRange(rowNum, 10).setValue(extractedData.departureFlight || "");
+            sheet.getRange(rowNum, 11).setValue(extractedData.departureAirline || "");
+            
+            processedCount++;
+          }
+        }
+      } catch (e) {
+        Logger.log(`Failed to process row ${rowNum}: ${e.message}`);
+      }
+    }
+  }
+  
+  if (processedCount > 0) {
+    ui.alert("סיום", `הסריקה הושלמה! עודכנו בהצלחה ${processedCount} כרטיסי טיסה בטבלה של ענת.`, ui.ButtonSet.OK);
+  } else {
+    ui.alert("סיום", "הסריקה הושלמה אבל לא נמצאו כרטיסים חדשים לפענוח (או שכולם כבר פוענחו).", ui.ButtonSet.OK);
+  }
+}
+
 function debugTestAI() {
   const ui = SpreadsheetApp.getUi();
   const response = ui.prompt('בדיקת AI ישירה', 'הדבק כאן לינק לדרייב של כרטיס טיסה:', ui.ButtonSet.OK_CANCEL);
