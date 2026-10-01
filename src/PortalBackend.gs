@@ -14,7 +14,7 @@ function generateOTP(email) {
     
     const masterData = masterSheet.getDataRange().getValues();
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, masterData.length); r++) {
+    for (let r = 0; r < Math.min(10, masterData.length); r++) {
       if (masterData[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
@@ -154,7 +154,7 @@ function getGuestPortalData(sessionToken) {
     if (masterData.length < 2) return { success: false, message: "Master sheet is empty." };
 
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, masterData.length); r++) {
+    for (let r = 0; r < Math.min(10, masterData.length); r++) {
       if (masterData[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
@@ -222,6 +222,7 @@ function getGuestPortalData(sessionToken) {
     const firstName = String(getColVal(CONFIG.FIRST_NAME_COL) || "");
     const lastName = String(getColVal(CONFIG.LAST_NAME_COL) || "");
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
+    const personalMsg = String(getColVal("הודעה אישית בפורטל") || "");
     
     const flightsData = fetchMappedData(ss.getSheetByName(CONFIG.FLIGHTS_SHEET), cleanEmail, MAPPINGS.FLIGHTS);
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
@@ -244,7 +245,15 @@ function getGuestPortalData(sessionToken) {
     
     return {
       success: true,
-      guestInfo: { email: cleanEmail, firstName: firstName, lastName: lastName, rowIndex: rowIndex, bio: bioText, isAdmin: isAdmin },
+      guestInfo: { 
+        email: cleanEmail, 
+        firstName: firstName, 
+        lastName: lastName, 
+        rowIndex: rowIndex, 
+        bio: bioText, 
+        isAdmin: isAdmin,
+        personalMessage: personalMsg 
+      },
       checklist: checklist,
       forms: CONFIG.FORMS,
       isComplete: isComplete,
@@ -266,7 +275,7 @@ function fetchMappedData(sheet, email, mappingArray) {
     if (data.length < 2) return [];
     
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, data.length); r++) {
+    for (let r = 0; r < Math.min(10, data.length); r++) {
       if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
@@ -314,7 +323,7 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
     if (data.length < 2) return [];
 
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, data.length); r++) {
+    for (let r = 0; r < Math.min(10, data.length); r++) {
       if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
@@ -446,7 +455,7 @@ function getLiveUpdates(sessionToken) {
     if (masterSheet) {
       const data = masterSheet.getDataRange().getValues();
       let headerRowIdx = -1;
-      for (let r = 0; r < Math.min(3, data.length); r++) {
+      for (let r = 0; r < Math.min(10, data.length); r++) {
         if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
           headerRowIdx = r;
           break;
@@ -562,7 +571,7 @@ function getAdminDashboardData(sessionToken) {
     
     const masterData = masterSheet.getDataRange().getValues();
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, masterData.length); r++) {
+    for (let r = 0; r < Math.min(10, masterData.length); r++) {
       if (masterData[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
@@ -623,16 +632,22 @@ function updatePersonalMessage(sessionToken, guestEmail, message) {
     
     const data = masterSheet.getDataRange().getValues();
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, data.length); r++) {
-      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+    let emailIdx = -1;
+    let headers = [];
+    
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStrings = data[r].map(c => String(c).trim().toLowerCase());
+      let idx = rowStrings.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+      if (idx === -1) idx = rowStrings.findIndex(col => col.includes("מייל") || col.includes("email"));
+      if (idx !== -1) {
         headerRowIdx = r;
+        emailIdx = idx;
+        headers = rowStrings;
         break;
       }
     }
-    if (headerRowIdx === -1) return { success: false, message: 'Header not found.' };
     
-    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
-    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    if (headerRowIdx === -1) return { success: false, message: 'Header not found.' };
     const roleIdx = headers.indexOf("תפקיד");
     const msgIdx = headers.indexOf("הודעה אישית בפורטל");
     
@@ -678,7 +693,7 @@ function sendAdminAlert(sessionToken, message) {
     const data = guestsSheet.getDataRange().getValues();
     
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, data.length); r++) {
+    for (let r = 0; r < Math.min(10, data.length); r++) {
       if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
@@ -742,16 +757,23 @@ function impersonateGuest(sessionToken, targetEmail) {
     const data = guestsSheet.getDataRange().getValues();
     
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, data.length); r++) {
-      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+    let emailIdx = -1;
+    let headers = [];
+    
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStrings = data[r].map(c => String(c).trim().toLowerCase());
+      let idx = rowStrings.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+      if (idx === -1) idx = rowStrings.findIndex(col => col.includes("מייל") || col.includes("email"));
+      if (idx !== -1) {
         headerRowIdx = r;
+        emailIdx = idx;
+        headers = rowStrings;
         break;
       }
     }
+    
     if (headerRowIdx === -1) return { success: false, message: "Headers not found" };
     
-    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
-    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
     const roleIdx = headers.indexOf("תפקיד");
     
     let isAdmin = false;

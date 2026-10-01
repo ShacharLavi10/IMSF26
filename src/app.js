@@ -210,6 +210,17 @@ let currentGuestEmail = "";
         document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
         document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
         
+        // Populate Personal Message
+        const pmCard = document.getElementById("personal-message-card");
+        if (pmCard) {
+          if (response.guestInfo.personalMessage && response.guestInfo.personalMessage.trim()) {
+            document.getElementById("personal-message-text").innerText = response.guestInfo.personalMessage.trim();
+            pmCard.style.display = "block";
+          } else {
+            pmCard.style.display = "none";
+          }
+        }
+        
         // Hide missing details cards
         if (document.getElementById("general-alert-card")) document.getElementById("general-alert-card").style.display = "none";
         if (document.getElementById("missing-hotel-card")) document.getElementById("missing-hotel-card").style.display = "none";
@@ -231,6 +242,17 @@ let currentGuestEmail = "";
         document.getElementById("welcome-message").innerText = `Please Complete Your Accommodation & Flight Details`;
         const navWrapper = document.getElementById("category-nav-wrapper");
         if (navWrapper) navWrapper.style.display = "none";
+
+        // Populate Personal Message
+        const pmCard = document.getElementById("personal-message-card");
+        if (pmCard) {
+          if (response.guestInfo.personalMessage && response.guestInfo.personalMessage.trim()) {
+            document.getElementById("personal-message-text").innerText = response.guestInfo.personalMessage.trim();
+            pmCard.style.display = "block";
+          } else {
+            pmCard.style.display = "none";
+          }
+        }
 
         
         // Hide all regular content cards
@@ -1733,13 +1755,25 @@ function viewAdminGuestDetails(rowIndex) {
 
   const getRowByEmail = (sheetData) => {
     if (!sheetData || sheetData.length < 2) return null;
-    const h = sheetData[0].map(x => String(x).trim().toLowerCase());
-    let eIdx = h.indexOf("מייל אורח");
-    if (eIdx === -1) eIdx = h.findIndex(col => col.includes("מייל") || col.includes("email"));
-    if (eIdx === -1) return null;
+    let headerRowIdx = -1;
+    let h = [];
+    let eIdx = -1;
+    
+    // Scan first 10 rows for the header
+    for (let r = 0; r < Math.min(10, sheetData.length); r++) {
+      h = sheetData[r].map(x => String(x).trim().toLowerCase());
+      eIdx = h.indexOf("מייל אורח");
+      if (eIdx === -1) eIdx = h.findIndex(col => col.includes("מייל") || col.includes("email"));
+      if (eIdx !== -1) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    
+    if (headerRowIdx === -1) return null;
     
     const lowerEmail = email.toLowerCase();
-    for (let i = 1; i < sheetData.length; i++) {
+    for (let i = headerRowIdx + 1; i < sheetData.length; i++) {
       if (String(sheetData[i][eIdx]).trim().toLowerCase() === lowerEmail) {
         const obj = {};
         h.forEach((key, idx) => { obj[key] = sheetData[i][idx]; });
