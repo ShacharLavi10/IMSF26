@@ -2,17 +2,41 @@
  * Exposure Festival 2026 - Flight PDF Parser using Gemini AI
  */
 
-function testParseActiveCell() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const range = sheet.getActiveCell();
+function debugTestAI() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.prompt('בדיקת AI ישירה', 'הדבק כאן לינק לדרייב של כרטיס טיסה:', ui.ButtonSet.OK_CANCEL);
   
-  const e = {
-    source: SpreadsheetApp.getActiveSpreadsheet(),
-    range: range
-  };
+  if (response.getSelectedButton() !== ui.Button.OK) return;
+  const url = response.getResponseText().trim();
+  if (!url) return;
   
-  SpreadsheetApp.getActiveSpreadsheet().toast("מפעיל פענוח ידני על התא הנבחר...", "בדיקה", 5);
-  triggerFlightParsing(e, true);
+  try {
+    ui.alert('מתחיל', 'מושך את הקובץ מהדרייב ושולח ל-AI... אנא המתן.', ui.ButtonSet.OK);
+    
+    const fileId = extractDriveId(url);
+    if (!fileId) throw new Error("לינק לא תקין של גוגל דרייב.");
+    
+    const file = DriveApp.getFileById(fileId);
+    const mimeType = file.getMimeType();
+    let base64Data = "";
+    if (mimeType === MimeType.PDF || mimeType.startsWith("image/")) {
+      base64Data = Utilities.base64Encode(file.getBlob().getBytes());
+    } else {
+      throw new Error("הקובץ חייב להיות PDF או תמונה.");
+    }
+    
+    const extractedData = callGeminiAPI(base64Data, mimeType);
+    if (extractedData && !extractedData.error) {
+      const formattedResult = 
+        `נחיתה:\n${extractedData.arrivalDate} | ${extractedData.arrivalTime} | ${extractedData.arrivalFlight} | ${extractedData.arrivalAirline}\n\n` +
+        `המראה:\n${extractedData.departureDate} | ${extractedData.departureTime} | ${extractedData.departureFlight} | ${extractedData.departureAirline}`;
+      ui.alert('הצלחה! ה-AI זיהה את הנתונים:', formattedResult, ui.ButtonSet.OK);
+    } else {
+      throw new Error("ה-AI לא מצא נתונים הגיוניים.");
+    }
+  } catch (err) {
+    ui.alert('שגיאה:', err.message, ui.ButtonSet.OK);
+  }
 }
 
 function setGeminiApiKey() {
@@ -123,7 +147,7 @@ function callGeminiAPI(base64File, mimeType) {
   const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error("מפתח API לא מוגדר במערכת. אנא הגדר GEMINI_API_KEY");
   
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`;
   
   const promptText = `
 You are a flight ticket parser. 
