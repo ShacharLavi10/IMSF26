@@ -2,6 +2,19 @@
  * Exposure Festival 2026 - Flight PDF Parser using Gemini AI
  */
 
+function testParseActiveCell() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const range = sheet.getActiveCell();
+  
+  const e = {
+    source: SpreadsheetApp.getActiveSpreadsheet(),
+    range: range
+  };
+  
+  SpreadsheetApp.getActiveSpreadsheet().toast("מפעיל פענוח ידני על התא הנבחר...", "בדיקה", 5);
+  triggerFlightParsing(e, true);
+}
+
 function setGeminiApiKey() {
   const ui = SpreadsheetApp.getUi();
   const response = ui.prompt(
@@ -36,11 +49,11 @@ function setupFlightParserTrigger() {
   Logger.log('✅ Flight Parser trigger installed on Anat sheet.');
 }
 
-function triggerFlightParsing(e) {
-  // This will be called from onEdit
+function triggerFlightParsing(e, isManual = false) {
   if (!e || !e.source) return;
   const sheet = e.source.getActiveSheet();
-  if (!sheet.getName().includes("טבלת טיסות")) return;
+  
+  if (!isManual && !sheet.getName().includes("טיסות")) return;
   
   const range = e.range;
   const col = range.getColumn();
@@ -49,10 +62,14 @@ function triggerFlightParsing(e) {
   const TICKET_LINK_COL = 13; // עמודה M - לינק כרטיס סופי
   const value = String(range.getValue()).trim();
   
-  // אם העריכה קרתה בעמודת הלינק, ויש שם לינק לדרייב
-  if (col === TICKET_LINK_COL && value.includes("drive.google.com")) {
+  if (isManual) {
+    sheet.getParent().toast(`בודק שורה ${row}, עמודה ${col}. ערך: ${value}`, "דיבאג");
+  }
+
+  // אם העריכה קרתה בעמודת הלינק ויש שם לינק (או אם הפעלנו ידנית)
+  if (isManual || (col === TICKET_LINK_COL && value.includes("http"))) {
     
-    sheet.getParent().toast("מזהה לינק חדש! מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
+    sheet.getParent().toast("מזהה לינק! מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
     sheet.getRange(row, 14).setValue("מתחיל פענוח AI..."); // Write to notes column
     
     try {
