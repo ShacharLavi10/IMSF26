@@ -1993,3 +1993,53 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(banner);
   }
 });
+
+let lastRefreshTime = 0;
+function triggerBackgroundRefresh() {
+  const token = localStorage.getItem('guestSessionToken');
+  if (!token) return;
+  
+  const now = Date.now();
+  // Throttle to at most once per minute
+  if (now - lastRefreshTime < 60000) return;
+  lastRefreshTime = now;
+  
+  google.script.run
+    .withSuccessHandler(function(res) {
+       if (res && res.success) {
+         localStorage.setItem('swr_portalData_' + token, JSON.stringify(res));
+         
+         // To avoid overwriting bio input while typing
+         const bioInput = document.getElementById("guest-bio-input");
+         const isBioFocused = (document.activeElement === bioInput);
+         const currentBioValue = bioInput ? bioInput.value : "";
+         
+         onLoginSuccess(res, false);
+         
+         if (isBioFocused && bioInput) {
+            bioInput.value = currentBioValue;
+            bioInput.focus();
+         }
+       }
+    })
+    .getGuestPortalData(token);
+    
+  // Refresh artists if we already have artists tab available
+  if (document.getElementById("artists-container") && document.getElementById("artists-container").style.display === "block") {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res.success && res.artists) {
+            localStorage.setItem('swr_artistsData', JSON.stringify(res.artists));
+            globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
+            initArtistsUI();
+          }
+        })
+        .getArtistsData();
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+     triggerBackgroundRefresh();
+  }
+});
