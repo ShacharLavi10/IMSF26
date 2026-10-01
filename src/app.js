@@ -1644,14 +1644,6 @@ function renderAdminDashboard() {
       <input type="text" id="admin-guest-search" placeholder="Search by name, email, or company..." style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); font-size: 1rem;" onkeyup="filterAdminGuests(this.value)">
     </div>
     <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
-    
-    <!-- Admin Modal (Hidden by default) -->
-    <div id="admin-modal-overlay" class="sheet-overlay" onclick="closeAdminModal()"></div>
-    <div id="admin-bottom-sheet" class="bottom-sheet">
-      <div class="sheet-handle" onclick="closeAdminModal()"></div>
-      <div class="sheet-content" id="admin-modal-content" style="padding-top: 10px;">
-      </div>
-    </div>
   `;
   
   container.innerHTML = html;
