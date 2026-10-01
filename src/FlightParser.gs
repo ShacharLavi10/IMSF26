@@ -61,12 +61,14 @@ function processAllTicketsBulk() {
               sheet.getRange(rowNum, 9).setValue(extractedData.departureTime || "");
               sheet.getRange(rowNum, 10).setValue(extractedData.departureFlight || "");
               sheet.getRange(rowNum, 11).setValue(extractedData.departureAirline || "");
+              sheet.getRange(rowNum, 14).setValue("פוענח בהצלחה ✅");
               
               processedCount++;
             }
           }
         } catch (e) {
           Logger.log(`Failed to process row ${rowNum}: ${e.message}`);
+          sheet.getRange(rowNum, 14).setValue("שגיאה בסריקה: " + e.message);
         }
         
         // Sleep for 5 seconds between tickets to respect the 15 Requests Per Minute free tier quota
@@ -166,7 +168,7 @@ function triggerFlightParsing(e, isManual = false) {
   if (!e || !e.source) return;
   const sheet = e.source.getActiveSheet();
   
-  if (!isManual && !sheet.getName().includes("טיסות")) return;
+  if (!isManual && sheet.getName() !== "טבלת טיסות") return;
   
   const range = e.range;
   const col = range.getColumn();
