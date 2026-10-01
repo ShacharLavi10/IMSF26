@@ -32,7 +32,7 @@ function debugTestAI() {
         `המראה:\n${extractedData.departureDate} | ${extractedData.departureTime} | ${extractedData.departureFlight} | ${extractedData.departureAirline}`;
       ui.alert('הצלחה! ה-AI זיהה את הנתונים:', formattedResult, ui.ButtonSet.OK);
     } else {
-      throw new Error("ה-AI לא מצא נתונים הגיוניים.");
+      throw new Error(extractedData.message || "ה-AI לא מצא נתונים הגיוניים.");
     }
   } catch (err) {
     ui.alert('שגיאה:', err.message, ui.ButtonSet.OK);
@@ -126,7 +126,7 @@ function triggerFlightParsing(e, isManual = false) {
         sheet.getParent().toast("הפענוח הושלם בהצלחה והשורה עודכנה!", "הצלחה", 5);
         sheet.getRange(row, 14).setValue("פוענח בהצלחה ✅"); // Clear notes or set success
       } else {
-        throw new Error("ה-AI לא הצליח לזהות נתונים תקינים בכרטיס הטיסה");
+        throw new Error(extractedData.message || "ה-AI לא הצליח לזהות נתונים תקינים בכרטיס הטיסה");
       }
       
     } catch (err) {
@@ -199,12 +199,31 @@ Required JSON Structure:
     muteHttpExceptions: true
   };
   
-  const response = UrlFetchApp.fetch(endpoint, options);
-  const result = JSON.parse(response.getContentText());
+  let response;
+  let result;
+  let attempts = 0;
+  const maxAttempts = 3;
   
-  if (result.error) {
-    Logger.log(result.error);
-    return { error: true };
+  while (attempts < maxAttempts) {
+    attempts++;
+    response = UrlFetchApp.fetch(endpoint, options);
+    result = JSON.parse(response.getContentText());
+    
+    // Check if there is an error
+    if (result.error) {
+      const errMsg = result.error.message || result.error;
+      Logger.log("API Error on attempt " + attempts + ": " + errMsg);
+      
+      // If it's a 503 high demand error or similar transient error, wait and retry
+      if (response.getResponseCode() >= 500 && attempts < maxAttempts) {
+        Utilities.sleep(attempts * 2000); // 2s, 4s backoff
+        continue;
+      }
+      return { error: true, message: errMsg };
+    }
+    
+    // Success
+    break;
   }
   
   try {
@@ -213,6 +232,6 @@ Required JSON Structure:
     return jsonParsed;
   } catch (e) {
     Logger.log("Failed to parse Gemini response: " + e.toString());
-    return { error: true };
+    return { error: true, message: "Parsing failed" };
   }
 }
