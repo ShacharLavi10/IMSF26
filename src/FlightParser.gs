@@ -5,232 +5,172 @@
 function processAllTicketsBulk() {
   const ui = SpreadsheetApp.getUi();
   const anatId = CONFIG.ANAT_SPREADSHEET_ID;
-  if (!anatId || anatId === "YOUR_ANAT_SPREADSHEET_ID_HERE") {
-    ui.alert("שגיאה: ANAT_SPREADSHEET_ID לא מוגדר בקונפיגורציה.");
-    return;
-  }
+  if (!anatId) return ui.alert("שגיאה: ANAT_SPREADSHEET_ID לא מוגדר.");
   
   const anatSs = SpreadsheetApp.openById(anatId);
-  const sheet = anatSs.getSheetByName("טבלת טיסות");
-  if (!sheet) {
-    ui.alert("שגיאה: לא נמצא גיליון בשם 'טבלת טיסות' בקובץ של ענת.");
-    return;
+  const sourceSheet = anatSs.getSheetByName("עדכוני טיסות");
+  const targetSheet = anatSs.getSheetByName("טבלת טיסות");
+  
+  if (!sourceSheet || !targetSheet) {
+    return ui.alert("שגיאה: חסר אחד הגיליונות - 'עדכוני טיסות' או 'טבלת טיסות'.");
   }
   
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return;
+  const sourceData = sourceSheet.getDataRange().getValues();
+  const targetData = targetSheet.getDataRange().getValues();
+  if (sourceData.length < 2 || targetData.length < 2) return;
   
-  const headers = data[0];
-  const linkColIdx = headers.findIndex(h => {
-    const txt = String(h).trim();
-    return txt === "לינק כרטיס סופי" || txt === "לינק כרטיס" || txt === "לינק לכרטיס סופי";
-  });
+  const sourceHeaders = sourceData[0];
+  const targetHeaders = targetData[0];
   
-  if (linkColIdx === -1) {
-    ui.alert("שגיאה: לא נמצאה עמודה בשם 'לינק כרטיס סופי' בשורת הכותרות.");
-    return;
-  }
+  const getColIdx = (headers, names) => headers.findIndex(h => names.some(n => String(h).trim() === n));
+  
+  const linkColIdx = getColIdx(sourceHeaders, ["לינק כרטיס סופי", "לינק כרטיס", "לינק לכרטיס סופי"]);
+  const sourceEmailColIdx = getColIdx(sourceHeaders, ["מייל אורח", "מייל", "Email"]);
+  const targetEmailColIdx = getColIdx(targetHeaders, ["מייל אורח", "מייל", "Email"]);
+  
+  if (linkColIdx === -1) return ui.alert("שגיאה: לא נמצאה עמודת לינק ב'עדכוני טיסות'.");
+  if (sourceEmailColIdx === -1) return ui.alert("שגיאה: לא נמצאה עמודת 'מייל אורח' ב'עדכוני טיסות'.");
+  if (targetEmailColIdx === -1) return ui.alert("שגיאה: לא נמצאה עמודת 'מייל אורח' ב'טבלת טיסות'.");
+  
+  // Find target columns dynamically
+  const colTarget = {
+    arrDate: getColIdx(targetHeaders, ["תאריך נחיתה", "הגעה לישראל"]) + 1,
+    arrTime: getColIdx(targetHeaders, ["שעת נחיתה", "שעת נחיתה בנתבג", "שעת נחיתה בנתב\"ג"]) + 1,
+    arrFlight: getColIdx(targetHeaders, ["מספר טיסה נחיתה", "מספר טיסת נחיתה"]) + 1,
+    arrAirline: getColIdx(targetHeaders, ["חברת תעופה נחיתה"]) + 1,
+    depDate: getColIdx(targetHeaders, ["תאריך המראה", "תאריך יציאה", "חזרה מישראל"]) + 1,
+    depTime: getColIdx(targetHeaders, ["שעת המראה", "שעת המראה מנתבג", "שעת המראה מנתב\"ג"]) + 1,
+    depFlight: getColIdx(targetHeaders, ["מספר טיסה המראה", "מספר טיסת המראה"]) + 1,
+    depAirline: getColIdx(targetHeaders, ["חברת תעופה המראה"]) + 1,
+    notes: getColIdx(targetHeaders, ["הערות סריקה", "סטטוס", "הערות"]) + 1 || 14
+  };
   
   let processedCount = 0;
-  let skippedHasDateCount = 0;
-  let skippedNoLinkCount = 0;
   
-  for (let i = 1; i < data.length; i++) {
-    const rowNum = i + 1;
-    const link = String(data[i][linkColIdx]).trim();
-    const existingDate = String(data[i][3]).trim(); // Column D (index 3)
+  for (let i = 1; i < sourceData.length; i++) {
+    const link = String(sourceData[i][linkColIdx]).trim();
+    const email = String(sourceData[i][sourceEmailColIdx]).trim();
     
-    // Process if there's a drive link and we haven't filled the data yet
-    if (link.includes("drive.google.com")) {
-      if (!existingDate) {
-        try {
-          const fileId = extractDriveId(link);
-          if (fileId) {
-            const file = DriveApp.getFileById(fileId);
-            const mime = file.getMimeType();
-            const base64Data = Utilities.base64Encode(file.getBlob().getBytes());
-            const extractedData = callGeminiAPI(base64Data, mime);
-            
-            if (extractedData && !extractedData.error) {
-              sheet.getRange(rowNum, 4).setValue(extractedData.arrivalDate || "");
-              sheet.getRange(rowNum, 5).setValue(extractedData.arrivalTime || "");
-              sheet.getRange(rowNum, 6).setValue(extractedData.arrivalFlight || "");
-              sheet.getRange(rowNum, 7).setValue(extractedData.arrivalAirline || "");
+    if (link.includes("drive.google.com") && email) {
+      // Find matching row in target
+      const targetRowIdx = targetData.findIndex((row, idx) => idx > 0 && String(row[targetEmailColIdx]).trim() === email);
+      
+      if (targetRowIdx !== -1) {
+        const targetRow = targetRowIdx + 1;
+        const existingDate = String(targetData[targetRowIdx][colTarget.arrDate - 1] || "").trim();
+        
+        if (!existingDate) {
+          try {
+            const fileId = extractDriveId(link);
+            if (fileId) {
+              const file = DriveApp.getFileById(fileId);
+              const extractedData = callGeminiAPI(Utilities.base64Encode(file.getBlob().getBytes()), file.getMimeType());
               
-              sheet.getRange(rowNum, 8).setValue(extractedData.departureDate || "");
-              sheet.getRange(rowNum, 9).setValue(extractedData.departureTime || "");
-              sheet.getRange(rowNum, 10).setValue(extractedData.departureFlight || "");
-              sheet.getRange(rowNum, 11).setValue(extractedData.departureAirline || "");
-              sheet.getRange(rowNum, 14).setValue("פוענח בהצלחה ✅");
-              
-              processedCount++;
+              if (extractedData && !extractedData.error) {
+                targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate || "");
+                targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime || "");
+                targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight || "");
+                targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline || "");
+                targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate || "");
+                targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime || "");
+                targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight || "");
+                targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline || "");
+                targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
+                processedCount++;
+                Utilities.sleep(5000); // Respect 15 RPM
+              }
             }
+          } catch (e) {
+            targetSheet.getRange(targetRow, colTarget.notes).setValue("שגיאה בסריקה: " + e.message);
           }
-        } catch (e) {
-          Logger.log(`Failed to process row ${rowNum}: ${e.message}`);
-          sheet.getRange(rowNum, 14).setValue("שגיאה בסריקה: " + e.message);
         }
-        
-        // Sleep for 5 seconds between tickets to respect the 15 Requests Per Minute free tier quota
-        Utilities.sleep(5000);
-        
-      } else {
-        skippedHasDateCount++;
       }
-    } else if (link !== "") {
-      skippedNoLinkCount++;
     }
   }
-  
-  if (processedCount > 0) {
-    ui.alert("סיום", `הסריקה הושלמה! עודכנו בהצלחה ${processedCount} כרטיסי טיסה בטבלה של ענת.`, ui.ButtonSet.OK);
-  } else {
-    let debugMsg = `הסריקה הושלמה, אך לא עובדו שורות חדשות.\n\n`;
-    debugMsg += `המערכת מזהה שעמודת הלינקים היא עמודה מספר ${linkColIdx + 1}.\n`;
-    debugMsg += `כמות שורות שדולגו כי כבר יש בהן תאריך נחיתה (עמודה D אינה ריקה): ${skippedHasDateCount}\n`;
-    debugMsg += `כמות שורות עם טקסט שלא זוהה כלינק תקין של גוגל דרייב: ${skippedNoLinkCount}\n`;
-    ui.alert("תוצאות סריקה", debugMsg, ui.ButtonSet.OK);
-  }
-}
-
-function debugTestAI() {
-  const ui = SpreadsheetApp.getUi();
-  const response = ui.prompt('בדיקת AI ישירה', 'הדבק כאן לינק לדרייב של כרטיס טיסה:', ui.ButtonSet.OK_CANCEL);
-  
-  if (response.getSelectedButton() !== ui.Button.OK) return;
-  const url = response.getResponseText().trim();
-  if (!url) return;
-  
-  try {
-    SpreadsheetApp.getActiveSpreadsheet().toast('מושך את הקובץ מהדרייב ושולח ל-AI... אנא המתן.', 'מתחיל', 5);
-    
-    const fileId = extractDriveId(url);
-    if (!fileId) throw new Error("לינק לא תקין של גוגל דרייב.");
-    
-    const file = DriveApp.getFileById(fileId);
-    const mimeType = file.getMimeType();
-    let base64Data = "";
-    if (mimeType === MimeType.PDF || mimeType.startsWith("image/")) {
-      base64Data = Utilities.base64Encode(file.getBlob().getBytes());
-    } else {
-      throw new Error("הקובץ חייב להיות PDF או תמונה.");
-    }
-    
-    const extractedData = callGeminiAPI(base64Data, mimeType);
-    if (extractedData && !extractedData.error) {
-      const formattedResult = 
-        `נחיתה:\n${extractedData.arrivalDate} | ${extractedData.arrivalTime} | ${extractedData.arrivalFlight} | ${extractedData.arrivalAirline}\n\n` +
-        `המראה:\n${extractedData.departureDate} | ${extractedData.departureTime} | ${extractedData.departureFlight} | ${extractedData.departureAirline}`;
-      ui.alert('הצלחה! ה-AI זיהה את הנתונים:', formattedResult, ui.ButtonSet.OK);
-    } else {
-      throw new Error(extractedData.message || "ה-AI לא מצא נתונים הגיוניים.");
-    }
-  } catch (err) {
-    ui.alert('שגיאה:', err.message, ui.ButtonSet.OK);
-  }
-}
-
-function setGeminiApiKey() {
-  const ui = SpreadsheetApp.getUi();
-  const response = ui.prompt(
-    'הגדרת מפתח AI (Gemini)',
-    'הזן כאן את ה-API Key שלך מ-Google AI Studio:',
-    ui.ButtonSet.OK_CANCEL
-  );
-
-  if (response.getSelectedButton() == ui.Button.OK) {
-    PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', response.getResponseText().trim());
-    ui.alert('מצוין!', 'המפתח נשמר בהצלחה במערכת. כעת תוכל להשתמש בפענוח האוטומטי.', ui.ButtonSet.OK);
-  }
-}
-
-function setupFlightParserTrigger() {
-  const anatId = CONFIG.ANAT_SPREADSHEET_ID;
-  if (!anatId || anatId === "YOUR_ANAT_SPREADSHEET_ID_HERE") return;
-  
-  // Delete existing to avoid duplicates
-  const triggers = ScriptApp.getProjectTriggers();
-  for (let i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === 'triggerFlightParsing') {
-      ScriptApp.deleteTrigger(triggers[i]);
-    }
-  }
-  
-  ScriptApp.newTrigger('triggerFlightParsing')
-    .forSpreadsheet(anatId)
-    .onEdit()
-    .create();
-    
-  Logger.log('✅ Flight Parser trigger installed on Anat sheet.');
+  ui.alert("סיום", `הסריקה הושלמה. עודכנו ${processedCount} שורות.`, ui.ButtonSet.OK);
 }
 
 function triggerFlightParsing(e, isManual = false) {
   if (!e || !e.source) return;
   const sheet = e.source.getActiveSheet();
   
-  if (!isManual && sheet.getName() !== "טבלת טיסות") return;
+  // Only listen to "עדכוני טיסות"
+  if (!isManual && sheet.getName() !== "עדכוני טיסות") return;
   
   const range = e.range;
   const col = range.getColumn();
   const row = range.getRow();
   
-  // Find the exact column dynamically
+  const getColIdx = (headers, names) => headers.findIndex(h => names.some(n => String(h).trim() === n));
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const ticketLinkCol = headers.findIndex(h => {
-    const txt = String(h).trim();
-    return txt === "לינק כרטיס סופי" || txt === "לינק כרטיס" || txt === "לינק לכרטיס סופי";
-  }) + 1; // +1 because array is 0-indexed and getColumn is 1-indexed
   
-  if (ticketLinkCol === 0) return; // Column not found
+  const ticketLinkCol = getColIdx(headers, ["לינק כרטיס סופי", "לינק כרטיס", "לינק לכרטיס סופי"]) + 1;
+  const sourceEmailCol = getColIdx(headers, ["מייל אורח", "מייל", "Email"]) + 1;
+  
+  if (ticketLinkCol === 0 || sourceEmailCol === 0) return;
   
   const value = String(range.getValue()).trim();
   
-  if (isManual) {
-    sheet.getParent().toast(`בודק שורה ${row}, עמודה ${col}. ערך: ${value}`, "דיבאג");
-  }
-
-  // אם העריכה קרתה בעמודת הלינק ויש שם לינק (או אם הפעלנו ידנית)
   if (isManual || (col === ticketLinkCol && value.includes("http"))) {
+    sheet.getParent().toast("מזהה לינק ב'עדכוני טיסות'! מתחיל לפענח...", "פענוח טיסות", 5);
     
-    sheet.getParent().toast("מזהה לינק! מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
-    sheet.getRange(row, 14).setValue("מתחיל פענוח AI..."); // Write to notes column
+    const email = String(sheet.getRange(row, sourceEmailCol).getValue()).trim();
+    if (!email) {
+      sheet.getParent().toast("לא נמצא מייל בשורה זו כדי לשייך לטבלת טיסות.", "שגיאה", 5);
+      return;
+    }
     
     try {
       const fileId = extractDriveId(value);
-      if (!fileId) throw new Error("לא זוהה מזהה קובץ תקין מתוך הלינק של גוגל דרייב");
+      if (!fileId) throw new Error("לא זוהה מזהה קובץ דרייב תקין");
       
       const file = DriveApp.getFileById(fileId);
-      const mimeType = file.getMimeType();
-      
-      let base64Data = "";
-      if (mimeType === MimeType.PDF || mimeType.startsWith("image/")) {
-        base64Data = Utilities.base64Encode(file.getBlob().getBytes());
-      } else {
-        throw new Error("הקובץ חייב להיות מסוג PDF או תמונה");
-      }
-      
-      const extractedData = callGeminiAPI(base64Data, mimeType);
+      const extractedData = callGeminiAPI(Utilities.base64Encode(file.getBlob().getBytes()), file.getMimeType());
       
       if (extractedData && !extractedData.error) {
-        sheet.getRange(row, 4).setValue(extractedData.arrivalDate || "");
-        sheet.getRange(row, 5).setValue(extractedData.arrivalTime || "");
-        sheet.getRange(row, 6).setValue(extractedData.arrivalFlight || "");
-        sheet.getRange(row, 7).setValue(extractedData.arrivalAirline || "");
+        // Find row in "טבלת טיסות"
+        const targetSheet = sheet.getParent().getSheetByName("טבלת טיסות");
+        if (!targetSheet) throw new Error("גיליון 'טבלת טיסות' לא קיים בקובץ.");
         
-        sheet.getRange(row, 8).setValue(extractedData.departureDate || "");
-        sheet.getRange(row, 9).setValue(extractedData.departureTime || "");
-        sheet.getRange(row, 10).setValue(extractedData.departureFlight || "");
-        sheet.getRange(row, 11).setValue(extractedData.departureAirline || "");
+        const targetData = targetSheet.getDataRange().getValues();
+        const targetHeaders = targetData[0];
+        const targetEmailColIdx = getColIdx(targetHeaders, ["מייל אורח", "מייל", "Email"]);
+        if (targetEmailColIdx === -1) throw new Error("לא נמצאה עמודת מייל בטבלת טיסות.");
         
-        sheet.getParent().toast("הפענוח הושלם בהצלחה והשורה עודכנה!", "הצלחה", 5);
-        sheet.getRange(row, 14).setValue("פוענח בהצלחה ✅"); // Clear notes or set success
+        const targetRowIdx = targetData.findIndex((r, idx) => idx > 0 && String(r[targetEmailColIdx]).trim() === email);
+        if (targetRowIdx === -1) throw new Error(`האורח עם המייל ${email} לא נמצא בטבלת טיסות.`);
+        
+        const targetRow = targetRowIdx + 1;
+        
+        const colTarget = {
+          arrDate: getColIdx(targetHeaders, ["תאריך נחיתה", "הגעה לישראל"]) + 1,
+          arrTime: getColIdx(targetHeaders, ["שעת נחיתה", "שעת נחיתה בנתבג", "שעת נחיתה בנתב\"ג"]) + 1,
+          arrFlight: getColIdx(targetHeaders, ["מספר טיסה נחיתה", "מספר טיסת נחיתה"]) + 1,
+          arrAirline: getColIdx(targetHeaders, ["חברת תעופה נחיתה"]) + 1,
+          depDate: getColIdx(targetHeaders, ["תאריך המראה", "תאריך יציאה", "חזרה מישראל"]) + 1,
+          depTime: getColIdx(targetHeaders, ["שעת המראה", "שעת המראה מנתבג", "שעת המראה מנתב\"ג"]) + 1,
+          depFlight: getColIdx(targetHeaders, ["מספר טיסה המראה", "מספר טיסת המראה"]) + 1,
+          depAirline: getColIdx(targetHeaders, ["חברת תעופה המראה"]) + 1,
+          notes: getColIdx(targetHeaders, ["הערות סריקה", "סטטוס", "הערות"]) + 1 || 14
+        };
+        
+        if (colTarget.arrDate > 0) targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate || "");
+        if (colTarget.arrTime > 0) targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime || "");
+        if (colTarget.arrFlight > 0) targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight || "");
+        if (colTarget.arrAirline > 0) targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline || "");
+        if (colTarget.depDate > 0) targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate || "");
+        if (colTarget.depTime > 0) targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime || "");
+        if (colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight || "");
+        if (colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline || "");
+        
+        targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
+        sheet.getParent().toast("הפענוח הושלם בהצלחה והוזן לטבלת טיסות!", "הצלחה", 5);
+        
       } else {
         throw new Error(extractedData.message || "ה-AI לא הצליח לזהות נתונים תקינים בכרטיס הטיסה");
       }
-      
     } catch (err) {
       sheet.getParent().toast(err.message, "שגיאה בפענוח", 8);
-      sheet.getRange(row, 14).setValue("שגיאת AI: " + err.message); // Write error to notes
     }
   }
 }
