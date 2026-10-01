@@ -21,10 +21,13 @@ function processAllTicketsBulk() {
   if (data.length < 2) return;
   
   const headers = data[0];
-  const linkColIdx = headers.findIndex(h => String(h).includes("לינק"));
+  const linkColIdx = headers.findIndex(h => {
+    const txt = String(h).trim();
+    return txt === "לינק כרטיס סופי" || txt === "לינק כרטיס" || txt === "לינק לכרטיס סופי";
+  });
   
   if (linkColIdx === -1) {
-    ui.alert("שגיאה: לא נמצאה עמודה שמכילה את המילה 'לינק' בשורת הכותרות.");
+    ui.alert("שגיאה: לא נמצאה עמודה בשם 'לינק כרטיס סופי' בשורת הכותרות.");
     return;
   }
   
@@ -165,7 +168,15 @@ function triggerFlightParsing(e, isManual = false) {
   const col = range.getColumn();
   const row = range.getRow();
   
-  const TICKET_LINK_COL = 13; // עמודה M - לינק כרטיס סופי
+  // Find the exact column dynamically
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const ticketLinkCol = headers.findIndex(h => {
+    const txt = String(h).trim();
+    return txt === "לינק כרטיס סופי" || txt === "לינק כרטיס" || txt === "לינק לכרטיס סופי";
+  }) + 1; // +1 because array is 0-indexed and getColumn is 1-indexed
+  
+  if (ticketLinkCol === 0) return; // Column not found
+  
   const value = String(range.getValue()).trim();
   
   if (isManual) {
@@ -173,7 +184,7 @@ function triggerFlightParsing(e, isManual = false) {
   }
 
   // אם העריכה קרתה בעמודת הלינק ויש שם לינק (או אם הפעלנו ידנית)
-  if (isManual || (col === TICKET_LINK_COL && value.includes("http"))) {
+  if (isManual || (col === ticketLinkCol && value.includes("http"))) {
     
     sheet.getParent().toast("מזהה לינק! מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
     sheet.getRange(row, 14).setValue("מתחיל פענוח AI..."); // Write to notes column
