@@ -1015,8 +1015,6 @@ let currentGuestEmail = "";
     }
 
     /* ================= SCHEDULE ================= */
-
-    /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
 
     
