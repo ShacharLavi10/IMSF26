@@ -38,8 +38,9 @@ function setupFlightParserTrigger() {
 
 function triggerFlightParsing(e) {
   // This will be called from onEdit
+  if (!e || !e.source) return;
   const sheet = e.source.getActiveSheet();
-  if (sheet.getName() !== "טבלת טיסות") return;
+  if (!sheet.getName().includes("טבלת טיסות")) return;
   
   const range = e.range;
   const col = range.getColumn();
@@ -51,7 +52,8 @@ function triggerFlightParsing(e) {
   // אם העריכה קרתה בעמודת הלינק, ויש שם לינק לדרייב
   if (col === TICKET_LINK_COL && value.includes("drive.google.com")) {
     
-    SpreadsheetApp.getActiveSpreadsheet().toast("מזהה לינק חדש! מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
+    sheet.getParent().toast("מזהה לינק חדש! מתחיל לפענח את הכרטיס בעזרת AI...", "פענוח טיסות", 5);
+    sheet.getRange(row, 14).setValue("מתחיל פענוח AI..."); // Write to notes column
     
     try {
       const fileId = extractDriveId(value);
@@ -70,9 +72,6 @@ function triggerFlightParsing(e) {
       const extractedData = callGeminiAPI(base64Data, mimeType);
       
       if (extractedData && !extractedData.error) {
-        // D, E, F, G (4, 5, 6, 7) = Arrival (Date, Time, Flight, Airline)
-        // H, I, J, K (8, 9, 10, 11) = Departure (Date, Time, Flight, Airline)
-        
         sheet.getRange(row, 4).setValue(extractedData.arrivalDate || "");
         sheet.getRange(row, 5).setValue(extractedData.arrivalTime || "");
         sheet.getRange(row, 6).setValue(extractedData.arrivalFlight || "");
@@ -83,13 +82,15 @@ function triggerFlightParsing(e) {
         sheet.getRange(row, 10).setValue(extractedData.departureFlight || "");
         sheet.getRange(row, 11).setValue(extractedData.departureAirline || "");
         
-        SpreadsheetApp.getActiveSpreadsheet().toast("הפענוח הושלם בהצלחה והשורה עודכנה!", "הצלחה", 5);
+        sheet.getParent().toast("הפענוח הושלם בהצלחה והשורה עודכנה!", "הצלחה", 5);
+        sheet.getRange(row, 14).setValue("פוענח בהצלחה ✅"); // Clear notes or set success
       } else {
         throw new Error("ה-AI לא הצליח לזהות נתונים תקינים בכרטיס הטיסה");
       }
       
     } catch (err) {
-      SpreadsheetApp.getActiveSpreadsheet().toast(err.message, "שגיאה בפענוח", 8);
+      sheet.getParent().toast(err.message, "שגיאה בפענוח", 8);
+      sheet.getRange(row, 14).setValue("שגיאת AI: " + err.message); // Write error to notes
     }
   }
 }
