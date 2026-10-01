@@ -27,7 +27,7 @@ let currentGuestEmail = "";
             if (res && res.success) {
               localStorage.setItem('swr_portalData_' + token, JSON.stringify(res));
             }
-            onLoginSuccess(res, false);
+            onLoginSuccess(res, false, !!cached);
           })
           .withFailureHandler(function(err) {
             if (!cached) onLoginFailure(err);
@@ -163,7 +163,7 @@ let currentGuestEmail = "";
       document.getElementById("login-error").style.display = "none";
     }
 
-    function onLoginSuccess(response, isFromCache = false) {
+    function onLoginSuccess(response, isFromCache = false, isBackgroundUpdate = false) {
       if (!isFromCache) console.log("Fresh data loaded from server.");
       else console.log("Loaded from cache instantly.");
       
@@ -231,7 +231,11 @@ let currentGuestEmail = "";
         
         const navWrapper = document.getElementById("category-nav-wrapper");
         if (navWrapper) navWrapper.style.display = "flex";
-        switchCategoryTab('schedule');
+        
+        let hasActiveTab = document.querySelector('#category-nav-wrapper button.active');
+        if (!isBackgroundUpdate || !hasActiveTab) {
+          switchCategoryTab('schedule');
+        }
         
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
@@ -2053,7 +2057,7 @@ function triggerBackgroundRefresh() {
          const isBioFocused = (document.activeElement === bioInput);
          const currentBioValue = bioInput ? bioInput.value : "";
          
-         onLoginSuccess(res, false);
+         onLoginSuccess(res, false, true);
          
          if (isBioFocused && bioInput) {
             bioInput.value = currentBioValue;
