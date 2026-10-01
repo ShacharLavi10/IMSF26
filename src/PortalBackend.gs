@@ -793,8 +793,10 @@ function impersonateGuest(sessionToken, targetEmail) {
     
     // Generate a valid token for targetEmail
     const fakeToken = Utilities.base64Encode(targetEmail.trim().toLowerCase() + "|||" + new Date().getTime());
-    // Save to Cache so validateSession works
-    CacheService.getScriptCache().put("SESSION_" + fakeToken, targetEmail.trim().toLowerCase(), 21600);
+    
+    // Save to Auth_Sessions sheet so validateSession works
+    const authSheet = getOrCreateAuthSheet();
+    authSheet.appendRow([targetEmail.trim().toLowerCase(), fakeToken, new Date().getTime(), new Date().toLocaleString()]);
     
     return { success: true, token: fakeToken };
     
