@@ -29,6 +29,8 @@ function processAllTicketsBulk() {
   }
   
   let processedCount = 0;
+  let skippedHasDateCount = 0;
+  let skippedNoLinkCount = 0;
   
   for (let i = 1; i < data.length; i++) {
     const rowNum = i + 1;
@@ -36,39 +38,49 @@ function processAllTicketsBulk() {
     const existingDate = String(data[i][3]).trim(); // Column D (index 3)
     
     // Process if there's a drive link and we haven't filled the data yet
-    if (link.includes("drive.google.com") && !existingDate) {
-      try {
-        const fileId = extractDriveId(link);
-        if (fileId) {
-          const file = DriveApp.getFileById(fileId);
-          const mime = file.getMimeType();
-          const base64Data = Utilities.base64Encode(file.getBlob().getBytes());
-          const extractedData = callGeminiAPI(base64Data, mime);
-          
-          if (extractedData && !extractedData.error) {
-            sheet.getRange(rowNum, 4).setValue(extractedData.arrivalDate || "");
-            sheet.getRange(rowNum, 5).setValue(extractedData.arrivalTime || "");
-            sheet.getRange(rowNum, 6).setValue(extractedData.arrivalFlight || "");
-            sheet.getRange(rowNum, 7).setValue(extractedData.arrivalAirline || "");
+    if (link.includes("drive.google.com")) {
+      if (!existingDate) {
+        try {
+          const fileId = extractDriveId(link);
+          if (fileId) {
+            const file = DriveApp.getFileById(fileId);
+            const mime = file.getMimeType();
+            const base64Data = Utilities.base64Encode(file.getBlob().getBytes());
+            const extractedData = callGeminiAPI(base64Data, mime);
             
-            sheet.getRange(rowNum, 8).setValue(extractedData.departureDate || "");
-            sheet.getRange(rowNum, 9).setValue(extractedData.departureTime || "");
-            sheet.getRange(rowNum, 10).setValue(extractedData.departureFlight || "");
-            sheet.getRange(rowNum, 11).setValue(extractedData.departureAirline || "");
-            
-            processedCount++;
+            if (extractedData && !extractedData.error) {
+              sheet.getRange(rowNum, 4).setValue(extractedData.arrivalDate || "");
+              sheet.getRange(rowNum, 5).setValue(extractedData.arrivalTime || "");
+              sheet.getRange(rowNum, 6).setValue(extractedData.arrivalFlight || "");
+              sheet.getRange(rowNum, 7).setValue(extractedData.arrivalAirline || "");
+              
+              sheet.getRange(rowNum, 8).setValue(extractedData.departureDate || "");
+              sheet.getRange(rowNum, 9).setValue(extractedData.departureTime || "");
+              sheet.getRange(rowNum, 10).setValue(extractedData.departureFlight || "");
+              sheet.getRange(rowNum, 11).setValue(extractedData.departureAirline || "");
+              
+              processedCount++;
+            }
           }
+        } catch (e) {
+          Logger.log(`Failed to process row ${rowNum}: ${e.message}`);
         }
-      } catch (e) {
-        Logger.log(`Failed to process row ${rowNum}: ${e.message}`);
+      } else {
+        skippedHasDateCount++;
       }
+    } else if (link !== "") {
+      skippedNoLinkCount++;
     }
   }
   
   if (processedCount > 0) {
     ui.alert("סיום", `הסריקה הושלמה! עודכנו בהצלחה ${processedCount} כרטיסי טיסה בטבלה של ענת.`, ui.ButtonSet.OK);
   } else {
-    ui.alert("סיום", "הסריקה הושלמה אבל לא נמצאו כרטיסים חדשים לפענוח (או שכולם כבר פוענחו).", ui.ButtonSet.OK);
+    let debugMsg = `הסריקה הושלמה, אך לא עובדו שורות חדשות.\n\n`;
+    debugMsg += `המערכת מזהה שעמודת הלינקים היא עמודה מספר ${linkColIdx + 1}.\n`;
+    debugMsg += `כמות שורות שדולגו כי כבר יש בהן תאריך נחיתה (עמודה D אינה ריקה): ${skippedHasDateCount}\n`;
+    debugMsg += `כמות שורות עם טקסט שלא זוהה כלינק תקין של גוגל דרייב: ${skippedNoLinkCount}\n`;
+    ui.alert("תוצאות סריקה", debugMsg, ui.ButtonSet.OK);
   }
 }
 
