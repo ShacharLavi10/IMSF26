@@ -608,6 +608,60 @@ function getAdminDashboardData(sessionToken) {
   }
 }
 
+/**
+ * Update personal message for a guest (Admin Only)
+ */
+function updatePersonalMessage(sessionToken, guestEmail, message) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const cleanAdminEmail = sessionRes.email;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: 'Master sheet not found.' };
+    
+    const data = masterSheet.getDataRange().getValues();
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(3, data.length); r++) {
+      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: 'Header not found.' };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    const msgIdx = headers.indexOf("הודעה אישית בפורטל");
+    
+    if (msgIdx === -1) return { success: false, message: 'Column "הודעה אישית בפורטל" not found.' };
+    
+    let isAdmin = false;
+    let guestRow = -1;
+    
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      const email = String(data[i][emailIdx] || "").trim().toLowerCase();
+      if (email === cleanAdminEmail) {
+        if (roleIdx !== -1 && String(data[i][roleIdx]).trim() === "הפקה חשיפה") {
+          isAdmin = true;
+        }
+      }
+      if (email === String(guestEmail).trim().toLowerCase()) {
+        guestRow = i + 1; // 1-indexed for SpreadsheetApp
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: 'Unauthorized. Admins only.' };
+    if (guestRow === -1) return { success: false, message: 'Guest not found.' };
+    
+    masterSheet.getRange(guestRow, msgIdx + 1).setValue(message);
+    return { success: true, message: 'Message updated successfully.' };
+  } catch (err) {
+    return { success: false, message: 'Server Error: ' + err.toString() };
+  }
+}
 
 /**
  * Send a global alert (Admin Only)
