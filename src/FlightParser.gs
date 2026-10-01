@@ -3,16 +3,23 @@
  */
 
 function processAllTicketsBulk() {
-  const ui = SpreadsheetApp.getUi();
+  let ui;
+  try { ui = SpreadsheetApp.getUi(); } catch(e) {}
+  
+  const showAlert = (title, msg) => {
+    Logger.log(title + ": " + msg);
+    if (ui) ui.alert(title, msg, ui.ButtonSet.OK);
+  };
+
   const anatId = CONFIG.ANAT_SPREADSHEET_ID;
-  if (!anatId) return ui.alert("שגיאה: ANAT_SPREADSHEET_ID לא מוגדר.");
+  if (!anatId) return showAlert("שגיאה", "ANAT_SPREADSHEET_ID לא מוגדר.");
   
   const anatSs = SpreadsheetApp.openById(anatId);
   const sourceSheet = anatSs.getSheetByName("עדכוני טיסות");
   const targetSheet = anatSs.getSheetByName("טבלת טיסות");
   
   if (!sourceSheet || !targetSheet) {
-    return ui.alert("שגיאה: חסר אחד הגיליונות - 'עדכוני טיסות' או 'טבלת טיסות'.");
+    return showAlert("שגיאה", "חסר אחד הגיליונות - 'עדכוני טיסות' או 'טבלת טיסות'.");
   }
   
   const sourceData = sourceSheet.getDataRange().getValues();
@@ -28,9 +35,9 @@ function processAllTicketsBulk() {
   const sourceEmailColIdx = getColIdx(sourceHeaders, ["מייל אורח", "מייל", "Email"]);
   const targetEmailColIdx = getColIdx(targetHeaders, ["מייל אורח", "מייל", "Email"]);
   
-  if (linkColIdx === -1) return ui.alert("שגיאה: לא נמצאה עמודת לינק ב'עדכוני טיסות'.");
-  if (sourceEmailColIdx === -1) return ui.alert("שגיאה: לא נמצאה עמודת 'מייל אורח' ב'עדכוני טיסות'.");
-  if (targetEmailColIdx === -1) return ui.alert("שגיאה: לא נמצאה עמודת 'מייל אורח' ב'טבלת טיסות'.");
+  if (linkColIdx === -1) return showAlert("שגיאה", "לא נמצאה עמודת לינק ב'עדכוני טיסות'.");
+  if (sourceEmailColIdx === -1) return showAlert("שגיאה", "לא נמצאה עמודת 'מייל אורח' ב'עדכוני טיסות'.");
+  if (targetEmailColIdx === -1) return showAlert("שגיאה", "לא נמצאה עמודת 'מייל אורח' ב'טבלת טיסות'.");
   
   // Find target columns dynamically
   const colTarget = {
@@ -67,14 +74,14 @@ function processAllTicketsBulk() {
               const extractedData = callGeminiAPI(Utilities.base64Encode(file.getBlob().getBytes()), file.getMimeType());
               
               if (extractedData && !extractedData.error) {
-                targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate || "");
-                targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime || "");
-                targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight || "");
-                targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline || "");
-                targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate || "");
-                targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime || "");
-                targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight || "");
-                targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline || "");
+                if (colTarget.arrDate > 0) targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate || "");
+                if (colTarget.arrTime > 0) targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime || "");
+                if (colTarget.arrFlight > 0) targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight || "");
+                if (colTarget.arrAirline > 0) targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline || "");
+                if (colTarget.depDate > 0) targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate || "");
+                if (colTarget.depTime > 0) targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime || "");
+                if (colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight || "");
+                if (colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline || "");
                 targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
                 processedCount++;
                 Utilities.sleep(5000); // Respect 15 RPM
@@ -87,7 +94,7 @@ function processAllTicketsBulk() {
       }
     }
   }
-  ui.alert("סיום", `הסריקה הושלמה. עודכנו ${processedCount} שורות.`, ui.ButtonSet.OK);
+  showAlert("סיום", `הסריקה הושלמה. עודכנו ${processedCount} שורות.`);
 }
 
 function triggerFlightParsing(e, isManual = false) {
