@@ -11,7 +11,7 @@ function debugTestAI() {
   if (!url) return;
   
   try {
-    ui.alert('מתחיל', 'מושך את הקובץ מהדרייב ושולח ל-AI... אנא המתן.', ui.ButtonSet.OK);
+    SpreadsheetApp.getActiveSpreadsheet().toast('מושך את הקובץ מהדרייב ושולח ל-AI... אנא המתן.', 'מתחיל', 5);
     
     const fileId = extractDriveId(url);
     if (!fileId) throw new Error("לינק לא תקין של גוגל דרייב.");
