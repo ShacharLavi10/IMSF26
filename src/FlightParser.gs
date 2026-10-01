@@ -240,7 +240,7 @@ function callGeminiAPI(base64File, mimeType) {
   const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error("מפתח API לא מוגדר במערכת. אנא הגדר GEMINI_API_KEY");
   
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-pro:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
   
   const promptText = `
 You are a flight ticket parser. 
@@ -295,7 +295,7 @@ Required JSON Structure:
   let response;
   let result;
   let attempts = 0;
-  const maxAttempts = 3;
+  const maxAttempts = 5;
   
   while (attempts < maxAttempts) {
     attempts++;
@@ -309,7 +309,7 @@ Required JSON Structure:
       
       // If it's a 503 high demand error or similar transient error, wait and retry
       if (response.getResponseCode() >= 500 && attempts < maxAttempts) {
-        Utilities.sleep(attempts * 2000); // 2s, 4s backoff
+        Utilities.sleep(Math.pow(2, attempts) * 1000); // 2s, 4s, 8s, 16s backoff
         continue;
       }
       return { error: true, message: errMsg };
