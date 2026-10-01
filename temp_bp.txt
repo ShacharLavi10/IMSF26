@@ -1,0 +1,187 @@
+﻿
+>         renderBoardingPassData("flights-container", response.flightsData, "Flight itinerary pending confirmation.");
+        } else {
+          document.getElementById("flights-container").style.display = "none";
+          document.getElementById("flights-pending-container").style.display = "block";
+        }
+  
+        if (response.checklist.approvalHotels) {
+          document.getElementById("hotels-container").style.display = "grid";
+          document.getElementById("hotels-pending-container").style.display = "none";
+          renderHotelData(response.hotelJerusalemData, response.hotelTelAvivData);
+        } else {
+          document.getElementById("hotels-container").style.display = "none";
+          document.getElementById("hotels-pending-container").style.display = "block";
+        }
+  
+        if (response.checklist.approvalDirectory) {
+          document.getElementById("directory-main-container").style.display = "block";
+          document.getElementById("directory-pending-container").style.display = "none";
+          renderDirectory(response.allGuestsDirectory);
+        } else {
+          document.getElementById("directory-main-container").style.display = "none";
+          document.getElementById("directory-pending-container").style.display = "block";
+        }
+  
+        if (response.checklist.approvalArtists) {
+          document.getElementById("artists-container").style.display = "block";
+          document.getElementById("artists-pending-container").style.display = "none";
+          // Fetch only if approved to avoid unnecessary requests and endless loading if the tab is hidden
+          fetchArtistsData();
+        } else {
+          document.getElementById("artists-container").style.display = "none";
+          document.getElementById("artists-pending-container").style.display = "block";
+        }
+      }
+  
+      function onLoginFailure(err) {
+        document.getElementById("login-loader").style.display = "none";
+        const errorDiv = document.getElementById("login-error");
+        errorDiv.innerText = "Connection error: " + err.message;
+        errorDiv.style.display = "block";
+      }
+  
+  
+      function formatDateOnly(dateStr) {
+        if (!dateStr) return '';
+        // If it looks like a full date string, parse it
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime()) && dateStr.toString().length > 10) {
+          return d.toLocaleDateString('en-GB'); // DD/MM/YYYY
+        }
+        return dateStr;
+      }
+  
+      function renderTableData(containerId, dataArray, emptyText) {
+        const container = document.getElementById(containerId);
+        if (!dataArray || dataArray.length === 0) {
+          container.innerHTML = `<p class="empty-state">${emptyText}</p>`;
+          return;
+        }
+        let html = `<div class="info-list">`;
+        dataArray.forEach(item => {
+          if (item.value && item.value.trim() !== "") {
+            let displayVal = item.value;
+            if (item.label.toLowerCase().includes('date') || item.label.toLowerCase().includes('×ª××¨×™×š')) {
+              displayVal = formatDateOnly(item.value);
+            }
+            html += `
+              <div class="info-row">
+                <span class="info-label">${item.label}</span>
+                <span class="info-value">${displayVal}</span>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+  
+>     function renderBoardingPassData(containerId, dataArray, emptyText) {
+        const container = document.getElementById(containerId);
+        if (!dataArray || dataArray.length === 0) {
+          container.innerHTML = `<p class="empty-state">${emptyText}</p>`;
+          return;
+        }
+        
+        let arrival = "TBD", origin = "TBD", departure = "TBD", dest = "TBD", ticketLink = null;
+        
+        dataArray.forEach(item => {
+          if (!item.value) return;
+          if (item.label === "Arrival Date") arrival = formatDateOnly(item.value);
+          if (item.label === "Origin / From") origin = item.value;
+          if (item.label === "Departure Date") departure = formatDateOnly(item.value);
+          if (item.label === "Destination / To") dest = item.value;
+          if (item.label === "Final Ticket Link") ticketLink = item.value;
+        });
+  
+        let html = '';
+  
+        if (ticketLink) {
+          html += `
+            <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
+              <a href="${ticketLink}" target="_blank" class="primary button-download-small" style="text-decoration: 
+none; display: flex; align-items: center; gap: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" 
+stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 
+3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                View E-Ticket
+              </a>
+            </div>
+          `;
+        }
+  
+        html += `
+          <div class="boarding-pass">
+            <div class="bp-header">
+              <span>OFFICIAL ITINERARY</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 
+24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,
+19v-5.5L21,16z"/></svg>
+            </div>
+            <div class="bp-body">
+              <div class="bp-flight">
+                <div class="bp-label">INBOUND</div>
+                <div class="bp-route">
+                  <span class="bp-city">${origin}</span>
+                  <span class="bp-arrow">â†’</span>
+                  <span class="bp-city">TLV</span>
+                </div>
+                <div class="bp-date">Arrival: ${arrival}</div>
+              </div>
+              <div class="bp-divider"></div>
+              <div class="bp-flight">
+                <div class="bp-label">OUTBOUND</div>
+                <div class="bp-route">
+                  <span class="bp-city">TLV</span>
+                  <span class="bp-arrow">â†’</span>
+                  <span class="bp-city">${dest}</span>
+                </div>
+                <div class="bp-date">Departure: ${departure}</div>
+              </div>
+            </div>
+          </div>
+        `;
+  
+        container.innerHTML = html;
+      }
+  
+      function renderHotelData(jerusalemData, telAvivData) {
+        const jlmContainer = document.getElementById("hotel-jerusalem-content");
+        const tlvContainer = document.getElementById("hotel-telaviv-content");
+        
+        const hasJlm = jerusalemData && jerusalemData.some(i => i.value && i.value.trim() !== "");
+        const hasTlv = telAvivData && telAvivData.some(i => i.value && i.value.trim() !== "");
+  
+        if (hasJlm) {
+          let html = `<div class="info-list">`;
+          jerusalemData.forEach(item => {
+            if (item.value && item.value.trim() !== "") {
+              html += `
+                <div class="info-row">
+                  <span class="info-label">${item.label}</span>
+                  <span class="info-value">${item.value}</span>
+                </div>
+              `;
+            }
+          });
+          html += `</div>`;
+          jlmContainer.innerHTML = html;
+        } else {
+          jlmContainer.innerHTML = `<p class="empty-state">No Jerusalem accommodation details confirmed yet.</p>`;
+        }
+  
+        if (hasTlv) {
+          let html = `<div class="info-list">`;
+          telAvivData.forEach(item => {
+            if (item.value && item.value.trim() !== "") {
+              html += `
+                <div class="info-row">
+                  <span class="info-label">${item.label}</span>
+                  <span class="info-value">${item.value}</span>
+                </div>
+              `;
+            }
+          });
+
+

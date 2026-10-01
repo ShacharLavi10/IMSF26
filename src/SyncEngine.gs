@@ -175,100 +175,106 @@ function syncAnatSheetWithMasterOrder() {
 
   try {
     const targetSS = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
-    const targetSheet = targetSS.getSheetByName(CONFIG.ANAT_SHEET_NAME) || targetSS.getSheets()[0];
-    const lastRow = targetSheet.getLastRow();
-    const lastCol = targetSheet.getLastColumn();
-    if (lastRow < 1 || lastCol < 1) return;
+    const sheetsToSync = [CONFIG.ANAT_SHEET_NAME, "טבלת טיסות"];
+    
+    sheetsToSync.forEach(sheetName => {
+      const targetSheet = targetSS.getSheetByName(sheetName);
+      if (!targetSheet) return; // Skip if sheet doesn't exist
+      
+      const lastRow = targetSheet.getLastRow();
+      const lastCol = targetSheet.getLastColumn();
+      if (lastRow < 1 || lastCol < 1) return;
 
-    const range = targetSheet.getRange(1, 1, lastRow, lastCol);
-    const values = range.getValues();
-    const formulas = range.getFormulas();
+      const range = targetSheet.getRange(1, 1, lastRow, lastCol);
+      const values = range.getValues();
+      const formulas = range.getFormulas();
 
-    let headerRowIdx = -1;
-    let targetEmailColIdx = -1;
-    for (let r = 0; r < Math.min(3, values.length); r++) {
-      for (let c = 0; c < values[r].length; c++) {
-        if (String(values[r][c]).trim().toLowerCase() === CONFIG.EMAIL_COL.trim().toLowerCase()) {
-          headerRowIdx = r;
-          targetEmailColIdx = c;
-          break;
-        }
-      }
-      if (headerRowIdx !== -1) break;
-    }
-    if (headerRowIdx === -1) return;
-    const startDataRowIdx = headerRowIdx + 1;
-
-    const combinedRows = [];
-    for (let r = startDataRowIdx; r < values.length; r++) {
-      const emailVal = values[r][targetEmailColIdx] ? values[r][targetEmailColIdx].toString().trim().toLowerCase() : "";
-      const isDeleted = (emailVal !== "" && !masterEmailOrder.includes(emailVal));
-
-      const rowObj = [];
-      for (let c = 0; c < lastCol; c++) {
-        rowObj.push({ val: values[r][c], form: formulas[r][c], oldRow: r + 1 });
-      }
-      rowObj.isDeleted = isDeleted;
-      combinedRows.push(rowObj);
-    }
-
-    const existingTargetEmails = combinedRows.map(row => row[targetEmailColIdx].val ? row[targetEmailColIdx].val.toString().trim().toLowerCase() : "");
-
-    const masterID = masterSS.getId();
-    masterEmailOrder.forEach(masterEmail => {
-      if (!existingTargetEmails.includes(masterEmail)) {
-        const newRow = new Array(lastCol).fill(null).map(() => ({ val: "", form: "" }));
-        newRow[targetEmailColIdx] = { val: masterEmail, form: "" };
-        
-        const targetRowIndex = combinedRows.length + startDataRowIdx + 1;
-        newRow[1] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!B:B"), ""))` };
-        newRow[2] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!A:A"), ""))` };
-        
-        combinedRows.push(newRow);
-      }
-    });
-
-    combinedRows.sort((a, b) => {
-      let indexA = masterEmailOrder.indexOf(a[targetEmailColIdx].val ? a[targetEmailColIdx].val.toString().trim().toLowerCase() : "");
-      let indexB = masterEmailOrder.indexOf(b[targetEmailColIdx].val ? b[targetEmailColIdx].val.toString().trim().toLowerCase() : "");
-      return (indexA === -1 ? 9999 : indexA) - (indexB === -1 ? 9999 : indexB);
-    });
-
-    const finalValues = values.slice(0, startDataRowIdx);
-    const finalFormulas = formulas.slice(0, startDataRowIdx);
-    const emailBackgrounds = [];
-
-    combinedRows.forEach((row, idx) => {
-      emailBackgrounds.push([row.isDeleted ? "#ffcccc" : null]);
-      const rowVal = []; const rowForm = [];
-      const currentRowNum = idx + startDataRowIdx + 1;
-      row.forEach((cell, cIdx) => {
-        let fStr = cell.form;
-        if (cIdx === targetEmailColIdx) fStr = ""; // Force email to be a static value
-        if (fStr) {
-          const oldRow = cell.oldRow;
-          if (oldRow) {
-            const regex = new RegExp(`(?<![!:])(\\$?[A-Za-z]+\\$?)(${oldRow})(?![0-9:])`, 'gi');
-            fStr = fStr.replace(regex, `$1${currentRowNum}`);
+      let headerRowIdx = -1;
+      let targetEmailColIdx = -1;
+      for (let r = 0; r < Math.min(3, values.length); r++) {
+        for (let c = 0; c < values[r].length; c++) {
+          if (String(values[r][c]).trim().toLowerCase() === CONFIG.EMAIL_COL.trim().toLowerCase()) {
+            headerRowIdx = r;
+            targetEmailColIdx = c;
+            break;
           }
         }
-        if (fStr !== "") { rowForm.push(fStr); rowVal.push(""); } 
-        else { rowForm.push(""); rowVal.push(cell.val); }
-      });
-      finalValues.push(rowVal); finalFormulas.push(rowForm);
-    });
-
-    targetSheet.clearContents();
-    const maxCol = Math.max(lastCol, finalValues[0] ? finalValues[0].length : 1);
-    targetSheet.getRange(1, 1, finalValues.length, maxCol).setValues(finalValues);
-    for (let r = startDataRowIdx; r < finalFormulas.length; r++) {
-      for (let c = 0; c < lastCol; c++) {
-        if (finalFormulas[r][c] !== "") targetSheet.getRange(r + 1, c + 1).setFormula(finalFormulas[r][c]);
+        if (headerRowIdx !== -1) break;
       }
-    }
-    if (emailBackgrounds.length > 0) {
-      targetSheet.getRange(startDataRowIdx + 1, targetEmailColIdx + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
-    }
+      if (headerRowIdx === -1) return;
+      const startDataRowIdx = headerRowIdx + 1;
+
+      const combinedRows = [];
+      for (let r = startDataRowIdx; r < values.length; r++) {
+        const emailVal = values[r][targetEmailColIdx] ? values[r][targetEmailColIdx].toString().trim().toLowerCase() : "";
+        const isDeleted = (emailVal !== "" && !masterEmailOrder.includes(emailVal));
+
+        const rowObj = [];
+        for (let c = 0; c < lastCol; c++) {
+          rowObj.push({ val: values[r][c], form: formulas[r][c], oldRow: r + 1 });
+        }
+        rowObj.isDeleted = isDeleted;
+        combinedRows.push(rowObj);
+      }
+
+      const existingTargetEmails = combinedRows.map(row => row[targetEmailColIdx].val ? row[targetEmailColIdx].val.toString().trim().toLowerCase() : "");
+
+      const masterID = masterSS.getId();
+      masterEmailOrder.forEach(masterEmail => {
+        if (!existingTargetEmails.includes(masterEmail)) {
+          const newRow = new Array(lastCol).fill(null).map(() => ({ val: "", form: "" }));
+          newRow[targetEmailColIdx] = { val: masterEmail, form: "" };
+          
+          const targetRowIndex = combinedRows.length + startDataRowIdx + 1;
+          newRow[1] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!B:B"), ""))` };
+          newRow[2] = { val: "", form: `=IF(ISBLANK(A${targetRowIndex}), "", XLOOKUP(A${targetRowIndex}, IMPORTRANGE("${masterID}", "'אורחים'!J:J"), IMPORTRANGE("${masterID}", "'אורחים'!A:A"), ""))` };
+          
+          combinedRows.push(newRow);
+        }
+      });
+
+      combinedRows.sort((a, b) => {
+        let indexA = masterEmailOrder.indexOf(a[targetEmailColIdx].val ? a[targetEmailColIdx].val.toString().trim().toLowerCase() : "");
+        let indexB = masterEmailOrder.indexOf(b[targetEmailColIdx].val ? b[targetEmailColIdx].val.toString().trim().toLowerCase() : "");
+        return (indexA === -1 ? 9999 : indexA) - (indexB === -1 ? 9999 : indexB);
+      });
+
+      const finalValues = values.slice(0, startDataRowIdx);
+      const finalFormulas = formulas.slice(0, startDataRowIdx);
+      const emailBackgrounds = [];
+
+      combinedRows.forEach((row, idx) => {
+        emailBackgrounds.push([row.isDeleted ? "#ffcccc" : null]);
+        const rowVal = []; const rowForm = [];
+        const currentRowNum = idx + startDataRowIdx + 1;
+        row.forEach((cell, cIdx) => {
+          let fStr = cell.form;
+          if (cIdx === targetEmailColIdx) fStr = ""; // Force email to be a static value
+          if (fStr) {
+            const oldRow = cell.oldRow;
+            if (oldRow) {
+              const regex = new RegExp(`(?<![!:])(\\$?[A-Za-z]+\\$?)(${oldRow})(?![0-9:])`, 'gi');
+              fStr = fStr.replace(regex, `$1${currentRowNum}`);
+            }
+          }
+          if (fStr !== "") { rowForm.push(fStr); rowVal.push(""); } 
+          else { rowForm.push(""); rowVal.push(cell.val); }
+        });
+        finalValues.push(rowVal); finalFormulas.push(rowForm);
+      });
+
+      targetSheet.clearContents();
+      const maxCol = Math.max(lastCol, finalValues[0] ? finalValues[0].length : 1);
+      targetSheet.getRange(1, 1, finalValues.length, maxCol).setValues(finalValues);
+      for (let r = startDataRowIdx; r < finalFormulas.length; r++) {
+        for (let c = 0; c < lastCol; c++) {
+          if (finalFormulas[r][c] !== "") targetSheet.getRange(r + 1, c + 1).setFormula(finalFormulas[r][c]);
+        }
+      }
+      if (emailBackgrounds.length > 0) {
+        targetSheet.getRange(startDataRowIdx + 1, targetEmailColIdx + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
+      }
+    });
   } catch (err) {
     Logger.log("Error syncing Anat sheet order: " + err.toString());
   }

@@ -64,9 +64,15 @@ const CONFIG = {
 const MAPPINGS = {
   FLIGHTS: [
     { key: "הגעה לישראל", altKeys: ["תאריך נחיתה", "תאריך הגעה", "הגעה לישראל"], label: "Arrival Date" },
+    { key: "שעת נחיתה", altKeys: ["שעת נחיתה", "שעת נחיתה בנתבג", "שעת נחיתה בנתב\"ג"], label: "Arrival Time" },
+    { key: "מספר טיסה נחיתה", altKeys: ["מספר טיסה נחיתה", "מספר טיסת נחיתה"], label: "Arrival Flight" },
+    { key: "חברת תעופה נחיתה", altKeys: ["חברת תעופה נחיתה"], label: "Arrival Airline" },
     { key: "יעד הגעה", altKeys: ["מאיפה?", "מאיפה", "יעד", "יעד הגעה"], label: "Origin / From" },
     { key: "חזרה מישראל", altKeys: ["תאריך המראה", "תאריך יציאה", "חזרה מישראל"], label: "Departure Date" },
-    { key: "יעד חזרה", altKeys: ["לאן?", "לאן", "יעד", "יעד חזרה"], label: "Destination / To" },
+    { key: "שעת המראה", altKeys: ["שעת המראה", "שעת המראה מנתבג", "שעת המראה מנתב\"ג"], label: "Departure Time" },
+    { key: "מספר טיסה המראה", altKeys: ["מספר טיסה המראה", "מספר טיסת המראה"], label: "Departure Flight" },
+    { key: "חברת תעופה המראה", altKeys: ["חברת תעופה המראה"], label: "Departure Airline" },
+    { key: "שיוך לשאטל", altKeys: ["שיוך לשאטל", "הסעה", "שאטל"], label: "Shuttle" },
     { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "לינק לכרטיס", "כרטיס סופי", "לינק כרטיס"], label: "Final Ticket Link" }
   ],
   HOTELS: [
