@@ -1,0 +1,1 @@
+﻿const fs = require('fs'); let content = fs.readFileSync('src/Config.gs', 'utf8'); content = content.replace('"שעת נחיתה", "שעת נחיתה משוערת"', '"שעת נחיתה", "שעת הגעה", "שעת נחיתה משוערת"'); content = content.replace('"שעת המראה", "שעת המראה משוערת"', '"שעת המראה", "שעת עזיבה", "שעת יציאה", "שעת המראה משוערת"'); fs.writeFileSync('src/Config.gs', content);

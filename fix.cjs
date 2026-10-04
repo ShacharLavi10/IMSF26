@@ -1,4 +1,1 @@
-﻿const fs = require('fs');
-let f = fs.readFileSync('main.js', 'utf8');
-f = f.replace(/const GAS_API_URL = .*/, 'const GAS_API_URL = "https://script.google.com/macros/s/AKfycby1dsqYxPUX21OOFtrE0Q2ggJGdcquwwna4_0f3SOtpj800wRgdn_18BApye05Ohmu3/exec";');
-fs.writeFileSync('main.js', f);
+﻿const fs = require('fs'); let content = fs.readFileSync('src/Config.gs', 'utf8'); content = content.replace(/altKeys: \["שעת נחיתה", "שעת נחיתה משוערת", "שעת נחיתה בנתב\\"ג"\]/, 'altKeys: ["שעת נחיתה", "שעת הגעה", "שעת נחיתה משוערת", "שעת נחיתה בנתב\\"ג"]'); content = content.replace(/altKeys: \["שעת המראה", "שעת המראה משוערת", "שעת המראה מנתב\\"ג"\]/, 'altKeys: ["שעת המראה", "שעת עזיבה", "שעת יציאה", "שעת המראה משוערת", "שעת המראה מנתב\\"ג"]'); fs.writeFileSync('src/Config.gs', content);
