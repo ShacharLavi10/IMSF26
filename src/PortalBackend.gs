@@ -378,7 +378,7 @@ function getScheduleData(forceRefresh) {
     }
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName('לו"ז פסטיבל');
+    let sheet = ss.getSheetByName('לו"ז פסטיבל') || ss.getSheetByName('לוז פסטיבל');
     if (!sheet) return { success: false, message: 'Schedule sheet not found' };
     
     const data = sheet.getDataRange().getValues();
