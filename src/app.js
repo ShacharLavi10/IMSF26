@@ -445,31 +445,36 @@ let currentGuestEmail = "";
       function formatFlightTime(tStr) {
         if (!tStr) return '';
         const timeMatch = String(tStr).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
-        if (timeMatch) {
+        if (timeMatch && timeMatch[0] !== "00:00") {
+          return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+        } else if (timeMatch && timeMatch[0] === "00:00") {
+           // if it's strictly 00:00 coming from a pure date formatting artifact, let's ignore it unless it's genuinely the only time
+           // Actually, let's just return what we matched. If the user says it shows 00:00, we should skip it if it's from the fallback.
+           // Since we are removing the fallback below, we can just return it normally if someone actually lands at 00:00.
           return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
         }
+        
+        // Handle Google Sheets decimal time format (e.g. 0.6041666667)
+        if (!isNaN(tStr) && Number(tStr) > 0 && Number(tStr) < 1) {
+           const totalMinutes = Math.round(Number(tStr) * 24 * 60);
+           const hh = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+           const mm = (totalMinutes % 60).toString().padStart(2, '0');
+           return `${hh}:${mm}`;
+        }
+        
         return tStr;
       }
 
       dataArray.forEach(item => {
         if (!item.value) return;
         
-        const timeMatch = String(item.value).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
-        const extractedTime = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : null;
-        
-        if (item.label === "Arrival Date") {
-          arrival = formatFlightDate(item.value);
-          if (extractedTime && !arrivalTime) arrivalTime = extractedTime;
-        }
+        if (item.label === "Arrival Date") arrival = formatFlightDate(item.value);
         if (item.label === "Arrival Time") arrivalTime = formatFlightTime(item.value);
         if (item.label === "Arrival Flight") arrivalFlight = item.value;
         if (item.label === "Arrival Airline") arrivalAirline = item.value;
         if (item.label === "Origin / From") origin = item.value;
         
-        if (item.label === "Departure Date") {
-          departure = formatFlightDate(item.value);
-          if (extractedTime && !departureTime) departureTime = extractedTime;
-        }
+        if (item.label === "Departure Date") departure = formatFlightDate(item.value);
         if (item.label === "Departure Time") departureTime = formatFlightTime(item.value);
         if (item.label === "Departure Flight") departureFlight = item.value;
         if (item.label === "Departure Airline") departureAirline = item.value;
