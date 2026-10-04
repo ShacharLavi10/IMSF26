@@ -434,16 +434,48 @@ let currentGuestEmail = "";
       let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
       let ticketLink = null, shuttle = null;
       
+      function formatFlightDate(dStr) {
+        if (!dStr) return '';
+        const d = new Date(dStr);
+        if (!isNaN(d.getTime()) && dStr.toString().length > 5) {
+          return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+        }
+        return dStr;
+      }
+      function formatFlightTime(tStr) {
+        if (!tStr) return '';
+        const timeMatch = String(tStr).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+        if (timeMatch && timeMatch[0] !== "00:00") {
+          return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+        } else if (timeMatch && timeMatch[0] === "00:00") {
+           // if it's strictly 00:00 coming from a pure date formatting artifact, let's ignore it unless it's genuinely the only time
+           // Actually, let's just return what we matched. If the user says it shows 00:00, we should skip it if it's from the fallback.
+           // Since we are removing the fallback below, we can just return it normally if someone actually lands at 00:00.
+          return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+        }
+        
+        // Handle Google Sheets decimal time format (e.g. 0.6041666667)
+        if (!isNaN(tStr) && Number(tStr) > 0 && Number(tStr) < 1) {
+           const totalMinutes = Math.round(Number(tStr) * 24 * 60);
+           const hh = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+           const mm = (totalMinutes % 60).toString().padStart(2, '0');
+           return `${hh}:${mm}`;
+        }
+        
+        return tStr;
+      }
+
       dataArray.forEach(item => {
         if (!item.value) return;
-        if (item.label === "Arrival Date") arrival = formatDateOnly(item.value);
-        if (item.label === "Arrival Time") arrivalTime = item.value;
+        
+        if (item.label === "Arrival Date") arrival = formatFlightDate(item.value);
+        if (item.label === "Arrival Time") arrivalTime = formatFlightTime(item.value);
         if (item.label === "Arrival Flight") arrivalFlight = item.value;
         if (item.label === "Arrival Airline") arrivalAirline = item.value;
         if (item.label === "Origin / From") origin = item.value;
         
-        if (item.label === "Departure Date") departure = formatDateOnly(item.value);
-        if (item.label === "Departure Time") departureTime = item.value;
+        if (item.label === "Departure Date") departure = formatFlightDate(item.value);
+        if (item.label === "Departure Time") departureTime = formatFlightTime(item.value);
         if (item.label === "Departure Flight") departureFlight = item.value;
         if (item.label === "Departure Airline") departureAirline = item.value;
         if (item.label === "Destination / To") dest = item.value;
@@ -456,10 +488,10 @@ let currentGuestEmail = "";
 
       if (ticketLink) {
         html += `
-          <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
-            <a href="${ticketLink}" target="_blank" class="primary button-download-small" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              View E-Ticket
+          <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <a href="${ticketLink}" target="_blank" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              View E-Ticket (PDF)
             </a>
           </div>
         `;
@@ -508,6 +540,22 @@ let currentGuestEmail = "";
               </div>
             </div>
           </div>
+        </div>
+      `;
+
+      // Shuttle Information Rubric Placeholder
+      html += `
+        <div style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: 8px; border: 1px solid var(--accent); margin-top: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            Shuttle Information
+          </h4>
+          <p style="margin: 0 0 8px 0; font-size: 0.95rem;">
+            You are on the shuttle from Ben Gurion airport leaving at <strong>[Time]</strong>.
+          </p>
+          <p style="margin: 0; font-size: 0.9rem; color: var(--foreground-muted);">
+            <strong>Together with:</strong> [Name 1], [Name 2], [Name 3]
+          </p>
         </div>
       `;
 

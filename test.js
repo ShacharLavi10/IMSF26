@@ -341,18 +341,37 @@ function fetchAllGuestsDirectory(masterSheet, mappingArray) {
 function getScheduleData() {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let sheet = ss.getSheetByName('לו"ז פסטיבל');
+    let sheet = ss.getSheetByName('לו"ז פסטיבל') || ss.getSheetByName('לוז פסטיבל');
     if (!sheet) return { success: false, message: 'Schedule sheet not found' };
     
     const data = sheet.getDataRange().getValues();
     if (data.length < 2) return { success: true, schedule: {} };
     
-    const headers = data[0].map(h => String(h).trim());
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStr = data[r].map(h => String(h).trim().toLowerCase());
+      if (rowStr.some(col => col.includes('תאריך') || col.includes('date'))) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    
+    if (headerRowIdx === -1) return { success: false, message: 'Headers not found in Schedule sheet' };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
     const scheduleByDate = {};
     
-    for (let i = 1; i < data.length; i++) {
+    const dateIdx = headers.findIndex(h => h.includes('תאריך') || h.includes('date'));
+    const stIdx = headers.findIndex(h => h.includes('שעת התחלה') || h.includes('start'));
+    const etIdx = headers.findIndex(h => h.includes('שעת סיום') || h.includes('end'));
+    const titleIdx = headers.findIndex(h => h.includes('כותרת') || h.includes('title') || h.includes('event'));
+    const descIdx = headers.findIndex(h => h.includes('תיאור') || h.includes('description') || h.includes('details'));
+    const locIdx = headers.findIndex(h => h.includes('מיקום') || h.includes('location') || h.includes('venue'));
+    
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
       const row = data[i];
-      let dateRaw = row[headers.indexOf('תאריך')];
+      
+      let dateRaw = dateIdx !== -1 ? row[dateIdx] : null;
       if (!dateRaw) continue;
       
       let dateStr = "";
@@ -362,8 +381,8 @@ function getScheduleData() {
         dateStr = String(dateRaw).trim();
       }
       
-      let stRaw = row[headers.indexOf('שעת התחלה')];
-      let etRaw = row[headers.indexOf('שעת סיום')];
+      let stRaw = stIdx !== -1 ? row[stIdx] : "";
+      let etRaw = etIdx !== -1 ? row[etIdx] : "";
       
       let stStr = "";
       if (stRaw instanceof Date) {
@@ -382,9 +401,9 @@ function getScheduleData() {
       const event = {
         startTime: stStr,
         endTime: etStr,
-        title: String(row[headers.indexOf('כותרת')] || "").trim(),
-        description: String(row[headers.indexOf('תיאור')] || "").trim(),
-        location: String(row[headers.indexOf('מיקום')] || "").trim()
+        title: titleIdx !== -1 ? String(row[titleIdx] || "").trim() : "",
+        description: descIdx !== -1 ? String(row[descIdx] || "").trim() : "",
+        location: locIdx !== -1 ? String(row[locIdx] || "").trim() : ""
       };
       
       if (!scheduleByDate[dateStr]) {
