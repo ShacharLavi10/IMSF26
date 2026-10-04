@@ -444,24 +444,32 @@ let currentGuestEmail = "";
       }
       function formatFlightTime(tStr) {
         if (!tStr) return '';
-        const d = new Date(tStr);
-        if (!isNaN(d.getTime()) && tStr.toString().length > 5) {
-          const hh = d.getHours().toString().padStart(2, '0');
-          const mm = d.getMinutes().toString().padStart(2, '0');
-          return `${hh}:${mm}`;
+        const timeMatch = String(tStr).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+        if (timeMatch) {
+          return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
         }
         return tStr;
       }
 
       dataArray.forEach(item => {
         if (!item.value) return;
-        if (item.label === "Arrival Date") arrival = formatFlightDate(item.value);
+        
+        const timeMatch = String(item.value).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+        const extractedTime = timeMatch ? `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}` : null;
+        
+        if (item.label === "Arrival Date") {
+          arrival = formatFlightDate(item.value);
+          if (extractedTime && !arrivalTime) arrivalTime = extractedTime;
+        }
         if (item.label === "Arrival Time") arrivalTime = formatFlightTime(item.value);
         if (item.label === "Arrival Flight") arrivalFlight = item.value;
         if (item.label === "Arrival Airline") arrivalAirline = item.value;
         if (item.label === "Origin / From") origin = item.value;
         
-        if (item.label === "Departure Date") departure = formatFlightDate(item.value);
+        if (item.label === "Departure Date") {
+          departure = formatFlightDate(item.value);
+          if (extractedTime && !departureTime) departureTime = extractedTime;
+        }
         if (item.label === "Departure Time") departureTime = formatFlightTime(item.value);
         if (item.label === "Departure Flight") departureFlight = item.value;
         if (item.label === "Departure Airline") departureAirline = item.value;
