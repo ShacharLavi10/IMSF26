@@ -224,7 +224,8 @@ function getGuestPortalData(sessionToken) {
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
     const personalMsg = String(getColVal("הודעה אישית בפורטל") || "");
     
-    const flightsData = fetchMappedData(ss.getSheetByName(CONFIG.FLIGHTS_SHEET), cleanEmail, MAPPINGS.FLIGHTS);
+    let flightsSheet = ss.getSheetByName(CONFIG.FLIGHTS_SHEET) || ss.getSheetByName("טיסות - שיקוף") || ss.getSheetByName("טבלת טיסות - שיקוף");
+    const flightsData = fetchMappedData(flightsSheet, cleanEmail, MAPPINGS.FLIGHTS);
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const hotelTelAvivData = fetchMappedData(ss.getSheetByName(CONFIG.TELAVIV_SHEET), cleanEmail, MAPPINGS.HOTELS);
     let allGuestsDirectory = null;
@@ -276,7 +277,10 @@ function fetchMappedData(sheet, email, mappingArray) {
     
     let headerRowIdx = -1;
     for (let r = 0; r < Math.min(10, data.length); r++) {
-      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+      if (data[r].some(cell => {
+        const val = String(cell).trim().toLowerCase();
+        return val === CONFIG.EMAIL_COL.toLowerCase() || val === 'מייל' || val === 'email' || val === 'מייל אורח';
+      })) {
         headerRowIdx = r;
         break;
       }
@@ -285,6 +289,8 @@ function fetchMappedData(sheet, email, mappingArray) {
     
     const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
     let emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    if (emailIdx === -1) emailIdx = headers.indexOf('מייל');
+    if (emailIdx === -1) emailIdx = headers.indexOf('email');
     if (emailIdx === -1) emailIdx = 0;
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {

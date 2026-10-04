@@ -39,7 +39,7 @@ function doPost(e) {
     }
   } catch (err) {
     console.error("API Error in doPost:", err.toString(), err.stack);
-    return ContentService.createTextOutput(JSON.stringify({ error: "Internal Server Error" }))
+    return ContentService.createTextOutput(JSON.stringify({ error: err.toString(), stack: err.stack }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
