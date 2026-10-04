@@ -91,3 +91,32 @@
 
 3. **Live Updates (מידע דינמי חי - הכנה להמשך):**
    * פיצ'רים של זמן אמת (כמו "עולה בעוד 5 דקות") יתווספו באמצעות אנדפוינט קטן ונפרד שלא משתמש ב-Cache הארוך, וילבשו באופן ויזואלי (Overlay) על גבי המידע הסטטי מה-Cache של האומנים.
+
+
+## 6. Production Dashboard (Admin Interface)
+The portal contains an internal Production Dashboard hidden from regular guests. It is accessible only to users marked with the role `הפקה חשיפה` (Production Exposure) in the Master Sheet. Admin users are also automatically excluded from the "Delegates" (Guest Directory) tab.
+
+**Key Features:**
+1. **Live Analytics (Overview):**
+   - Automatically calculates total non-admin delegates.
+   - Computes missing critical forms in real-time by inspecting the relevant checkbox columns in the Master Sheet (Hotel form, Flight form, Passport photo).
+2. **Alert Center (Push Notifications):**
+   - Allows admins to broadcast global messages to all delegates.
+   - Operates by appending the message to the `מידע כללי` (General Info) sheet under the `הודעה לכולם` column, which instantly reflects in the Live Updates bell of all users.
+3. **Logistics Summary:**
+   - Aggregates and displays total booked hotel nights for Tel Aviv vs Jerusalem directly from the hotel sheets.
+   - Summarizes total processed flight arrivals.
+4. **Guest Management & Search:**
+   - Real-time search across names, emails, and companies.
+   - Status indicators (Green/Orange) summarizing form completion.
+   - Clicking a guest opens the **Admin Modal** containing their full contact details, missing forms breakdown, a direct WhatsApp chat button, and the Impersonation feature.
+5. **View As (Impersonation):**
+   - Admins can temporarily view the portal strictly as a specific guest.
+   - It generates a cryptographic temporary token for the target user via `impersonateGuest()` in Apps Script, saves the admin's original token, and reloads the portal.
+   - A floating red banner remains active to allow instantly reverting to Admin mode.
+
+**Technical Flow:**
+- **Frontend (`src/app.js`):** All admin logic (`renderAdminDashboard`, `filterAdminGuests`, `viewAdminGuestDetails`, `sendAdminAlert`, `impersonateGuest`) is strictly encapsulated and dynamically injected into `#admin-card` to ensure rapid loading and visual separation.
+- **Backend (`src/PortalBackend.gs`):** 
+  - `getAdminDashboardData`: A unified endpoint fetching Master Sheet, Hotels, and Flights data for local processing to avoid multiple round-trips.
+  - Role verification is strictly enforced server-side before executing any admin mutations (`sendAdminAlert`, `impersonateGuest`).

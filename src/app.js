@@ -430,14 +430,25 @@ let currentGuestEmail = "";
         return;
       }
       
-      let arrival = "TBD", origin = "TBD", departure = "TBD", dest = "TBD", ticketLink = null;
+      let arrival = "TBD", arrivalTime = "", arrivalFlight = "", arrivalAirline = "", origin = "TBD";
+      let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
+      let ticketLink = null, shuttle = null;
       
       dataArray.forEach(item => {
         if (!item.value) return;
         if (item.label === "Arrival Date") arrival = formatDateOnly(item.value);
+        if (item.label === "Arrival Time") arrivalTime = item.value;
+        if (item.label === "Arrival Flight") arrivalFlight = item.value;
+        if (item.label === "Arrival Airline") arrivalAirline = item.value;
         if (item.label === "Origin / From") origin = item.value;
+        
         if (item.label === "Departure Date") departure = formatDateOnly(item.value);
+        if (item.label === "Departure Time") departureTime = item.value;
+        if (item.label === "Departure Flight") departureFlight = item.value;
+        if (item.label === "Departure Airline") departureAirline = item.value;
         if (item.label === "Destination / To") dest = item.value;
+        
+        if (item.label === "Shuttle") shuttle = item.value;
         if (item.label === "Final Ticket Link") ticketLink = item.value;
       });
 
@@ -455,30 +466,46 @@ let currentGuestEmail = "";
       }
 
       html += `
-        <div class="boarding-pass">
+        <div class="boarding-pass" style="margin-bottom: 12px;">
           <div class="bp-header">
             <span>OFFICIAL ITINERARY</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
           </div>
           <div class="bp-body">
             <div class="bp-flight">
-              <div class="bp-label">INBOUND</div>
+              <div class="bp-label" style="display: flex; justify-content: space-between;">
+                <span>INBOUND TO ISRAEL</span>
+                ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
+              </div>
               <div class="bp-route">
                 <span class="bp-city">${origin}</span>
                 <span class="bp-arrow">→</span>
                 <span class="bp-city">TLV</span>
               </div>
-              <div class="bp-date">Arrival: ${arrival}</div>
+              <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
+              </div>
             </div>
+            
+            ${shuttle ? `
+            <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
+              <strong>🚐 Shuttle:</strong> ${shuttle}
+            </div>` : ''}
+
             <div class="bp-divider"></div>
             <div class="bp-flight">
-              <div class="bp-label">OUTBOUND</div>
+              <div class="bp-label" style="display: flex; justify-content: space-between;">
+                <span>OUTBOUND FROM ISRAEL</span>
+                ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
+              </div>
               <div class="bp-route">
                 <span class="bp-city">TLV</span>
                 <span class="bp-arrow">→</span>
                 <span class="bp-city">${dest}</span>
               </div>
-              <div class="bp-date">Departure: ${departure}</div>
+              <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
+              </div>
             </div>
           </div>
         </div>
