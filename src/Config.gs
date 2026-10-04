@@ -28,7 +28,7 @@ const ACTIVE_ENV = IS_PROD ? ENVIRONMENTS.PRODUCTION : ENVIRONMENTS.SANDBOX;
 const CONFIG = {
   ANAT_SPREADSHEET_ID: ACTIVE_ENV.ANAT_SPREADSHEET_ID,
   MASTER_SHEET: "אורחים",
-  FLIGHTS_SHEET: "טבלת טיסות - שיקוף",
+  FLIGHTS_SHEET: "טבלת טיסות",
   JERUSALEM_SHEET: "מלונות ירושלים",
   TELAVIV_SHEET: "מלונות תל אביב",
   ANAT_SHEET_NAME: "עדכוני טיסות",

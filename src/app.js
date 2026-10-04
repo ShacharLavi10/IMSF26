@@ -434,16 +434,35 @@ let currentGuestEmail = "";
       let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
       let ticketLink = null, shuttle = null;
       
+      function formatFlightDate(dStr) {
+        if (!dStr) return '';
+        const d = new Date(dStr);
+        if (!isNaN(d.getTime()) && dStr.toString().length > 5) {
+          return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+        }
+        return dStr;
+      }
+      function formatFlightTime(tStr) {
+        if (!tStr) return '';
+        const d = new Date(tStr);
+        if (!isNaN(d.getTime()) && tStr.toString().length > 5) {
+          const hh = d.getHours().toString().padStart(2, '0');
+          const mm = d.getMinutes().toString().padStart(2, '0');
+          return `${hh}:${mm}`;
+        }
+        return tStr;
+      }
+
       dataArray.forEach(item => {
         if (!item.value) return;
-        if (item.label === "Arrival Date") arrival = formatDateOnly(item.value);
-        if (item.label === "Arrival Time") arrivalTime = item.value;
+        if (item.label === "Arrival Date") arrival = formatFlightDate(item.value);
+        if (item.label === "Arrival Time") arrivalTime = formatFlightTime(item.value);
         if (item.label === "Arrival Flight") arrivalFlight = item.value;
         if (item.label === "Arrival Airline") arrivalAirline = item.value;
         if (item.label === "Origin / From") origin = item.value;
         
-        if (item.label === "Departure Date") departure = formatDateOnly(item.value);
-        if (item.label === "Departure Time") departureTime = item.value;
+        if (item.label === "Departure Date") departure = formatFlightDate(item.value);
+        if (item.label === "Departure Time") departureTime = formatFlightTime(item.value);
         if (item.label === "Departure Flight") departureFlight = item.value;
         if (item.label === "Departure Airline") departureAirline = item.value;
         if (item.label === "Destination / To") dest = item.value;
