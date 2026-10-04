@@ -275,7 +275,7 @@ function fetchMappedData(sheet, email, mappingArray) {
     if (data.length < 2) return [];
     
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, data.length); r++) {
+    for (let r = 0; r < Math.min(10, data.length); r++) {
       if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
