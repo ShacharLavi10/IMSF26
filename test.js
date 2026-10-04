@@ -253,8 +253,11 @@ function fetchMappedData(sheet, email, mappingArray) {
     if (data.length < 2) return [];
     
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(3, data.length); r++) {
-      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      if (data[r].some(cell => {
+        const val = String(cell).trim().toLowerCase();
+        return val === CONFIG.EMAIL_COL.toLowerCase() || val === 'מייל' || val === 'email' || val === 'מייל אורח';
+      })) {
         headerRowIdx = r;
         break;
       }
@@ -263,6 +266,8 @@ function fetchMappedData(sheet, email, mappingArray) {
     
     const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
     let emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    if (emailIdx === -1) emailIdx = headers.indexOf('מייל');
+    if (emailIdx === -1) emailIdx = headers.indexOf('email');
     if (emailIdx === -1) emailIdx = 0;
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {
@@ -347,12 +352,24 @@ function getScheduleData() {
     const data = sheet.getDataRange().getValues();
     if (data.length < 2) return { success: true, schedule: {} };
     
-    const headers = data[0].map(h => String(h).trim());
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStr = data[r].map(h => String(h).trim().toLowerCase());
+      if (rowStr.includes('תאריך') || rowStr.includes('date')) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    
+    if (headerRowIdx === -1) return { success: false, message: 'Headers not found in Schedule sheet' };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
     const scheduleByDate = {};
     
-    for (let i = 1; i < data.length; i++) {
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
       const row = data[i];
-      let dateRaw = row[headers.indexOf('תאריך')];
+      
+      let dateRaw = row[headers.indexOf('תאריך')] || row[headers.indexOf('date')];
       if (!dateRaw) continue;
       
       let dateStr = "";
@@ -362,8 +379,15 @@ function getScheduleData() {
         dateStr = String(dateRaw).trim();
       }
       
-      let stRaw = row[headers.indexOf('שעת התחלה')];
-      let etRaw = row[headers.indexOf('שעת סיום')];
+      let stIdx = headers.indexOf('שעת התחלה');
+      if (stIdx === -1) stIdx = headers.indexOf('start time');
+      if (stIdx === -1) stIdx = headers.indexOf('start');
+      let stRaw = stIdx !== -1 ? row[stIdx] : "";
+      
+      let etIdx = headers.indexOf('שעת סיום');
+      if (etIdx === -1) etIdx = headers.indexOf('end time');
+      if (etIdx === -1) etIdx = headers.indexOf('end');
+      let etRaw = etIdx !== -1 ? row[etIdx] : "";
       
       let stStr = "";
       if (stRaw instanceof Date) {
@@ -379,12 +403,24 @@ function getScheduleData() {
         etStr = String(etRaw).trim();
       }
       
+      let titleIdx = headers.indexOf('כותרת');
+      if (titleIdx === -1) titleIdx = headers.indexOf('title');
+      if (titleIdx === -1) titleIdx = headers.indexOf('event');
+      
+      let descIdx = headers.indexOf('תיאור');
+      if (descIdx === -1) descIdx = headers.indexOf('description');
+      if (descIdx === -1) descIdx = headers.indexOf('details');
+      
+      let locIdx = headers.indexOf('מיקום');
+      if (locIdx === -1) locIdx = headers.indexOf('location');
+      if (locIdx === -1) locIdx = headers.indexOf('venue');
+      
       const event = {
         startTime: stStr,
         endTime: etStr,
-        title: String(row[headers.indexOf('כותרת')] || "").trim(),
-        description: String(row[headers.indexOf('תיאור')] || "").trim(),
-        location: String(row[headers.indexOf('מיקום')] || "").trim()
+        title: titleIdx !== -1 ? String(row[titleIdx] || "").trim() : "",
+        description: descIdx !== -1 ? String(row[descIdx] || "").trim() : "",
+        location: locIdx !== -1 ? String(row[locIdx] || "").trim() : ""
       };
       
       if (!scheduleByDate[dateStr]) {
