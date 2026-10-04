@@ -475,10 +475,10 @@ let currentGuestEmail = "";
 
       if (ticketLink) {
         html += `
-          <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
-            <a href="${ticketLink}" target="_blank" class="primary button-download-small" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              View E-Ticket
+          <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <a href="${ticketLink}" target="_blank" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #000; font-weight: bold;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              View E-Ticket (PDF)
             </a>
           </div>
         `;
@@ -527,6 +527,22 @@ let currentGuestEmail = "";
               </div>
             </div>
           </div>
+        </div>
+      `;
+
+      // Shuttle Information Rubric Placeholder
+      html += `
+        <div style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: 8px; border: 1px solid var(--accent); margin-top: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            Shuttle Information
+          </h4>
+          <p style="margin: 0 0 8px 0; font-size: 0.95rem;">
+            You are on the shuttle from Ben Gurion airport leaving at <strong>[Time]</strong>.
+          </p>
+          <p style="margin: 0; font-size: 0.9rem; color: var(--foreground-muted);">
+            <strong>Together with:</strong> [Name 1], [Name 2], [Name 3]
+          </p>
         </div>
       `;
 
