@@ -355,7 +355,7 @@ function getScheduleData() {
     let headerRowIdx = -1;
     for (let r = 0; r < Math.min(10, data.length); r++) {
       const rowStr = data[r].map(h => String(h).trim().toLowerCase());
-      if (rowStr.includes('תאריך') || rowStr.includes('date')) {
+      if (rowStr.some(col => col.includes('תאריך') || col.includes('date'))) {
         headerRowIdx = r;
         break;
       }
@@ -366,10 +366,17 @@ function getScheduleData() {
     const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
     const scheduleByDate = {};
     
+    const dateIdx = headers.findIndex(h => h.includes('תאריך') || h.includes('date'));
+    const stIdx = headers.findIndex(h => h.includes('שעת התחלה') || h.includes('start'));
+    const etIdx = headers.findIndex(h => h.includes('שעת סיום') || h.includes('end'));
+    const titleIdx = headers.findIndex(h => h.includes('כותרת') || h.includes('title') || h.includes('event'));
+    const descIdx = headers.findIndex(h => h.includes('תיאור') || h.includes('description') || h.includes('details'));
+    const locIdx = headers.findIndex(h => h.includes('מיקום') || h.includes('location') || h.includes('venue'));
+    
     for (let i = headerRowIdx + 1; i < data.length; i++) {
       const row = data[i];
       
-      let dateRaw = row[headers.indexOf('תאריך')] || row[headers.indexOf('date')];
+      let dateRaw = dateIdx !== -1 ? row[dateIdx] : null;
       if (!dateRaw) continue;
       
       let dateStr = "";
@@ -379,14 +386,7 @@ function getScheduleData() {
         dateStr = String(dateRaw).trim();
       }
       
-      let stIdx = headers.indexOf('שעת התחלה');
-      if (stIdx === -1) stIdx = headers.indexOf('start time');
-      if (stIdx === -1) stIdx = headers.indexOf('start');
       let stRaw = stIdx !== -1 ? row[stIdx] : "";
-      
-      let etIdx = headers.indexOf('שעת סיום');
-      if (etIdx === -1) etIdx = headers.indexOf('end time');
-      if (etIdx === -1) etIdx = headers.indexOf('end');
       let etRaw = etIdx !== -1 ? row[etIdx] : "";
       
       let stStr = "";
@@ -402,18 +402,6 @@ function getScheduleData() {
       } else if (etRaw) {
         etStr = String(etRaw).trim();
       }
-      
-      let titleIdx = headers.indexOf('כותרת');
-      if (titleIdx === -1) titleIdx = headers.indexOf('title');
-      if (titleIdx === -1) titleIdx = headers.indexOf('event');
-      
-      let descIdx = headers.indexOf('תיאור');
-      if (descIdx === -1) descIdx = headers.indexOf('description');
-      if (descIdx === -1) descIdx = headers.indexOf('details');
-      
-      let locIdx = headers.indexOf('מיקום');
-      if (locIdx === -1) locIdx = headers.indexOf('location');
-      if (locIdx === -1) locIdx = headers.indexOf('venue');
       
       const event = {
         startTime: stStr,
