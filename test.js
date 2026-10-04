@@ -253,11 +253,8 @@ function fetchMappedData(sheet, email, mappingArray) {
     if (data.length < 2) return [];
     
     let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(10, data.length); r++) {
-      if (data[r].some(cell => {
-        const val = String(cell).trim().toLowerCase();
-        return val === CONFIG.EMAIL_COL.toLowerCase() || val === 'מייל' || val === 'email' || val === 'מייל אורח';
-      })) {
+    for (let r = 0; r < Math.min(3, data.length); r++) {
+      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
         headerRowIdx = r;
         break;
       }
@@ -266,8 +263,6 @@ function fetchMappedData(sheet, email, mappingArray) {
     
     const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
     let emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
-    if (emailIdx === -1) emailIdx = headers.indexOf('מייל');
-    if (emailIdx === -1) emailIdx = headers.indexOf('email');
     if (emailIdx === -1) emailIdx = 0;
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {
