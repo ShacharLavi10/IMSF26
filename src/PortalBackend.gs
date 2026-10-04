@@ -60,7 +60,8 @@ function generateOTP(email) {
     
     return { success: true, message: "OTP sent successfully." };
   } catch (err) {
-    return { success: false, message: "Server Error: " + err.toString() };
+    console.error("Error in generateOTP:", err);
+    return { success: false, message: "We encountered an issue sending the verification code. Please try again or contact production." };
   }
 }
 
