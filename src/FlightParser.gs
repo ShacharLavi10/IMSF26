@@ -188,12 +188,8 @@ function extractDriveId(url) {
 }
 
 function callGeminiAPI(base64File, mimeType) {
-  // To set this up, run in Apps Script:
-  // PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', 'your-key-here');
   const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error("מפתח API לא מוגדר במערכת. אנא הגדר GEMINI_API_KEY");
-  
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
   
   const promptText = `
 You are a flight ticket parser. 
@@ -245,31 +241,52 @@ Required JSON Structure:
     muteHttpExceptions: true
   };
   
+  // Waterfall fallback logic: Try best models first, fallback to older ones if quota/demand fails
+  const models = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash"];
+  
   let response;
   let result;
-  let attempts = 0;
-  const maxAttempts = 5;
+  let lastErrorMsg = "";
+  let overallSuccess = false;
   
-  while (attempts < maxAttempts) {
-    attempts++;
-    response = UrlFetchApp.fetch(endpoint, options);
-    result = JSON.parse(response.getContentText());
+  for (const model of models) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    let attempts = 0;
+    const maxAttemptsPerModel = 2;
+    let modelSuccess = false;
     
-    // Check if there is an error
-    if (result.error) {
-      const errMsg = result.error.message || result.error;
-      Logger.log("API Error on attempt " + attempts + ": " + errMsg);
+    while (attempts < maxAttemptsPerModel) {
+      attempts++;
+      response = UrlFetchApp.fetch(endpoint, options);
+      result = JSON.parse(response.getContentText());
       
-      // If it's a 503 high demand error or similar transient error, wait and retry
-      if (response.getResponseCode() >= 500 && attempts < maxAttempts) {
-        Utilities.sleep(Math.pow(2, attempts) * 1000); // 2s, 4s, 8s, 16s backoff
-        continue;
+      if (result.error) {
+        lastErrorMsg = result.error.message || result.error;
+        Logger.log(`API Error on model ${model} (attempt ${attempts}): ${lastErrorMsg}`);
+        
+        const code = response.getResponseCode();
+        // 429 = Quota Exceeded, 5xx = High Demand / Server Error
+        if (code >= 500 || code === 429) {
+          Utilities.sleep(Math.pow(2, attempts) * 1000); // 2s, 4s backoff before retrying same model
+          continue; 
+        }
+        // For other errors (e.g. 400 bad request), break retry and try next model
+        break;
       }
-      return { error: true, message: errMsg };
+      
+      modelSuccess = true;
+      break;
     }
     
-    // Success
-    break;
+    if (modelSuccess) {
+      overallSuccess = true;
+      Logger.log(`Successfully processed ticket using model: ${model}`);
+      break; 
+    }
+  }
+
+  if (!overallSuccess || (result && result.error)) {
+    return { error: true, message: lastErrorMsg || "כל המודלים נכשלו" };
   }
   
   try {
