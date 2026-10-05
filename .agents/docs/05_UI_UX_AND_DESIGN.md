@@ -11,3 +11,21 @@
 - **Touch Ergonomics & Usability**: Interactive elements (buttons, inputs, dropdowns, tabs) must have generous touch targets (minimum 44x44px), readable typography without zooming, comfortable spacing, and zero unwanted horizontal scrolling on mobile devices.
 - **Language & Localization (Strict English-Only)**: All UI copy, headings, labels, button text, error messages, system announcements, and placeholders must be strictly in English. No Hebrew text in the portal interface. If there is any doubt or question regarding phrasing or wording, ask for clarification.
 - **Progressive Enhancement**: Desktop layouts should scale cleanly and make smart use of wider screens, but never at the expense of mobile simplicity, speed, or ergonomics.
+
+## 3. Visual Identity & Design System (Neo-Brutalism)
+The portal follows a specific Indie / Comic / Neo-Brutalist design language inspired by the official 2026 festival poster (Iceberg cassette / underwater).
+
+- **Color Palette**:
+  - **Dark Mode (Default - Deep Sea)**: Deep blue gradients (`#0a1626` to `#11233a`) for backgrounds to simulate deep water.
+  - **Light Mode (Ice/Sky)**: Ice blue gradients (`#E8F4FA` to `#D6EAF8`).
+  - **Accent**: Salmon Pink (`#F1A9A0`) is the primary action color. Use it for CTAs, active states, and highlights.
+- **Shadows & Borders (Neo-Brutalism)**:
+  - Do NOT use soft, blurred box-shadows.
+  - Use solid, opaque block shadows for a "flat 3D" effect (e.g., `box-shadow: 4px 4px 0px rgba(0,0,0,1)`).
+  - Use thick, dark borders around interactive elements (`border: 2px solid #000`).
+  - Active/Click states should visually "press down" by reducing the box-shadow offset and translating the element (e.g., `transform: translate(4px, 4px)`).
+- **Typography**:
+  - **Display Font**: Use `Oswald` (or `Anton`) from Google Fonts for Headings (H1-H5). Headings should be UPPERCASE and bold to resemble the festival logo.
+  - **Body Font**: Use standard system sans-serif fonts for clean, readable body text.
+- **UI Elements**:
+  - Avoid heavy background images. Rely on CSS variables, simple noise overlays (`.bg-layer-noise`), and solid block shadows to convey the indie/comic style efficiently.
