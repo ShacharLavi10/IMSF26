@@ -1,4 +1,4 @@
-const GAS_API_URL = import.meta.env.VITE_GAS_API_URL || "https://script.google.com/macros/s/AKfycbwmBnCKXN-OpMh9Qyoz8avnrStOb2P8cZZD6mf8x44IT7aQYm9vL10aly-mQ-z31mPftQ/exec";
+const GAS_API_URL = import.meta.env.VITE_APPS_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwmBnCKXN-OpMh9Qyoz8avnrStOb2P8cZZD6mf8x44IT7aQYm9vL10aly-mQ-z31mPftQ/exec";
 
 window.google = {
   script: {
