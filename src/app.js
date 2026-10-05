@@ -208,7 +208,7 @@ let currentGuestEmail = "";
         const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
 
         document.getElementById("hello-message").innerText = displayName ? `Hello ${displayName}` : `Hello`;
-        document.getElementById("welcome-message").innerText = `Welcome to your Personal Page`;
+        document.getElementById("welcome-message").innerText = `Welcome to your Personal Page (Debug Admin: ${response.guestInfo.isAdmin})`;
         
         // Populate Personal Message
         const pmCard = document.getElementById("personal-message-card");
