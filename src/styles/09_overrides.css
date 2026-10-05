@@ -40,22 +40,23 @@
    NEW DESIGN OVERRIDES (ONBOARDING CARDS)
    ========================================= */
 .main-logo {
-  max-width: 280px;
+  max-width: 320px;
   height: auto;
   margin: 0 auto;
   display: block;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
-  transition: transform var(--transition-base);
+  filter: drop-shadow(4px 4px 0px rgba(0,0,0,1));
+  transition: transform 150ms ease-out;
 }
 @media (min-width: 768px) {
-  .main-logo { max-width: 380px; }
+  .main-logo { max-width: 480px; }
 }
 .main-logo:hover {
-  transform: scale(1.02);
+  transform: translate(-2px, -2px);
+  filter: drop-shadow(6px 6px 0px rgba(0,0,0,1));
 }
 
 body.light-mode .main-logo {
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+  filter: drop-shadow(4px 4px 0px rgba(0,0,0,1));
 }
 
 /* We will change the global page background instead. */

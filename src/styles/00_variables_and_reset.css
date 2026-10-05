@@ -1,22 +1,31 @@
 :root {
-    --background-deep: #020203;
-    --background-base: #050506;
-    --background-elevated: #0a0a0c;
+    /* Color Palette based on Poster */
+    --background-deep: #050b14;
+    --background-base: #0a1626;
+    --background-elevated: #11233a;
     --surface: rgba(255, 255, 255, 0.05);
-    --surface-hover: rgba(255, 255, 255, 0.08);
-    --foreground: #FFFFFF;
-    --foreground-muted: #A3A9B4;
-    --foreground-subtle: rgba(255, 255, 255, 0.75);
-    --accent: #A78BFA;
-    --accent-bright: #C4B5FD;
-    --accent-glow: rgba(167, 139, 250, 0.3);
-    --border-default: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.15);
-    --border-accent: rgba(167, 139, 250, 0.30);
-    --shadow-card: 0 0 0 1px rgba(255,255,255,0.08), 0 2px 20px rgba(0,0,0,0.4), 0 0 40px rgba(0,0,0,0.2);
-    --shadow-card-hover: 0 0 0 1px rgba(255,255,255,0.15), 0 8px 40px rgba(0,0,0,0.5), 0 0 80px rgba(167, 139, 250,0.15);
-    --shadow-button: 0 0 0 1px rgba(167, 139, 250,0.6), 0 4px 12px rgba(167, 139, 250,0.4), inset 0 1px 0 0 rgba(255,255,255,0.3);
-    --shadow-inner: inset 0 1px 0 0 rgba(255,255,255,0.15);
+    --surface-hover: rgba(255, 255, 255, 0.1);
+    
+    --foreground: #F8FAFC;
+    --foreground-muted: #94a3b8;
+    --foreground-subtle: rgba(248, 250, 252, 0.7);
+    
+    --accent: #F1A9A0; /* Salmon Pink from logo/ribbon */
+    --accent-bright: #ffc2b9;
+    --accent-secondary: #D6EAF8; /* Ice Blue */
+    
+    /* Neo-Brutalism Borders & Shadows */
+    --border-color: #000000;
+    --border-default: 2px solid var(--border-color);
+    --border-hover: 2px solid var(--accent);
+    
+    /* Block Shadows (Flat 3D) */
+    --shadow-card: 6px 6px 0px rgba(0,0,0,1);
+    --shadow-card-hover: 8px 8px 0px rgba(0,0,0,1);
+    --shadow-button: 4px 4px 0px rgba(0,0,0,1);
+    --shadow-button-hover: 2px 2px 0px rgba(0,0,0,1); /* Button presses down */
+    --shadow-button-active: 0px 0px 0px rgba(0,0,0,1);
+    --shadow-text: 3px 3px 0px rgba(0,0,0,1);
     
     --success: #10b981;
     --warning: #f59e0b;
@@ -27,9 +36,10 @@
     --radius-2xl: 16px;
     
     --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-display: "Oswald", var(--font-stack);
     
-    --transition-fast: 200ms cubic-bezier(0.16, 1, 0.3, 1);
-    --transition-base: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-fast: 150ms ease-out;
+    --transition-base: 250ms ease-out;
   }
 
   * { 

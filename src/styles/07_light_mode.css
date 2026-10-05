@@ -1,23 +1,29 @@
 /* LIGHT MODE OVERRIDES */
 body.light-mode {
-    --background-deep: #e2e8f0;
-    --background-base: #f1f5f9;
+    --background-deep: #D6EAF8; /* Ice Blue */
+    --background-base: #E8F4FA;
     --background-elevated: #ffffff;
     --surface: rgba(0, 0, 0, 0.02);
     --surface-hover: rgba(0, 0, 0, 0.04);
+    
     --foreground: #0f172a;
     --foreground-muted: #475569;
-    --foreground-subtle: rgba(0, 0, 0, 0.40);
-    --accent: #4f46e5;
-    --accent-bright: #4338ca;
-    --accent-glow: rgba(79, 70, 229, 0.2);
-    --border-default: rgba(0, 0, 0, 0.08);
-    --border-hover: rgba(0, 0, 0, 0.15);
-    --border-accent: rgba(79, 70, 229, 0.30);
-    --shadow-card: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03), 0 12px 32px rgba(0,0,0,0.04);
-    --shadow-card-hover: 0 0 0 1px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06), 0 24px 64px rgba(79,70,229,0.08);
-    --shadow-button: 0 0 0 1px rgba(79,70,229,0.2), 0 4px 12px rgba(79,70,229,0.15), inset 0 1px 0 0 rgba(255,255,255,0.4);
-    --shadow-inner: inset 0 1px 0 0 rgba(255,255,255,0.8);
+    --foreground-subtle: rgba(0, 0, 0, 0.60);
+    
+    --accent: #F1A9A0; /* Salmon Pink */
+    --accent-bright: #ffc2b9;
+    --accent-secondary: #0a1626; /* Dark blue for contrast */
+    
+    --border-color: #000000;
+    --border-default: 2px solid var(--border-color);
+    --border-hover: 2px solid var(--accent);
+    
+    --shadow-card: 6px 6px 0px rgba(0,0,0,1);
+    --shadow-card-hover: 8px 8px 0px rgba(0,0,0,1);
+    --shadow-button: 4px 4px 0px rgba(0,0,0,1);
+    --shadow-button-hover: 2px 2px 0px rgba(0,0,0,1);
+    --shadow-button-active: 0px 0px 0px rgba(0,0,0,1);
+    --shadow-text: 2px 2px 0px rgba(0,0,0,0.2);
   }
 
   body.light-mode header h1 {
@@ -26,22 +32,19 @@ body.light-mode {
     -webkit-text-fill-color: transparent;
   }
   
-  body.light-mode .bg-layer-base { background: radial-gradient(ellipse at top right, #fdf8f5 0%, #eef0db 50%, #e0d7c6 100%); }
+  body.light-mode .bg-layer-base { background: radial-gradient(ellipse at top right, #ffffff 0%, #E8F4FA 50%, #D6EAF8 100%); }
     
   body.light-mode .bg-layer-grid {
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   }
   
-  body.light-mode .card { background: linear-gradient(to bottom, #ffffff, #f8fafc); }
-  body.light-mode .card::before {
-    background: linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.01));
-  }
-  body.light-mode .card:hover::before {
-    background: linear-gradient(to bottom, var(--border-accent), transparent);
+  body.light-mode .card { 
+    background: #ffffff; 
+    border: var(--border-default);
   }
   
-  body.light-mode .spotlight { background: radial-gradient(600px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(79, 70, 229, 0.06), transparent 40%); }
+  body.light-mode .spotlight { background: radial-gradient(600px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(241, 169, 160, 0.1), transparent 40%); }
   
   body.light-mode .input-group input, body.light-mode .input-group textarea {
     background: #ffffff;
