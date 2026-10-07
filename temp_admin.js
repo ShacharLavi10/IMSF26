@@ -1,0 +1,1 @@
+fetch('https://script.google.com/macros/s/AKfycbwBHATDJCBg2bv7AzhZE1SctyhCKhtVpe93uNfOwqr5r7Uz7pFZE690grYzgfQzMFN1Mg/exec', {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({method:'getGuestPortalData', args:['DEBUG_TOKEN_shacharlavi10@gmail.com']})}).then(r=>r.json()).then(r=>console.log(r.data.guestInfo.isAdmin))
