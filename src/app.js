@@ -1888,49 +1888,123 @@ function viewAdminGuestDetails(rowIndex) {
   // Flight HTML
   let flightHtml = '<p style="color:var(--foreground-muted); font-size:0.9rem;">No flight info</p>';
   if (fData) {
-    const inboundOrigin = fData['מאיפה יוצא?'] || fData['יעד הגעה'] || '?';
-    const inboundDate = formatDateOnly(fData['הגעה לישראל']) || '?';
-    const outboundDest = fData['יעד חזרה'] || '?';
-    const outboundDate = formatDateOnly(fData['חזרה מישראל']) || '?';
+    const getFlightVal = (altKeys) => {
+      for (const k of altKeys) {
+        if (fData[k.toLowerCase()] !== undefined && fData[k.toLowerCase()] !== '') return fData[k.toLowerCase()];
+      }
+      return '';
+    };
+
+    let arrival = getFlightVal(["תאריך נחיתה", "תאריך הגעה", "הגעה לישראל", "תאריך חזרה"]);
+    let arrivalTime = getFlightVal(["שעת נחיתה", "שעת הגעה", "שעת נחיתה משוערת", 'שעת נחיתה בנתב"ג', "שעת נחיתה בנתבג"]);
+    let arrivalFlight = getFlightVal(["מספר טיסה נחיתה", "מספר טיסת נחיתה", "מספר טיסת הגעה", "מספר טיסה הגעה", "טיסת נחיתה"]);
+    let arrivalAirline = getFlightVal(["חברת תעופה נחיתה", "חברת תעופה הגעה"]);
+    let origin = getFlightVal(["ארץ מוצא", "ממדינה", "מארץ", "מאיפה", "עיר מוצא", "מדינת מוצא", "יעד הגעה", "מאיפה?"]);
     
-    flightHtml = `
-      ${fData['לינק כרטיס סופי'] ? `
-        <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
-          <a href="${fData['לינק כרטיס סופי']}" target="_blank" class="primary button-download-small" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            View E-Ticket
+    let departure = getFlightVal(["תאריך המראה", "תאריך עזיבה", "תאריך יציאה", "חזרה מישראל"]);
+    let departureTime = getFlightVal(["שעת המראה", "שעת עזיבה", "שעת יציאה", "שעת המראה משוערת", 'שעת המראה מנתב"ג']);
+    let departureFlight = getFlightVal(["מספר טיסה המראה", "מספר טיסת המראה", "מספר טיסת עזיבה", "טיסת המראה"]);
+    let departureAirline = getFlightVal(["חברת תעופה המראה", "חברת תעופה עזיבה"]);
+    let dest = getFlightVal(["יעד חזרה", "לאיפה", "מדינת חזרה", "לאן"]);
+    
+    let shuttle = getFlightVal(["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"]);
+    let ticketLink = getFlightVal(["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"]);
+    let flightNotes = fData['הערות טיסות'] || '';
+
+    function formatFlightDate(dStr) {
+      if (!dStr) return '';
+      const d = new Date(dStr);
+      if (!isNaN(d.getTime()) && dStr.toString().length > 5) {
+        return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+      }
+      return dStr;
+    }
+    
+    function formatFlightTime(tStr) {
+      if (!tStr) return '';
+      const timeMatch = String(tStr).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+      if (timeMatch && timeMatch[0] !== "00:00") {
+        return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+      } else if (timeMatch && timeMatch[0] === "00:00") {
+        return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+      }
+      if (!isNaN(tStr) && Number(tStr) > 0 && Number(tStr) < 1) {
+         const totalMinutes = Math.round(Number(tStr) * 24 * 60);
+         const hh = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+         const mm = (totalMinutes % 60).toString().padStart(2, '0');
+         return `${hh}:${mm}`;
+      }
+      return tStr;
+    }
+
+    arrival = formatFlightDate(arrival) || "TBD";
+    arrivalTime = formatFlightTime(arrivalTime);
+    departure = formatFlightDate(departure) || "TBD";
+    departureTime = formatFlightTime(departureTime);
+    origin = origin || "TBD";
+    dest = dest || "TBD";
+
+    flightHtml = '';
+
+    if (ticketLink) {
+      flightHtml += `
+        <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+          <a href="${ticketLink}" target="_blank" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            View E-Ticket (PDF)
           </a>
         </div>
-      ` : ''}
-      <div class="boarding-pass" style="margin-bottom: 8px;">
+      `;
+    }
+
+    flightHtml += `
+      <div class="boarding-pass" style="margin-bottom: 12px;">
         <div class="bp-header">
-          <span>FLIGHT ITINERARY</span>
+          <span>OFFICIAL ITINERARY</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
         </div>
         <div class="bp-body">
           <div class="bp-flight">
-            <div class="bp-label">INBOUND</div>
+            <div class="bp-label" style="display: flex; justify-content: space-between;">
+              <span>INBOUND TO ISRAEL</span>
+              ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
+            </div>
             <div class="bp-route">
-              <span class="bp-city">${inboundOrigin}</span>
+              <span class="bp-city">${origin}</span>
               <span class="bp-arrow">→</span>
               <span class="bp-city">TLV</span>
             </div>
-            <div class="bp-date">Arrival: ${inboundDate}</div>
+            <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+              <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
+            </div>
           </div>
+          
+          ${shuttle ? `
+          <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
+            <strong>🚐 Shuttle:</strong> ${shuttle}
+          </div>` : ''}
+
           <div class="bp-divider"></div>
           <div class="bp-flight">
-            <div class="bp-label">OUTBOUND</div>
+            <div class="bp-label" style="display: flex; justify-content: space-between;">
+              <span>OUTBOUND FROM ISRAEL</span>
+              ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
+            </div>
             <div class="bp-route">
               <span class="bp-city">TLV</span>
               <span class="bp-arrow">→</span>
-              <span class="bp-city">${outboundDest}</span>
+              <span class="bp-city">${dest}</span>
             </div>
-            <div class="bp-date">Departure: ${outboundDate}</div>
+            <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+              <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
+            </div>
           </div>
         </div>
       </div>
-      ${fData['הערות טיסות'] ? `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${fData['הערות טיסות']}</div>` : ''}
     `;
+    if (flightNotes) {
+      flightHtml += `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${flightNotes}</div>`;
+    }
   }
 
   // Hotel HTML
