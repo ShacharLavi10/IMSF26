@@ -1,3 +1,8 @@
+---
+name: always-read-docs-rule
+description: Enforce reading the documentation files in .agents/docs/ at the start of any conversation
+trigger: always_on
+---
 # Always Read Documentation
 
 **CRITICAL INSTRUCTION FOR THE AGENT:**

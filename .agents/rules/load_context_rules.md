@@ -1,3 +1,8 @@
+---
+name: load-context-rules-rule
+description: Routing rules for loading specific context files based on user requests
+trigger: always_on
+---
 # Knowledge Base Routing Rules
 
 When processing a user request, you MUST NOT read all `.md` files in `.agents/docs/`. Instead, read ONLY the specific files that are relevant to the user's request based on these rules:
