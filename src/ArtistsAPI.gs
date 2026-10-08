@@ -30,7 +30,7 @@ function getArtistsData(forceRefresh) {
     const idxInstagram = headers.indexOf("Instagram");
     const idxYoutube1 = headers.indexOf("קישור YouTube 1");
     const idxYoutube2 = headers.indexOf("קישור YouTube 2");
-    const idxGenre = headers.indexOf("ז'אנר");
+    const idxGenre = headers.findIndex(h => h === "ז'אנר" || h === "ז׳אנר" || h.includes("ז'אנר") || h.includes("ז׳אנר") || h.toLowerCase() === "genre");
     
     const artists = [];
     

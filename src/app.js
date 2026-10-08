@@ -1289,7 +1289,8 @@ let currentGuestEmail = "";
     function initArtistsUI() {
       // Setup Genre Filter
       const genreSelect = document.getElementById('artist-genre-filter');
-      const genres = new Set(globalArtistsData.map(a => a.genre).filter(g => g));
+      const predefinedGenres = ["Rock, Indie & Electronic", "Jazz & World Music"];
+      const genres = new Set([...predefinedGenres, ...globalArtistsData.map(a => a.genre).filter(g => g)]);
       let genreHtml = '<option value="All">All Genres</option>';
       genres.forEach(g => { genreHtml += `<option value="${g}">${g}</option>`; });
       genreSelect.innerHTML = genreHtml;
