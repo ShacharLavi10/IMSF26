@@ -1357,7 +1357,7 @@ let currentGuestEmail = "";
 
       const filtered = globalArtistsData.filter(a => {
         const matchesSearch = !searchTxt || a.name.toLowerCase().includes(searchTxt) || a.genre.toLowerCase().includes(searchTxt);
-        const matchesGenre = genreVal === 'All' || a.genre === genreVal;
+        const matchesGenre = genreVal === 'All' || a.genre === genreVal || a.genre.includes(genreVal) || genreVal.includes(a.genre);
         const matchesFav = !showFavsOnly || !!favs[a.id];
         return matchesSearch && matchesGenre && matchesFav;
       });

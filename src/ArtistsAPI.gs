@@ -1,7 +1,7 @@
 function getArtistsData(forceRefresh) {
   try {
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'global_artists_data';
+    const cacheKey = 'global_artists_data_v2';
     
     if (!forceRefresh) {
       const cached = cache.get(cacheKey);
