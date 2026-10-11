@@ -420,7 +420,9 @@ img {
   justify-content: space-between;
   align-items: flex-start;
   margin-top: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   z-index: 2;
 }
@@ -439,12 +441,78 @@ img {
 }
 
 .sheet-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+.sheet-section:last-child {
+  margin-bottom: 0;
 }
 .sheet-section .section-title {
-  color: var(--foreground-muted);
+  color: var(--accent);
   font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Light mode styling for bottom sheet modal */
+body.light-mode .sheet-title-row {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+body.light-mode .sheet-genre {
+  color: #d97706;
+}
+body.light-mode .sheet-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+body.light-mode .sheet-section .section-title {
+  color: #1e293b;
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+body.light-mode .sheet-bio {
+  color: #334155;
+}
+body.light-mode .sheet-members {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+body.light-mode .sheet-link-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #1e293b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+body.light-mode .sheet-link-btn:hover {
+  background: #f1f5f9;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+body.light-mode .private-notes-section textarea {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+body.light-mode .private-notes-section textarea:focus {
+  background: #ffffff;
+  border-color: var(--accent);
+}
+body.light-mode #sheet-guest-website,
+body.light-mode #sheet-guest-email,
+body.light-mode #sheet-guest-phone {
+  color: #0284c7;
 }
 
 /* Private Notes Textarea */
