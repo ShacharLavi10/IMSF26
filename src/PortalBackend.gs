@@ -225,15 +225,38 @@ function getGuestPortalData(sessionToken) {
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
     const personalMsg = String(getColVal("הודעה אישית בפורטל") || "");
     
-    let flightsSheet1 = ss.getSheetByName("טיסות - שיקוף");
-    let flightsSheet2 = ss.getSheetByName(CONFIG.FLIGHTS_SHEET) || ss.getSheetByName("טבלת טיסות - שיקוף");
+    let flightsSheet1 = findSheetFuzzy(ss, ["טיסות - שיקוף", "עדכוני טיסות", "טיסות"]);
+    let flightsSheet2 = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+    
+    // If either sheet is missing in Master, check Anat's external spreadsheet
+    if ((!flightsSheet1 || !flightsSheet2) && CONFIG.ANAT_SPREADSHEET_ID) {
+      try {
+        const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+        if (!flightsSheet1) {
+          flightsSheet1 = findSheetFuzzy(anatSs, [CONFIG.ANAT_SHEET_NAME, "עדכוני טיסות", "טיסות - שיקוף", "טיסות"]);
+        }
+        if (!flightsSheet2) {
+          flightsSheet2 = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET]);
+        }
+      } catch(errAnat) {
+        console.error("Could not access Anat spreadsheet:", errAnat.toString());
+      }
+    }
     
     let flightsData1 = flightsSheet1 ? fetchMappedData(flightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
     let flightsData2 = flightsSheet2 ? fetchMappedData(flightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
     
     let flightsDataMap = {};
-    flightsData1.forEach(item => flightsDataMap[item.label] = item.value);
-    flightsData2.forEach(item => flightsDataMap[item.label] = item.value);
+    flightsData1.forEach(item => {
+      if (item && item.value && String(item.value).trim() !== "") {
+        flightsDataMap[item.label] = item.value;
+      }
+    });
+    flightsData2.forEach(item => {
+      if (item && item.value && String(item.value).trim() !== "") {
+        flightsDataMap[item.label] = item.value;
+      }
+    });
     
     const flightsData = Object.keys(flightsDataMap).map(label => ({ label: label, value: flightsDataMap[label] }));
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
@@ -279,6 +302,29 @@ function getGuestPortalData(sessionToken) {
   }
 }
 
+function findSheetFuzzy(spreadsheet, candidateNames) {
+  if (!spreadsheet) return null;
+  try {
+    const sheets = spreadsheet.getSheets();
+    for (const name of candidateNames) {
+      if (!name) continue;
+      const target = String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+      let found = sheets.find(s => s.getName().trim().toLowerCase().replace(/\s+/g, ' ') === target);
+      if (found) return found;
+    }
+    for (const name of candidateNames) {
+      if (!name) continue;
+      const target = String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+      let found = sheets.find(s => {
+        const sName = s.getName().trim().toLowerCase().replace(/\s+/g, ' ');
+        return sName.includes(target) || target.includes(sName);
+      });
+      if (found) return found;
+    }
+  } catch(e) {}
+  return null;
+}
+
 function fetchMappedData(sheet, email, mappingArray) {
   if (!sheet) return [];
   try {
@@ -290,8 +336,13 @@ function fetchMappedData(sheet, email, mappingArray) {
     let headerRowIdx = -1;
     for (let r = 0; r < Math.min(10, data.length); r++) {
       if (data[r].some(cell => {
-        const val = String(cell).trim().toLowerCase();
-        return val === CONFIG.EMAIL_COL.toLowerCase() || val === 'מייל' || val === 'email' || val === 'מייל אורח';
+        const val = String(cell).trim().toLowerCase().replace(/\s+/g, ' ');
+        return val === CONFIG.EMAIL_COL.toLowerCase() || 
+               val === 'מייל' || 
+               val === 'מייל אורח' || 
+               val === 'email' || 
+               val.includes('מייל') || 
+               val.includes('email');
       })) {
         headerRowIdx = r;
         break;
@@ -299,15 +350,22 @@ function fetchMappedData(sheet, email, mappingArray) {
     }
     if (headerRowIdx === -1) headerRowIdx = 0;
     
-    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
-    let emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
-    if (emailIdx === -1) emailIdx = headers.indexOf('מייל');
-    if (emailIdx === -1) emailIdx = headers.indexOf('email');
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase().replace(/\s+/g, ' '));
+    let emailIdx = headers.findIndex(h => {
+      return h === CONFIG.EMAIL_COL.toLowerCase() || 
+             h === 'מייל' || 
+             h === 'מייל אורח' || 
+             h === 'email' || 
+             h.includes('מייל') || 
+             h.includes('email');
+    });
     if (emailIdx === -1) emailIdx = 0;
+    
+    const targetEmail = String(email || "").trim().toLowerCase();
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {
       const currentEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
-      if (currentEmail === email.toLowerCase()) {
+      if (currentEmail === targetEmail) {
         const resultList = [];
         const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
         
@@ -316,7 +374,11 @@ function fetchMappedData(sheet, email, mappingArray) {
           const searchKeys = item.altKeys || [item.key];
           
           for (let key of searchKeys) {
-            const foundIdx = headers.indexOf(key.trim().toLowerCase());
+            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
+            let foundIdx = headers.findIndex(h => h === cleanKey);
+            if (foundIdx === -1) {
+              foundIdx = headers.findIndex(h => h.includes(cleanKey) || cleanKey.includes(h));
+            }
             if (foundIdx !== -1) { cIdx = foundIdx; break; }
           }
           

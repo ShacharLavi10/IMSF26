@@ -555,23 +555,23 @@ let currentGuestEmail = "";
       }
 
       dataArray.forEach(item => {
-        if (!item.value) return;
+        const lbl = String(item.label || "").trim().toLowerCase();
         
-        if (item.label === "Arrival Date") arrival = formatFlightDate(item.value);
-        if (item.label === "Arrival Time") arrivalTime = formatFlightTime(item.value);
-        if (item.label === "Arrival Flight") arrivalFlight = item.value;
-        if (item.label === "Arrival Airline") arrivalAirline = item.value;
-        if (item.label === "Origin / From") origin = item.value;
+        if (lbl === "arrival date") arrival = formatFlightDate(item.value);
+        if (lbl === "arrival time") arrivalTime = formatFlightTime(item.value);
+        if (lbl === "arrival flight") arrivalFlight = item.value;
+        if (lbl === "arrival airline") arrivalAirline = item.value;
+        if (lbl === "origin / from" || lbl.includes("origin") || lbl.includes("from")) origin = item.value;
         
-        if (item.label === "Departure Date") departure = formatFlightDate(item.value);
-        if (item.label === "Departure Time") departureTime = formatFlightTime(item.value);
-        if (item.label === "Departure Flight") departureFlight = item.value;
-        if (item.label === "Departure Airline") departureAirline = item.value;
-        if (item.label === "Destination / To") dest = item.value;
+        if (lbl === "departure date") departure = formatFlightDate(item.value);
+        if (lbl === "departure time") departureTime = formatFlightTime(item.value);
+        if (lbl === "departure flight") departureFlight = item.value;
+        if (lbl === "departure airline") departureAirline = item.value;
+        if (lbl === "destination / to" || lbl.includes("destination") || lbl.includes("to")) dest = item.value;
         
-        if (item.label === "Shuttle" || item.label === "שיוך לשאטל" || item.label === "שאטל") shuttle = item.value;
-        if (item.label === "Together With" || item.label === "ביחד עם" || item.label === "Together with") togetherWith = item.value;
-        if (item.label === "Final Ticket Link") ticketLink = item.value;
+        if (lbl === "shuttle" || lbl.includes("shuttle") || lbl.includes("שאטל") || lbl.includes("הסעה")) shuttle = item.value;
+        if (lbl === "together with" || lbl.includes("together") || lbl.includes("ביחד") || lbl.includes("יחד")) togetherWith = item.value;
+        if (lbl === "final ticket link" || lbl.includes("ticket link") || lbl.includes("כרטיס")) ticketLink = item.value;
       });
 
       const formattedShuttle = formatShuttleTime(shuttle);

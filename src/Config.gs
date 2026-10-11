@@ -73,8 +73,8 @@ const MAPPINGS = {
     { key: "מספר טיסה המראה", altKeys: ["מספר טיסה המראה", "מספר טיסת המראה", "מספר טיסת עזיבה", "טיסת המראה"], label: "Departure Flight" },
     { key: "חברת תעופה המראה", altKeys: ["חברת תעופה המראה", "חברת תעופה עזיבה"], label: "Departure Airline" },
     { key: "יעד חזרה", altKeys: ["לאיפה", "מדינת חזרה", "לאן", "יעד חזרה"], label: "Destination / To" },
-    { key: "שיוך לשאטל", altKeys: ["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"], label: "Shuttle" },
-    { key: "ביחד עם", altKeys: ["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "Together with"], label: "Together With" },
+    { key: "שיוך לשאטל", altKeys: ["שיוך לשאטל", "שיוך שאטל", "שאטל", "שעת שאטל", "שעה שאטל", "שאטלים", "הסעה נדרשת", "הסעה", "שעת הסעה", "הסעות", "shuttle", "shuttle time"], label: "Shuttle" },
+    { key: "ביחד עם", altKeys: ["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "Together with", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד"], label: "Together With" },
     { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"], label: "Final Ticket Link" }
   ],
   HOTELS: [
