@@ -43,21 +43,21 @@ header {
 }
 
 .main-logo {
-  max-width: 210px;
-  max-height: 160px;
+  max-width: 260px;
+  max-height: 220px;
   width: auto;
   height: auto;
   object-fit: contain;
   margin: 0 auto;
   display: block;
   background: transparent; /* Overrides the global img skeleton background */
-  filter: drop-shadow(3px 3px 0px rgba(0,0,0,1));
+  filter: drop-shadow(4px 4px 0px rgba(0,0,0,1));
   transition: transform 150ms ease-out, filter 150ms ease-out;
 }
 @media (min-width: 768px) {
   .main-logo {
-    max-width: 290px;
-    max-height: 220px;
+    max-width: 380px;
+    max-height: 320px;
   }
 }
 .main-logo:hover {
