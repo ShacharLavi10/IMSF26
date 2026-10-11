@@ -282,7 +282,9 @@ function getGuestPortalData(sessionToken) {
 function fetchMappedData(sheet, email, mappingArray) {
   if (!sheet) return [];
   try {
-    const data = sheet.getDataRange().getValues();
+    const range = sheet.getDataRange();
+    const data = range.getValues();
+    const displayData = range.getDisplayValues();
     if (data.length < 2) return [];
     
     let headerRowIdx = -1;
@@ -307,6 +309,8 @@ function fetchMappedData(sheet, email, mappingArray) {
       const currentEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
       if (currentEmail === email.toLowerCase()) {
         const resultList = [];
+        const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+        
         mappingArray.forEach(item => {
           let cIdx = -1;
           const searchKeys = item.altKeys || [item.key];
@@ -315,12 +319,36 @@ function fetchMappedData(sheet, email, mappingArray) {
             const foundIdx = headers.indexOf(key.trim().toLowerCase());
             if (foundIdx !== -1) { cIdx = foundIdx; break; }
           }
-          let val = cIdx !== -1 ? data[i][cIdx] : "";
-          if (val instanceof Date) {
-            val = Utilities.formatDate(val, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), "yyyy-MM-dd HH:mm");
+          
+          let rawVal = cIdx !== -1 ? data[i][cIdx] : "";
+          let dispVal = (displayData && displayData[i] && cIdx !== -1) ? String(displayData[i][cIdx] || "").trim() : "";
+          
+          // Filter out formula errors (#N/A, #VALUE!, etc.) or uncalculated formula text (=...)
+          if (dispVal.startsWith("#") || dispVal.startsWith("=")) {
+            dispVal = "";
           }
-          if (val !== undefined && val !== null && String(val).trim() !== "") {
-            resultList.push({ label: item.label, value: String(val) });
+          if (typeof rawVal === "string" && (rawVal.startsWith("#") || rawVal.startsWith("="))) {
+            rawVal = "";
+          }
+
+          let finalVal = rawVal;
+
+          if (item.label === "Shuttle") {
+            // For shuttle time, prefer display value if it exists and is clean, or format Date object as HH:mm
+            if (dispVal && !dispVal.startsWith("#") && !dispVal.startsWith("=")) {
+              finalVal = dispVal;
+            } else if (rawVal instanceof Date) {
+              finalVal = Utilities.formatDate(rawVal, tz, "HH:mm");
+            }
+          } else if (rawVal instanceof Date) {
+            finalVal = Utilities.formatDate(rawVal, tz, "yyyy-MM-dd HH:mm");
+          } else if ((finalVal === "" || finalVal === null || finalVal === undefined) && dispVal) {
+            finalVal = dispVal;
+          }
+
+          const strVal = String(finalVal !== undefined && finalVal !== null ? finalVal : "").trim();
+          if (strVal !== "" && !strVal.startsWith("#") && !strVal.startsWith("=")) {
+            resultList.push({ label: item.label, value: strVal });
           }
         });
         return resultList;
@@ -634,8 +662,23 @@ function getAdminDashboardData(sessionToken) {
     const getSheetData = (sheetName) => {
       const sheet = ss.getSheetByName(sheetName);
       if (!sheet) return null;
-      const data = sheet.getDataRange().getValues();
-      return data.map(row => row.map(cell => (cell instanceof Date) ? Utilities.formatDate(cell, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm') : cell));
+      const range = sheet.getDataRange();
+      const data = range.getValues();
+      const displayData = range.getDisplayValues();
+      const tz = ss.getSpreadsheetTimeZone();
+      return data.map((row, rIdx) => row.map((cell, cIdx) => {
+        let dispVal = displayData && displayData[rIdx] ? String(displayData[rIdx][cIdx] || "").trim() : "";
+        if (dispVal.startsWith("#") || dispVal.startsWith("=")) {
+          return "";
+        }
+        if (typeof cell === "string" && (cell.startsWith("#") || cell.startsWith("="))) {
+          return "";
+        }
+        if (cell instanceof Date) {
+          return Utilities.formatDate(cell, tz, 'yyyy-MM-dd HH:mm');
+        }
+        return cell;
+      }));
     };
     
     return {

@@ -476,24 +476,82 @@ let currentGuestEmail = "";
         }
         return dStr;
       }
+
       function formatFlightTime(tStr) {
         if (!tStr) return '';
-        const timeMatch = String(tStr).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
-        if (timeMatch && timeMatch[0] !== "00:00") {
-          return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
-        } else if (timeMatch && timeMatch[0] === "00:00") {
+        const str = String(tStr).trim();
+        if (!str || str === '-' || /^#|^=/i.test(str) || /^n\/?a$/i.test(str) || /^null$/i.test(str)) return '';
+        
+        // 12-hour AM/PM format
+        const ampmMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i);
+        if (ampmMatch) {
+          let hours = parseInt(ampmMatch[1], 10);
+          const minutes = ampmMatch[2];
+          const period = ampmMatch[3].toUpperCase();
+          if (period === 'PM' && hours < 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+          return `${String(hours).padStart(2, '0')}:${minutes}`;
+        }
+
+        // 24-hour format
+        const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+        if (timeMatch) {
           return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
         }
         
         // Handle Google Sheets decimal time format (e.g. 0.6041666667)
-        if (!isNaN(tStr) && Number(tStr) > 0 && Number(tStr) < 1) {
-           const totalMinutes = Math.round(Number(tStr) * 24 * 60);
-           const hh = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
-           const mm = (totalMinutes % 60).toString().padStart(2, '0');
-           return `${hh}:${mm}`;
+        const num = Number(str);
+        if (!isNaN(num) && num > 0 && num < 1) {
+           const totalMinutes = Math.round(num * 24 * 60);
+           const hh = Math.floor(totalMinutes / 60) % 24;
+           const mm = totalMinutes % 60;
+           return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
         }
         
-        return tStr;
+        return str;
+      }
+
+      function formatShuttleTime(val) {
+        if (val === null || val === undefined) return '';
+        const str = String(val).trim();
+        if (!str || str === '-' || /^#|^=/i.test(str) || /^n\/?a$/i.test(str) || /^none$/i.test(str) || /^null$/i.test(str)) {
+          return '';
+        }
+
+        // 1. Handle 12-hour format e.g. "4:00 PM", "04:30 pm", "4:00:00 PM"
+        const ampmMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i);
+        if (ampmMatch) {
+          let hours = parseInt(ampmMatch[1], 10);
+          const minutes = ampmMatch[2];
+          const period = ampmMatch[3].toUpperCase();
+          if (period === 'PM' && hours < 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+          return `${String(hours).padStart(2, '0')}:${minutes}`;
+        }
+
+        // 2. Handle 24-hour format e.g. "16:00", "09:15", "16:00:00", "2026-10-15 16:00"
+        const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\b/);
+        if (timeMatch) {
+          return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+        }
+
+        // 3. Handle Google Sheets decimal time fraction (e.g. 0.6666667 => 16:00)
+        const num = Number(str);
+        if (!isNaN(num) && num > 0 && num < 1) {
+          const totalMinutes = Math.round(num * 24 * 60);
+          const hh = Math.floor(totalMinutes / 60) % 24;
+          const mm = totalMinutes % 60;
+          return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+        }
+
+        // 4. Handle integer/float hours e.g. 16 or 16.5
+        if (!isNaN(num) && num >= 0 && num < 24 && !str.includes(':')) {
+          const hours = Math.floor(num);
+          const minutes = Math.round((num - hours) * 60);
+          return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        return str;
       }
 
       dataArray.forEach(item => {
@@ -516,8 +574,17 @@ let currentGuestEmail = "";
         if (item.label === "Final Ticket Link") ticketLink = item.value;
       });
 
-      const hasShuttle = shuttle && String(shuttle).trim() !== "" && String(shuttle).trim() !== "N/A" && String(shuttle).trim() !== "-";
-      const hasTogetherWith = togetherWith && String(togetherWith).trim() !== "" && String(togetherWith).trim() !== "N/A" && String(togetherWith).trim() !== "-";
+      const formattedShuttle = formatShuttleTime(shuttle);
+      const hasShuttle = formattedShuttle !== "";
+
+      const cleanTogetherWith = togetherWith ? String(togetherWith).trim() : "";
+      const hasTogetherWith = cleanTogetherWith !== "" && 
+                              !cleanTogetherWith.startsWith("#") && 
+                              !cleanTogetherWith.startsWith("=") && 
+                              !/^n\/?a$/i.test(cleanTogetherWith) && 
+                              !/^none$/i.test(cleanTogetherWith) && 
+                              !/^null$/i.test(cleanTogetherWith) && 
+                              cleanTogetherWith !== "-";
 
       let html = '';
 
@@ -556,7 +623,7 @@ let currentGuestEmail = "";
             
             ${hasShuttle ? `
             <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
-              <strong>🚐 Shuttle:</strong> ${String(shuttle).trim()}
+              <strong>🚐 Shuttle:</strong> ${formattedShuttle}
             </div>` : ''}
 
             <div class="bp-divider"></div>
@@ -580,19 +647,10 @@ let currentGuestEmail = "";
 
       // Shuttle Information Rubric (shown ONLY if shuttle is assigned)
       if (hasShuttle) {
-        const trimmedShuttle = String(shuttle).trim();
-        const formattedTime = formatFlightTime(trimmedShuttle);
-        const isPureTime = /^([01]?\d|2[0-3]):[0-5]\d(\s*(AM|PM|am|pm))?$/i.test(trimmedShuttle) || 
-                           /^\d{4}-\d{2}-\d{2}\s+([01]?\d|2[0-3]):[0-5]\d$/i.test(trimmedShuttle);
-
-        let shuttleTextHtml = "";
-        if (isPureTime && formattedTime) {
-          shuttleTextHtml = `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedTime}</strong>.`;
-        } else if (/^leaving at/i.test(trimmedShuttle) || /^at /i.test(trimmedShuttle)) {
-          shuttleTextHtml = `You are on the shuttle from Ben Gurion airport <strong>${trimmedShuttle}</strong>.`;
-        } else {
-          shuttleTextHtml = `You are on the shuttle from Ben Gurion airport: <strong>${trimmedShuttle}</strong>.`;
-        }
+        const isTimeOnly = /^\d{2}:\d{2}$/.test(formattedShuttle);
+        const shuttleTextHtml = isTimeOnly
+          ? `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedShuttle}</strong>.`
+          : `You are on the shuttle from Ben Gurion airport: <strong>${formattedShuttle}</strong>.`;
 
         html += `
           <div class="shuttle-info-card" style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: var(--radius-xl, 12px); border: 1px solid var(--accent); margin-top: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
@@ -605,7 +663,7 @@ let currentGuestEmail = "";
             </p>
             ${hasTogetherWith ? `
             <p style="margin: 0; font-size: 0.9rem; color: var(--foreground-muted);">
-              <strong>Together with:</strong> ${togetherWith.trim()}
+              <strong>Together with:</strong> ${cleanTogetherWith}
             </p>` : ''}
           </div>
         `;
@@ -2009,19 +2067,71 @@ function viewAdminGuestDetails(rowIndex) {
     
     function formatFlightTime(tStr) {
       if (!tStr) return '';
-      const timeMatch = String(tStr).match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
-      if (timeMatch && timeMatch[0] !== "00:00") {
-        return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
-      } else if (timeMatch && timeMatch[0] === "00:00") {
+      const str = String(tStr).trim();
+      if (!str || str === '-' || /^#|^=/i.test(str) || /^n\/?a$/i.test(str) || /^null$/i.test(str)) return '';
+      
+      const ampmMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i);
+      if (ampmMatch) {
+        let hours = parseInt(ampmMatch[1], 10);
+        const minutes = ampmMatch[2];
+        const period = ampmMatch[3].toUpperCase();
+        if (period === 'PM' && hours < 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+      }
+
+      const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+      if (timeMatch) {
         return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
       }
-      if (!isNaN(tStr) && Number(tStr) > 0 && Number(tStr) < 1) {
-         const totalMinutes = Math.round(Number(tStr) * 24 * 60);
-         const hh = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
-         const mm = (totalMinutes % 60).toString().padStart(2, '0');
-         return `${hh}:${mm}`;
+
+      const num = Number(str);
+      if (!isNaN(num) && num > 0 && num < 1) {
+         const totalMinutes = Math.round(num * 24 * 60);
+         const hh = Math.floor(totalMinutes / 60) % 24;
+         const mm = totalMinutes % 60;
+         return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
       }
-      return tStr;
+      return str;
+    }
+
+    function formatShuttleTime(val) {
+      if (val === null || val === undefined) return '';
+      const str = String(val).trim();
+      if (!str || str === '-' || /^#|^=/i.test(str) || /^n\/?a$/i.test(str) || /^none$/i.test(str) || /^null$/i.test(str)) {
+        return '';
+      }
+
+      const ampmMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i);
+      if (ampmMatch) {
+        let hours = parseInt(ampmMatch[1], 10);
+        const minutes = ampmMatch[2];
+        const period = ampmMatch[3].toUpperCase();
+        if (period === 'PM' && hours < 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+      }
+
+      const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\b/);
+      if (timeMatch) {
+        return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+      }
+
+      const num = Number(str);
+      if (!isNaN(num) && num > 0 && num < 1) {
+        const totalMinutes = Math.round(num * 24 * 60);
+        const hh = Math.floor(totalMinutes / 60) % 24;
+        const mm = totalMinutes % 60;
+        return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+      }
+
+      if (!isNaN(num) && num >= 0 && num < 24 && !str.includes(':')) {
+        const hours = Math.floor(num);
+        const minutes = Math.round((num - hours) * 60);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      }
+
+      return str;
     }
 
     arrival = formatFlightDate(arrival) || "TBD";
@@ -2030,6 +2140,16 @@ function viewAdminGuestDetails(rowIndex) {
     departureTime = formatFlightTime(departureTime);
     origin = origin || "TBD";
     dest = dest || "TBD";
+
+    const formattedShuttle = formatShuttleTime(shuttle);
+    const cleanTogetherWith = togetherWith ? String(togetherWith).trim() : '';
+    const hasTogetherWith = cleanTogetherWith !== '' && 
+                            !cleanTogetherWith.startsWith('#') && 
+                            !cleanTogetherWith.startsWith('=') && 
+                            !/^n\/?a$/i.test(cleanTogetherWith) && 
+                            !/^none$/i.test(cleanTogetherWith) && 
+                            !/^null$/i.test(cleanTogetherWith) && 
+                            cleanTogetherWith !== '-';
 
     flightHtml = '';
 
@@ -2066,10 +2186,10 @@ function viewAdminGuestDetails(rowIndex) {
             </div>
           </div>
           
-          ${shuttle ? `
+          ${formattedShuttle ? `
           <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
-            <strong>🚐 Shuttle:</strong> ${shuttle}
-            ${togetherWith ? `<br><span style="color:var(--foreground-muted); font-size:0.85rem;"><strong>Together with:</strong> ${togetherWith}</span>` : ''}
+            <strong>🚐 Shuttle:</strong> ${formattedShuttle}
+            ${hasTogetherWith ? `<br><span style="color:var(--foreground-muted); font-size:0.85rem;"><strong>Together with:</strong> ${cleanTogetherWith}</span>` : ''}
           </div>` : ''}
 
           <div class="bp-divider"></div>
