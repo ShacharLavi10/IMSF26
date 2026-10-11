@@ -422,6 +422,13 @@ let currentGuestEmail = "";
         document.getElementById("artists-container").style.display = "none";
         document.getElementById("artists-pending-container").style.display = "block";
       }
+
+      // Initialize Guide Data
+      if (response.guideData) {
+        initGuide(response.guideData);
+      } else {
+        fetchGuideData();
+      }
     }
 
     function onLoginFailure(err) {
