@@ -39,4 +39,21 @@
       padding: 12px 14px;
       font-size: 0.88rem;
     }
+
+    .top-left-actions {
+      top: max(12px, env(safe-area-inset-top));
+      left: max(12px, env(safe-area-inset-left));
+      gap: 6px;
+    }
+
+    .live-updates-btn, .admin-reset-cache-btn {
+      padding: 7px 11px;
+      font-size: 0.8rem;
+      gap: 5px;
+    }
+
+    .admin-reset-cache-btn svg, .live-updates-btn svg {
+      width: 15px;
+      height: 15px;
+    }
   }

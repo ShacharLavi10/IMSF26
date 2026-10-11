@@ -14,7 +14,14 @@ let currentGuestEmail = "";
         const cached = localStorage.getItem('swr_portalData_' + token);
         if (cached) {
           try {
-            onLoginSuccess(JSON.parse(cached), true);
+            const parsedCached = JSON.parse(cached);
+            if (parsedCached && parsedCached.guestInfo && (parsedCached.guestInfo.isAdmin || localStorage.getItem('originalAdminToken'))) {
+              const resetBtn = document.getElementById("admin-reset-cache-btn");
+              const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
+              if (resetBtn) resetBtn.style.display = "inline-flex";
+              if (panelResetBtn) panelResetBtn.style.display = "inline-flex";
+            }
+            onLoginSuccess(parsedCached, true);
           } catch(e) {
             document.getElementById("login-loader").style.display = "block";
           }
@@ -186,7 +193,14 @@ let currentGuestEmail = "";
       }
       currentGuestEmail = response.guestInfo.email;
       
-      if (response.guestInfo.isAdmin) {
+      const isUserAdmin = !!(response.guestInfo && response.guestInfo.isAdmin) || !!localStorage.getItem('originalAdminToken');
+      
+      const resetBtn = document.getElementById("admin-reset-cache-btn");
+      const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
+      if (resetBtn) resetBtn.style.display = isUserAdmin ? "inline-flex" : "none";
+      if (panelResetBtn) panelResetBtn.style.display = isUserAdmin ? "inline-flex" : "none";
+
+      if (isUserAdmin) {
         document.getElementById("tab-admin").style.display = "block";
       }
 
@@ -232,9 +246,21 @@ let currentGuestEmail = "";
         const navWrapper = document.getElementById("category-nav-wrapper");
         if (navWrapper) navWrapper.style.display = "flex";
         
-        let hasActiveTab = document.querySelector('#category-nav-wrapper button.active');
-        if (!isBackgroundUpdate || !hasActiveTab) {
-          switchCategoryTab('schedule');
+        const restoreTab = sessionStorage.getItem('imsf_restore_tab');
+        if (restoreTab) {
+          sessionStorage.removeItem('imsf_restore_tab');
+          switchCategoryTab(restoreTab);
+        } else {
+          let hasActiveTab = document.querySelector('#category-nav-wrapper button.active');
+          if (!isBackgroundUpdate || !hasActiveTab) {
+            switchCategoryTab('schedule');
+          }
+        }
+        
+        // Show toast if cache was just reset
+        if (sessionStorage.getItem('imsf_cache_reset_toast')) {
+          sessionStorage.removeItem('imsf_cache_reset_toast');
+          setTimeout(() => showToast("✨ Cache reset! Loaded fresh data."), 300);
         }
         
         // Start live updates polling & fetch schedule
@@ -320,6 +346,14 @@ let currentGuestEmail = "";
         } else {
           if (missingFlightCard) missingFlightCard.style.display = "none";
           passportCard.style.display = response.checklist.hasPassport ? "none" : "block";
+        }
+
+        if (isUserAdmin) {
+          startLiveUpdatesPolling();
+          if (sessionStorage.getItem('imsf_cache_reset_toast')) {
+            sessionStorage.removeItem('imsf_cache_reset_toast');
+            setTimeout(() => showToast("✨ Cache reset! Loaded fresh data."), 300);
+          }
         }
       }
       if (response.checklist.approvalSchedule) {
@@ -2290,3 +2324,96 @@ document.addEventListener("visibilitychange", () => {
      triggerBackgroundRefresh();
   }
 });
+
+/* ================= CACHE MANAGEMENT (ADMIN) ================= */
+function showToast(message, duration = 3500) {
+  let toast = document.getElementById("toast-notification");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toast-notification";
+    toast.className = "toast-notification";
+    document.body.appendChild(toast);
+  }
+  toast.innerText = message;
+  toast.classList.add("show");
+  clearTimeout(toast._hideTimeout);
+  toast._hideTimeout = setTimeout(() => {
+    toast.classList.remove("show");
+  }, duration);
+}
+
+function handleAdminResetCache() {
+  const btn = document.getElementById("admin-reset-cache-btn");
+  const panelBtn = document.getElementById("admin-panel-reset-cache-btn");
+  
+  if (btn) {
+    btn.disabled = true;
+    const icon = btn.querySelector('.cache-btn-icon');
+    if (icon) icon.classList.add('spin-icon');
+    const textSpan = document.getElementById('admin-reset-cache-text');
+    if (textSpan) textSpan.innerText = "Clearing...";
+  }
+  if (panelBtn) {
+    panelBtn.disabled = true;
+    const pIcon = panelBtn.querySelector('.cache-btn-icon');
+    if (pIcon) pIcon.classList.add('spin-icon');
+    const pSpan = panelBtn.querySelector('span');
+    if (pSpan) pSpan.innerText = "Clearing...";
+  }
+
+  // 1. Remember current active tab
+  const activeTabBtn = document.querySelector('#category-nav-wrapper button.active');
+  if (activeTabBtn && activeTabBtn.id) {
+    const tabName = activeTabBtn.id.replace('tab-', '');
+    try { sessionStorage.setItem('imsf_restore_tab', tabName); } catch (e) {}
+  }
+  try { sessionStorage.setItem('imsf_cache_reset_toast', 'true'); } catch (e) {}
+
+  // 2. Clear client-side cache immediately
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('swr_') || key.startsWith('lastSeenUpdatesHash_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch(e) {
+    console.error("Error clearing localStorage:", e);
+  }
+
+  // Clear in-memory state
+  adminData = null;
+  adminDataLoaded = false;
+  scheduleDataCache = null;
+  globalArtistsData = [];
+  globalDirectoryData = [];
+
+  const token = localStorage.getItem('guestSessionToken') || localStorage.getItem('originalAdminToken');
+
+  const performReload = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('nocache', Date.now());
+    window.location.href = url.toString();
+  };
+
+  // 3. Clear server-side cache and reload
+  if (window.google && google.script && google.script.run && token) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        console.log("Server cache purged:", res);
+        performReload();
+      })
+      .withFailureHandler(function(err) {
+        console.warn("Server cache purge error, reloading anyway:", err);
+        performReload();
+      })
+      .clearAppCache(token);
+  } else {
+    performReload();
+  }
+}
+
+window.showToast = showToast;
+window.handleAdminResetCache = handleAdminResetCache;

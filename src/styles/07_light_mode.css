@@ -248,17 +248,25 @@ body.light-mode {
     margin-left: 6px;
   }
 
+  /* TOP ACTIONS CONTAINER */
+  .top-left-actions {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+  }
+
   /* LIVE UPDATES BUTTON */
   .live-updates-btn {
-    position: absolute; 
-    top: 20px; 
-    left: 20px;
+    position: relative; 
     cursor: pointer; 
     padding: 10px 18px; 
     background: rgba(255,255,255,0.05); 
     border-radius: 9999px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
-    z-index: 100; 
     backdrop-filter: blur(12px); 
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255,255,255,0.1); 
@@ -289,6 +297,50 @@ body.light-mode {
     border-radius: 4px;
     margin-left: 4px;
     letter-spacing: 0.05em;
+  }
+
+  /* ADMIN RESET CACHE BUTTON (הפקה חשיפה) */
+  .admin-reset-cache-btn {
+    position: relative;
+    cursor: pointer;
+    padding: 10px 16px;
+    background: rgba(245, 158, 11, 0.12);
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #f59e0b;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    transition: all var(--transition-base);
+    user-select: none;
+  }
+  .admin-reset-cache-btn:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.22);
+    border-color: #f59e0b;
+    color: #fbbf24;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25);
+  }
+  .admin-reset-cache-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .admin-reset-cache-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+  .spin-icon {
+    animation: spin-kf 0.8s linear infinite;
+  }
+  @keyframes spin-kf {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
   @keyframes pulse-glow {
@@ -335,6 +387,33 @@ body.light-mode {
     font-weight: 600;
     color: var(--foreground);
     margin: 0;
+  }
+  .updates-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .admin-panel-reset-btn {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #f59e0b;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--transition-fast);
+  }
+  .admin-panel-reset-btn:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+  }
+  .admin-panel-reset-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
   .updates-close {
     background: transparent;
@@ -457,4 +536,48 @@ body.light-mode {
     background: #ffffff;
     border-color: rgba(0, 0, 0, 0.1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  /* TOAST NOTIFICATION */
+  .toast-notification {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px 24px;
+    border-radius: 9999px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(245, 158, 11, 0.4);
+    font-size: 0.95rem;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  .toast-notification.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  body.light-mode .admin-reset-cache-btn {
+    background: rgba(217, 119, 6, 0.12);
+    border-color: rgba(217, 119, 6, 0.4);
+    color: #b45309;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.15);
+  }
+  body.light-mode .admin-reset-cache-btn:hover:not(:disabled) {
+    background: rgba(217, 119, 6, 0.2);
+    color: #92400e;
+  }
+  body.light-mode .toast-notification {
+    background: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(217, 119, 6, 0.4);
   }
