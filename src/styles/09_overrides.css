@@ -666,3 +666,307 @@ body.light-mode .shuttle-info-card h4 {
   color: #1e293b !important;
 }
 
+/* ========================================================= */
+/* SCHEDULE LOCATION LINK & ENHANCEMENTS                     */
+/* ========================================================= */
+.schedule-event-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.schedule-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.schedule-loc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: rgba(241, 169, 160, 0.15);
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.schedule-loc-link:hover {
+  background: var(--accent);
+  color: #000;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+}
+
+.schedule-loc-link:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 1);
+}
+
+body.light-mode .schedule-loc-link {
+  background: rgba(241, 169, 160, 0.25);
+  color: #8c2518;
+  border-color: #8c2518;
+  box-shadow: 2px 2px 0px #000;
+}
+
+body.light-mode .schedule-loc-link:hover {
+  background: #f1a9a0;
+  color: #000;
+}
+
+/* ========================================================= */
+/* GUIDE & RECOMMENDATIONS STYLES                            */
+/* ========================================================= */
+.guide-pills-nav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 24px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.guide-sections-wrapper,
+.guide-essentials-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.guide-category-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-category-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.guide-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .guide-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .guide-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.guide-item-card {
+  background: var(--background-elevated);
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 1);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  min-height: 140px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .guide-item-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 1);
+  }
+}
+
+.guide-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.guide-item-name {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.25;
+}
+
+.guide-item-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(241, 169, 160, 0.2);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.guide-item-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--foreground-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.guide-item-address svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.guide-item-desc {
+  color: var(--foreground-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.guide-item-actions {
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.guide-map-btn,
+.guide-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0px #000;
+  cursor: pointer;
+  transition: all 120ms ease;
+  width: fit-content;
+}
+
+.guide-map-btn:hover,
+.guide-action-btn:hover {
+  background: #ffb8b0;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000;
+}
+
+.guide-map-btn:active,
+.guide-action-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000;
+}
+
+/* GUIDE FAQ ACCORDION */
+.guide-faq-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guide-faq-item {
+  background: var(--background-elevated);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 120ms ease;
+}
+
+.guide-faq-question {
+  padding: 14px 18px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+  user-select: none;
+  color: var(--foreground);
+}
+
+.guide-faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.faq-chevron {
+  font-size: 1.1rem;
+  transition: transform 200ms ease;
+  color: var(--accent);
+}
+
+details[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+.guide-faq-answer {
+  padding: 0 18px 16px;
+  color: var(--foreground-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 4px;
+  padding-top: 12px;
+}
+
+.guide-faq-answer p {
+  margin: 0;
+}
+
+/* LIGHT MODE SUPPORT */
+body.light-mode .guide-item-card {
+  background: #ffffff;
+  border-color: #000;
+  box-shadow: 4px 4px 0px #000;
+}
+
+body.light-mode .guide-faq-item {
+  background: #ffffff;
+  border-color: #000;
+  box-shadow: 3px 3px 0px #000;
+}
+
+body.light-mode .guide-faq-answer {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .guide-item-tag {
+  background: rgba(241, 169, 160, 0.3);
+  color: #8c2518;
+  border-color: #8c2518;
+}
+
+

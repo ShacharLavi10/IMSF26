@@ -1328,6 +1328,16 @@ let currentGuestEmail = "";
       renderScheduleForDate(dateStr);
     }
     
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    
     function renderScheduleForDate(dateStr) {
       const events = scheduleDataCache[dateStr] || [];
       const container = document.getElementById("schedule-container");
@@ -1341,25 +1351,336 @@ let currentGuestEmail = "";
       events.forEach(e => {
         const timeText = e.endTime ? `${e.startTime}-${e.endTime}` : e.startTime;
         
-        let titleHtml = e.title;
-        if (e.location && e.location.trim() !== "") {
-          let href = e.location.trim();
-          if (!href.startsWith('http')) {
-             href = 'https://' + href;
+        let mapsUrl = "";
+        let locName = e.location ? e.location.trim() : "";
+
+        if (locName !== "") {
+          if (locName.startsWith('http://') || locName.startsWith('https://')) {
+            mapsUrl = locName;
+          } else {
+            // Check if matches a venue or place in guideDataCache
+            if (guideDataCache && guideDataCache.items) {
+              const matched = guideDataCache.items.find(item => 
+                item.name && item.name.toLowerCase().trim() === locName.toLowerCase()
+              );
+              if (matched) {
+                if (matched.link && matched.link.startsWith('http')) {
+                  mapsUrl = matched.link;
+                } else if (matched.address) {
+                  mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(matched.name + ' ' + matched.address + ', Israel')}`;
+                }
+              }
+            }
+            // Direct Google Maps search fallback
+            if (!mapsUrl) {
+              mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locName + ', Israel')}`;
+            }
           }
-          titleHtml = `<a href="${href}" target="_blank" class="event-title">${e.title}</a>`;
-        } else {
-          titleHtml = `<span class="event-title">${e.title}</span>`;
         }
-        
+
+        let titleHtml = `<span class="event-title">${escapeHtml(e.title)}</span>`;
+        let locHtml = "";
+        if (locName !== "" && mapsUrl !== "") {
+          locHtml = `
+            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="schedule-loc-link" title="Open in Google Maps">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>${escapeHtml(locName)}</span>
+            </a>
+          `;
+        }
+
         html += `
           <div class="schedule-event-inline fade-up">
-            <span class="event-time">${timeText}</span>
-            ${titleHtml}
-            ${e.description ? `<span class="event-desc">${e.description}</span>` : ''}
+            <span class="event-time">${escapeHtml(timeText)}</span>
+            <div class="schedule-event-details">
+              <div class="schedule-title-row">
+                ${titleHtml}
+                ${locHtml}
+              </div>
+              ${e.description ? `<span class="event-desc">${escapeHtml(e.description)}</span>` : ''}
+            </div>
           </div>
         `;
       });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    /* ========================================================= */
+    /* GUIDE & ESSENTIALS UI LOGIC                               */
+    /* ========================================================= */
+    let guideDataCache = null;
+    let currentGuideCity = 'jerusalem';
+
+    function initGuide(guideData) {
+      if (guideData) {
+        guideDataCache = guideData;
+        try {
+          localStorage.setItem('imsf_guide_cache', JSON.stringify(guideData));
+        } catch(e) {}
+      } else {
+        const cached = localStorage.getItem('imsf_guide_cache');
+        if (cached) {
+          try { guideDataCache = JSON.parse(cached); } catch(e) {}
+        }
+      }
+      renderGuideCityContent(currentGuideCity);
+    }
+
+    function fetchGuideData() {
+      const loader = document.getElementById('guide-loader');
+      if (loader) loader.style.display = 'flex';
+      
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (loader) loader.style.display = 'none';
+          if (res && res.success && res.guide) {
+            initGuide(res.guide);
+          } else {
+            const container = document.getElementById('guide-content-area');
+            if (container && (!guideDataCache || !guideDataCache.items || guideDataCache.items.length === 0)) {
+              container.innerHTML = '<p class="empty-state">No guide recommendations published yet.</p>';
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          if (loader) loader.style.display = 'none';
+          console.error("Guide fetch error:", err);
+        })
+        .getGuideData(false);
+    }
+
+    function selectGuideCity(city) {
+      currentGuideCity = city;
+      ['jerusalem', 'telaviv', 'essentials'].forEach(c => {
+        const pill = document.getElementById('guide-pill-' + c);
+        if (pill) {
+          if (c === city) {
+            pill.classList.add('active');
+          } else {
+            pill.classList.remove('active');
+          }
+        }
+      });
+      renderGuideCityContent(city);
+    }
+
+    function renderGuideCityContent(city) {
+      const container = document.getElementById('guide-content-area');
+      if (!container) return;
+
+      if (!guideDataCache) {
+        container.innerHTML = '<p class="empty-state">Loading recommendations...</p>';
+        return;
+      }
+
+      let items = [];
+      if (city === 'jerusalem') {
+        items = guideDataCache.jerusalem || [];
+      } else if (city === 'telaviv') {
+        items = guideDataCache.telAviv || [];
+      } else if (city === 'essentials') {
+        items = guideDataCache.essentials || [];
+      }
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `<p class="empty-state">No recommendations added for this section yet.</p>`;
+        return;
+      }
+
+      if (city === 'essentials') {
+        renderEssentialsContent(items, container);
+        return;
+      }
+
+      // Group by Category (Venues, Bars, Food, etc.)
+      const categories = {};
+      items.forEach(item => {
+        const cat = item.category || 'General';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(item);
+      });
+
+      let html = '<div class="guide-sections-wrapper">';
+      Object.keys(categories).forEach(catName => {
+        const catItems = categories[catName];
+        let catIcon = '📍';
+        const lowerCat = catName.toLowerCase();
+        if (lowerCat.includes('venue') || lowerCat.includes('לוקיישן')) catIcon = '🎪';
+        else if (lowerCat.includes('bar') || lowerCat.includes('night') || lowerCat.includes('בר')) catIcon = '🍸';
+        else if (lowerCat.includes('food') || lowerCat.includes('restaurant') || lowerCat.includes('coffee') || lowerCat.includes('אוכל') || lowerCat.includes('קפה')) catIcon = '🍽️';
+
+        html += `
+          <div class="guide-category-section">
+            <h4 class="guide-category-title">
+              <span>${catIcon}</span> ${escapeHtml(catName)}
+            </h4>
+            <div class="guide-cards-grid">
+        `;
+
+        catItems.forEach(item => {
+          let mapUrl = item.link ? item.link.trim() : '';
+          if (!mapUrl.startsWith('http')) {
+            const cityNameStr = (city === 'jerusalem' ? 'Jerusalem' : 'Tel Aviv');
+            const query = [item.name, item.address, cityNameStr, 'Israel'].filter(Boolean).join(', ');
+            mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+          }
+
+          html += `
+            <div class="guide-item-card fade-up">
+              <div class="guide-item-header">
+                <span class="guide-item-name">${escapeHtml(item.name)}</span>
+                ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
+              </div>
+              ${item.address ? `
+                <div class="guide-item-address">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>${escapeHtml(item.address)}</span>
+                </div>
+              ` : ''}
+              ${item.description ? `<p class="guide-item-desc">${escapeHtml(item.description)}</p>` : ''}
+              <div class="guide-item-actions">
+                <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="guide-map-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  <span>Open in Maps</span>
+                </a>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function renderEssentialsContent(items, container) {
+      const actionItems = [];
+      const faqItems = [];
+
+      items.forEach(item => {
+        const catLower = (item.category || "").toLowerCase();
+        const tagLower = (item.tag || "").toLowerCase();
+        if (catLower.includes('faq') || catLower.includes('q&a') || catLower.includes('שאלה') || tagLower.includes('faq')) {
+          faqItems.push(item);
+        } else {
+          actionItems.push(item);
+        }
+      });
+
+      let html = '<div class="guide-essentials-wrapper">';
+
+      if (actionItems.length > 0) {
+        html += `
+          <div class="guide-category-section">
+            <h4 class="guide-category-title">
+              <span>📱</span> Essential Apps & Services
+            </h4>
+            <div class="guide-cards-grid">
+        `;
+        actionItems.forEach(item => {
+          let btnLabel = "Open Link";
+          const lowerName = (item.name || "").toLowerCase();
+          const lowerCat = (item.category || "").toLowerCase();
+          if (lowerCat.includes('taxi') || lowerName.includes('gett') || lowerName.includes('yango') || lowerName.includes('מוניות')) {
+            btnLabel = "Get Taxi App";
+          } else if (lowerCat.includes('transit') || lowerName.includes('moovit') || lowerName.includes('hopon')) {
+            btnLabel = "Transit App";
+          } else if (lowerCat.includes('pay') || lowerName.includes('pay') || lowerCat.includes('תשלום')) {
+            btnLabel = "Payment Link";
+          } else if (lowerCat.includes('rsvp') || lowerName.includes('rsvp') || lowerCat.includes('אישור')) {
+            btnLabel = "RSVP Form";
+          }
+
+          let linkHtml = '';
+          if (item.link && item.link.trim() !== '') {
+            let href = item.link.trim();
+            if (!href.startsWith('http')) href = 'https://' + href;
+            linkHtml = `
+              <div class="guide-item-actions">
+                <a href="${href}" target="_blank" rel="noopener noreferrer" class="guide-action-btn">
+                  <span>${btnLabel}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            `;
+          }
+
+          html += `
+            <div class="guide-item-card fade-up">
+              <div class="guide-item-header">
+                <span class="guide-item-name">${escapeHtml(item.name)}</span>
+                ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
+              </div>
+              ${item.description ? `<p class="guide-item-desc">${escapeHtml(item.description)}</p>` : ''}
+              ${linkHtml}
+            </div>
+          `;
+        });
+        html += `
+            </div>
+          </div>
+        `;
+      }
+
+      if (faqItems.length > 0) {
+        html += `
+          <div class="guide-category-section">
+            <h4 class="guide-category-title">
+              <span>💡</span> Need to Know & FAQs
+            </h4>
+            <div class="guide-faq-accordion">
+        `;
+        faqItems.forEach((faq) => {
+          let linkHtml = '';
+          if (faq.link && faq.link.trim() !== '') {
+            let href = faq.link.trim();
+            if (!href.startsWith('http')) href = 'https://' + href;
+            linkHtml = `
+              <div style="margin-top: 10px;">
+                <a href="${href}" target="_blank" rel="noopener noreferrer" class="guide-action-btn" style="display: inline-flex; width: auto; padding: 6px 14px; font-size: 0.8rem;">
+                  <span>More Info</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            `;
+          }
+
+          html += `
+            <details class="guide-faq-item fade-up">
+              <summary class="guide-faq-question">
+                <span>${escapeHtml(faq.name)}</span>
+                <span class="faq-chevron">▾</span>
+              </summary>
+              <div class="guide-faq-answer">
+                <p>${escapeHtml(faq.description)}</p>
+                ${linkHtml}
+              </div>
+            </details>
+          `;
+        });
+        html += `
+            </div>
+          </div>
+        `;
+      }
+
       html += '</div>';
       container.innerHTML = html;
     }
@@ -2579,6 +2900,7 @@ function handleAdminResetCache() {
   adminData = null;
   adminDataLoaded = false;
   scheduleDataCache = null;
+  guideDataCache = null;
   globalArtistsData = [];
   globalDirectoryData = [];
 
@@ -2609,3 +2931,5 @@ function handleAdminResetCache() {
 
 window.showToast = showToast;
 window.handleAdminResetCache = handleAdminResetCache;
+window.selectGuideCity = selectGuideCity;
+window.fetchGuideData = fetchGuideData;
