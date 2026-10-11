@@ -48,7 +48,10 @@ let currentGuestEmail = "";
     }
 
     function switchCategoryTab(tabName) {
-      const tabs = ['admin', 'schedule', 'flights', 'hotels', 'directory', 'artists'];
+      if (tabName === 'flights' || tabName === 'hotels') {
+        tabName = 'mytrip';
+      }
+      const tabs = ['admin', 'schedule', 'mytrip', 'guide', 'directory', 'artists'];
       tabs.forEach(t => {
         const btn = document.getElementById('tab-' + t);
         const card = document.getElementById(t + '-card');
@@ -67,9 +70,16 @@ let currentGuestEmail = "";
         }
         if (card) {
           card.style.display = (t === tabName) ? 'block' : 'none';
+        }
         if (t === 'admin' && tabName === 'admin') {
           loadAdminDashboard();
         }
+        if (t === 'guide' && tabName === 'guide') {
+          if (!guideDataCache) {
+            fetchGuideData();
+          } else {
+            renderGuideCityContent(currentGuideCity);
+          }
         }
       });
     }
@@ -286,11 +296,11 @@ let currentGuestEmail = "";
 
         
         // Hide all regular content cards
-        document.getElementById("schedule-card").style.display = "none";
-        document.getElementById("flights-card").style.display = "none";
-        document.getElementById("hotels-card").style.display = "none";
-        document.getElementById("directory-card").style.display = "none";
-        document.getElementById("artists-card").style.display = "none";
+        if (document.getElementById("schedule-card")) document.getElementById("schedule-card").style.display = "none";
+        if (document.getElementById("mytrip-card")) document.getElementById("mytrip-card").style.display = "none";
+        if (document.getElementById("guide-card")) document.getElementById("guide-card").style.display = "none";
+        if (document.getElementById("directory-card")) document.getElementById("directory-card").style.display = "none";
+        if (document.getElementById("artists-card")) document.getElementById("artists-card").style.display = "none";
         
         // Set forms links
         if (document.getElementById("link-hotel-form")) document.getElementById("link-hotel-form").href = response.forms.HOTEL;
@@ -643,11 +653,6 @@ let currentGuestEmail = "";
                 <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
               </div>
             </div>
-            
-            ${hasShuttle ? `
-            <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
-              <strong>🚐 Shuttle:</strong> ${formattedShuttle}
-            </div>` : ''}
 
             <div class="bp-divider"></div>
             <div class="bp-flight">
@@ -2208,12 +2213,6 @@ function viewAdminGuestDetails(rowIndex) {
               <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
             </div>
           </div>
-          
-          ${formattedShuttle ? `
-          <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
-            <strong>🚐 Shuttle:</strong> ${formattedShuttle}
-            ${hasTogetherWith ? `<br><span style="color:var(--foreground-muted); font-size:0.85rem;"><strong>Together with:</strong> ${cleanTogetherWith}</span>` : ''}
-          </div>` : ''}
 
           <div class="bp-divider"></div>
           <div class="bp-flight">
@@ -2233,6 +2232,29 @@ function viewAdminGuestDetails(rowIndex) {
         </div>
       </div>
     `;
+
+    if (formattedShuttle) {
+      const isTimeOnly = /^\d{2}:\d{2}$/.test(formattedShuttle);
+      const shuttleTextHtml = isTimeOnly
+        ? `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedShuttle}</strong>.`
+        : `You are on the shuttle from Ben Gurion airport: <strong>${formattedShuttle}</strong>.`;
+
+      flightHtml += `
+        <div class="shuttle-info-card" style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: var(--radius-xl, 12px); border: 1px solid var(--accent); margin-top: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+          <h4 style="margin: 0 0 8px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            Shuttle Information
+          </h4>
+          <p style="margin: 0 ${hasTogetherWith ? '0 6px 0' : '0 0 0'}; font-size: 0.9rem;">
+            ${shuttleTextHtml}
+          </p>
+          ${hasTogetherWith ? `
+          <p style="margin: 0; font-size: 0.85rem; color: var(--foreground-muted);">
+            <strong>Together with:</strong> ${cleanTogetherWith}
+          </p>` : ''}
+        </div>
+      `;
+    }
     if (flightNotes) {
       flightHtml += `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${flightNotes}</div>`;
     }

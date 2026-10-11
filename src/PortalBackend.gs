@@ -276,6 +276,8 @@ function getGuestPortalData(sessionToken) {
     
     const scheduleRes = getScheduleData(isAdmin);
     const scheduleData = scheduleRes.success ? scheduleRes.schedule : null;
+    const guideRes = getGuideData(isAdmin);
+    const guideData = guideRes.success ? guideRes.guide : null;
     
     return {
       success: true,
@@ -295,7 +297,8 @@ function getGuestPortalData(sessionToken) {
       hotelJerusalemData: hotelJerusalemData,
       hotelTelAvivData: hotelTelAvivData,
       allGuestsDirectory: allGuestsDirectory,
-      scheduleData: scheduleData
+      scheduleData: scheduleData,
+      guideData: guideData
     };
   } catch (err) {
     return { success: false, message: "Server Error: " + err.toString() };
@@ -584,6 +587,103 @@ function getScheduleData(forceRefresh) {
     return { success: true, schedule: scheduleByDate };
   } catch (err) {
     return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Fetch and group Guide Data (Venues, Bars, Food, Apps, FAQ, etc.) from 'מידע כללי' sheet
+ */
+function getGuideData(forceRefresh) {
+  try {
+    const cache = CacheService.getScriptCache();
+    const cacheKey = 'global_guide_data';
+    
+    if (!forceRefresh) {
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return { success: true, guide: JSON.parse(cached) };
+      }
+    }
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = findSheetFuzzy(ss, ['מידע כללי', 'מידע כללי והמלצות', 'General Info', 'Guide']);
+    if (!sheet) return { success: false, message: 'Guide / Info sheet not found' };
+    
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) return { success: true, guide: { jerusalem: [], telAviv: [], essentials: [], items: [] } };
+    
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStr = data[r].map(h => String(h).trim().toLowerCase());
+      if (rowStr.some(col => col.includes('עיר') || col.includes('city') || col.includes('שם המקום') || col.includes('venue') || col.includes('קטגוריה'))) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    
+    if (headerRowIdx === -1) return { success: false, message: 'Headers not found in Info sheet' };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    
+    const cityIdx = headers.findIndex(h => h.includes('עיר') || h.includes('city'));
+    const catIdx = headers.findIndex(h => h.includes('קטגוריה') || h.includes('category'));
+    const nameIdx = headers.findIndex(h => h.includes('שם המקום') || h.includes('name') || h.includes('title') || h.includes('שם'));
+    const addrIdx = headers.findIndex(h => h.includes('כתובת') || h.includes('address') || h.includes('location'));
+    const descIdx = headers.findIndex(h => h.includes('תיאור') || h.includes('desc'));
+    const linkIdx = headers.findIndex(h => h.includes('לינק') || h.includes('קישור') || h.includes('link') || h.includes('url'));
+    const tagIdx = headers.findIndex(h => h.includes('תגית') || h.includes('tag') || h.includes('badge'));
+    
+    const items = [];
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      const row = data[i];
+      const name = nameIdx !== -1 ? String(row[nameIdx] || "").trim() : "";
+      if (!name) continue;
+      
+      const city = cityIdx !== -1 ? String(row[cityIdx] || "").trim() : "";
+      const category = catIdx !== -1 ? String(row[catIdx] || "").trim() : "";
+      const address = addrIdx !== -1 ? String(row[addrIdx] || "").trim() : "";
+      const description = descIdx !== -1 ? String(row[descIdx] || "").trim() : "";
+      const link = linkIdx !== -1 ? String(row[linkIdx] || "").trim() : "";
+      const tag = tagIdx !== -1 ? String(row[tagIdx] || "").trim() : "";
+      
+      items.push({
+        city: city,
+        category: category,
+        name: name,
+        address: address,
+        description: description,
+        link: link,
+        tag: tag
+      });
+    }
+    
+    const guideGrouped = {
+      jerusalem: [],
+      telAviv: [],
+      essentials: [],
+      items: items
+    };
+    
+    items.forEach(item => {
+      const cityNorm = item.city.toLowerCase();
+      const catNorm = item.category.toLowerCase();
+      
+      if (cityNorm.includes('ירושלים') || cityNorm.includes('jerusalem') || cityNorm.includes('jlm')) {
+        guideGrouped.jerusalem.push(item);
+      } else if (cityNorm.includes('תל אביב') || cityNorm.includes('tel aviv') || cityNorm.includes('tlv')) {
+        guideGrouped.telAviv.push(item);
+      } else {
+        guideGrouped.essentials.push(item);
+      }
+    });
+    
+    try {
+      cache.put(cacheKey, JSON.stringify(guideGrouped), 120);
+    } catch(e) {}
+    
+    return { success: true, guide: guideGrouped };
+  } catch(err) {
+    return { success: false, message: "Error fetching guide data: " + err.toString() };
   }
 }
 
