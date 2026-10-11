@@ -727,7 +727,7 @@
         return;
       }
       
-      let arrival = "TBD", origin = "TBD", departure = "TBD", dest = "TBD", ticketLink = null;
+      let arrival = "TBD", origin = "TBD", departure = "TBD", dest = "TBD", ticketLink = null, shuttle = null, togetherWith = null;
       
       dataArray.forEach(item => {
         if (!item.value) return;
@@ -735,8 +735,13 @@
         if (item.label === "Origin / From") origin = item.value;
         if (item.label === "Departure Date") departure = item.value;
         if (item.label === "Destination / To") dest = item.value;
+        if (item.label === "Shuttle" || item.label === "שיוך לשאטל" || item.label === "שאטל") shuttle = item.value;
+        if (item.label === "Together With" || item.label === "ביחד עם" || item.label === "Together with") togetherWith = item.value;
         if (item.label === "Final Ticket Link") ticketLink = item.value;
       });
+
+      const hasShuttle = shuttle && String(shuttle).trim() !== "" && String(shuttle).trim() !== "N/A" && String(shuttle).trim() !== "-";
+      const hasTogetherWith = togetherWith && String(togetherWith).trim() !== "" && String(togetherWith).trim() !== "N/A" && String(togetherWith).trim() !== "-";
 
       let html = '';
 
@@ -767,6 +772,12 @@
               </div>
               <div class="bp-date">Arrival: ${arrival}</div>
             </div>
+            
+            ${hasShuttle ? `
+            <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
+              <strong>🚐 Shuttle:</strong> ${String(shuttle).trim()}
+            </div>` : ''}
+
             <div class="bp-divider"></div>
             <div class="bp-flight">
               <div class="bp-label">OUTBOUND</div>
@@ -780,6 +791,24 @@
           </div>
         </div>
       `;
+
+      if (hasShuttle) {
+        html += `
+          <div class="shuttle-info-card" style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: 12px; border: 1px solid var(--accent); margin-top: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              Shuttle Information
+            </h4>
+            <p style="margin: 0 ${hasTogetherWith ? '0 8px 0' : '0 0 0'}; font-size: 0.95rem;">
+              You are on the shuttle from Ben Gurion airport: <strong>${String(shuttle).trim()}</strong>
+            </p>
+            ${hasTogetherWith ? `
+            <p style="margin: 0; font-size: 0.9rem; color: var(--foreground-muted);">
+              <strong>Together with:</strong> ${togetherWith.trim()}
+            </p>` : ''}
+          </div>
+        `;
+      }
 
       container.innerHTML = html;
     }

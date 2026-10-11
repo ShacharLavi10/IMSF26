@@ -466,7 +466,7 @@ let currentGuestEmail = "";
       
       let arrival = "TBD", arrivalTime = "", arrivalFlight = "", arrivalAirline = "", origin = "TBD";
       let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
-      let ticketLink = null, shuttle = null;
+      let ticketLink = null, shuttle = null, togetherWith = null;
       
       function formatFlightDate(dStr) {
         if (!dStr) return '';
@@ -482,9 +482,6 @@ let currentGuestEmail = "";
         if (timeMatch && timeMatch[0] !== "00:00") {
           return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
         } else if (timeMatch && timeMatch[0] === "00:00") {
-           // if it's strictly 00:00 coming from a pure date formatting artifact, let's ignore it unless it's genuinely the only time
-           // Actually, let's just return what we matched. If the user says it shows 00:00, we should skip it if it's from the fallback.
-           // Since we are removing the fallback below, we can just return it normally if someone actually lands at 00:00.
           return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
         }
         
@@ -514,9 +511,13 @@ let currentGuestEmail = "";
         if (item.label === "Departure Airline") departureAirline = item.value;
         if (item.label === "Destination / To") dest = item.value;
         
-        if (item.label === "Shuttle") shuttle = item.value;
+        if (item.label === "Shuttle" || item.label === "שיוך לשאטל" || item.label === "שאטל") shuttle = item.value;
+        if (item.label === "Together With" || item.label === "ביחד עם" || item.label === "Together with") togetherWith = item.value;
         if (item.label === "Final Ticket Link") ticketLink = item.value;
       });
+
+      const hasShuttle = shuttle && String(shuttle).trim() !== "" && String(shuttle).trim() !== "N/A" && String(shuttle).trim() !== "-";
+      const hasTogetherWith = togetherWith && String(togetherWith).trim() !== "" && String(togetherWith).trim() !== "N/A" && String(togetherWith).trim() !== "-";
 
       let html = '';
 
@@ -553,9 +554,9 @@ let currentGuestEmail = "";
               </div>
             </div>
             
-            ${shuttle ? `
+            ${hasShuttle ? `
             <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
-              <strong>🚐 Shuttle:</strong> ${shuttle}
+              <strong>🚐 Shuttle:</strong> ${String(shuttle).trim()}
             </div>` : ''}
 
             <div class="bp-divider"></div>
@@ -577,21 +578,38 @@ let currentGuestEmail = "";
         </div>
       `;
 
-      // Shuttle Information Rubric Placeholder
-      html += `
-        <div style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: 8px; border: 1px solid var(--accent); margin-top: 15px;">
-          <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-            Shuttle Information
-          </h4>
-          <p style="margin: 0 0 8px 0; font-size: 0.95rem;">
-            You are on the shuttle from Ben Gurion airport leaving at <strong>[Time]</strong>.
-          </p>
-          <p style="margin: 0; font-size: 0.9rem; color: var(--foreground-muted);">
-            <strong>Together with:</strong> [Name 1], [Name 2], [Name 3]
-          </p>
-        </div>
-      `;
+      // Shuttle Information Rubric (shown ONLY if shuttle is assigned)
+      if (hasShuttle) {
+        const trimmedShuttle = String(shuttle).trim();
+        const formattedTime = formatFlightTime(trimmedShuttle);
+        const isPureTime = /^([01]?\d|2[0-3]):[0-5]\d(\s*(AM|PM|am|pm))?$/i.test(trimmedShuttle) || 
+                           /^\d{4}-\d{2}-\d{2}\s+([01]?\d|2[0-3]):[0-5]\d$/i.test(trimmedShuttle);
+
+        let shuttleTextHtml = "";
+        if (isPureTime && formattedTime) {
+          shuttleTextHtml = `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedTime}</strong>.`;
+        } else if (/^leaving at/i.test(trimmedShuttle) || /^at /i.test(trimmedShuttle)) {
+          shuttleTextHtml = `You are on the shuttle from Ben Gurion airport <strong>${trimmedShuttle}</strong>.`;
+        } else {
+          shuttleTextHtml = `You are on the shuttle from Ben Gurion airport: <strong>${trimmedShuttle}</strong>.`;
+        }
+
+        html += `
+          <div class="shuttle-info-card" style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: var(--radius-xl, 12px); border: 1px solid var(--accent); margin-top: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+            <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              Shuttle Information
+            </h4>
+            <p style="margin: 0 ${hasTogetherWith ? '0 8px 0' : '0 0 0'}; font-size: 0.95rem;">
+              ${shuttleTextHtml}
+            </p>
+            ${hasTogetherWith ? `
+            <p style="margin: 0; font-size: 0.9rem; color: var(--foreground-muted);">
+              <strong>Together with:</strong> ${togetherWith.trim()}
+            </p>` : ''}
+          </div>
+        `;
+      }
 
       container.innerHTML = html;
     }
@@ -1976,6 +1994,7 @@ function viewAdminGuestDetails(rowIndex) {
     let dest = getFlightVal(["יעד חזרה", "לאיפה", "מדינת חזרה", "לאן"]);
     
     let shuttle = getFlightVal(["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"]);
+    let togetherWith = getFlightVal(["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "together with"]);
     let ticketLink = getFlightVal(["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"]);
     let flightNotes = fData['הערות טיסות'] || '';
 
@@ -2050,6 +2069,7 @@ function viewAdminGuestDetails(rowIndex) {
           ${shuttle ? `
           <div style="background: rgba(30, 215, 96, 0.1); border-left: 3px solid var(--accent); padding: 8px 12px; margin-top: 12px; border-radius: 4px; font-size: 0.9rem;">
             <strong>🚐 Shuttle:</strong> ${shuttle}
+            ${togetherWith ? `<br><span style="color:var(--foreground-muted); font-size:0.85rem;"><strong>Together with:</strong> ${togetherWith}</span>` : ''}
           </div>` : ''}
 
           <div class="bp-divider"></div>

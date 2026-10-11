@@ -647,3 +647,22 @@ body.light-mode #sheet-guest-phone {
 
 body:not(.light-mode) .blob { display: none; }
 
+/* SHUTTLE INFO CARD */
+.shuttle-info-card {
+  background: rgba(30, 215, 96, 0.05);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-xl);
+  padding: 16px;
+  margin-top: 15px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+body.light-mode .shuttle-info-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+body.light-mode .shuttle-info-card h4 {
+  color: #1e293b !important;
+}
+

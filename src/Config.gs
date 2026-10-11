@@ -74,6 +74,7 @@ const MAPPINGS = {
     { key: "חברת תעופה המראה", altKeys: ["חברת תעופה המראה", "חברת תעופה עזיבה"], label: "Departure Airline" },
     { key: "יעד חזרה", altKeys: ["לאיפה", "מדינת חזרה", "לאן", "יעד חזרה"], label: "Destination / To" },
     { key: "שיוך לשאטל", altKeys: ["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"], label: "Shuttle" },
+    { key: "ביחד עם", altKeys: ["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "Together with"], label: "Together With" },
     { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"], label: "Final Ticket Link" }
   ],
   HOTELS: [
