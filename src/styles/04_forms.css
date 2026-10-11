@@ -49,8 +49,6 @@
     border-radius: 4px; /* Flatter radius for brutalism */
     font-size: 0.95rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     cursor: pointer;
     transition: all 150ms ease-out;
     display: inline-flex;

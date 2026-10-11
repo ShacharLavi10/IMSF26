@@ -25,7 +25,7 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - Use thick, dark borders around interactive elements (`border: 2px solid #000`).
   - Active/Click states should visually "press down" by reducing the box-shadow offset and translating the element (e.g., `transform: translate(4px, 4px)`).
 - **Typography**:
-  - **Display Font**: Use `Oswald` (or `Anton`) from Google Fonts for Headings (H1-H5). Headings should be UPPERCASE and bold to resemble the festival logo.
+  - **Display Font**: Use `Oswald` from Google Fonts for Headings (H1-H5). Headings should use standard casing (Capital letter at the start of words/sentences) for an elegant, readable appearance.
   - **Body Font**: Use standard system sans-serif fonts for clean, readable body text.
 - **UI Elements**:
   - Avoid heavy background images. Rely on CSS variables, simple noise overlays (`.bg-layer-noise`), and solid block shadows to convey the indie/comic style efficiently.

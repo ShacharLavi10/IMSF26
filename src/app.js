@@ -2125,7 +2125,7 @@ function viewAdminGuestDetails(rowIndex) {
 
     <!-- Personal Message -->
     <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
-      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Personal Portal Message</h4>
+      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); letter-spacing: 0.5px;">Personal Portal Message</h4>
       <textarea id="admin-personal-msg" rows="2" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--background); color:var(--foreground); font-family:inherit; resize:vertical; margin-bottom:8px;" placeholder="Message shown to guest...">${personalMsg}</textarea>
       <button class="primary" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; width:auto;" onclick="savePersonalMessage('${email}')">Save Message</button>
       <div id="admin-msg-status" style="font-size:0.8rem; margin-top:4px; display:none;"></div>
@@ -2134,24 +2134,24 @@ function viewAdminGuestDetails(rowIndex) {
     <!-- Flights & Hotels -->
     <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
       <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">✈️ Flights</h4>
+        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); letter-spacing: 0.5px;">✈️ Flights</h4>
         ${flightHtml}
       </div>
       <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">🏨 Accommodations</h4>
+        <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); letter-spacing: 0.5px;">🏨 Accommodations</h4>
         ${hotelHtml}
       </div>
     </div>
 
     <!-- Production Notes -->
     <div style="background: #fef9c3; color: #854d0e; padding: 12px; border-radius: 8px; border: 1px solid #fde047; margin-bottom: 15px;">
-      <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Internal Notes</h4>
+      <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; letter-spacing: 0.5px;">Internal Notes</h4>
       <p style="margin:0; font-size: 0.9rem; white-space: pre-wrap; word-break: break-word;">${prodNotes || 'No internal notes.'}</p>
     </div>
     
     <!-- Contact Info -->
     <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
-      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Contact Info</h4>
+      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); letter-spacing: 0.5px;">Contact Info</h4>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; align-items: center; gap: 10px; word-break: break-all;">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-bright); flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -2168,7 +2168,7 @@ function viewAdminGuestDetails(rowIndex) {
     </div>
     
     <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.5px;">Quick Actions</h4>
+      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); letter-spacing: 0.5px;">Quick Actions</h4>
       <div style="display: flex; flex-direction: column; gap: 10px;">
          <button class="secondary" style="width: 100%; justify-content: center;" onclick="impersonateGuest('${email}')">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
