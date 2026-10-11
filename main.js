@@ -1,4 +1,22 @@
-const GAS_API_URL = import.meta.env.VITE_APPS_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbzdKgXI92FaA4Z6418mxAC0tzSzJ8p6b8bsYpmnYDPNI6owtBIH9i_6RFIItxjc9O0L/exec";
+const PROD_GAS_URL = "https://script.google.com/macros/s/AKfycbyGjswDALICsGxU5wXzeeTLV8NfIA71-K1Z1tCUmS94IbTPqxjos5BACqcB3ezVw1fg5A/exec";
+const SANDBOX_GAS_URL = "https://script.google.com/macros/s/AKfycbzK3tyvdqCU1UDLvYqC-6IvH2zFoLsOvEGGwXslGQQK0f7cuYgCb0U4MbISSuldV3RM/exec";
+
+function resolveGasApiUrl() {
+  if (typeof window !== "undefined" && window.location && window.location.hostname) {
+    const host = window.location.hostname.toLowerCase();
+    // Production domains: imsf26portal.vercel.app or production deployments
+    if (host === "imsf26portal.vercel.app" || host.includes("imsf26portal-git-main") || host.startsWith("imsf26portal-")) {
+      return PROD_GAS_URL;
+    }
+    // Sandbox domains: imsf26sandbox.vercel.app or branch preview deployments
+    if (host.includes("sandbox") || host.includes("localhost") || host === "127.0.0.1") {
+      return import.meta.env.VITE_APPS_SCRIPT_URL || SANDBOX_GAS_URL;
+    }
+  }
+  return import.meta.env.VITE_APPS_SCRIPT_URL || SANDBOX_GAS_URL;
+}
+
+const GAS_API_URL = resolveGasApiUrl();
 
 window.google = {
   script: {
