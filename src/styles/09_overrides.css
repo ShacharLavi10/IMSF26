@@ -37,16 +37,22 @@
 }
 
 .main-logo {
-  max-width: 320px;
+  max-width: 290px;
+  max-height: 250px;
+  width: auto;
   height: auto;
-  margin: 0 auto;
+  object-fit: contain;
+  margin: 0 auto 10px;
   display: block;
   background: transparent; /* Overrides the global img skeleton background */
   filter: drop-shadow(4px 4px 0px rgba(0,0,0,1));
-  transition: transform 150ms ease-out;
+  transition: transform 150ms ease-out, filter 150ms ease-out;
 }
 @media (min-width: 768px) {
-  .main-logo { max-width: 480px; }
+  .main-logo {
+    max-width: 440px;
+    max-height: 420px;
+  }
 }
 .main-logo:hover {
   transform: translate(-2px, -2px);
@@ -79,6 +85,20 @@ body.light-mode .main-logo {
   gap: 15px;
   font-size: 2.5rem;
   margin-bottom: 12px;
+}
+.polar-bear-loader-img {
+  width: 76px;
+  max-width: 80px;
+  height: auto;
+  display: inline-block;
+  background: transparent;
+  filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.9));
+  animation: bear-bounce 1.6s infinite ease-in-out alternate;
+  transform-origin: bottom center;
+}
+@keyframes bear-bounce {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-8px) rotate(-3deg); }
 }
 .drummer-emoji {
   display: inline-block;
@@ -558,3 +578,24 @@ img {
 }
 
 body:not(.light-mode) .blob { display: none; }
+
+/* TAPE RIBBON DIVIDER */
+.tape-ribbon-divider {
+  width: 100%;
+  max-width: 440px;
+  margin: 6px auto 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.85;
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.8));
+  pointer-events: none;
+}
+.tape-ribbon-divider svg {
+  width: 100%;
+  height: 14px;
+}
+body.light-mode .tape-ribbon-divider {
+  filter: drop-shadow(1px 1px 0px rgba(0,0,0,0.4));
+  opacity: 0.95;
+}
