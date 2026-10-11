@@ -1249,14 +1249,20 @@ let currentGuestEmail = "";
 
     function fetchArtistsData() {
       const grid = document.getElementById('artists-grid');
+      const cacheKey = 'swr_artistsData_v3';
       
-      const cached = localStorage.getItem('swr_artistsData');
+      const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
-          globalArtistsData = JSON.parse(cached).sort((a, b) => a.name.localeCompare(b.name));
-          initArtistsUI();
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.some(a => a.genre)) {
+            globalArtistsData = parsed.sort((a, b) => a.name.localeCompare(b.name));
+            initArtistsUI();
+          }
         } catch(e) {}
-      } else {
+      }
+      
+      if (!globalArtistsData || globalArtistsData.length === 0) {
         grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px 0;">
           <div class="musical-loader-wrapper" style="display: flex; margin: 0 auto; flex-direction: column;">
             <div class="musical-loader">
@@ -1271,16 +1277,16 @@ let currentGuestEmail = "";
       
       google.script.run
         .withSuccessHandler(function(res) {
-          if (res.success && res.artists) {
-            localStorage.setItem('swr_artistsData', JSON.stringify(res.artists));
+          if (res && res.success && res.artists) {
+            localStorage.setItem(cacheKey, JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           } else {
-            if (!cached) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
+            if (!globalArtistsData || globalArtistsData.length === 0) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
           }
         })
         .withFailureHandler(function(err) {
-          if (!cached) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
+          if (!globalArtistsData || globalArtistsData.length === 0) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
         })
         .getArtistsData();
     }
@@ -1289,17 +1295,26 @@ let currentGuestEmail = "";
     function initArtistsUI() {
       // Setup Genre Filter
       const genreSelect = document.getElementById('artist-genre-filter');
+      const currentVal = genreSelect ? genreSelect.value : 'All';
       const predefinedGenres = ["Rock, Indie & Electronic", "Jazz & World Music"];
-      const genres = new Set([...predefinedGenres, ...globalArtistsData.map(a => a.genre).filter(g => g)]);
+      const genres = new Set([...predefinedGenres, ...globalArtistsData.map(a => a.genre).filter(g => g && g.trim())]);
       let genreHtml = '<option value="All">All Genres</option>';
-      genres.forEach(g => { genreHtml += `<option value="${g}">${g}</option>`; });
-      genreSelect.innerHTML = genreHtml;
+      genres.forEach(g => {
+        const isSelected = (g === currentVal) ? 'selected' : '';
+        genreHtml += `<option value="${g}" ${isSelected}>${g}</option>`;
+      });
+      if (genreSelect) {
+        genreSelect.innerHTML = genreHtml;
+        if (currentVal && (currentVal === 'All' || genres.has(currentVal))) {
+          genreSelect.value = currentVal;
+        }
+      }
 
       // Setup Live Banner
       const liveBanner = document.getElementById('artists-live-banner');
-      liveBanner.style.display = 'none';
+      if (liveBanner) liveBanner.style.display = 'none';
 
-      renderArtistsGrid(globalArtistsData);
+      filterArtists();
     }
 
     function renderArtistsGrid(artists) {
@@ -1349,15 +1364,25 @@ let currentGuestEmail = "";
 
     function filterArtists() {
       const searchTxt = document.getElementById('artist-search').value.toLowerCase().trim();
-      const genreVal = document.getElementById('artist-genre-filter').value;
+      const genreVal = document.getElementById('artist-genre-filter') ? document.getElementById('artist-genre-filter').value : 'All';
       const clearBtn = document.getElementById('clear-artist-search-btn');
       const favs = getFavorites();
 
-      clearBtn.style.display = searchTxt ? 'flex' : 'none';
+      if (clearBtn) clearBtn.style.display = searchTxt ? 'flex' : 'none';
 
       const filtered = globalArtistsData.filter(a => {
-        const matchesSearch = !searchTxt || a.name.toLowerCase().includes(searchTxt) || a.genre.toLowerCase().includes(searchTxt);
-        const matchesGenre = genreVal === 'All' || a.genre === genreVal || a.genre.includes(genreVal) || genreVal.includes(a.genre);
+        const aGenre = (a.genre || "").trim();
+        const matchesSearch = !searchTxt || (a.name && a.name.toLowerCase().includes(searchTxt)) || aGenre.toLowerCase().includes(searchTxt);
+        
+        let matchesGenre = false;
+        if (!genreVal || genreVal === 'All') {
+          matchesGenre = true;
+        } else if (aGenre) {
+          const gArtist = aGenre.toLowerCase();
+          const gTarget = genreVal.trim().toLowerCase();
+          matchesGenre = (gArtist === gTarget) || gArtist.includes(gTarget) || gTarget.includes(gArtist);
+        }
+
         const matchesFav = !showFavsOnly || !!favs[a.id];
         return matchesSearch && matchesGenre && matchesFav;
       });
@@ -1373,10 +1398,12 @@ let currentGuestEmail = "";
     function toggleFavFilter() {
       showFavsOnly = !showFavsOnly;
       const btn = document.getElementById('artist-fav-filter-btn');
-      if (showFavsOnly) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
+      if (btn) {
+        if (showFavsOnly) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
       }
       filterArtists();
     }
@@ -1392,7 +1419,13 @@ let currentGuestEmail = "";
 
       document.getElementById('sheet-artist-img').style.backgroundImage = `url('${artist.image}')`;
       document.getElementById('sheet-artist-name').innerText = artist.name;
-      document.getElementById('sheet-artist-genre').innerText = artist.genre;
+      
+      const genreElem = document.getElementById('sheet-artist-genre');
+      if (genreElem) {
+        genreElem.innerText = artist.genre || "";
+        genreElem.style.display = artist.genre ? "block" : "none";
+      }
+
       document.getElementById('sheet-artist-bio').innerText = artist.bio;
       document.getElementById('sheet-artist-members').innerText = artist.members;
       
@@ -2242,8 +2275,8 @@ function triggerBackgroundRefresh() {
   if (document.getElementById("artists-container") && document.getElementById("artists-container").style.display === "block") {
       google.script.run
         .withSuccessHandler(function(res) {
-          if (res.success && res.artists) {
-            localStorage.setItem('swr_artistsData', JSON.stringify(res.artists));
+          if (res && res.success && res.artists) {
+            localStorage.setItem('swr_artistsData_v3', JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           }

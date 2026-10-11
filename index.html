@@ -428,7 +428,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="sheet-fav-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
             </button>
           </div>
-          <span class="sheet-genre" id="sheet-artist-genre" style="margin-top: 4px; font-size: 0.85rem; color: var(--foreground-muted); font-weight: 500;">Genre</span>
+          <span class="sheet-genre" id="sheet-artist-genre" style="display: block; margin-top: 4px; font-size: 0.9rem; color: var(--accent-bright, #f59e0b); font-weight: 600;"></span>
         </div>
       </div>
 
@@ -527,23 +527,39 @@
     </div>
   </div>
 
-  <div id="notification-bell-container" class="live-updates-btn" onclick="toggleUpdatesPanel()" style="display: none;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-    </svg>
-    <span id="updates-btn-text">Live Updates</span>
-    <span id="notification-badge" style="display: none;">NEW</span>
+  <div class="top-left-actions">
+    <div id="notification-bell-container" class="live-updates-btn" onclick="toggleUpdatesPanel()" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+      <span id="updates-btn-text">Live Updates</span>
+      <span id="notification-badge" style="display: none;">NEW</span>
+    </div>
+    <button id="admin-reset-cache-btn" class="admin-reset-cache-btn" onclick="handleAdminResetCache()" style="display: none;" title="Reset Cache & Reload Fresh Data (Admin)">
+      <svg class="cache-btn-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      <span id="admin-reset-cache-text">Reset Cache</span>
+    </button>
   </div>
 
   <div id="updates-overlay" class="updates-overlay" onclick="toggleUpdatesPanel()"></div>
   <div id="updates-panel" class="updates-panel">
     <div class="updates-header">
       <h2>Live Updates</h2>
-      <button class="updates-close" onclick="toggleUpdatesPanel()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+      <div class="updates-header-actions">
+        <button id="admin-panel-reset-cache-btn" class="admin-panel-reset-btn" onclick="handleAdminResetCache()" style="display: none;" title="Reset Cache & Reload Fresh Data (Admin)">
+          <svg class="cache-btn-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span>Reset Cache</span>
+        </button>
+        <button class="updates-close" onclick="toggleUpdatesPanel()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="updates-body" id="updates-body">
       <div id="updates-loader" style="display: none;"><div class="musical-loader-wrapper"><div class="musical-loader"><span class="music-note music-note-1">🎵</span><span class="drummer-emoji">🥁</span><span class="music-note music-note-2">🎶</span></div><p class="loader-text">Finishing sound-check,<br>Soon we&apos;ll open the doors</p></div></div>
@@ -570,6 +586,9 @@
     <span class="viewer-close">&times;</span>
     <img id="fullscreen-image" src="" alt="Full Screen">
   </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast-notification" class="toast-notification"></div>
 </body>
 </html>
 

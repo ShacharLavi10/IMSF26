@@ -839,3 +839,56 @@ function impersonateGuest(sessionToken, targetEmail) {
     return { success: false, message: e.toString() };
   }
 }
+
+/**
+ * Purge server-side caches (Admins only)
+ */
+function clearAppCache(sessionToken) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const cleanEmail = sessionRes.email;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: 'Master sheet not found.' };
+    
+    const masterData = masterSheet.getDataRange().getValues();
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(10, masterData.length); r++) {
+      if (masterData[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: 'Header not found.' };
+    
+    const headers = masterData[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    
+    let isAdmin = false;
+    for (let i = headerRowIdx + 1; i < masterData.length; i++) {
+      if (masterData[i][emailIdx] && String(masterData[i][emailIdx]).trim().toLowerCase() === cleanEmail) {
+        if (roleIdx !== -1 && String(masterData[i][roleIdx]).trim() === "הפקה חשיפה") {
+          isAdmin = true;
+        }
+        break;
+      }
+    }
+    
+    if (!isAdmin) return { success: false, message: 'Unauthorized. Admin role required.' };
+    
+    const cache = CacheService.getScriptCache();
+    cache.removeAll([
+      'global_guests_directory',
+      'global_schedule_data',
+      'global_artists_data_v2',
+      'global_artists_data'
+    ]);
+    
+    return { success: true, message: 'Server cache purged successfully.' };
+  } catch (err) {
+    return { success: false, message: 'Error clearing cache: ' + err.toString() };
+  }
+}
