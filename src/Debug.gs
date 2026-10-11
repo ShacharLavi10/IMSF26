@@ -1,12 +1,247 @@
-function logFlightsHeaders() {
+function debugGetFlightsInfo() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(CONFIG.FLIGHTS_SHEET);
-  const data = sheet.getDataRange().getValues();
-  if(data.length > 0) {
-    console.log("Row 0: " + data[0].join(", "));
-    if(data.length > 1) console.log("Row 1: " + data[1].join(", "));
-    if(data.length > 2) console.log("Row 2: " + data[2].join(", "));
-  } else {
-    console.log("Sheet empty or missing");
+  const sheets = ss.getSheets().map(s => s.getName());
+  
+  let anatSheets = [];
+  if (CONFIG.ANAT_SPREADSHEET_ID) {
+    try {
+      const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+      anatSheets = anatSs.getSheets().map(s => s.getName());
+    } catch(e) {
+      anatSheets = ["Error opening Anat SS: " + e.toString()];
+    }
   }
+
+  const result = {
+    masterSheets: sheets,
+    anatSheets: anatSheets,
+    masterShuttleRows: [],
+    anatShuttleRows: []
+  };
+
+  const fSheet = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+  if (fSheet) {
+    const data = fSheet.getDataRange().getValues();
+    const displayData = fSheet.getDataRange().getDisplayValues();
+    result.totalRows = data.length;
+    result.allRowsPreview = [];
+    for (let r = 0; r < Math.min(25, data.length); r++) {
+      result.allRowsPreview.push({
+        row: r + 1,
+        email: data[r][0],
+        name: (data[r][2] || "") + " " + (data[r][1] || ""),
+        rawShuttleCol: data[r][11],
+        dispShuttleCol: displayData[r][11]
+      });
+    }
+  }
+
+  const prodSsId = "17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos";
+  const prodAnatId = "1UDzPjGWdvjJ1yOQHmORY-itX0yr52BMOkSrdac3t95M";
+  result.prodMasterShuttleRows = [];
+  result.prodAnatShuttleRows = [];
+
+  try {
+    const prodSs = SpreadsheetApp.openById(prodSsId);
+    const pSheet = findSheetFuzzy(prodSs, ["טבלת טיסות - שיקוף", "טבלת טיסות"]);
+    if (pSheet) {
+      const pData = pSheet.getDataRange().getValues();
+      const pDisp = pSheet.getDataRange().getDisplayValues();
+      result.prodMasterHeaders = pData[0];
+      const pCol = pData[0].findIndex(h => String(h).includes("שאטל"));
+      for (let r = 1; r < pData.length; r++) {
+        const val = pCol !== -1 ? String(pDisp[r][pCol] || pData[r][pCol] || "").trim() : "";
+        if (val !== "") {
+          result.prodMasterShuttleRows.push({
+            row: r + 1,
+            email: pData[r][0],
+            name: (pData[r][2] || "") + " " + (pData[r][1] || ""),
+            shuttle: val
+          });
+        }
+      }
+    }
+  } catch(e) {
+    result.prodMasterError = e.toString();
+  }
+
+  try {
+    const prodAnatSs = SpreadsheetApp.openById(prodAnatId);
+    const paSheet = findSheetFuzzy(prodAnatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף"]);
+    if (paSheet) {
+      const paData = paSheet.getDataRange().getValues();
+      const paDisp = paSheet.getDataRange().getDisplayValues();
+      result.prodAnatHeaders = paData[0];
+      const paCol = paData[0].findIndex(h => String(h).includes("שאטל"));
+      for (let r = 1; r < paData.length; r++) {
+        const val = paCol !== -1 ? String(paDisp[r][paCol] || paData[r][paCol] || "").trim() : "";
+        if (val !== "") {
+          result.prodAnatShuttleRows.push({
+            row: r + 1,
+            email: paData[r][0],
+            name: (paData[r][2] || "") + " " + (paData[r][1] || ""),
+            shuttle: val
+          });
+        }
+      }
+    }
+  } catch(e) {
+    result.prodAnatError = e.toString();
+  }
+
+  return result;
+}
+
+function syncSandboxFlightsFromProd() {
+  const prodSsId = "17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos";
+  const prodAnatId = "1UDzPjGWdvjJ1yOQHmORY-itX0yr52BMOkSrdac3t95M";
+  const sandboxSs = SpreadsheetApp.getActiveSpreadsheet();
+
+  let syncedMaster = false;
+  let syncedAnat = false;
+
+  try {
+    const prodSs = SpreadsheetApp.openById(prodSsId);
+    const pSheet = findSheetFuzzy(prodSs, ["טבלת טיסות - שיקוף", "טבלת טיסות"]);
+    let sSheet = findSheetFuzzy(sandboxSs, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+    if (!sSheet) {
+      sSheet = sandboxSs.insertSheet("טבלת טיסות - שיקוף");
+    }
+
+    if (pSheet && sSheet) {
+      const pRange = pSheet.getDataRange();
+      const pValues = pRange.getValues();
+      const pFormulas = pRange.getFormulas();
+      
+      sSheet.clearContents();
+      const numRows = pValues.length;
+      const numCols = pValues[0].length;
+      
+      const targetRange = sSheet.getRange(1, 1, numRows, numCols);
+      targetRange.setValues(pValues);
+      
+      for (let r = 0; r < numRows; r++) {
+        for (let c = 0; c < numCols; c++) {
+          if (pFormulas[r][c] && pFormulas[r][c] !== "") {
+            try {
+              sSheet.getRange(r + 1, c + 1).setFormula(pFormulas[r][c]);
+            } catch(e) {}
+          }
+        }
+      }
+      if (numRows > 1 && numCols >= 12) {
+        sSheet.getRange(2, 12, numRows - 1, 1).setNumberFormat("HH:mm");
+      }
+      syncedMaster = true;
+    }
+  } catch(e) {
+    return { success: false, error: "Error syncing master: " + e.toString() };
+  }
+
+  try {
+    if (CONFIG.ANAT_SPREADSHEET_ID) {
+      const prodAnatSs = SpreadsheetApp.openById(prodAnatId);
+      const paSheet = findSheetFuzzy(prodAnatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף"]);
+      const sandboxAnatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+      let saSheet = findSheetFuzzy(sandboxAnatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף"]);
+      if (!saSheet) {
+        saSheet = sandboxAnatSs.insertSheet("טבלת טיסות");
+      }
+
+      if (paSheet && saSheet) {
+        const paRange = paSheet.getDataRange();
+        const paValues = paRange.getValues();
+        const paFormulas = paRange.getFormulas();
+        
+        saSheet.clearContents();
+        const numRows = paValues.length;
+        const numCols = paValues[0].length;
+        
+        const targetRange = saSheet.getRange(1, 1, numRows, numCols);
+        targetRange.setValues(paValues);
+        
+        for (let r = 0; r < numRows; r++) {
+          for (let c = 0; c < numCols; c++) {
+            if (paFormulas[r][c] && paFormulas[r][c] !== "") {
+              try {
+                saSheet.getRange(r + 1, c + 1).setFormula(paFormulas[r][c]);
+              } catch(e) {}
+            }
+          }
+        }
+        if (numRows > 1 && numCols >= 12) {
+          saSheet.getRange(2, 12, numRows - 1, 1).setNumberFormat("HH:mm");
+        }
+        syncedAnat = true;
+      }
+    }
+  } catch(e) {
+    return { success: false, error: "Error syncing anat: " + e.toString() };
+  }
+
+  return { success: true, syncedMaster: syncedMaster, syncedAnat: syncedAnat };
+}
+
+function fixFlightsNumberFormat() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sSheet = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+  let masterFixed = false;
+  if (sSheet) {
+    const lastRow = sSheet.getLastRow();
+    if (lastRow > 1) {
+      sSheet.getRange(2, 12, lastRow - 1, 1).setNumberFormat("HH:mm");
+      masterFixed = true;
+    }
+  }
+
+  let anatFixed = false;
+  if (CONFIG.ANAT_SPREADSHEET_ID) {
+    try {
+      const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+      const aSheet = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף"]);
+      if (aSheet) {
+        const lastRow = aSheet.getLastRow();
+        if (lastRow > 1) {
+          aSheet.getRange(2, 12, lastRow - 1, 1).setNumberFormat("HH:mm");
+          anatFixed = true;
+        }
+      }
+    } catch(e) {}
+  }
+
+  return { success: true, masterFixed: masterFixed, anatFixed: anatFixed };
+}
+
+function testFormatShuttle() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const tz = ss.getSpreadsheetTimeZone();
+  const fSheet = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+  if (!fSheet) return { error: "No sheet" };
+  const data = fSheet.getDataRange().getValues();
+  const disp = fSheet.getDataRange().getDisplayValues();
+  const row24Raw = data[23][11];
+  const row24Disp = disp[23][11];
+  
+  let formatted = "";
+  if (row24Raw instanceof Date) {
+    formatted = Utilities.formatDate(row24Raw, tz, "HH:mm");
+  }
+  
+  return {
+    tz: tz,
+    raw: String(row24Raw),
+    isDate: (row24Raw instanceof Date),
+    formatted: formatted,
+    disp: row24Disp
+  };
+}
+
+function testFetchMappedData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const fSheet = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+  return fetchMappedData(fSheet, "shacharlavi10@gmail.com", MAPPINGS.FLIGHTS);
+}
+
+function logFlightsHeaders() {
+  return debugGetFlightsInfo();
 }

@@ -518,6 +518,14 @@ let currentGuestEmail = "";
           return '';
         }
 
+        // If it's a date-only string like 30/12/1899 or contains 1899 without time, reject it!
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+          return '';
+        }
+        if (str.includes('1899') && !str.includes('T') && !str.includes(':')) {
+          return '';
+        }
+
         // 1. Handle 12-hour format e.g. "4:00 PM", "04:30 pm", "4:00:00 PM"
         const ampmMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i);
         if (ampmMatch) {
@@ -529,13 +537,23 @@ let currentGuestEmail = "";
           return `${String(hours).padStart(2, '0')}:${minutes}`;
         }
 
-        // 2. Handle 24-hour format e.g. "16:00", "09:15", "16:00:00", "2026-10-15 16:00"
+        // 2. Handle 24-hour format e.g. "16:00", "09:15", "16:00:00"
         const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\b/);
         if (timeMatch) {
           return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
         }
 
-        // 3. Handle Google Sheets decimal time fraction (e.g. 0.6666667 => 16:00)
+        // 3. Handle Date parsing e.g. ISO string or "1899-12-30T13:39:20.000Z"
+        if (str.includes('T') || (str.includes('-') && str.length > 10)) {
+          const d = new Date(str);
+          if (!isNaN(d.getTime())) {
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            return `${hh}:${mm}`;
+          }
+        }
+
+        // 4. Handle Google Sheets decimal time fraction (e.g. 0.6666667 => 16:00)
         const num = Number(str);
         if (!isNaN(num) && num > 0 && num < 1) {
           const totalMinutes = Math.round(num * 24 * 60);
@@ -544,11 +562,16 @@ let currentGuestEmail = "";
           return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
         }
 
-        // 4. Handle integer/float hours e.g. 16 or 16.5
+        // 5. Handle integer/float hours e.g. 16 or 16.5
         if (!isNaN(num) && num >= 0 && num < 24 && !str.includes(':')) {
           const hours = Math.floor(num);
           const minutes = Math.round((num - hours) * 60);
           return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        // Reject any leftover dates or strings containing 1899
+        if (str.includes('1899') || str.includes('/')) {
+          return '';
         }
 
         return str;

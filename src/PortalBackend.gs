@@ -396,11 +396,35 @@ function fetchMappedData(sheet, email, mappingArray) {
           let finalVal = rawVal;
 
           if (item.label === "Shuttle") {
-            // For shuttle time, prefer display value if it exists and is clean, or format Date object as HH:mm
-            if (dispVal && !dispVal.startsWith("#") && !dispVal.startsWith("=")) {
-              finalVal = dispVal;
-            } else if (rawVal instanceof Date) {
+            // If rawVal is a Date object, always format as HH:mm
+            if (rawVal instanceof Date) {
               finalVal = Utilities.formatDate(rawVal, tz, "HH:mm");
+            } else if (dispVal && dispVal.includes(":")) {
+              finalVal = dispVal;
+            } else if (rawVal && String(rawVal).includes(":")) {
+              finalVal = String(rawVal).trim();
+            } else if (typeof rawVal === "number" && rawVal > 0 && rawVal < 1) {
+              const totalMins = Math.round(rawVal * 24 * 60);
+              const hh = String(Math.floor(totalMins / 60) % 24).padStart(2, '0');
+              const mm = String(totalMins % 60).padStart(2, '0');
+              finalVal = hh + ":" + mm;
+            } else if (dispVal && !dispVal.includes("/")) {
+              finalVal = dispVal;
+            } else {
+              finalVal = "";
+            }
+
+            // Safety guard: reject any date formats or 1899 epoch artifacts
+            if (String(finalVal).includes("1899") || /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(finalVal))) {
+              finalVal = "";
+            }
+          } else if (item.label.toLowerCase().includes("time")) {
+            if (rawVal instanceof Date) {
+              finalVal = Utilities.formatDate(rawVal, tz, "HH:mm");
+            } else if (dispVal && dispVal.includes(":")) {
+              finalVal = dispVal;
+            } else {
+              finalVal = dispVal || rawVal;
             }
           } else if (rawVal instanceof Date) {
             finalVal = Utilities.formatDate(rawVal, tz, "yyyy-MM-dd HH:mm");
