@@ -310,3 +310,51 @@ function debugInspectTogetherWith() {
   return result;
 }
 
+function checkAllTogetherWithSources() {
+  const targetEmail = "shacharlavi10@gmail.com";
+  const results = {};
+
+  const checkSs = (id, name) => {
+    try {
+      const ss = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();
+      const sheets = ss.getSheets();
+      const sheetReports = [];
+      sheets.forEach(sheet => {
+        const sName = sheet.getName();
+        const data = sheet.getDataRange().getValues();
+        const disp = sheet.getDataRange().getDisplayValues();
+        if (data.length < 1) return;
+        const headers = data[0].map(h => String(h).trim());
+        const emailIdx = headers.findIndex(h => String(h).includes("מייל") || String(h).toLowerCase().includes("email"));
+        const togetherIdx = headers.findIndex(h => String(h).includes("ביחד") || String(h).includes("נוסע") || String(h).toLowerCase().includes("together"));
+        
+        let foundRow = null;
+        for (let r = 0; r < data.length; r++) {
+          const rowEmail = emailIdx !== -1 ? String(data[r][emailIdx]).trim().toLowerCase() : "";
+          if (rowEmail === targetEmail) {
+            foundRow = {
+              row: r + 1,
+              togetherVal: togetherIdx !== -1 ? data[r][togetherIdx] : "no together col",
+              togetherDisp: togetherIdx !== -1 ? disp[r][togetherIdx] : "no together col",
+              fullRowDisp: disp[r]
+            };
+            break;
+          }
+        }
+        sheetReports.push({ sheetName: sName, headers: headers, foundRow: foundRow });
+      });
+      results[name] = sheetReports;
+    } catch(e) {
+      results[name] = "Error: " + e.toString();
+    }
+  };
+
+  checkSs(null, "activeSandboxMaster");
+  checkSs(CONFIG.ANAT_SPREADSHEET_ID, "sandboxAnat");
+  checkSs("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos", "prodMaster");
+  checkSs("1UDzPjGWdvjJ1yOQHmORY-itX0yr52BMOkSrdac3t95M", "prodAnat");
+
+  return results;
+}
+
+

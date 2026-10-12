@@ -753,28 +753,42 @@ let currentGuestEmail = "";
       if (!raw) return '';
       const s = String(raw).trim();
       if (s === '-' || s.toLowerCase() === 'n/a') return '';
-      // If already DD/MM/YYYY
-      const ddmmyyyy = s.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})/);
-      if (ddmmyyyy) {
-        const day = ddmmyyyy[1].padStart(2, '0');
-        const month = ddmmyyyy[2].padStart(2, '0');
-        const year = ddmmyyyy[3];
-        return `${day}/${month}/${year}`;
-      }
       // If YYYY-MM-DD
       const yyyymmdd = s.match(/^(\d{4})[\/\.-](\d{1,2})[\/\.-](\d{1,2})/);
       if (yyyymmdd) {
         const year = yyyymmdd[1];
         const month = yyyymmdd[2].padStart(2, '0');
         const day = yyyymmdd[3].padStart(2, '0');
-        return `${day}/${month}/${year}`;
+        return `${month}/${day}/${year}`;
+      }
+      // If already DD/MM/YYYY or MM/DD/YYYY
+      const slashDate = s.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})/);
+      if (slashDate) {
+        const p1 = parseInt(slashDate[1], 10);
+        const p2 = parseInt(slashDate[2], 10);
+        const year = slashDate[3];
+        let day, month;
+        if (p1 > 12) {
+          // Definitely DD/MM/YYYY
+          day = String(p1).padStart(2, '0');
+          month = String(p2).padStart(2, '0');
+        } else if (p2 > 12) {
+          // Definitely MM/DD/YYYY
+          month = String(p1).padStart(2, '0');
+          day = String(p2).padStart(2, '0');
+        } else {
+          // Default for Israeli Sheets is DD/MM/YYYY
+          day = String(p1).padStart(2, '0');
+          month = String(p2).padStart(2, '0');
+        }
+        return `${month}/${day}/${year}`;
       }
       const parsed = new Date(s);
       if (!isNaN(parsed.getTime())) {
         const day = String(parsed.getDate()).padStart(2, '0');
         const month = String(parsed.getMonth() + 1).padStart(2, '0');
         const year = parsed.getFullYear();
-        return `${day}/${month}/${year}`;
+        return `${month}/${day}/${year}`;
       }
       return s.replace(/\s+00:00.*$/, '').replace(/T00:00.*$/, '');
     }
