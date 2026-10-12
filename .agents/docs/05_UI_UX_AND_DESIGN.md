@@ -29,3 +29,21 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - **Body Font**: Use standard system sans-serif fonts for clean, readable body text.
 - **UI Elements**:
   - Avoid heavy background images. Rely on CSS variables, simple noise overlays (`.bg-layer-noise`), and solid block shadows to convey the indie/comic style efficiently.
+
+## 4. Specific Component Patterns
+
+- **Interactive Shuttle Passenger Badges (`.shuttle-passenger-badge`)**:
+  - Compact badges (`padding: 4px 10px`, `font-size: 0.82rem`, `font-weight: 600`).
+  - Small person icon (`11px`) with clean typography and no bulky chevrons.
+  - Interactive clickable button with cursor pointer and active 3D press-down effect (`transform: translate(2px, 2px)`).
+  - Triggers the Delegate / Guest bottom-sheet modal.
+- **Zero-Scroll City Switcher (`.guide-city-switcher`)**:
+  - CSS Grid with 3 equal columns (`grid-template-columns: repeat(3, 1fr)`).
+  - Shortened labels (`📍 Jerusalem` | `🌊 Tel Aviv` | `⚡ Essentials`).
+  - Guarantees all 3 tabs are 100% visible on any mobile viewport without horizontal scrolling.
+- **Compact Guide Cards (`.guide-place-row`)**:
+  - Row layout reducing card height by 55%, enabling 4-5 venues visible per screen without vertical clutter.
+  - Direct right-aligned "Open in Maps" button with map icon.
+- **Unified Accommodations Spec Card (`.hotel-spec-card`)**:
+  - Modern spec card for Arthur Hotel & Cinema Hotel with row-based key-value details, external map button, and high-contrast Neo-Brutalist borders.
+

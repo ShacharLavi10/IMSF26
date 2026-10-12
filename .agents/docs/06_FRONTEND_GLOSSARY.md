@@ -19,3 +19,11 @@
    * 🧭 **לשונית מדריך והמלצות (Guide Tab):** קונסיירז' דיגיטלי הכולל מתגים ל-Jerusalem, Tel Aviv, ו-Essentials (ברים, מסעדות, לוקיישנים, אפליקציות מוניות, קישורי תשלום ו-FAQ) עם קישור ישיר ל-Google Maps (`#tab-guide`, `#guide-card`, `#guide-pending-container`). מותנה בסימון עמודת 'אישור כללי' בגיליון אורחים.
    * 🤝 **לשונית אורחים (Delegates Tab):** מנוע חיפוש וסינון רשימת כלל האורחים בפסטיבל (`#tab-directory`, `#directory-card`).
    * 🎸 **לשונית אמנים (Artists Tab):** אזור להצגת ליין-אפ האמנים, ז'אנרים, מועדפים והערות אישיות (`#tab-artists`, `#artists-card`).
+
+4. **🪟 חלוניות צפות ומודאלים (Modals & Bottom Sheets)**
+   * 👤 **חלונית פרופיל אורח (Guest Bottom Sheet):** חלונית תחתונה מודרנית הנפתחת הן מלשונית האורחים והן בלחיצה על נוסע בשאטל, ומציגה פרטי קשר, תמונה, תפקיד, חברה וביוגרפיה (`#guest-bottom-sheet`, `#guest-sheet-overlay`).
+   * 🏷️ **כפתור נוסע בשאטל (Shuttle Passenger Badge):** כפתור אינטראקטיבי לחיץ הנושא אייקון נוסע ושם (`.shuttle-passenger-badge`), הפותח מיידית את חלונית פרופיל הנוסע.
+   * 🛠️ **חלונית ניהול אורח (Admin Guest Sheet):** מודאל מנהל מקיף עבור הפקה בלבד לצפייה בטפסים, וואטסאפ והתחזות (`#admin-bottom-sheet`, `#admin-overlay`).
+   * 🧭 **רכיבי מדריך (Guide Components):** מתג 3 עמודות ללא גלילה (`#guide-city-switcher`), קוביית מקום קומפקטית (`.guide-place-row`), וכפתור ניווט מהיר (`.guide-maps-btn`).
+   * 🏨 **כרטיסיית מפרט מלון (Hotel Spec Card):** תצוגת פרטי מלון מעוצבת בטבלה נקייה וניאו-ברוטליסטית (`.hotel-spec-card`, `.hotel-map-btn`).
+
