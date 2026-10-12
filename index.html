@@ -88,17 +88,17 @@
             </svg>
             <span>Itinerary</span>
           </button>
-          <button id="tab-flights" class="tab-btn" onclick="switchCategoryTab('flights')" role="tab" aria-selected="false">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L3 8l6 5.3-3.7 3.7-2.6-.7-1.2 1.2 4 1.5 1.5 4 1.2-1.2-.7-2.6 3.7-3.7 5.3 6h1.2c.4-.2.7-.6.6-1.1z"/>
+          <button id="tab-mytrip" class="tab-btn" onclick="switchCategoryTab('mytrip')" role="tab" aria-selected="false">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7h-3V5a2 2 0 00-2-2h-6a2 2 0 00-2 2v2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM9 5h6v2H9V5zm11 14H4V9h16v10z"/>
             </svg>
-            <span>Flights</span>
+            <span>My Trip</span>
           </button>
-          <button id="tab-hotels" class="tab-btn" onclick="switchCategoryTab('hotels')" role="tab" aria-selected="false">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          <button id="tab-guide" class="tab-btn" onclick="switchCategoryTab('guide')" role="tab" aria-selected="false">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20zm3.5 6.5l-2 5.5-5.5 2 2-5.5 5.5-2z"/>
             </svg>
-            <span>Hotels</span>
+            <span>Guide</span>
           </button>
           <button id="tab-directory" class="tab-btn" onclick="switchCategoryTab('directory')" role="tab" aria-selected="false">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -232,58 +232,118 @@
           </div>
         </div>
 
-        <!-- CATEGORY 1: FLIGHT DETAILS -->
-        <div id="flights-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.2s;">
+        <!-- CATEGORY 1: MY TRIP (FLIGHTS & ACCOMMODATIONS) -->
+        <div id="mytrip-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.2s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Flight Details</h3>
-            <div id="flights-container">
-              <p class="empty-state">No flight information available.</p>
+            <h3>My Trip</h3>
+            <p class="desc" style="margin-bottom: 1.5rem;">Your personal travel itinerary, flights, and accommodations in Jerusalem and Tel Aviv.</p>
+
+            <!-- SECTION: FLIGHT DETAILS -->
+            <div class="mytrip-section" style="margin-bottom: 2rem;">
+              <h4 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
+                <span>✈️</span> Flight Details
+              </h4>
+              <div id="flights-container">
+                <p class="empty-state">No flight information available.</p>
+              </div>
+              <div id="flights-pending-container" style="display: none;">
+                <div class="empty-category-card" style="padding: 2.5rem 1.5rem; text-align: center;">
+                  <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div class="empty-category-title">Flight Details Processing</div>
+                  <div class="empty-category-desc">We are finalizing your flight itinerary and it will be available here soon.</div>
+                </div>
+              </div>
             </div>
-            <div id="flights-pending-container" style="display: none;">
-              <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
-                <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div class="empty-category-title">Flight Details Processing</div>
-                <div class="empty-category-desc">We are finalizing your flight itinerary and it will be available here soon.</div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; opacity: 0.3;" />
+
+            <!-- SECTION: ACCOMMODATIONS -->
+            <div class="mytrip-section">
+              <h4 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
+                <span>🏨</span> Accommodations
+              </h4>
+              <div id="hotels-container" class="hotel-rubrics-grid">
+                <div class="rubric-card">
+                  <div class="rubric-header">
+                    <div class="rubric-title">Jerusalem - Arthur Hotel</div>
+                    <a id="hotel-jlm-map-btn" href="https://www.google.com/maps/search/?api=1&query=Arthur+Hotel+Jerusalem" target="_blank" rel="noopener noreferrer" class="hotel-map-btn" title="View Arthur Hotel on Google Maps">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="map-icon">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      <span>Location</span>
+                    </a>
+                  </div>
+                  <div id="hotel-jerusalem-content">
+                    <p class="empty-state">No accommodation details confirmed yet.</p>
+                  </div>
+                </div>
+                <div class="rubric-card">
+                  <div class="rubric-header">
+                    <div class="rubric-title">Tel Aviv - Cinema Hotel</div>
+                    <a id="hotel-tlv-map-btn" href="https://www.google.com/maps/search/?api=1&query=Cinema+Hotel+Tel+Aviv" target="_blank" rel="noopener noreferrer" class="hotel-map-btn" title="View Cinema Hotel on Google Maps">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="map-icon">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      <span>Location</span>
+                    </a>
+                  </div>
+                  <div id="hotel-telaviv-content">
+                    <p class="empty-state">No accommodation details confirmed yet.</p>
+                  </div>
+                </div>
+              </div>
+              <div id="hotels-pending-container" style="display: none;">
+                <div class="empty-category-card" style="padding: 2.5rem 1.5rem; text-align: center;">
+                  <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div class="empty-category-title">Accommodations Processing</div>
+                  <div class="empty-category-desc">We are finalizing your accommodation details and they will be available here soon.</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- CATEGORY 2: HOTEL DETAILS (JERUSALEM & TEL AVIV RUBRICS) -->
-        <div id="hotels-card" class="card col-span-3 fade-up" style="animation-delay: 0.3s;">
+        <!-- CATEGORY 2: GUIDE & ESSENTIALS -->
+        <div id="guide-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.25s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Accommodations</h3>
-            <div id="hotels-container" class="hotel-rubrics-grid">
-              <div class="rubric-card">
-                <div class="rubric-header">
-                  <div class="rubric-title">Jerusalem Accommodations</div>
-                  <span class="city-badge">Jerusalem</span>
-                </div>
-                <div id="hotel-jerusalem-content">
-                  <p class="empty-state">No accommodation details confirmed yet.</p>
-                </div>
-              </div>
-              <div class="rubric-card">
-                <div class="rubric-header">
-                  <div class="rubric-title">Tel Aviv Accommodations</div>
-                  <span class="city-badge">Tel Aviv</span>
-                </div>
-                <div id="hotel-telaviv-content">
-                  <p class="empty-state">No accommodation details confirmed yet.</p>
-                </div>
-              </div>
+            <h3>Guide & Recommendations</h3>
+            <p class="desc" style="margin-bottom: 1.25rem;">Curated spots, festival venues, essential apps, and local tips.</p>
+
+            <!-- GUIDE PILLS (City Switcher) -->
+            <div id="guide-pills-nav" class="guide-pills-nav">
+              <button id="guide-pill-jerusalem" class="schedule-pill active" onclick="selectGuideCity('jerusalem')">📍 Jerusalem</button>
+              <button id="guide-pill-telaviv" class="schedule-pill" onclick="selectGuideCity('telaviv')">🌊 Tel Aviv</button>
+              <button id="guide-pill-essentials" class="schedule-pill" onclick="selectGuideCity('essentials')">⚡ Essentials</button>
             </div>
-            <div id="hotels-pending-container" style="display: none;">
+
+            <!-- GUIDE CONTAINER -->
+            <div id="guide-container">
+              <div id="guide-loader" class="musical-loader-wrapper" style="display: none;">
+                <div class="musical-loader">
+                  <span class="music-note music-note-1">🎵</span>
+                  <img src="/polar-bear.png" alt="IMSF Mascot" class="polar-bear-loader-img">
+                  <span class="music-note music-note-2">🎶</span>
+                </div>
+                <p class="loader-text">Loading recommendations...</p>
+              </div>
+              <div id="guide-content-area"></div>
+            </div>
+
+            <div id="guide-pending-container" style="display: none;">
               <div class="empty-category-card" style="padding: 3rem 1.5rem; text-align: center;">
                 <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <div class="empty-category-title">Accommodations Processing</div>
-                <div class="empty-category-desc">We are finalizing your accommodation details and they will be available here soon.</div>
+                <div class="empty-category-title">Guide Processing</div>
+                <div class="empty-category-desc">We are curating local recommendations and venue details for you.</div>
               </div>
             </div>
           </div>
@@ -349,7 +409,7 @@
             
             <!-- LIVE SCHEDULE BANNER (Happening Now) -->
             <div id="artists-live-banner" class="live-banner" style="display: none;">
-              <div class="live-indicator"><span class="pulse"></span> LIVE NOW</div>
+              <div class="live-indicator"><span class="pulse"></span> Live Now</div>
               <div class="live-content" id="live-banner-content">
                 <!-- Dynamically injected live sets -->
               </div>
@@ -479,7 +539,7 @@
       </button>
     </div>
     <div class="sheet-content">
-      <div class="sheet-title-row" style="margin-top: 5px;">
+      <div class="sheet-title-row">
         <div style="display: flex; flex-direction: column; width: 100%;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
             <h2 id="sheet-guest-name" style="margin-bottom: 0;">Guest Name</h2>

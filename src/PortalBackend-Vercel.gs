@@ -29,8 +29,11 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (typeof this[method] === 'function') {
-      const result = this[method].apply(this, args);
+    const targetFn = (typeof this[method] === 'function') ? this[method] : 
+                     (typeof globalThis !== 'undefined' && typeof globalThis[method] === 'function' ? globalThis[method] : null);
+
+    if (typeof targetFn === 'function') {
+      const result = targetFn.apply(this, args);
       return ContentService.createTextOutput(JSON.stringify({ data: result }))
         .setMimeType(ContentService.MimeType.JSON);
     } else {

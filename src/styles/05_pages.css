@@ -212,7 +212,6 @@
     font-weight: 600; 
     font-family: var(--font-stack); 
     letter-spacing: 0.04em; 
-    text-transform: uppercase;
     flex-shrink: 0;
   }
   .badge-success { background: rgba(16, 185, 129, 0.12); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
@@ -328,6 +327,4 @@
     margin-top: 20px; 
     margin-bottom: 10px; 
     font-weight: 600; 
-    text-transform: uppercase; 
-    letter-spacing: 0.05em;
   }

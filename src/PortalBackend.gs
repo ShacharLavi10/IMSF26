@@ -197,7 +197,8 @@ function getGuestPortalData(sessionToken) {
       approvalHotels: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_HOTELS)),
       approvalDirectory: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_DIRECTORY)),
       approvalSchedule: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_SCHEDULE) || getColVal("אישור לו\"ז") || getColVal("אישור לוז")),
-      approvalArtists: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_ARTISTS) || getColVal("אישור אומנים") || getColVal("אישור אמנים") || getColVal("אישור הצגת לשונית אומנים"))
+      approvalArtists: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_ARTISTS) || getColVal("אישור אומנים") || getColVal("אישור אמנים") || getColVal("אישור הצגת לשונית אומנים")),
+      approvalGuide: Boolean(getColVal(CONFIG.CHECKBOXES.APPROVAL_GUIDE) || getColVal("אישור כללי") || getColVal("אישור מדריך") || getColVal("אישור guide"))
     };
     
     let rawMissingText = String(getColVal(CONFIG.GENERAL_MISSING_TEXT_COL) || "");
@@ -225,16 +226,44 @@ function getGuestPortalData(sessionToken) {
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
     const personalMsg = String(getColVal("הודעה אישית בפורטל") || "");
     
-    let flightsSheet1 = ss.getSheetByName("טיסות - שיקוף");
-    let flightsSheet2 = ss.getSheetByName(CONFIG.FLIGHTS_SHEET) || ss.getSheetByName("טבלת טיסות - שיקוף");
-    
-    let flightsData1 = flightsSheet1 ? fetchMappedData(flightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
-    let flightsData2 = flightsSheet2 ? fetchMappedData(flightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
-    
+    let masterFlightsSheet1 = findSheetFuzzy(ss, ["טיסות - שיקוף", "עדכוני טיסות", "טיסות"]);
+    let masterFlightsSheet2 = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+    let anatFlightsSheet1 = null;
+    let anatFlightsSheet2 = null;
+
+    if (CONFIG.ANAT_SPREADSHEET_ID) {
+      try {
+        const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+        anatFlightsSheet1 = findSheetFuzzy(anatSs, [CONFIG.ANAT_SHEET_NAME, "עדכוני טיסות", "טיסות - שיקוף", "טיסות"]);
+        anatFlightsSheet2 = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET]);
+      } catch(errAnat) {
+        console.error("Could not access Anat spreadsheet:", errAnat.toString());
+      }
+    }
+
+    const masterData1 = masterFlightsSheet1 ? fetchMappedData(masterFlightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
+    const masterData2 = masterFlightsSheet2 ? fetchMappedData(masterFlightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
+    const anatData1 = anatFlightsSheet1 ? fetchMappedData(anatFlightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
+    const anatData2 = anatFlightsSheet2 ? fetchMappedData(anatFlightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
+
     let flightsDataMap = {};
-    flightsData1.forEach(item => flightsDataMap[item.label] = item.value);
-    flightsData2.forEach(item => flightsDataMap[item.label] = item.value);
-    
+    // Base layer: Master spreadsheet mirror
+    [masterData1, masterData2].forEach(arr => {
+      arr.forEach(item => {
+        if (item && item.value && String(item.value).trim() !== "") {
+          flightsDataMap[item.label] = item.value;
+        }
+      });
+    });
+    // Priority layer: Anat's live spreadsheet (overrides with latest edits)
+    [anatData1, anatData2].forEach(arr => {
+      arr.forEach(item => {
+        if (item && item.value && String(item.value).trim() !== "") {
+          flightsDataMap[item.label] = item.value;
+        }
+      });
+    });
+
     const flightsData = Object.keys(flightsDataMap).map(label => ({ label: label, value: flightsDataMap[label] }));
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const hotelTelAvivData = fetchMappedData(ss.getSheetByName(CONFIG.TELAVIV_SHEET), cleanEmail, MAPPINGS.HOTELS);
@@ -253,6 +282,29 @@ function getGuestPortalData(sessionToken) {
     
     const scheduleRes = getScheduleData(isAdmin);
     const scheduleData = scheduleRes.success ? scheduleRes.schedule : null;
+    const guideRes = getGuideData(isAdmin);
+    const guideData = guideRes.success ? guideRes.guide : null;
+
+    let hotelLinks = {
+      jerusalem: "https://www.google.com/maps/search/?api=1&query=Arthur+Hotel+Jerusalem",
+      telAviv: "https://www.google.com/maps/search/?api=1&query=Cinema+Hotel+Tel+Aviv"
+    };
+    if (guideData && guideData.items) {
+      guideData.items.forEach(it => {
+        const cat = String(it.category || "").toLowerCase();
+        const city = String(it.city || "").toLowerCase();
+        const name = String(it.name || "").toLowerCase();
+        const link = String(it.link || "").trim();
+        if ((cat.includes('מלון') || cat.includes('hotel') || name.includes('arthur') || name.includes('cinema')) && link) {
+          if (city.includes('ירושלים') || city.includes('jerusalem') || name.includes('arthur')) {
+            hotelLinks.jerusalem = link;
+          }
+          if (city.includes('תל אביב') || city.includes('tel aviv') || name.includes('cinema')) {
+            hotelLinks.telAviv = link;
+          }
+        }
+      });
+    }
     
     return {
       success: true,
@@ -271,25 +323,57 @@ function getGuestPortalData(sessionToken) {
       flightsData: flightsData,
       hotelJerusalemData: hotelJerusalemData,
       hotelTelAvivData: hotelTelAvivData,
+      hotelLinks: hotelLinks,
       allGuestsDirectory: allGuestsDirectory,
-      scheduleData: scheduleData
+      scheduleData: scheduleData,
+      guideData: guideData
     };
   } catch (err) {
     return { success: false, message: "Server Error: " + err.toString() };
   }
 }
 
+function findSheetFuzzy(spreadsheet, candidateNames) {
+  if (!spreadsheet) return null;
+  try {
+    const sheets = spreadsheet.getSheets();
+    for (const name of candidateNames) {
+      if (!name) continue;
+      const target = String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+      let found = sheets.find(s => s.getName().trim().toLowerCase().replace(/\s+/g, ' ') === target);
+      if (found) return found;
+    }
+    for (const name of candidateNames) {
+      if (!name) continue;
+      const target = String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+      let found = sheets.find(s => {
+        const sName = s.getName().trim().toLowerCase().replace(/\s+/g, ' ');
+        return sName.includes(target) || target.includes(sName);
+      });
+      if (found) return found;
+    }
+  } catch(e) {}
+  return null;
+}
+
 function fetchMappedData(sheet, email, mappingArray) {
   if (!sheet) return [];
   try {
-    const data = sheet.getDataRange().getValues();
+    const range = sheet.getDataRange();
+    const data = range.getValues();
+    const displayData = range.getDisplayValues();
     if (data.length < 2) return [];
     
     let headerRowIdx = -1;
     for (let r = 0; r < Math.min(10, data.length); r++) {
       if (data[r].some(cell => {
-        const val = String(cell).trim().toLowerCase();
-        return val === CONFIG.EMAIL_COL.toLowerCase() || val === 'מייל' || val === 'email' || val === 'מייל אורח';
+        const val = String(cell).trim().toLowerCase().replace(/\s+/g, ' ');
+        return val === CONFIG.EMAIL_COL.toLowerCase() || 
+               val === 'מייל' || 
+               val === 'מייל אורח' || 
+               val === 'email' || 
+               val.includes('מייל') || 
+               val.includes('email');
       })) {
         headerRowIdx = r;
         break;
@@ -297,30 +381,91 @@ function fetchMappedData(sheet, email, mappingArray) {
     }
     if (headerRowIdx === -1) headerRowIdx = 0;
     
-    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
-    let emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
-    if (emailIdx === -1) emailIdx = headers.indexOf('מייל');
-    if (emailIdx === -1) emailIdx = headers.indexOf('email');
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase().replace(/\s+/g, ' '));
+    let emailIdx = headers.findIndex(h => {
+      return h === CONFIG.EMAIL_COL.toLowerCase() || 
+             h === 'מייל' || 
+             h === 'מייל אורח' || 
+             h === 'email' || 
+             h.includes('מייל') || 
+             h.includes('email');
+    });
     if (emailIdx === -1) emailIdx = 0;
+    
+    const targetEmail = String(email || "").trim().toLowerCase();
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {
       const currentEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
-      if (currentEmail === email.toLowerCase()) {
+      if (currentEmail === targetEmail) {
         const resultList = [];
+        const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+        
         mappingArray.forEach(item => {
           let cIdx = -1;
           const searchKeys = item.altKeys || [item.key];
           
           for (let key of searchKeys) {
-            const foundIdx = headers.indexOf(key.trim().toLowerCase());
+            const cleanKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
+            let foundIdx = headers.findIndex(h => h === cleanKey);
+            if (foundIdx === -1) {
+              foundIdx = headers.findIndex(h => h && h.length > 1 && (h.includes(cleanKey) || (cleanKey.length > 1 && cleanKey.includes(h))));
+            }
             if (foundIdx !== -1) { cIdx = foundIdx; break; }
           }
-          let val = cIdx !== -1 ? data[i][cIdx] : "";
-          if (val instanceof Date) {
-            val = Utilities.formatDate(val, SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), "yyyy-MM-dd HH:mm");
+          
+          let rawVal = cIdx !== -1 ? data[i][cIdx] : "";
+          let dispVal = (displayData && displayData[i] && cIdx !== -1) ? String(displayData[i][cIdx] || "").trim() : "";
+          
+          // Filter out formula errors (#N/A, #VALUE!, etc.) or uncalculated formula text (=...)
+          if (dispVal.startsWith("#") || dispVal.startsWith("=")) {
+            dispVal = "";
           }
-          if (val !== undefined && val !== null && String(val).trim() !== "") {
-            resultList.push({ label: item.label, value: String(val) });
+          if (typeof rawVal === "string" && (rawVal.startsWith("#") || rawVal.startsWith("="))) {
+            rawVal = "";
+          }
+
+          let finalVal = rawVal;
+
+          if (item.label === "Shuttle") {
+            // If rawVal is a Date object, always format as HH:mm
+            if (rawVal instanceof Date) {
+              finalVal = Utilities.formatDate(rawVal, tz, "HH:mm");
+            } else if (dispVal && dispVal.includes(":")) {
+              finalVal = dispVal;
+            } else if (rawVal && String(rawVal).includes(":")) {
+              finalVal = String(rawVal).trim();
+            } else if (typeof rawVal === "number" && rawVal > 0 && rawVal < 1) {
+              const totalMins = Math.round(rawVal * 24 * 60);
+              const hh = String(Math.floor(totalMins / 60) % 24).padStart(2, '0');
+              const mm = String(totalMins % 60).padStart(2, '0');
+              finalVal = hh + ":" + mm;
+            } else if (dispVal && !dispVal.includes("/")) {
+              finalVal = dispVal;
+            } else {
+              finalVal = "";
+            }
+
+            // Safety guard: reject any date formats or 1899 epoch artifacts
+            if (String(finalVal).includes("1899") || /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(finalVal))) {
+              finalVal = "";
+            }
+          } else if (item.label.toLowerCase().includes("time")) {
+            if (rawVal instanceof Date) {
+              finalVal = Utilities.formatDate(rawVal, tz, "HH:mm");
+            } else if (dispVal && dispVal.includes(":")) {
+              finalVal = dispVal;
+            } else {
+              finalVal = dispVal || rawVal;
+            }
+          } else if (rawVal instanceof Date) {
+            finalVal = Utilities.formatDate(rawVal, tz, "yyyy-MM-dd HH:mm");
+          } else if ((finalVal === "" || finalVal === null || finalVal === undefined) && dispVal) {
+            finalVal = dispVal;
+          }
+
+          const strVal = String(finalVal !== undefined && finalVal !== null ? finalVal : "").trim();
+          if (strVal !== "" && !strVal.startsWith("#") && !strVal.startsWith("=")) {
+            resultList.push({ label: item.label, value: strVal });
           }
         });
         return resultList;
@@ -370,6 +515,147 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
     return guestsList;
   } catch (e) {
     return [];
+  }
+}
+
+/**
+ * Look up a guest profile by passenger name or email
+ * Used when clicking a fellow shuttle passenger badge
+ */
+function getGuestByPassengerName(nameQuery) {
+  try {
+    if (!nameQuery) return { success: false, message: "Empty name query" };
+    const cleanQuery = String(nameQuery).trim().toLowerCase().replace(/\s+/g, ' ');
+    if (cleanQuery.length < 2) return { success: false, message: "Query too short" };
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: "Master sheet not found" };
+
+    const mData = masterSheet.getDataRange().getValues();
+    if (mData.length < 2) return { success: false, message: "No data in master sheet" };
+
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(10, mData.length); r++) {
+      if (mData[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) headerRowIdx = 0;
+
+    const headers = mData[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const fnIdx = headers.indexOf(CONFIG.FIRST_NAME_COL.toLowerCase());
+    const lnIdx = headers.indexOf(CONFIG.LAST_NAME_COL.toLowerCase());
+
+    let matchedRow = -1;
+    let matchedEmail = "";
+
+    // 1. First, search Master sheet for exact full name or email
+    for (let i = headerRowIdx + 1; i < mData.length; i++) {
+      const fn = fnIdx !== -1 ? String(mData[i][fnIdx] || "").trim().toLowerCase() : "";
+      const ln = lnIdx !== -1 ? String(mData[i][lnIdx] || "").trim().toLowerCase() : "";
+      const email = emailIdx !== -1 ? String(mData[i][emailIdx] || "").trim().toLowerCase() : "";
+      const fullName = `${fn} ${ln}`.trim();
+      const reverseName = `${ln} ${fn}`.trim();
+
+      if (email === cleanQuery || (fullName && fullName === cleanQuery) || (reverseName && reverseName === cleanQuery)) {
+        matchedRow = i;
+        matchedEmail = email;
+        break;
+      }
+    }
+
+    // 2. If not matched, search Flights sheets (Anat external spreadsheet and Master mirror) to map name to email
+    if (matchedRow === -1) {
+      const flightSheetsToSearch = [];
+      if (CONFIG.ANAT_SPREADSHEET_ID) {
+        try {
+          const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+          const anF1 = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET]);
+          if (anF1) flightSheetsToSearch.push(anF1);
+          const anF2 = findSheetFuzzy(anatSs, [CONFIG.ANAT_SHEET_NAME, "עדכוני טיסות"]);
+          if (anF2) flightSheetsToSearch.push(anF2);
+        } catch(e) {}
+      }
+      const mF = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+      if (mF) flightSheetsToSearch.push(mF);
+
+      for (let fSheet of flightSheetsToSearch) {
+        const fData = fSheet.getDataRange().getValues();
+        if (fData.length > 1) {
+          for (let r = 1; r < fData.length; r++) {
+            const fEmail = String(fData[r][0] || "").trim().toLowerCase();
+            const fLn = String(fData[r][1] || "").trim().toLowerCase();
+            const fFn = String(fData[r][2] || "").trim().toLowerCase();
+            const fFullName = `${fFn} ${fLn}`.trim();
+            const fReverse = `${fLn} ${fFn}`.trim();
+
+            if (fEmail === cleanQuery || fFullName === cleanQuery || fReverse === cleanQuery || fFn === cleanQuery ||
+                (fFullName && (fFullName.includes(cleanQuery) || cleanQuery.includes(fFullName)))) {
+              matchedEmail = fEmail;
+              break;
+            }
+          }
+        }
+        if (matchedEmail) break;
+      }
+
+      if (matchedEmail) {
+        for (let i = headerRowIdx + 1; i < mData.length; i++) {
+          const email = emailIdx !== -1 ? String(mData[i][emailIdx] || "").trim().toLowerCase() : "";
+          if (email === matchedEmail) {
+            matchedRow = i;
+            break;
+          }
+        }
+      }
+    }
+
+    // 3. If still not matched, try first name or substring search in Master sheet
+    if (matchedRow === -1) {
+      for (let i = headerRowIdx + 1; i < mData.length; i++) {
+        const fn = fnIdx !== -1 ? String(mData[i][fnIdx] || "").trim().toLowerCase() : "";
+        const ln = lnIdx !== -1 ? String(mData[i][lnIdx] || "").trim().toLowerCase() : "";
+        const email = emailIdx !== -1 ? String(mData[i][emailIdx] || "").trim().toLowerCase() : "";
+        const fullName = `${fn} ${ln}`.trim();
+
+        if (fn === cleanQuery || (fullName && (fullName.includes(cleanQuery) || cleanQuery.includes(fullName)))) {
+          matchedRow = i;
+          matchedEmail = email;
+          break;
+        }
+      }
+    }
+
+    if (matchedRow === -1) {
+      return { success: false, notFound: true, message: "Passenger profile not found" };
+    }
+
+    // Build guest object using GUESTS_DIRECTORY mapping
+    const guestObj = {};
+    MAPPINGS.GUESTS_DIRECTORY.forEach(item => {
+      let cIdx = -1;
+      const searchKeys = item.altKeys || [item.key];
+      for (let key of searchKeys) {
+        const foundIdx = headers.indexOf(key.trim().toLowerCase());
+        if (foundIdx !== -1) { cIdx = foundIdx; break; }
+      }
+      let val = (cIdx !== -1 && matchedRow !== -1) ? mData[matchedRow][cIdx] : "";
+      if (val instanceof Date) {
+        val = Utilities.formatDate(val, ss.getSpreadsheetTimeZone(), "yyyy-MM-dd");
+      }
+      guestObj[item.label] = String(val !== undefined && val !== null ? val : "");
+    });
+
+    if (matchedEmail && !guestObj["Email"]) {
+      guestObj["Email"] = matchedEmail;
+    }
+
+    return { success: true, guest: guestObj };
+  } catch (err) {
+    return { success: false, error: err.toString() };
   }
 }
 
@@ -470,6 +756,103 @@ function getScheduleData(forceRefresh) {
     return { success: true, schedule: scheduleByDate };
   } catch (err) {
     return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Fetch and group Guide Data (Venues, Bars, Food, Apps, FAQ, etc.) from 'מידע כללי' sheet
+ */
+function getGuideData(forceRefresh) {
+  try {
+    const cache = CacheService.getScriptCache();
+    const cacheKey = 'global_guide_data';
+    
+    if (!forceRefresh) {
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return { success: true, guide: JSON.parse(cached) };
+      }
+    }
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = findSheetFuzzy(ss, ['מידע כללי', 'מידע כללי והמלצות', 'General Info', 'Guide']);
+    if (!sheet) return { success: false, message: 'Guide / Info sheet not found' };
+    
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) return { success: true, guide: { jerusalem: [], telAviv: [], essentials: [], items: [] } };
+    
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStr = data[r].map(h => String(h).trim().toLowerCase());
+      if (rowStr.some(col => col.includes('עיר') || col.includes('city') || col.includes('שם המקום') || col.includes('venue') || col.includes('קטגוריה'))) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    
+    if (headerRowIdx === -1) return { success: false, message: 'Headers not found in Info sheet' };
+    
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    
+    const cityIdx = headers.findIndex(h => h.includes('עיר') || h.includes('city'));
+    const catIdx = headers.findIndex(h => h.includes('קטגוריה') || h.includes('category'));
+    const nameIdx = headers.findIndex(h => h.includes('שם המקום') || h.includes('name') || h.includes('title') || h.includes('שם'));
+    const addrIdx = headers.findIndex(h => h.includes('כתובת') || h.includes('address') || h.includes('location'));
+    const descIdx = headers.findIndex(h => h.includes('תיאור') || h.includes('desc'));
+    const linkIdx = headers.findIndex(h => h.includes('לינק') || h.includes('קישור') || h.includes('link') || h.includes('url'));
+    const tagIdx = headers.findIndex(h => h.includes('תגית') || h.includes('tag') || h.includes('badge'));
+    
+    const items = [];
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      const row = data[i];
+      const name = nameIdx !== -1 ? String(row[nameIdx] || "").trim() : "";
+      if (!name) continue;
+      
+      const city = cityIdx !== -1 ? String(row[cityIdx] || "").trim() : "";
+      const category = catIdx !== -1 ? String(row[catIdx] || "").trim() : "";
+      const address = addrIdx !== -1 ? String(row[addrIdx] || "").trim() : "";
+      const description = descIdx !== -1 ? String(row[descIdx] || "").trim() : "";
+      const link = linkIdx !== -1 ? String(row[linkIdx] || "").trim() : "";
+      const tag = tagIdx !== -1 ? String(row[tagIdx] || "").trim() : "";
+      
+      items.push({
+        city: city,
+        category: category,
+        name: name,
+        address: address,
+        description: description,
+        link: link,
+        tag: tag
+      });
+    }
+    
+    const guideGrouped = {
+      jerusalem: [],
+      telAviv: [],
+      essentials: [],
+      items: items
+    };
+    
+    items.forEach(item => {
+      const cityNorm = item.city.toLowerCase();
+      const catNorm = item.category.toLowerCase();
+      
+      if (cityNorm.includes('ירושלים') || cityNorm.includes('jerusalem') || cityNorm.includes('jlm')) {
+        guideGrouped.jerusalem.push(item);
+      } else if (cityNorm.includes('תל אביב') || cityNorm.includes('tel aviv') || cityNorm.includes('tlv')) {
+        guideGrouped.telAviv.push(item);
+      } else {
+        guideGrouped.essentials.push(item);
+      }
+    });
+    
+    try {
+      cache.put(cacheKey, JSON.stringify(guideGrouped), 120);
+    } catch(e) {}
+    
+    return { success: true, guide: guideGrouped };
+  } catch(err) {
+    return { success: false, message: "Error fetching guide data: " + err.toString() };
   }
 }
 
@@ -634,14 +1017,30 @@ function getAdminDashboardData(sessionToken) {
     const getSheetData = (sheetName) => {
       const sheet = ss.getSheetByName(sheetName);
       if (!sheet) return null;
-      const data = sheet.getDataRange().getValues();
-      return data.map(row => row.map(cell => (cell instanceof Date) ? Utilities.formatDate(cell, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd HH:mm') : cell));
+      const range = sheet.getDataRange();
+      const data = range.getValues();
+      const displayData = range.getDisplayValues();
+      const tz = ss.getSpreadsheetTimeZone();
+      return data.map((row, rIdx) => row.map((cell, cIdx) => {
+        let dispVal = displayData && displayData[rIdx] ? String(displayData[rIdx][cIdx] || "").trim() : "";
+        if (dispVal.startsWith("#") || dispVal.startsWith("=")) {
+          return "";
+        }
+        if (typeof cell === "string" && (cell.startsWith("#") || cell.startsWith("="))) {
+          return "";
+        }
+        if (cell instanceof Date) {
+          return Utilities.formatDate(cell, tz, 'yyyy-MM-dd HH:mm');
+        }
+        return cell;
+      }));
     };
     
     return {
       success: true,
       guests: getSheetData(CONFIG.MASTER_SHEET),
       flights: getSheetData(CONFIG.FLIGHTS_SHEET),
+      flightsUpdates: getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME),
       hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
       hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
       infoSheet: getSheetData('מידע כללי'),
