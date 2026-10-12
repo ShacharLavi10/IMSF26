@@ -1040,6 +1040,7 @@ function getAdminDashboardData(sessionToken) {
       success: true,
       guests: getSheetData(CONFIG.MASTER_SHEET),
       flights: getSheetData(CONFIG.FLIGHTS_SHEET),
+      flightsUpdates: getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME),
       hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
       hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
       infoSheet: getSheetData('מידע כללי'),

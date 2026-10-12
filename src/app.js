@@ -617,16 +617,16 @@ let currentGuestEmail = "";
         if (lbl === "arrival time") arrivalTime = formatFlightTime(item.value);
         if (lbl === "arrival flight") arrivalFlight = item.value;
         if (lbl === "arrival airline") arrivalAirline = item.value;
-        if (lbl === "origin / from" || lbl.includes("origin") || lbl.includes("from")) origin = item.value;
+        if (lbl === "origin / from" || lbl === "origin" || lbl.startsWith("origin") || lbl.includes("מוצא") || lbl.includes("הגעה")) origin = item.value;
         
         if (lbl === "departure date") departure = formatFlightDate(item.value);
         if (lbl === "departure time") departureTime = formatFlightTime(item.value);
         if (lbl === "departure flight") departureFlight = item.value;
         if (lbl === "departure airline") departureAirline = item.value;
-        if (lbl === "destination / to" || lbl.includes("destination") || lbl.includes("to")) dest = item.value;
+        if (lbl === "destination / to" || lbl === "destination" || lbl.startsWith("destination") || lbl.includes("יעד חזרה") || (lbl.includes("חזרה") && !lbl.includes("תאריך") && !lbl.includes("שעת"))) dest = item.value;
         
         if (lbl === "shuttle" || lbl.includes("shuttle") || lbl.includes("שאטל") || lbl.includes("הסעה")) shuttle = item.value;
-        if (lbl === "together with" || lbl.includes("together") || lbl.includes("ביחד") || lbl.includes("יחד") || lbl.includes("נוסע") || lbl.includes("שותפ") || lbl.includes("passengers")) togetherWith = item.value;
+        if (lbl === "together with" || lbl.startsWith("together") || lbl.includes("ביחד") || lbl.includes("יחד") || lbl.includes("נוסע") || lbl.includes("שותפ") || lbl.includes("passengers")) togetherWith = item.value;
         if (lbl === "final ticket link" || lbl.includes("ticket link") || lbl.includes("כרטיס")) ticketLink = item.value;
       });
 
@@ -2617,7 +2617,9 @@ function viewAdminGuestDetails(rowIndex) {
     return null;
   };
 
-  const fData = getRowByEmail(adminData.flights);
+  const fDataRaw = getRowByEmail(adminData.flights);
+  const fUpRaw = getRowByEmail(adminData.flightsUpdates);
+  const fData = (fDataRaw || fUpRaw) ? Object.assign({}, fUpRaw || {}, fDataRaw || {}) : null;
   const hjData = getRowByEmail(adminData.hotelJlm);
   const htData = getRowByEmail(adminData.hotelTlv);
 
@@ -2645,7 +2647,7 @@ function viewAdminGuestDetails(rowIndex) {
     let arrivalTime = getFlightVal(["שעת נחיתה", "שעת הגעה", "שעת נחיתה משוערת", 'שעת נחיתה בנתב"ג', "שעת נחיתה בנתבג"]);
     let arrivalFlight = getFlightVal(["מספר טיסה נחיתה", "מספר טיסת נחיתה", "מספר טיסת הגעה", "מספר טיסה הגעה", "טיסת נחיתה"]);
     let arrivalAirline = getFlightVal(["חברת תעופה נחיתה", "חברת תעופה הגעה"]);
-    let origin = getFlightVal(["ארץ מוצא", "ממדינה", "מארץ", "מאיפה", "עיר מוצא", "מדינת מוצא", "יעד הגעה", "מאיפה?"]);
+    let origin = getFlightVal(["יעד הגעה", "ארץ מוצא", "עיר מוצא", "מאיפה"]);
     
     let departure = getFlightVal(["תאריך המראה", "תאריך עזיבה", "תאריך יציאה", "חזרה מישראל"]);
     let departureTime = getFlightVal(["שעת המראה", "שעת עזיבה", "שעת יציאה", "שעת המראה משוערת", 'שעת המראה מנתב"ג']);
