@@ -515,6 +515,59 @@ body.light-mode #sheet-guest-phone {
   color: #0284c7;
 }
 
+/* Intent Tags & Save Status */
+.sheet-intent-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sheet-intent-tag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid var(--border-default);
+  color: var(--foreground-subtle);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  min-height: 34px;
+}
+.sheet-intent-tag-btn:hover {
+  border-color: var(--accent);
+  color: var(--foreground);
+}
+.sheet-intent-tag-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.6);
+  transform: translate(-1px, -1px);
+}
+body.light-mode .sheet-intent-tag-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+body.light-mode .sheet-intent-tag-btn.active {
+  background: var(--accent);
+  border-color: #000;
+  color: #000;
+  box-shadow: 2px 2px 0px rgba(0,0,0,1);
+}
+.sheet-save-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--foreground-muted);
+  transition: opacity 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
 /* Private Notes Textarea */
 .private-notes-section textarea {
   width: 100%;

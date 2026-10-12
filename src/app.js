@@ -2016,7 +2016,7 @@ let currentGuestEmail = "";
     let showFavsOnly = false;
     let currentOpenArtistId = null;
 
-    // Load favorites from local storage for now
+    // Load favorites from local storage
     function getFavorites() {
       try {
         const stored = localStorage.getItem('artist_favs_' + currentGuestEmail);
@@ -2038,6 +2038,160 @@ let currentGuestEmail = "";
       localStorage.setItem(`artist_note_${currentGuestEmail}_${artistId}`, note);
     }
 
+    // Load & Save intent tags
+    function getArtistTags(artistId) {
+      try {
+        const stored = localStorage.getItem(`artist_tags_${currentGuestEmail}_${artistId}`);
+        return stored ? JSON.parse(stored) : [];
+      } catch(e) { return []; }
+    }
+    function saveArtistTagsLocally(artistId, tags) {
+      localStorage.setItem(`artist_tags_${currentGuestEmail}_${artistId}`, JSON.stringify(tags));
+    }
+
+    // Toggle Intent Tag
+    function toggleIntentTag(tag) {
+      if (!currentOpenArtistId) return;
+      const currentTags = getArtistTags(currentOpenArtistId);
+      const idx = currentTags.indexOf(tag);
+      if (idx >= 0) {
+        currentTags.splice(idx, 1);
+      } else {
+        currentTags.push(tag);
+      }
+      saveArtistTagsLocally(currentOpenArtistId, currentTags);
+
+      // Update button visual
+      const btn = document.querySelector(`.sheet-intent-tag-btn[data-tag="${tag}"]`);
+      if (btn) {
+        if (currentTags.includes(tag)) btn.classList.add('active');
+        else btn.classList.remove('active');
+      }
+
+      // If user tags Booking or Connect, automatically mark artist as favorite if not already
+      const favs = getFavorites();
+      if (!favs[currentOpenArtistId] && (tag === "Booking" || tag === "Connect")) {
+        favs[currentOpenArtistId] = true;
+        saveFavorites(favs);
+        const favBtn = document.getElementById('sheet-fav-btn');
+        if (favBtn) {
+          favBtn.classList.add('active');
+          document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
+        }
+      }
+
+      triggerFeedbackAutoSave(1500);
+    }
+
+    // Auto-Save & Debounce Engine
+    let feedbackSaveTimer = null;
+    function triggerFeedbackAutoSave(delay = 3500) {
+      const statusElem = document.getElementById('sheet-save-status');
+      if (statusElem) statusElem.innerText = 'Saving...';
+      if (feedbackSaveTimer) clearTimeout(feedbackSaveTimer);
+      feedbackSaveTimer = setTimeout(() => {
+        syncArtistFeedbackToServer();
+      }, delay);
+    }
+
+    function flushFeedbackAutoSave() {
+      if (feedbackSaveTimer) {
+        clearTimeout(feedbackSaveTimer);
+        feedbackSaveTimer = null;
+        syncArtistFeedbackToServer();
+      }
+    }
+
+    function syncArtistFeedbackToServer() {
+      if (!currentGuestEmail) return;
+      const statusElem = document.getElementById('sheet-save-status');
+
+      // Aggregate all notes and tags
+      const allNotes = {};
+      const allTags = {};
+      if (Array.isArray(globalArtistsData)) {
+        globalArtistsData.forEach(a => {
+          const n = getPrivateNote(a.id);
+          if (n && n.trim()) allNotes[a.id] = n.trim();
+          const t = getArtistTags(a.id);
+          if (t && t.length > 0) allTags[a.id] = t;
+        });
+      }
+      // Also ensure current open artist's latest inputs are captured
+      if (currentOpenArtistId) {
+        const currentInput = document.getElementById('sheet-private-note');
+        if (currentInput && currentInput.value.trim()) {
+          allNotes[currentOpenArtistId] = currentInput.value.trim();
+        }
+        const currentTags = getArtistTags(currentOpenArtistId);
+        if (currentTags && currentTags.length > 0) {
+          allTags[currentOpenArtistId] = currentTags;
+        }
+      }
+
+      const payload = {
+        favorites: getFavorites(),
+        notes: allNotes,
+        tags: allTags
+      };
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (statusElem) {
+              statusElem.innerText = 'Saved ✓';
+              setTimeout(() => {
+                if (statusElem.innerText === 'Saved ✓') statusElem.innerText = '';
+              }, 3000);
+            }
+          })
+          .withFailureHandler(function(err) {
+            console.warn("Auto-save error:", err);
+            if (statusElem) statusElem.innerText = '';
+          })
+          .saveGuestArtistFeedback(currentGuestEmail, payload);
+      }
+    }
+
+    // Fetch remote feedback on startup for cross-device persistence
+    function fetchGuestArtistFeedback() {
+      if (!currentGuestEmail || !window.google || !google.script || !google.script.run) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success && res.feedback) {
+            const fb = res.feedback;
+            if (fb.favorites) {
+              const localFavs = getFavorites();
+              const mergedFavs = Object.assign({}, localFavs, fb.favorites);
+              saveFavorites(mergedFavs);
+            }
+            if (fb.notes) {
+              Object.keys(fb.notes).forEach(aId => {
+                if (!getPrivateNote(aId)) savePrivateNoteLocally(aId, fb.notes[aId]);
+              });
+            }
+            if (fb.tags) {
+              Object.keys(fb.tags).forEach(aId => {
+                if (!getArtistTags(aId) || getArtistTags(aId).length === 0) {
+                  saveArtistTagsLocally(aId, fb.tags[aId]);
+                }
+              });
+            }
+            filterArtists();
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.warn("Could not fetch remote artist feedback:", err);
+        })
+        .getGuestArtistFeedback(currentGuestEmail);
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        flushFeedbackAutoSave();
+      }
+    });
+
     function fetchArtistsData() {
       const grid = document.getElementById('artists-grid');
       const cacheKey = 'swr_artistsData_v3';
@@ -2049,6 +2203,7 @@ let currentGuestEmail = "";
           if (Array.isArray(parsed) && parsed.some(a => a.genre)) {
             globalArtistsData = parsed.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
+            fetchGuestArtistFeedback();
           }
         } catch(e) {}
       }
@@ -2150,6 +2305,7 @@ let currentGuestEmail = "";
         favs[artistId] = true;
       }
       saveFavorites(favs);
+      triggerFeedbackAutoSave(1500);
       filterArtists(); // Re-render grid
     }
 
@@ -2232,6 +2388,17 @@ let currentGuestEmail = "";
       // Notes
       document.getElementById('sheet-private-note').value = getPrivateNote(artistId);
 
+      // Intent Tags
+      const currentTags = getArtistTags(artistId);
+      document.querySelectorAll('.sheet-intent-tag-btn').forEach(btn => {
+        const t = btn.getAttribute('data-tag');
+        if (currentTags.includes(t)) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+
+      const statusElem = document.getElementById('sheet-save-status');
+      if (statusElem) statusElem.innerText = '';
+
       // Media Embed - Removed Spotify Embed
       const mediaContainer = document.getElementById('sheet-media-container');
       const embedWrapper = document.getElementById('sheet-embed-wrapper');
@@ -2263,6 +2430,7 @@ let currentGuestEmail = "";
     }
 
     function closeArtistSheet(isHashChange) {
+      flushFeedbackAutoSave();
       document.getElementById('artist-sheet-overlay').classList.remove('active');
       document.getElementById('artist-bottom-sheet').classList.remove('active');
       document.body.style.overflow = '';
@@ -2311,12 +2479,14 @@ let currentGuestEmail = "";
         document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
       }
       saveFavorites(favs);
+      triggerFeedbackAutoSave(1500);
     }
 
     function savePrivateNote() {
       if (!currentOpenArtistId) return;
       const note = document.getElementById('sheet-private-note').value;
       savePrivateNoteLocally(currentOpenArtistId, note);
+      triggerFeedbackAutoSave(3500);
     }
 
     function exportBriefcase() {
@@ -2392,6 +2562,7 @@ window.exportBriefcase = exportBriefcase;
 window.closeArtistSheet = closeArtistSheet;
 window.toggleSheetFav = toggleSheetFav;
 window.savePrivateNote = savePrivateNote;
+window.toggleIntentTag = toggleIntentTag;
 window.closeGuestSheet = closeGuestSheet;
 window.toggleUpdatesPanel = toggleUpdatesPanel;
 window.toggleTheme = toggleTheme;
@@ -2532,6 +2703,24 @@ function renderAdminDashboard() {
           </div>
         </div>
       </div>
+
+      <!-- Lineup & Networking Leads -->
+      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border); grid-column: 1 / -1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+            <span>🎸</span> Lineup & Networking Leads
+          </h3>
+          <button class="secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="loadAdminNetworkingData(true)">Refresh Leads</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
+        <div style="margin-bottom: 12px; position: relative;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="admin-networking-search" placeholder="Search artist, country, delegate or booking..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground);" onkeyup="filterAdminNetworking(this.value)">
+        </div>
+        <div id="admin-networking-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto;">
+          <p style="color: var(--foreground-muted); text-align: center; padding: 15px;">Loading networking insights...</p>
+        </div>
+      </div>
       
     </div>
   `;
@@ -2548,6 +2737,105 @@ function renderAdminDashboard() {
   
   container.innerHTML = html;
   filterAdminGuests("");
+  loadAdminNetworkingData(false);
+}
+
+let adminNetworkingData = null;
+
+function loadAdminNetworkingData(forceRefresh = false) {
+  const container = document.getElementById('admin-networking-list');
+  if (!container) return;
+  if (adminNetworkingData && !forceRefresh) {
+    renderAdminNetworkingList(adminNetworkingData);
+    return;
+  }
+  container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Loading networking insights...</p>';
+  if (window.google && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          adminNetworkingData = res;
+          renderAdminNetworkingList(adminNetworkingData);
+        } else {
+          container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">No networking data available yet.</p>';
+        }
+      })
+      .withFailureHandler(function(err) {
+        container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Could not load networking data.</p>';
+      })
+      .getAdminArtistsNetworkingData();
+  }
+}
+
+function renderAdminNetworkingList(data, query = "") {
+  const container = document.getElementById('admin-networking-list');
+  if (!container || !data || !data.artistsLeads) return;
+
+  const q = query.toLowerCase().trim();
+  const leads = data.artistsLeads.filter(a => {
+    if (!q) return true;
+    return a.name.toLowerCase().includes(q) ||
+           (a.genre && a.genre.toLowerCase().includes(q)) ||
+           (a.countries && a.countries.toLowerCase().includes(q)) ||
+           (a.bookingLeads && a.bookingLeads.toLowerCase().includes(q)) ||
+           (a.notes && a.notes.toLowerCase().includes(q));
+  });
+
+  if (leads.length === 0) {
+    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">No artists match your search.</p>';
+    return;
+  }
+
+  let html = '';
+  leads.forEach(a => {
+    const hasBooking = a.bookingLeads && a.bookingLeads.trim().length > 0;
+    const hasNotes = a.notes && a.notes.trim().length > 0;
+    html += `
+      <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 6px;">
+          <div>
+            <div style="font-weight: 700; font-size: 1rem; color: var(--foreground);">${a.name}</div>
+            <div style="font-size: 0.8rem; color: var(--accent-bright); font-weight: 600;">${a.genre || 'General'}</div>
+          </div>
+          <div style="text-align: right;">
+            <span style="display:inline-block; font-size: 0.85rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: rgba(241,169,160,0.15); color: var(--accent);">❤️ ${a.likesCount || 0}</span>
+          </div>
+        </div>
+
+        <div style="font-size: 0.8rem; margin-bottom: 6px;">
+          <span style="font-weight: 600;">Tour Status:</span> <span>${a.tourPotential}</span>
+        </div>
+
+        ${a.countries ? `
+          <div style="font-size: 0.78rem; color: var(--foreground-muted); margin-bottom: 6px;">
+            <span style="font-weight: 600;">Countries:</span> ${a.countries}
+          </div>
+        ` : ''}
+
+        ${hasBooking ? `
+          <div style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 6px 8px; border-radius: 4px; margin-top: 6px; font-size: 0.8rem;">
+            <div style="font-weight: 700; color: #10b981; margin-bottom: 2px;">🎯 Booking Interest:</div>
+            <div style="white-space: pre-line; color: var(--foreground);">${a.bookingLeads}</div>
+          </div>
+        ` : ''}
+
+        ${hasNotes ? `
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--border); padding: 6px 8px; border-radius: 4px; margin-top: 6px; font-size: 0.78rem;">
+            <div style="font-weight: 600; color: var(--foreground-subtle); margin-bottom: 2px;">💬 Delegate Feedback:</div>
+            <div style="white-space: pre-line; color: var(--foreground);">${a.notes}</div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function filterAdminNetworking(query) {
+  if (adminNetworkingData) {
+    renderAdminNetworkingList(adminNetworkingData, query);
+  }
 }
 
 function loadAdminDashboard(forceRefresh = false) {
@@ -3295,3 +3583,5 @@ window.showToast = showToast;
 window.handleAdminResetCache = handleAdminResetCache;
 window.selectGuideCity = selectGuideCity;
 window.fetchGuideData = fetchGuideData;
+window.loadAdminNetworkingData = loadAdminNetworkingData;
+window.filterAdminNetworking = filterAdminNetworking;
