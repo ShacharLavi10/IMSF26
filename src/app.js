@@ -972,7 +972,11 @@ let currentGuestEmail = "";
     }
 
     function renderDirectory(directoryArray) {
-      globalDirectoryData = directoryArray || [];
+      globalDirectoryData = (directoryArray || []).filter(guest => {
+        const guestEmail = String(guest["Email"] || "").trim();
+        const guestRole = String(guest["Role / Title"] || "").trim();
+        return guestEmail !== "" && guestRole !== "הפקה חשיפה" && Boolean((guest["First Name"] || "").trim() || (guest["Last Name"] || "").trim());
+      });
       const container = document.getElementById("directory-container");
       
       if (globalDirectoryData.length === 0) {

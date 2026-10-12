@@ -510,7 +510,14 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
         }
         guestObj[item.label] = String(val !== undefined && val !== null ? val : "");
       });
-      if (guestObj["Role / Title"] !== "הפקה חשיפה" && (guestObj["First Name"] || guestObj["Last Name"])) guestsList.push(guestObj);
+
+      const guestEmail = String(guestObj["Email"] || "").trim();
+      const guestRole = String(guestObj["Role / Title"] || "").trim();
+
+      // חובה שיהיה מייל אורח; אם לא רשום מייל - לא מציגים בשום מצב. לאחר מכן נבדק התפקיד ושם
+      if (guestEmail && guestRole !== "הפקה חשיפה" && ((guestObj["First Name"] || "").trim() || (guestObj["Last Name"] || "").trim())) {
+        guestsList.push(guestObj);
+      }
     }
     return guestsList;
   } catch (e) {
