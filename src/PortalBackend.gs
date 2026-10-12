@@ -226,39 +226,44 @@ function getGuestPortalData(sessionToken) {
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
     const personalMsg = String(getColVal("הודעה אישית בפורטל") || "");
     
-    let flightsSheet1 = findSheetFuzzy(ss, ["טיסות - שיקוף", "עדכוני טיסות", "טיסות"]);
-    let flightsSheet2 = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
-    
-    // If either sheet is missing in Master, check Anat's external spreadsheet
-    if ((!flightsSheet1 || !flightsSheet2) && CONFIG.ANAT_SPREADSHEET_ID) {
+    let masterFlightsSheet1 = findSheetFuzzy(ss, ["טיסות - שיקוף", "עדכוני טיסות", "טיסות"]);
+    let masterFlightsSheet2 = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+    let anatFlightsSheet1 = null;
+    let anatFlightsSheet2 = null;
+
+    if (CONFIG.ANAT_SPREADSHEET_ID) {
       try {
         const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
-        if (!flightsSheet1) {
-          flightsSheet1 = findSheetFuzzy(anatSs, [CONFIG.ANAT_SHEET_NAME, "עדכוני טיסות", "טיסות - שיקוף", "טיסות"]);
-        }
-        if (!flightsSheet2) {
-          flightsSheet2 = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET]);
-        }
+        anatFlightsSheet1 = findSheetFuzzy(anatSs, [CONFIG.ANAT_SHEET_NAME, "עדכוני טיסות", "טיסות - שיקוף", "טיסות"]);
+        anatFlightsSheet2 = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET]);
       } catch(errAnat) {
         console.error("Could not access Anat spreadsheet:", errAnat.toString());
       }
     }
-    
-    let flightsData1 = flightsSheet1 ? fetchMappedData(flightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
-    let flightsData2 = flightsSheet2 ? fetchMappedData(flightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
-    
+
+    const masterData1 = masterFlightsSheet1 ? fetchMappedData(masterFlightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
+    const masterData2 = masterFlightsSheet2 ? fetchMappedData(masterFlightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
+    const anatData1 = anatFlightsSheet1 ? fetchMappedData(anatFlightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
+    const anatData2 = anatFlightsSheet2 ? fetchMappedData(anatFlightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
+
     let flightsDataMap = {};
-    flightsData1.forEach(item => {
-      if (item && item.value && String(item.value).trim() !== "") {
-        flightsDataMap[item.label] = item.value;
-      }
+    // Base layer: Master spreadsheet mirror
+    [masterData1, masterData2].forEach(arr => {
+      arr.forEach(item => {
+        if (item && item.value && String(item.value).trim() !== "") {
+          flightsDataMap[item.label] = item.value;
+        }
+      });
     });
-    flightsData2.forEach(item => {
-      if (item && item.value && String(item.value).trim() !== "") {
-        flightsDataMap[item.label] = item.value;
-      }
+    // Priority layer: Anat's live spreadsheet (overrides with latest edits)
+    [anatData1, anatData2].forEach(arr => {
+      arr.forEach(item => {
+        if (item && item.value && String(item.value).trim() !== "") {
+          flightsDataMap[item.label] = item.value;
+        }
+      });
     });
-    
+
     const flightsData = Object.keys(flightsDataMap).map(label => ({ label: label, value: flightsDataMap[label] }));
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
     const hotelTelAvivData = fetchMappedData(ss.getSheetByName(CONFIG.TELAVIV_SHEET), cleanEmail, MAPPINGS.HOTELS);
@@ -562,10 +567,22 @@ function getGuestByPassengerName(nameQuery) {
       }
     }
 
-    // 2. If not matched, search Flights sheet (טבלת טיסות - שיקוף) to map name to email
+    // 2. If not matched, search Flights sheets (Anat external spreadsheet and Master mirror) to map name to email
     if (matchedRow === -1) {
-      const fSheet = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
-      if (fSheet) {
+      const flightSheetsToSearch = [];
+      if (CONFIG.ANAT_SPREADSHEET_ID) {
+        try {
+          const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+          const anF1 = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET]);
+          if (anF1) flightSheetsToSearch.push(anF1);
+          const anF2 = findSheetFuzzy(anatSs, [CONFIG.ANAT_SHEET_NAME, "עדכוני טיסות"]);
+          if (anF2) flightSheetsToSearch.push(anF2);
+        } catch(e) {}
+      }
+      const mF = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+      if (mF) flightSheetsToSearch.push(mF);
+
+      for (let fSheet of flightSheetsToSearch) {
         const fData = fSheet.getDataRange().getValues();
         if (fData.length > 1) {
           for (let r = 1; r < fData.length; r++) {
@@ -582,6 +599,7 @@ function getGuestByPassengerName(nameQuery) {
             }
           }
         }
+        if (matchedEmail) break;
       }
 
       if (matchedEmail) {

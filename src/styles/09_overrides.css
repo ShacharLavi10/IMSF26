@@ -1032,9 +1032,9 @@ body.light-mode .shuttle-passengers-wrap {
   background: rgba(241, 169, 160, 0.15);
   color: var(--accent);
   border: 1.5px solid var(--accent);
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.6);
   cursor: pointer;
@@ -1043,6 +1043,12 @@ body.light-mode .shuttle-passengers-wrap {
   line-height: 1.2;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+.shuttle-passenger-badge svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
 }
 
 .shuttle-passenger-badge:hover {

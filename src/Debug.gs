@@ -238,8 +238,42 @@ function testFormatShuttle() {
 
 function testFetchMappedData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const fSheet = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
-  return fetchMappedData(fSheet, "shacharlavi10@gmail.com", MAPPINGS.FLIGHTS);
+  const cleanEmail = "shacharlavi10@gmail.com";
+  let masterFlightsSheet1 = findSheetFuzzy(ss, ["טיסות - שיקוף", "עדכוני טיסות", "טיסות"]);
+  let masterFlightsSheet2 = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+  let anatFlightsSheet1 = null;
+  let anatFlightsSheet2 = null;
+
+  if (CONFIG.ANAT_SPREADSHEET_ID) {
+    try {
+      const anatSs = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
+      anatFlightsSheet1 = findSheetFuzzy(anatSs, [CONFIG.ANAT_SHEET_NAME, "עדכוני טיסות", "טיסות - שיקוף", "טיסות"]);
+      anatFlightsSheet2 = findSheetFuzzy(anatSs, ["טבלת טיסות", "טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET]);
+    } catch(errAnat) {}
+  }
+
+  const masterData1 = masterFlightsSheet1 ? fetchMappedData(masterFlightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
+  const masterData2 = masterFlightsSheet2 ? fetchMappedData(masterFlightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
+  const anatData1 = anatFlightsSheet1 ? fetchMappedData(anatFlightsSheet1, cleanEmail, MAPPINGS.FLIGHTS) : [];
+  const anatData2 = anatFlightsSheet2 ? fetchMappedData(anatFlightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
+
+  let flightsDataMap = {};
+  [masterData1, masterData2].forEach(arr => {
+    arr.forEach(item => {
+      if (item && item.value && String(item.value).trim() !== "") {
+        flightsDataMap[item.label] = item.value;
+      }
+    });
+  });
+  [anatData1, anatData2].forEach(arr => {
+    arr.forEach(item => {
+      if (item && item.value && String(item.value).trim() !== "") {
+        flightsDataMap[item.label] = item.value;
+      }
+    });
+  });
+
+  return Object.keys(flightsDataMap).map(label => ({ label: label, value: flightsDataMap[label] }));
 }
 
 function logFlightsHeaders() {

@@ -644,7 +644,7 @@ let currentGuestEmail = "";
 
       const togetherNames = hasTogetherWith
         ? cleanTogetherWith
-            .split(/[,;\n]+/)
+            .split(/[,;\n+&،/]+|\s+and\s+|\s+וגם\s+/i)
             .map(n => n.trim())
             .filter(n => n && !/^n\/?a$/i.test(n) && !/^none$/i.test(n) && !/^null$/i.test(n) && n !== "-")
         : [];
@@ -720,12 +720,11 @@ let currentGuestEmail = "";
             <span style="font-size: 0.85rem; font-weight: 600; color: var(--foreground-muted); display: block; margin-bottom: 6px;">
               Together with:
             </span>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
               ${togetherNames.map(name => `
                 <button type="button" class="shuttle-passenger-badge" onclick="openPassengerProfile('${escapeHtml(name).replace(/'/g, "\\'")}')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                   <span>${escapeHtml(name)}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="opacity: 0.7; margin-left: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                 </button>
               `).join('')}
             </div>
@@ -2756,7 +2755,7 @@ function viewAdminGuestDetails(rowIndex) {
 
     const togetherNames = hasTogetherWith
       ? cleanTogetherWith
-          .split(/[,;\n]+/)
+          .split(/[,;\n+&،/]+|\s+and\s+|\s+וגם\s+/i)
           .map(n => n.trim())
           .filter(n => n && !/^n\/?a$/i.test(n) && !/^none$/i.test(n) && !/^null$/i.test(n) && n !== "-")
       : [];
@@ -2831,12 +2830,11 @@ function viewAdminGuestDetails(rowIndex) {
           <span style="font-size: 0.82rem; font-weight: 600; color: var(--foreground-muted); display: block; margin-bottom: 6px;">
             Together with:
           </span>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
             ${togetherNames.map(name => `
               <button type="button" class="shuttle-passenger-badge" onclick="openPassengerProfile('${escapeHtml(name).replace(/'/g, "\\'")}')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                 <span>${escapeHtml(name)}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="opacity: 0.7; margin-left: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
               </button>
             `).join('')}
           </div>
