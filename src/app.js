@@ -75,10 +75,13 @@ let currentGuestEmail = "";
           loadAdminDashboard();
         }
         if (t === 'guide' && tabName === 'guide') {
-          if (!guideDataCache) {
-            fetchGuideData();
-          } else {
-            renderGuideCityContent(currentGuideCity);
+          const isPending = document.getElementById('guide-pending-container') && document.getElementById('guide-pending-container').style.display === 'block';
+          if (!isPending) {
+            if (!guideDataCache) {
+              fetchGuideData();
+            } else {
+              renderGuideCityContent(currentGuideCity);
+            }
           }
         }
       });
@@ -398,7 +401,7 @@ let currentGuestEmail = "";
       if (response.checklist.approvalHotels) {
         document.getElementById("hotels-container").style.display = "grid";
         document.getElementById("hotels-pending-container").style.display = "none";
-        renderHotelData(response.hotelJerusalemData, response.hotelTelAvivData);
+        renderHotelData(response.hotelJerusalemData, response.hotelTelAvivData, response.hotelLinks);
       } else {
         document.getElementById("hotels-container").style.display = "none";
         document.getElementById("hotels-pending-container").style.display = "block";
@@ -423,11 +426,24 @@ let currentGuestEmail = "";
         document.getElementById("artists-pending-container").style.display = "block";
       }
 
-      // Initialize Guide Data
-      if (response.guideData) {
-        initGuide(response.guideData);
+      // Initialize Guide Data & Approval
+      const guidePills = document.getElementById("guide-pills-nav");
+      const guideContainer = document.getElementById("guide-container");
+      const guidePending = document.getElementById("guide-pending-container");
+
+      if (response.checklist.approvalGuide) {
+        if (guidePills) guidePills.style.display = "flex";
+        if (guideContainer) guideContainer.style.display = "block";
+        if (guidePending) guidePending.style.display = "none";
+        if (response.guideData) {
+          initGuide(response.guideData);
+        } else {
+          fetchGuideData();
+        }
       } else {
-        fetchGuideData();
+        if (guidePills) guidePills.style.display = "none";
+        if (guideContainer) guideContainer.style.display = "none";
+        if (guidePending) guidePending.style.display = "block";
       }
     }
 
@@ -704,12 +720,13 @@ let currentGuestEmail = "";
             <span style="font-size: 0.85rem; font-weight: 600; color: var(--foreground-muted); display: block; margin-bottom: 6px;">
               Together with:
             </span>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
               ${togetherNames.map(name => `
-                <span class="shuttle-passenger-badge">
+                <button type="button" class="shuttle-passenger-badge" onclick="openPassengerProfile('${escapeHtml(name).replace(/'/g, "\\'")}')">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                  ${escapeHtml(name)}
-                </span>
+                  <span>${escapeHtml(name)}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="opacity: 0.7; margin-left: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
               `).join('')}
             </div>
           </div>
@@ -732,48 +749,133 @@ let currentGuestEmail = "";
       container.innerHTML = html;
     }
 
-    function renderHotelData(jerusalemData, telAvivData) {
+    function formatHotelDateStrict(raw) {
+      if (!raw) return '';
+      const s = String(raw).trim();
+      if (s === '-' || s.toLowerCase() === 'n/a') return '';
+      // If already DD/MM/YYYY
+      const ddmmyyyy = s.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})/);
+      if (ddmmyyyy) {
+        const day = ddmmyyyy[1].padStart(2, '0');
+        const month = ddmmyyyy[2].padStart(2, '0');
+        const year = ddmmyyyy[3];
+        return `${day}/${month}/${year}`;
+      }
+      // If YYYY-MM-DD
+      const yyyymmdd = s.match(/^(\d{4})[\/\.-](\d{1,2})[\/\.-](\d{1,2})/);
+      if (yyyymmdd) {
+        const year = yyyymmdd[1];
+        const month = yyyymmdd[2].padStart(2, '0');
+        const day = yyyymmdd[3].padStart(2, '0');
+        return `${day}/${month}/${year}`;
+      }
+      const parsed = new Date(s);
+      if (!isNaN(parsed.getTime())) {
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const year = parsed.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+      return s.replace(/\s+00:00.*$/, '').replace(/T00:00.*$/, '');
+    }
+
+    function translateRoomType(raw) {
+      if (!raw) return '';
+      const s = String(raw).trim();
+      const lower = s.toLowerCase();
+      if (s.includes('יחיד') || lower.includes('single') || lower === 'sgl') {
+        return 'Single';
+      }
+      if (s.includes('זוגי') || lower.includes('double') || lower.includes('twin') || lower === 'dbl') {
+        return 'Double';
+      }
+      return s;
+    }
+
+    function renderHotelData(jerusalemData, telAvivData, hotelLinks) {
       const jlmContainer = document.getElementById("hotel-jerusalem-content");
       const tlvContainer = document.getElementById("hotel-telaviv-content");
-      
-      const hasJlm = jerusalemData && jerusalemData.some(i => i.value && i.value.trim() !== "");
-      const hasTlv = telAvivData && telAvivData.some(i => i.value && i.value.trim() !== "");
 
-      if (hasJlm) {
-        let html = `<div class="info-list">`;
-        jerusalemData.forEach(item => {
-          if (item.value && item.value.trim() !== "") {
-            html += `
-              <div class="info-row">
-                <span class="info-label">${item.label}</span>
-                <span class="info-value">${item.value}</span>
-              </div>
-            `;
+      // Update Map Links
+      const jlmBtn = document.getElementById("hotel-jlm-map-btn");
+      const tlvBtn = document.getElementById("hotel-tlv-map-btn");
+      let jlmLink = (hotelLinks && hotelLinks.jerusalem) || "";
+      let tlvLink = (hotelLinks && hotelLinks.telAviv) || "";
+
+      if ((!jlmLink || !tlvLink) && typeof guideDataCache !== 'undefined' && guideDataCache && guideDataCache.items) {
+        guideDataCache.items.forEach(it => {
+          const cat = String(it.category || "").toLowerCase();
+          const city = String(it.city || "").toLowerCase();
+          const name = String(it.name || "").toLowerCase();
+          const link = String(it.link || "").trim();
+          if ((cat.includes('מלון') || cat.includes('hotel') || name.includes('arthur') || name.includes('cinema')) && link) {
+            if (!jlmLink && (city.includes('ירושלים') || city.includes('jerusalem') || name.includes('arthur'))) {
+              jlmLink = link;
+            }
+            if (!tlvLink && (city.includes('תל אביב') || city.includes('tel aviv') || name.includes('cinema'))) {
+              tlvLink = link;
+            }
           }
         });
-        html += `</div>`;
-        jlmContainer.innerHTML = html;
-      } else {
-        jlmContainer.innerHTML = `<p class="empty-state">No Jerusalem accommodation details confirmed yet.</p>`;
       }
 
-      if (hasTlv) {
-        let html = `<div class="info-list">`;
-        telAvivData.forEach(item => {
-          if (item.value && item.value.trim() !== "") {
-            html += `
-              <div class="info-row">
-                <span class="info-label">${item.label}</span>
-                <span class="info-value">${item.value}</span>
-              </div>
-            `;
+      if (jlmBtn && jlmLink) jlmBtn.href = jlmLink;
+      if (tlvBtn && tlvLink) tlvBtn.href = tlvLink;
+
+      const buildHotelCard = (dataArray, cityName) => {
+        if (!dataArray || !Array.isArray(dataArray)) {
+          return `<p class="empty-state">No ${cityName} accommodation details confirmed yet.</p>`;
+        }
+
+        const map = {};
+        dataArray.forEach(item => {
+          if (item && item.label) {
+            map[item.label] = item.value;
           }
         });
-        html += `</div>`;
-        tlvContainer.innerHTML = html;
-      } else {
-        tlvContainer.innerHTML = `<p class="empty-state">No Tel Aviv accommodation details confirmed yet.</p>`;
-      }
+
+        const nights = map["Nights Count"] || map["כמות לילות"] || map["Total Nights"] || map["סה\"כ לילות"] || "";
+        const arrivalRaw = map["Arrival Date"] || map["תאריך הגעה"] || "";
+        const departureRaw = map["Departure Date"] || map["תאריך יציאה"] || map["תאריך עזיבה"] || "";
+        const roomTypeRaw = map["Room Type"] || map["סוג חדר"] || "";
+
+        const arrivalFormatted = formatHotelDateStrict(arrivalRaw);
+        const departureFormatted = formatHotelDateStrict(departureRaw);
+        const roomTypeFormatted = translateRoomType(roomTypeRaw);
+
+        const hasDetails = (nights && String(nights).trim() !== "") || 
+                           (arrivalFormatted && arrivalFormatted.trim() !== "") ||
+                           (departureFormatted && departureFormatted.trim() !== "") ||
+                           (roomTypeFormatted && roomTypeFormatted.trim() !== "");
+
+        if (!hasDetails) {
+          return `<p class="empty-state">No ${cityName} accommodation details confirmed yet.</p>`;
+        }
+
+        return `
+          <div class="hotel-spec-card">
+            <div class="hotel-spec-row">
+              <span class="hotel-spec-label">Nights Count</span>
+              <span class="hotel-spec-value">${nights ? `${nights}` : '—'}</span>
+            </div>
+            <div class="hotel-spec-row">
+              <span class="hotel-spec-label">Arrival Date</span>
+              <span class="hotel-spec-value">${arrivalFormatted || '—'}</span>
+            </div>
+            <div class="hotel-spec-row">
+              <span class="hotel-spec-label">Departure Date</span>
+              <span class="hotel-spec-value">${departureFormatted || '—'}</span>
+            </div>
+            <div class="hotel-spec-row">
+              <span class="hotel-spec-label">Room Type</span>
+              <span class="hotel-spec-value">${roomTypeFormatted || '—'}</span>
+            </div>
+          </div>
+        `;
+      };
+
+      if (jlmContainer) jlmContainer.innerHTML = buildHotelCard(jerusalemData, "Jerusalem");
+      if (tlvContainer) tlvContainer.innerHTML = buildHotelCard(telAvivData, "Tel Aviv");
     }
 
     function populateCountries(directoryArray) {
@@ -929,12 +1031,17 @@ let currentGuestEmail = "";
       container.className = "artists-grid";
     }
 
-    function openGuestSheet(index) {
-      const guest = globalDirectoryData[index];
+    function openGuestSheet(target) {
+      let guest = null;
+      if (typeof target === 'number') {
+        guest = globalDirectoryData[target];
+      } else if (target && typeof target === 'object') {
+        guest = target;
+      }
       if (!guest) return;
       
       const photoUrl = guest["Photo"] ? getThumbnailUrl(guest["Photo"]) : '';
-      const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim();
+      const fullName = `${guest["First Name"] || ""} ${guest["Last Name"] || ""}`.trim() || (guest["Email"] || "Guest Profile");
       let genreText = guest["Genre / Style"] || "";
       if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
       
@@ -999,22 +1106,109 @@ let currentGuestEmail = "";
         phoneContainer.style.display = 'none';
       }
 
-      document.getElementById('guest-sheet-overlay').classList.add('active');
-      document.getElementById('guest-bottom-sheet').classList.add('active');
+      // If an admin sheet is open, ensure guest sheet appears cleanly on top
+      const overlayEl = document.getElementById('guest-sheet-overlay');
+      const sheetEl = document.getElementById('guest-bottom-sheet');
+      const adminSheet = document.getElementById('admin-bottom-sheet');
+      if (adminSheet && adminSheet.classList.contains('active')) {
+        overlayEl.style.zIndex = '1010';
+        sheetEl.style.zIndex = '1011';
+      } else {
+        overlayEl.style.zIndex = '';
+        sheetEl.style.zIndex = '';
+      }
+
+      overlayEl.classList.add('active');
+      sheetEl.classList.add('active');
       document.body.style.overflow = 'hidden';
       
       window.location.hash = "guestsheet";
     }
 
     function closeGuestSheet(isHashChange) {
-      document.getElementById('guest-sheet-overlay').classList.remove('active');
-      document.getElementById('guest-bottom-sheet').classList.remove('active');
-      document.body.style.overflow = '';
+      const overlayEl = document.getElementById('guest-sheet-overlay');
+      const sheetEl = document.getElementById('guest-bottom-sheet');
+      overlayEl.classList.remove('active');
+      sheetEl.classList.remove('active');
+      overlayEl.style.zIndex = '';
+      sheetEl.style.zIndex = '';
+      
+      const adminSheet = document.getElementById('admin-bottom-sheet');
+      if (!adminSheet || !adminSheet.classList.contains('active')) {
+        document.body.style.overflow = '';
+      }
       
       if (isHashChange !== true && window.location.hash === "#guestsheet") {
         history.back();
       }
     }
+
+    window.openPassengerProfile = function(passengerName) {
+      if (!passengerName) return;
+      const cleanQ = String(passengerName).trim();
+      if (!cleanQ) return;
+      const lowerQ = cleanQ.toLowerCase();
+
+      // 1. Instant match in local globalDirectoryData
+      if (Array.isArray(globalDirectoryData) && globalDirectoryData.length > 0) {
+        let found = globalDirectoryData.find(g => {
+          const fn = String(g["First Name"] || "").trim().toLowerCase();
+          const ln = String(g["Last Name"] || "").trim().toLowerCase();
+          const full1 = `${fn} ${ln}`.trim();
+          const full2 = `${ln} ${fn}`.trim();
+          return (full1 && full1 === lowerQ) || (full2 && full2 === lowerQ);
+        });
+
+        if (!found) {
+          found = globalDirectoryData.find(g => String(g["Email"] || "").trim().toLowerCase() === lowerQ);
+        }
+
+        if (!found) {
+          found = globalDirectoryData.find(g => String(g["First Name"] || "").trim().toLowerCase() === lowerQ);
+        }
+
+        if (!found) {
+          found = globalDirectoryData.find(g => {
+            const fn = String(g["First Name"] || "").trim().toLowerCase();
+            const ln = String(g["Last Name"] || "").trim().toLowerCase();
+            const full = `${fn} ${ln}`.trim();
+            return full && (full.includes(lowerQ) || lowerQ.includes(full));
+          });
+        }
+
+        if (found) {
+          openGuestSheet(found);
+          return;
+        }
+      }
+
+      // 2. Fallback: Search via backend by name to get email and profile
+      if (typeof showToast === 'function') {
+        showToast("Opening " + cleanQ + "'s profile...", 1800);
+      }
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res && res.success && res.guest) {
+              if (Array.isArray(globalDirectoryData)) {
+                globalDirectoryData.push(res.guest);
+              }
+              openGuestSheet(res.guest);
+            } else {
+              if (typeof showToast === 'function') {
+                showToast("Profile details not found for " + cleanQ);
+              }
+            }
+          })
+          .withFailureHandler(function(err) {
+            if (typeof showToast === 'function') {
+              showToast("Error loading passenger profile");
+            }
+          })
+          .getGuestByPassengerName(cleanQ);
+      }
+    };
 
     function submitBio() {
       const bioText = document.getElementById("bio-input").value.trim();
@@ -2623,12 +2817,13 @@ function viewAdminGuestDetails(rowIndex) {
           <span style="font-size: 0.82rem; font-weight: 600; color: var(--foreground-muted); display: block; margin-bottom: 6px;">
             Together with:
           </span>
-          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
             ${togetherNames.map(name => `
-              <span class="shuttle-passenger-badge">
+              <button type="button" class="shuttle-passenger-badge" onclick="openPassengerProfile('${escapeHtml(name).replace(/'/g, "\\'")}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                ${escapeHtml(name)}
-              </span>
+                <span>${escapeHtml(name)}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="opacity: 0.7; margin-left: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
             `).join('')}
           </div>
         </div>

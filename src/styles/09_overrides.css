@@ -1032,11 +1032,28 @@ body.light-mode .shuttle-passengers-wrap {
   background: rgba(241, 169, 160, 0.15);
   color: var(--accent);
   border: 1.5px solid var(--accent);
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+  font-family: inherit;
+  line-height: 1.2;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shuttle-passenger-badge:hover {
+  background: rgba(241, 169, 160, 0.28);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.8);
+}
+
+.shuttle-passenger-badge:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.8);
 }
 
 body.light-mode .shuttle-passenger-badge {
@@ -1045,6 +1062,144 @@ body.light-mode .shuttle-passenger-badge {
   border: 1.5px solid #000;
   box-shadow: 2px 2px 0px #000;
 }
+
+body.light-mode .shuttle-passenger-badge:hover {
+  background: #fcd5cf;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000;
+}
+
+body.light-mode .shuttle-passenger-badge:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000;
+}
+
+/* ==========================================================================
+   ACCOMMODATIONS REDESIGN (Arthur Hotel & Cinema Hotel)
+   ========================================================================== */
+
+.rubric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.rubric-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+  margin: 0;
+}
+
+body.light-mode .rubric-title {
+  color: #0f172a;
+}
+
+.hotel-map-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: var(--accent);
+  color: #ffffff !important;
+  text-decoration: none !important;
+  border: 1.5px solid #000;
+  box-shadow: 2px 2px 0px #000;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.hotel-map-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000;
+  background: var(--accent-bright, #f87171);
+}
+
+.hotel-map-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000;
+}
+
+.hotel-map-btn .map-icon {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.2;
+}
+
+/* Unified Hotel Spec Card */
+.hotel-spec-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+}
+
+body.light-mode .hotel-spec-card {
+  background: #ffffff;
+  border: 1.5px solid #000;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.hotel-spec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.15s ease;
+}
+
+.hotel-spec-row:last-child {
+  border-bottom: none;
+}
+
+.hotel-spec-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.light-mode .hotel-spec-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .hotel-spec-row:hover {
+  background: #f8fafc;
+}
+
+.hotel-spec-label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--foreground-muted);
+}
+
+body.light-mode .hotel-spec-label {
+  color: #475569;
+}
+
+.hotel-spec-value {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--foreground);
+  text-align: right;
+  letter-spacing: 0.01em;
+}
+
+body.light-mode .hotel-spec-value {
+  color: #0f172a;
+}
+
 
 
 
