@@ -380,7 +380,7 @@ function fetchMappedData(sheet, email, mappingArray) {
             const cleanKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
             let foundIdx = headers.findIndex(h => h === cleanKey);
             if (foundIdx === -1) {
-              foundIdx = headers.findIndex(h => h.includes(cleanKey) || cleanKey.includes(h));
+              foundIdx = headers.findIndex(h => h && h.length > 1 && (h.includes(cleanKey) || (cleanKey.length > 1 && cleanKey.includes(h))));
             }
             if (foundIdx !== -1) { cIdx = foundIdx; break; }
           }

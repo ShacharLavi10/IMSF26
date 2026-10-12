@@ -245,3 +245,68 @@ function testFetchMappedData() {
 function logFlightsHeaders() {
   return debugGetFlightsInfo();
 }
+
+function debugInspectTogetherWith() {
+  const result = {};
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const fSheet = findSheetFuzzy(ss, ["טבלת טיסות - שיקוף", CONFIG.FLIGHTS_SHEET, "טבלת טיסות"]);
+  if (fSheet) {
+    const data = fSheet.getDataRange().getValues();
+    const disp = fSheet.getDataRange().getDisplayValues();
+    const formulas = fSheet.getDataRange().getFormulas();
+    result.sandboxHeaders = data[0];
+    result.sandboxRows = [];
+    for (let r = 0; r < data.length; r++) {
+      const email = String(data[r][0] || "");
+      const shuttle = String(disp[r][11] || data[r][11] || "");
+      const together = String(disp[r][12] || data[r][12] || "");
+      const form = String(formulas[r][12] || "");
+      if (shuttle !== "" || together !== "" || email.includes("shachar")) {
+        result.sandboxRows.push({
+          row: r + 1,
+          email: email,
+          name: (data[r][2] || "") + " " + (data[r][1] || ""),
+          shuttle: shuttle,
+          togetherRaw: data[r][12],
+          togetherDisp: disp[r][12],
+          togetherFormula: form
+        });
+      }
+    }
+  }
+
+  // Also inspect PROD master
+  try {
+    const prodSs = SpreadsheetApp.openById("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos");
+    const pSheet = findSheetFuzzy(prodSs, ["טבלת טיסות - שיקוף", "טבלת טיסות"]);
+    if (pSheet) {
+      const pData = pSheet.getDataRange().getValues();
+      const pDisp = pSheet.getDataRange().getDisplayValues();
+      const pForm = pSheet.getDataRange().getFormulas();
+      result.prodHeaders = pData[0];
+      result.prodRows = [];
+      for (let r = 0; r < pData.length; r++) {
+        const email = String(pData[r][0] || "");
+        const shuttle = String(pDisp[r][11] || pData[r][11] || "");
+        const together = String(pDisp[r][12] || pData[r][12] || "");
+        const form = String(pForm[r][12] || "");
+        if (shuttle !== "" || together !== "" || email.includes("shachar")) {
+          result.prodRows.push({
+            row: r + 1,
+            email: email,
+            name: (pData[r][2] || "") + " " + (pData[r][1] || ""),
+            shuttle: shuttle,
+            togetherRaw: pData[r][12],
+            togetherDisp: pDisp[r][12],
+            togetherFormula: form
+          });
+        }
+      }
+    }
+  } catch(e) {
+    result.prodError = e.toString();
+  }
+
+  return result;
+}
+

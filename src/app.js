@@ -610,7 +610,7 @@ let currentGuestEmail = "";
         if (lbl === "destination / to" || lbl.includes("destination") || lbl.includes("to")) dest = item.value;
         
         if (lbl === "shuttle" || lbl.includes("shuttle") || lbl.includes("שאטל") || lbl.includes("הסעה")) shuttle = item.value;
-        if (lbl === "together with" || lbl.includes("together") || lbl.includes("ביחד") || lbl.includes("יחד")) togetherWith = item.value;
+        if (lbl === "together with" || lbl.includes("together") || lbl.includes("ביחד") || lbl.includes("יחד") || lbl.includes("נוסע") || lbl.includes("שותפ") || lbl.includes("passengers")) togetherWith = item.value;
         if (lbl === "final ticket link" || lbl.includes("ticket link") || lbl.includes("כרטיס")) ticketLink = item.value;
       });
 
@@ -625,6 +625,13 @@ let currentGuestEmail = "";
                               !/^none$/i.test(cleanTogetherWith) && 
                               !/^null$/i.test(cleanTogetherWith) && 
                               cleanTogetherWith !== "-";
+
+      const togetherNames = hasTogetherWith
+        ? cleanTogetherWith
+            .split(/[,;\n]+/)
+            .map(n => n.trim())
+            .filter(n => n && !/^n\/?a$/i.test(n) && !/^none$/i.test(n) && !/^null$/i.test(n) && n !== "-")
+        : [];
 
       let html = '';
 
@@ -680,26 +687,44 @@ let currentGuestEmail = "";
         </div>
       `;
 
-      // Shuttle Information Rubric (shown ONLY if shuttle is assigned)
-      if (hasShuttle) {
+      // Shuttle Information Rubric (shown if shuttle is assigned or fellow passengers are scheduled)
+      if (hasShuttle || togetherNames.length > 0) {
         const isTimeOnly = /^\d{2}:\d{2}$/.test(formattedShuttle);
-        const shuttleTextHtml = isTimeOnly
-          ? `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedShuttle}</strong>.`
-          : `You are on the shuttle from Ben Gurion airport: <strong>${formattedShuttle}</strong>.`;
+        let shuttleTextHtml = '';
+        if (hasShuttle) {
+          shuttleTextHtml = isTimeOnly
+            ? `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedShuttle}</strong>.`
+            : `You are on the shuttle from Ben Gurion airport: <strong>${formattedShuttle}</strong>.`;
+        } else {
+          shuttleTextHtml = `You are scheduled on a shuttle from Ben Gurion airport.`;
+        }
+
+        const passengersHtml = togetherNames.length > 0 ? `
+          <div class="shuttle-passengers-wrap">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--foreground-muted); display: block; margin-bottom: 6px;">
+              Together with:
+            </span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              ${togetherNames.map(name => `
+                <span class="shuttle-passenger-badge">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                  ${escapeHtml(name)}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        ` : '';
 
         html += `
-          <div class="shuttle-info-card" style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: var(--radius-xl, 12px); border: 1px solid var(--accent); margin-top: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+          <div class="shuttle-info-card">
             <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
               Shuttle Information
             </h4>
-            <p style="margin: 0 ${hasTogetherWith ? '0 8px 0' : '0 0 0'}; font-size: 0.95rem;">
+            <p style="margin: 0; font-size: 0.95rem;">
               ${shuttleTextHtml}
             </p>
-            ${hasTogetherWith ? `
-            <p style="margin: 0; font-size: 0.9rem; color: var(--foreground-muted);">
-              <strong>Together with:</strong> ${cleanTogetherWith}
-            </p>` : ''}
+            ${passengersHtml}
           </div>
         `;
       }
@@ -2394,7 +2419,17 @@ function viewAdminGuestDetails(rowIndex) {
   if (fData) {
     const getFlightVal = (altKeys) => {
       for (const k of altKeys) {
-        if (fData[k.toLowerCase()] !== undefined && fData[k.toLowerCase()] !== '') return fData[k.toLowerCase()];
+        const cleanK = String(k).trim().toLowerCase();
+        for (const [key, val] of Object.entries(fData)) {
+          if (String(key).trim().toLowerCase() === cleanK && val !== undefined && val !== '') return val;
+        }
+      }
+      for (const k of altKeys) {
+        const cleanK = String(k).trim().toLowerCase();
+        for (const [key, val] of Object.entries(fData)) {
+          const cleanHeader = String(key).trim().toLowerCase();
+          if (cleanHeader && (cleanHeader.includes(cleanK) || cleanK.includes(cleanHeader)) && val !== undefined && val !== '') return val;
+        }
       }
       return '';
     };
@@ -2412,7 +2447,7 @@ function viewAdminGuestDetails(rowIndex) {
     let dest = getFlightVal(["יעד חזרה", "לאיפה", "מדינת חזרה", "לאן"]);
     
     let shuttle = getFlightVal(["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"]);
-    let togetherWith = getFlightVal(["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "together with"]);
+    let togetherWith = getFlightVal(["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"]);
     let ticketLink = getFlightVal(["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"]);
     let flightNotes = fData['הערות טיסות'] || '';
 
@@ -2511,6 +2546,13 @@ function viewAdminGuestDetails(rowIndex) {
                             !/^null$/i.test(cleanTogetherWith) && 
                             cleanTogetherWith !== '-';
 
+    const togetherNames = hasTogetherWith
+      ? cleanTogetherWith
+          .split(/[,;\n]+/)
+          .map(n => n.trim())
+          .filter(n => n && !/^n\/?a$/i.test(n) && !/^none$/i.test(n) && !/^null$/i.test(n) && n !== "-")
+      : [];
+
     flightHtml = '';
 
     if (ticketLink) {
@@ -2565,25 +2607,43 @@ function viewAdminGuestDetails(rowIndex) {
       </div>
     `;
 
-    if (formattedShuttle) {
+    if (formattedShuttle || togetherNames.length > 0) {
       const isTimeOnly = /^\d{2}:\d{2}$/.test(formattedShuttle);
-      const shuttleTextHtml = isTimeOnly
-        ? `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedShuttle}</strong>.`
-        : `You are on the shuttle from Ben Gurion airport: <strong>${formattedShuttle}</strong>.`;
+      let shuttleTextHtml = '';
+      if (formattedShuttle) {
+        shuttleTextHtml = isTimeOnly
+          ? `You are on the shuttle from Ben Gurion airport leaving at <strong>${formattedShuttle}</strong>.`
+          : `You are on the shuttle from Ben Gurion airport: <strong>${formattedShuttle}</strong>.`;
+      } else {
+        shuttleTextHtml = `You are scheduled on a shuttle from Ben Gurion airport.`;
+      }
+
+      const passengersHtml = togetherNames.length > 0 ? `
+        <div class="shuttle-passengers-wrap">
+          <span style="font-size: 0.82rem; font-weight: 600; color: var(--foreground-muted); display: block; margin-bottom: 6px;">
+            Together with:
+          </span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${togetherNames.map(name => `
+              <span class="shuttle-passenger-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                ${escapeHtml(name)}
+              </span>
+            `).join('')}
+          </div>
+        </div>
+      ` : '';
 
       flightHtml += `
-        <div class="shuttle-info-card" style="background: rgba(30, 215, 96, 0.05); padding: 16px; border-radius: var(--radius-xl, 12px); border: 1px solid var(--accent); margin-top: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
+        <div class="shuttle-info-card" style="margin-top: 12px; margin-bottom: 12px;">
           <h4 style="margin: 0 0 8px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1rem;">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
             Shuttle Information
           </h4>
-          <p style="margin: 0 ${hasTogetherWith ? '0 6px 0' : '0 0 0'}; font-size: 0.9rem;">
+          <p style="margin: 0; font-size: 0.9rem;">
             ${shuttleTextHtml}
           </p>
-          ${hasTogetherWith ? `
-          <p style="margin: 0; font-size: 0.85rem; color: var(--foreground-muted);">
-            <strong>Together with:</strong> ${cleanTogetherWith}
-          </p>` : ''}
+          ${passengersHtml}
         </div>
       `;
     }
