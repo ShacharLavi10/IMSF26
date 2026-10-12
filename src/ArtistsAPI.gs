@@ -469,3 +469,70 @@ function getAdminArtistsNetworkingData() {
   }
 }
 
+/**
+ * Run a full recalculation and sync of all artist leads from guest preferences.
+ * Can be called manually from Apps Script or from the Production Dashboard.
+ */
+function syncAllArtistsAndLeads() {
+  try {
+    // 1. Clear server-side artists cache
+    CacheService.getScriptCache().remove('global_artists_data_v2');
+
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+    const ss = SpreadsheetApp.openById(ssId);
+
+    const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
+    let prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
+    
+    // Check active spreadsheet fallback
+    if (!prefSheet) {
+      try {
+        const activeSs = SpreadsheetApp.getActiveSpreadsheet();
+        if (activeSs && activeSs.getId() !== ss.getId()) {
+          prefSheet = activeSs.getSheetByName(prefSheetName) || activeSs.getSheetByName("הערות אורחים");
+        }
+      } catch (e) {}
+    }
+
+    const leadsSheetName = CONFIG.ARTIST_LEADS_SHEET || "לידים והזדמנויות אומנים";
+    let leadsSheet = ss.getSheetByName(leadsSheetName);
+    if (!leadsSheet) {
+      try {
+        const activeSs = SpreadsheetApp.getActiveSpreadsheet();
+        if (activeSs && activeSs.getId() !== ss.getId()) {
+          leadsSheet = activeSs.getSheetByName(leadsSheetName);
+        }
+      } catch (e) {}
+    }
+
+    if (!leadsSheet) {
+      leadsSheet = ss.insertSheet(leadsSheetName);
+      leadsSheet.appendRow([
+        "שם האמן", "ז'אנר", "פוטנציאל סיבוב הופעות (Tour Match)",
+        "מדינות מתעניינות", "בוקרים להופעה (🎯 Booking)",
+        "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)",
+        "סה\"כ לייקים (❤️)", "הערות אורחים", "Raw Data"
+      ]);
+      leadsSheet.setFrozenRows(1);
+    }
+
+    const artistsRes = getArtistsData(true);
+    const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
+
+    if (prefSheet && leadsSheet) {
+      syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList);
+    }
+
+    return { 
+      success: true, 
+      message: "Sync complete! All artist leads and preferences have been recalculated.",
+      artistsCount: artistsList.length
+    };
+  } catch (err) {
+    console.error("Error in syncAllArtistsAndLeads:", err);
+    return { success: false, message: err.toString() };
+  }
+}
+
+

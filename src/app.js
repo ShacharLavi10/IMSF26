@@ -2710,7 +2710,10 @@ function renderAdminDashboard() {
           <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
             <span>🎸</span> Lineup & Networking Leads
           </h3>
-          <button class="secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="loadAdminNetworkingData(true)">Refresh Leads</button>
+          <div style="display: flex; gap: 8px;">
+            <button class="secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="loadAdminNetworkingData(true)">Refresh</button>
+            <button class="primary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="triggerFullLeadsSync()">⚡ Run Full Sync</button>
+          </div>
         </div>
         <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
         <div style="margin-bottom: 12px; position: relative;">
@@ -2764,6 +2767,29 @@ function loadAdminNetworkingData(forceRefresh = false) {
         container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Could not load networking data.</p>';
       })
       .getAdminArtistsNetworkingData();
+  }
+}
+
+function triggerFullLeadsSync() {
+  const container = document.getElementById('admin-networking-list');
+  if (container) {
+    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Running full leads recalculation...</p>';
+  }
+  if (window.google && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (typeof showToast === 'function') {
+          showToast(res.message || "Sync completed successfully!", "success");
+        }
+        loadAdminNetworkingData(true);
+      })
+      .withFailureHandler(function(err) {
+        if (typeof showToast === 'function') {
+          showToast("Sync failed: " + err.toString(), "error");
+        }
+        loadAdminNetworkingData(true);
+      })
+      .syncAllArtistsAndLeads();
   }
 }
 
@@ -3585,3 +3611,4 @@ window.selectGuideCity = selectGuideCity;
 window.fetchGuideData = fetchGuideData;
 window.loadAdminNetworkingData = loadAdminNetworkingData;
 window.filterAdminNetworking = filterAdminNetworking;
+window.triggerFullLeadsSync = triggerFullLeadsSync;
