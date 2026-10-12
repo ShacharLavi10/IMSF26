@@ -1,5 +1,6 @@
 let currentGuestEmail = "";
     let globalDirectoryData = [];
+    let isCurrentGuestAdmin = false;
 
     function closeWelcomeModal() {
       document.getElementById("welcome-modal-overlay").style.display = "none";
@@ -7,6 +8,9 @@ let currentGuestEmail = "";
     }
 
     function checkSessionOnLoad() {
+      const tabAdminInit = document.getElementById("tab-admin");
+      if (tabAdminInit) tabAdminInit.style.display = "none";
+
       const token = localStorage.getItem('guestSessionToken');
       if (token) {
         document.getElementById("email-step").style.display = "none";
@@ -15,12 +19,12 @@ let currentGuestEmail = "";
         if (cached) {
           try {
             const parsedCached = JSON.parse(cached);
-            if (parsedCached && parsedCached.guestInfo && (parsedCached.guestInfo.isAdmin || localStorage.getItem('originalAdminToken'))) {
-              const resetBtn = document.getElementById("admin-reset-cache-btn");
-              const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
-              if (resetBtn) resetBtn.style.display = "inline-flex";
-              if (panelResetBtn) panelResetBtn.style.display = "inline-flex";
-            }
+            isCurrentGuestAdmin = !!(parsedCached && parsedCached.guestInfo && (parsedCached.guestInfo.isAdmin === true || parsedCached.guestInfo.role === 'הפקה חשיפה'));
+            const resetBtn = document.getElementById("admin-reset-cache-btn");
+            const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
+            if (resetBtn) resetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
+            if (panelResetBtn) panelResetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
+            if (tabAdminInit) tabAdminInit.style.display = isCurrentGuestAdmin ? "flex" : "none";
             onLoginSuccess(parsedCached, true);
           } catch(e) {
             document.getElementById("login-loader").style.display = "block";
@@ -48,6 +52,9 @@ let currentGuestEmail = "";
     }
 
     function switchCategoryTab(tabName) {
+      if (tabName === 'admin' && !isCurrentGuestAdmin) {
+        tabName = 'schedule';
+      }
       if (tabName === 'flights' || tabName === 'hotels') {
         tabName = 'mytrip';
       }
@@ -72,7 +79,9 @@ let currentGuestEmail = "";
           card.style.display = (t === tabName) ? 'block' : 'none';
         }
         if (t === 'admin' && tabName === 'admin') {
-          loadAdminDashboard();
+          if (isCurrentGuestAdmin) {
+            loadAdminDashboard();
+          }
         }
         if (t === 'guide' && tabName === 'guide') {
           const isPending = document.getElementById('guide-pending-container') && document.getElementById('guide-pending-container').style.display === 'block';
@@ -181,6 +190,15 @@ let currentGuestEmail = "";
       document.getElementById("otp-step").style.display = "none";
       document.getElementById("guest-otp").value = "";
       document.getElementById("login-error").style.display = "none";
+      isCurrentGuestAdmin = false;
+      const tabAdmin = document.getElementById("tab-admin");
+      if (tabAdmin) tabAdmin.style.display = "none";
+      const adminCard = document.getElementById("admin-card");
+      if (adminCard) adminCard.style.display = "none";
+      const resetBtn = document.getElementById("admin-reset-cache-btn");
+      if (resetBtn) resetBtn.style.display = "none";
+      const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
+      if (panelResetBtn) panelResetBtn.style.display = "none";
     }
 
     function onLoginSuccess(response, isFromCache = false, isBackgroundUpdate = false) {
@@ -206,15 +224,21 @@ let currentGuestEmail = "";
       }
       currentGuestEmail = response.guestInfo.email;
       
-      const isUserAdmin = !!(response.guestInfo && response.guestInfo.isAdmin) || !!localStorage.getItem('originalAdminToken');
+      isCurrentGuestAdmin = !!(response.guestInfo && (response.guestInfo.isAdmin === true || response.guestInfo.role === 'הפקה חשיפה'));
       
       const resetBtn = document.getElementById("admin-reset-cache-btn");
       const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
-      if (resetBtn) resetBtn.style.display = isUserAdmin ? "inline-flex" : "none";
-      if (panelResetBtn) panelResetBtn.style.display = isUserAdmin ? "inline-flex" : "none";
+      if (resetBtn) resetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
+      if (panelResetBtn) panelResetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
 
-      if (isUserAdmin) {
-        document.getElementById("tab-admin").style.display = "block";
+      const tabAdmin = document.getElementById("tab-admin");
+      if (tabAdmin) {
+        tabAdmin.style.display = isCurrentGuestAdmin ? "flex" : "none";
+      }
+
+      const adminCard = document.getElementById("admin-card");
+      if (adminCard && !isCurrentGuestAdmin) {
+        adminCard.style.display = "none";
       }
 
       document.getElementById("login-section").style.display = "none";
@@ -262,7 +286,11 @@ let currentGuestEmail = "";
         const restoreTab = sessionStorage.getItem('imsf_restore_tab');
         if (restoreTab) {
           sessionStorage.removeItem('imsf_restore_tab');
-          switchCategoryTab(restoreTab);
+          if (restoreTab === 'admin' && !isCurrentGuestAdmin) {
+            switchCategoryTab('schedule');
+          } else {
+            switchCategoryTab(restoreTab);
+          }
         } else {
           let hasActiveTab = document.querySelector('#category-nav-wrapper button.active');
           if (!isBackgroundUpdate || !hasActiveTab) {
@@ -1704,6 +1732,19 @@ let currentGuestEmail = "";
       renderGuideCityContent(city);
     }
 
+    function getGuideCategoryIcon(catName) {
+      const lower = (catName || '').toLowerCase();
+      if (lower.includes('venue') || lower.includes('לוקיישן')) return '🎪';
+      if (lower.includes('bar') || lower.includes('night') || lower.includes('בר') || lower.includes('pub') || lower.includes('פאב')) return '🍸';
+      if (lower.includes('food') || lower.includes('restaurant') || lower.includes('coffee') || lower.includes('cafe') || lower.includes('אוכל') || lower.includes('קפה') || lower.includes('מסעד')) return '🍽️';
+      if (lower.includes('hotel') || lower.includes('מלון') || lower.includes('אירוח') || lower.includes('לינה')) return '🏨';
+      if (lower.includes('transit') || lower.includes('taxi') || lower.includes('מוני') || lower.includes('app') || lower.includes('אפליקצי')) return '📱';
+      if (lower.includes('faq') || lower.includes('q&a') || lower.includes('שאלה') || lower.includes('מידע')) return '💡';
+      if (lower.includes('emergency') || lower.includes('חירום') || lower.includes('health') || lower.includes('בריאות')) return '🚨';
+      if (lower.includes('pay') || lower.includes('money') || lower.includes('תשלום') || lower.includes('כסף')) return '💳';
+      return '📍';
+    }
+
     function renderGuideCityContent(city) {
       const container = document.getElementById('guide-content-area');
       if (!container) return;
@@ -1732,7 +1773,7 @@ let currentGuestEmail = "";
         return;
       }
 
-      // Group by Category (Venues, Bars, Food, etc.)
+      // Group by Category (Venues, Bars, Food, Hotels, etc.)
       const categories = {};
       items.forEach(item => {
         const cat = item.category || 'General';
@@ -1743,18 +1784,26 @@ let currentGuestEmail = "";
       let html = '<div class="guide-sections-wrapper">';
       Object.keys(categories).forEach(catName => {
         const catItems = categories[catName];
-        let catIcon = '📍';
-        const lowerCat = catName.toLowerCase();
-        if (lowerCat.includes('venue') || lowerCat.includes('לוקיישן')) catIcon = '🎪';
-        else if (lowerCat.includes('bar') || lowerCat.includes('night') || lowerCat.includes('בר')) catIcon = '🍸';
-        else if (lowerCat.includes('food') || lowerCat.includes('restaurant') || lowerCat.includes('coffee') || lowerCat.includes('אוכל') || lowerCat.includes('קפה')) catIcon = '🍽️';
+        const catIcon = getGuideCategoryIcon(catName);
 
         html += `
-          <div class="guide-category-section">
-            <h4 class="guide-category-title">
-              <span>${catIcon}</span> ${escapeHtml(catName)}
-            </h4>
-            <div class="guide-cards-grid">
+          <details class="guide-category-accordion">
+            <summary class="guide-category-summary">
+              <div class="guide-category-info">
+                <span class="guide-category-icon">${catIcon}</span>
+                <span class="guide-category-title">${escapeHtml(catName)}</span>
+              </div>
+              <div class="guide-category-meta">
+                <span class="guide-category-badge">${catItems.length}</span>
+                <span class="guide-category-chevron">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+            </summary>
+            <div class="guide-category-content">
+              <div class="guide-cards-list">
         `;
 
         catItems.forEach(item => {
@@ -1769,12 +1818,12 @@ let currentGuestEmail = "";
             <div class="guide-item-card fade-up">
               <div class="guide-item-main">
                 <div class="guide-item-header">
-                  <span class="guide-item-name">${escapeHtml(item.name)}</span>
+                  <span class="guide-item-name" dir="auto">${escapeHtml(item.name)}</span>
                   ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
                 </div>
-                ${item.description ? `<p class="guide-item-desc">${escapeHtml(item.description)}</p>` : ''}
+                ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
                 ${item.address ? `
-                  <div class="guide-item-address">
+                  <div class="guide-item-address" dir="auto">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1796,8 +1845,9 @@ let currentGuestEmail = "";
         });
 
         html += `
+              </div>
             </div>
-          </div>
+          </details>
         `;
       });
       html += '</div>';
@@ -1822,11 +1872,23 @@ let currentGuestEmail = "";
 
       if (actionItems.length > 0) {
         html += `
-          <div class="guide-category-section">
-            <h4 class="guide-category-title">
-              <span>📱</span> Essential Apps & Services
-            </h4>
-            <div class="guide-cards-grid">
+          <details class="guide-category-accordion">
+            <summary class="guide-category-summary">
+              <div class="guide-category-info">
+                <span class="guide-category-icon">📱</span>
+                <span class="guide-category-title">Essential Apps & Services</span>
+              </div>
+              <div class="guide-category-meta">
+                <span class="guide-category-badge">${actionItems.length}</span>
+                <span class="guide-category-chevron">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+            </summary>
+            <div class="guide-category-content">
+              <div class="guide-cards-list">
         `;
         actionItems.forEach(item => {
           let btnLabel = "Open";
@@ -1862,28 +1924,50 @@ let currentGuestEmail = "";
             <div class="guide-item-card fade-up">
               <div class="guide-item-main">
                 <div class="guide-item-header">
-                  <span class="guide-item-name">${escapeHtml(item.name)}</span>
+                  <span class="guide-item-name" dir="auto">${escapeHtml(item.name)}</span>
                   ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
                 </div>
-                ${item.description ? `<p class="guide-item-desc">${escapeHtml(item.description)}</p>` : ''}
+                ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
+                ${item.address ? `
+                  <div class="guide-item-address" dir="auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>${escapeHtml(item.address)}</span>
+                  </div>
+                ` : ''}
               </div>
               ${linkHtml}
             </div>
           `;
         });
         html += `
+              </div>
             </div>
-          </div>
+          </details>
         `;
       }
 
       if (faqItems.length > 0) {
         html += `
-          <div class="guide-category-section">
-            <h4 class="guide-category-title">
-              <span>💡</span> Need to Know & FAQs
-            </h4>
-            <div class="guide-faq-accordion">
+          <details class="guide-category-accordion">
+            <summary class="guide-category-summary">
+              <div class="guide-category-info">
+                <span class="guide-category-icon">💡</span>
+                <span class="guide-category-title">Need to Know & FAQs</span>
+              </div>
+              <div class="guide-category-meta">
+                <span class="guide-category-badge">${faqItems.length}</span>
+                <span class="guide-category-chevron">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
+            </summary>
+            <div class="guide-category-content">
+              <div class="guide-cards-list">
         `;
         faqItems.forEach((faq) => {
           let linkHtml = '';
@@ -1905,19 +1989,20 @@ let currentGuestEmail = "";
           html += `
             <details class="guide-faq-item fade-up">
               <summary class="guide-faq-question">
-                <span>${escapeHtml(faq.name)}</span>
+                <span dir="auto">${escapeHtml(faq.name)}</span>
                 <span class="faq-chevron">▾</span>
               </summary>
               <div class="guide-faq-answer">
-                <p>${escapeHtml(faq.description)}</p>
+                <p dir="auto">${escapeHtml(faq.description)}</p>
                 ${linkHtml}
               </div>
             </details>
           `;
         });
         html += `
+              </div>
             </div>
-          </div>
+          </details>
         `;
       }
 
