@@ -1,5 +1,6 @@
 let currentGuestEmail = "";
     let globalDirectoryData = [];
+    let isCurrentGuestAdmin = false;
 
     function closeWelcomeModal() {
       document.getElementById("welcome-modal-overlay").style.display = "none";
@@ -7,6 +8,9 @@ let currentGuestEmail = "";
     }
 
     function checkSessionOnLoad() {
+      const tabAdminInit = document.getElementById("tab-admin");
+      if (tabAdminInit) tabAdminInit.style.display = "none";
+
       const token = localStorage.getItem('guestSessionToken');
       if (token) {
         document.getElementById("email-step").style.display = "none";
@@ -15,12 +19,12 @@ let currentGuestEmail = "";
         if (cached) {
           try {
             const parsedCached = JSON.parse(cached);
-            if (parsedCached && parsedCached.guestInfo && (parsedCached.guestInfo.isAdmin || localStorage.getItem('originalAdminToken'))) {
-              const resetBtn = document.getElementById("admin-reset-cache-btn");
-              const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
-              if (resetBtn) resetBtn.style.display = "inline-flex";
-              if (panelResetBtn) panelResetBtn.style.display = "inline-flex";
-            }
+            isCurrentGuestAdmin = !!(parsedCached && parsedCached.guestInfo && (parsedCached.guestInfo.isAdmin === true || parsedCached.guestInfo.role === 'הפקה חשיפה'));
+            const resetBtn = document.getElementById("admin-reset-cache-btn");
+            const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
+            if (resetBtn) resetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
+            if (panelResetBtn) panelResetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
+            if (tabAdminInit) tabAdminInit.style.display = isCurrentGuestAdmin ? "flex" : "none";
             onLoginSuccess(parsedCached, true);
           } catch(e) {
             document.getElementById("login-loader").style.display = "block";
@@ -48,6 +52,9 @@ let currentGuestEmail = "";
     }
 
     function switchCategoryTab(tabName) {
+      if (tabName === 'admin' && !isCurrentGuestAdmin) {
+        tabName = 'schedule';
+      }
       if (tabName === 'flights' || tabName === 'hotels') {
         tabName = 'mytrip';
       }
@@ -72,7 +79,9 @@ let currentGuestEmail = "";
           card.style.display = (t === tabName) ? 'block' : 'none';
         }
         if (t === 'admin' && tabName === 'admin') {
-          loadAdminDashboard();
+          if (isCurrentGuestAdmin) {
+            loadAdminDashboard();
+          }
         }
         if (t === 'guide' && tabName === 'guide') {
           const isPending = document.getElementById('guide-pending-container') && document.getElementById('guide-pending-container').style.display === 'block';
@@ -181,6 +190,15 @@ let currentGuestEmail = "";
       document.getElementById("otp-step").style.display = "none";
       document.getElementById("guest-otp").value = "";
       document.getElementById("login-error").style.display = "none";
+      isCurrentGuestAdmin = false;
+      const tabAdmin = document.getElementById("tab-admin");
+      if (tabAdmin) tabAdmin.style.display = "none";
+      const adminCard = document.getElementById("admin-card");
+      if (adminCard) adminCard.style.display = "none";
+      const resetBtn = document.getElementById("admin-reset-cache-btn");
+      if (resetBtn) resetBtn.style.display = "none";
+      const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
+      if (panelResetBtn) panelResetBtn.style.display = "none";
     }
 
     function onLoginSuccess(response, isFromCache = false, isBackgroundUpdate = false) {
@@ -206,15 +224,21 @@ let currentGuestEmail = "";
       }
       currentGuestEmail = response.guestInfo.email;
       
-      const isUserAdmin = !!(response.guestInfo && response.guestInfo.isAdmin) || !!localStorage.getItem('originalAdminToken');
+      isCurrentGuestAdmin = !!(response.guestInfo && (response.guestInfo.isAdmin === true || response.guestInfo.role === 'הפקה חשיפה'));
       
       const resetBtn = document.getElementById("admin-reset-cache-btn");
       const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
-      if (resetBtn) resetBtn.style.display = isUserAdmin ? "inline-flex" : "none";
-      if (panelResetBtn) panelResetBtn.style.display = isUserAdmin ? "inline-flex" : "none";
+      if (resetBtn) resetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
+      if (panelResetBtn) panelResetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
 
-      if (isUserAdmin) {
-        document.getElementById("tab-admin").style.display = "block";
+      const tabAdmin = document.getElementById("tab-admin");
+      if (tabAdmin) {
+        tabAdmin.style.display = isCurrentGuestAdmin ? "flex" : "none";
+      }
+
+      const adminCard = document.getElementById("admin-card");
+      if (adminCard && !isCurrentGuestAdmin) {
+        adminCard.style.display = "none";
       }
 
       document.getElementById("login-section").style.display = "none";
@@ -262,7 +286,11 @@ let currentGuestEmail = "";
         const restoreTab = sessionStorage.getItem('imsf_restore_tab');
         if (restoreTab) {
           sessionStorage.removeItem('imsf_restore_tab');
-          switchCategoryTab(restoreTab);
+          if (restoreTab === 'admin' && !isCurrentGuestAdmin) {
+            switchCategoryTab('schedule');
+          } else {
+            switchCategoryTab(restoreTab);
+          }
         } else {
           let hasActiveTab = document.querySelector('#category-nav-wrapper button.active');
           if (!isBackgroundUpdate || !hasActiveTab) {

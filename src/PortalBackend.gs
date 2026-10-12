@@ -312,6 +312,7 @@ function getGuestPortalData(sessionToken) {
         email: cleanEmail, 
         firstName: firstName, 
         lastName: lastName, 
+        role: String(getColVal("תפקיד") || "").trim(),
         rowIndex: rowIndex, 
         bio: bioText, 
         isAdmin: isAdmin,

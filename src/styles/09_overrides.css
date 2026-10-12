@@ -1358,6 +1358,11 @@ body.light-mode .hotel-spec-value {
   color: #0f172a;
 }
 
+/* Production Tab - Hidden by default unless user is in role 'הפקה חשיפה' */
+#tab-admin {
+  display: none;
+}
+
 
 
 
