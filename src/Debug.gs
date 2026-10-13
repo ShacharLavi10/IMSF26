@@ -498,8 +498,8 @@ function inspectBackupsAndHotels() {
         result.sandboxJlmHotel = {
           lastRow: lastRow,
           lastCol: lastCol,
-          sampleValues: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : [],
-          sampleFormulas: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getFormulas() : []
+          sampleValues: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getValues() : [],
+          sampleFormulas: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getFormulas() : []
         };
       }
     } catch (e) {
@@ -512,9 +512,15 @@ function inspectBackupsAndHotels() {
       if (pJlm) {
         const lastRow = pJlm.getLastRow();
         const lastCol = pJlm.getLastColumn();
-        result.prodJlmHotel.sampleFormulas = lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getFormulas() : [];
+        result.prodJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getValues() : [],
+          sampleFormulas: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getFormulas() : []
+        };
       }
     } catch(e) {}
+
 
   } catch (err) {
     result.error = err.toString();
