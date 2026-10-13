@@ -304,8 +304,8 @@ function getGuestArtistFeedback(email) {
  */
 function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
   try {
-    const prefData = prefSheet.getDataRange().getValues();
-    if (prefData.length < 2) return;
+    const prefData = (prefSheet && prefSheet.getLastRow() > 0) ? prefSheet.getDataRange().getValues() : [];
+    const hasPreferences = prefData.length > 1;
 
     // Aggregates per artistId
     // artistId -> { likes: 0, countries: {}, booking: [], connect: [], press: [], notes: [] }
@@ -323,47 +323,53 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
       };
     });
 
-    for (let r = 1; r < prefData.length; r++) {
-      const row = prefData[r];
-      const guestName = String(row[1] || "").trim();
-      const country = String(row[2] || "").trim();
-      const company = String(row[4] || row[3] || "").trim(); // role or company
-      const rawJson = row[10];
-      if (!rawJson) continue;
+    if (hasPreferences) {
+      for (let r = 1; r < prefData.length; r++) {
+        const row = prefData[r];
+        const cleanEmail = String(row[0] || "").trim();
+        const guestName = String(row[1] || "").trim();
+        const country = String(row[2] || "").trim();
+        const company = String(row[4] || row[3] || "").trim(); // role or company
+        const rawJson = row[10];
+        if (!rawJson) continue;
 
-      let payload = null;
-      try { payload = JSON.parse(rawJson); } catch (e) { continue; }
+        let payload = null;
+        try { payload = JSON.parse(rawJson); } catch (e) { continue; }
 
-      const favs = payload.favorites || {};
-      const notes = payload.notes || {};
-      const tags = payload.tags || {};
+        const favs = payload.favorites || {};
+        const notes = payload.notes || {};
+        const tags = payload.tags || {};
 
-      const delegateLabel = country ? `${guestName} (${country}${company ? " - " + company : ""})` : `${guestName}${company ? " (" + company + ")" : ""}`;
+        const displayName = guestName || cleanEmail;
+        const delegateLabel = country 
+          ? `${displayName} (${country}${company ? " - " + company : ""})` 
+          : `${displayName}${company ? " (" + company + ")" : ""}`;
 
-      Object.keys(favs).forEach(aId => {
-        if (favs[aId] && agg[aId]) {
-          agg[aId].likes++;
-          if (country) {
-            agg[aId].countries[country] = (agg[aId].countries[country] || 0) + 1;
+        Object.keys(favs).forEach(aId => {
+          if (favs[aId] && agg[aId]) {
+            agg[aId].likes++;
+            if (country) {
+              agg[aId].countries[country] = (agg[aId].countries[country] || 0) + 1;
+            }
           }
-        }
-      });
+        });
 
-      Object.keys(tags).forEach(aId => {
-        if (!agg[aId]) return;
-        const tList = tags[aId] || [];
-        if (tList.includes("Booking")) agg[aId].booking.push(delegateLabel);
-        if (tList.includes("Connect")) agg[aId].connect.push(delegateLabel);
-        if (tList.includes("Press")) agg[aId].press.push(delegateLabel);
-      });
+        Object.keys(tags).forEach(aId => {
+          if (!agg[aId]) return;
+          const tList = tags[aId] || [];
+          if (tList.includes("Booking")) agg[aId].booking.push(delegateLabel);
+          if (tList.includes("Connect")) agg[aId].connect.push(delegateLabel);
+          if (tList.includes("Press")) agg[aId].press.push(delegateLabel);
+        });
 
-      Object.keys(notes).forEach(aId => {
-        if (!agg[aId]) return;
-        const text = (notes[aId] || "").trim();
-        if (text) {
-          agg[aId].notes.push(`[${delegateLabel}]: ${text}`);
-        }
-      });
+        Object.keys(notes).forEach(aId => {
+          if (!agg[aId]) return;
+          const text = (notes[aId] || "").trim();
+          if (text) {
+            agg[aId].notes.push(`[${delegateLabel}]: ${text}`);
+          }
+        });
+      }
     }
 
     const rowsToWrite = [];
@@ -417,12 +423,12 @@ function getAdminArtistsNetworkingData() {
     const ss = SpreadsheetApp.openById(ssId);
 
     const leadsSheetName = CONFIG.ARTIST_LEADS_SHEET || "לידים והזדמנויות אומנים";
-    const leadsSheet = ss.getSheetByName(leadsSheetName);
+    let leadsSheet = ss.getSheetByName(leadsSheetName);
     const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
     const prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
 
-    const artistsLeads = [];
-    if (leadsSheet) {
+    let artistsLeads = [];
+    if (leadsSheet && leadsSheet.getLastRow() > 1) {
       const data = leadsSheet.getDataRange().getValues();
       for (let r = 1; r < data.length; r++) {
         const row = data[r];
@@ -438,6 +444,30 @@ function getAdminArtistsNetworkingData() {
           likesCount: Number(row[7] || 0),
           notes: String(row[8] || "").trim()
         });
+      }
+    }
+
+    // Auto-populate if leads sheet is empty
+    if (artistsLeads.length === 0) {
+      syncAllArtistsAndLeads();
+      leadsSheet = ss.getSheetByName(leadsSheetName);
+      if (leadsSheet && leadsSheet.getLastRow() > 1) {
+        const data = leadsSheet.getDataRange().getValues();
+        for (let r = 1; r < data.length; r++) {
+          const row = data[r];
+          if (!row[0]) continue;
+          artistsLeads.push({
+            name: String(row[0]).trim(),
+            genre: String(row[1] || "").trim(),
+            tourPotential: String(row[2] || "").trim(),
+            countries: String(row[3] || "").trim(),
+            bookingLeads: String(row[4] || "").trim(),
+            connectLeads: String(row[5] || "").trim(),
+            pressLeads: String(row[6] || "").trim(),
+            likesCount: Number(row[7] || 0),
+            notes: String(row[8] || "").trim()
+          });
+        }
       }
     }
 

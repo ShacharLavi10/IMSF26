@@ -2812,8 +2812,16 @@ function renderAdminNetworkingList(data, query = "") {
     return;
   }
 
+  const sortedLeads = [...leads].sort((a, b) => {
+    const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
+    const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
+    if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
+    if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
+    return a.name.localeCompare(b.name);
+  });
+
   let html = '';
-  leads.forEach(a => {
+  sortedLeads.forEach(a => {
     const hasBooking = a.bookingLeads && a.bookingLeads.trim().length > 0;
     const hasNotes = a.notes && a.notes.trim().length > 0;
     html += `
