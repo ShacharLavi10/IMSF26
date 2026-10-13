@@ -1647,20 +1647,29 @@ let currentGuestEmail = "";
         const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         
         const isActive = d === activeDate;
-        html += `<button class="schedule-pill ${isActive ? 'active' : ''}" onclick="selectScheduleDate('${d}')">${dayName}, ${monthDay}</button>`;
+        html += `<button class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectScheduleDate('${d}')">${dayName}, ${monthDay}</button>`;
       });
       nav.innerHTML = html;
+
+      // Add direct event listeners for rock-solid click response on both desktop & mobile touch
+      nav.querySelectorAll('.schedule-pill').forEach(btn => {
+        btn.addEventListener('click', function(ev) {
+          const targetDate = this.getAttribute('data-date');
+          if (targetDate) {
+            selectScheduleDate(targetDate);
+          }
+        });
+      });
       
       renderScheduleForDate(activeDate);
     }
     
     function selectScheduleDate(dateStr) {
-      const pills = document.querySelectorAll('.schedule-pill');
-      const dates = Object.keys(scheduleDataCache).sort();
-      const index = dates.indexOf(dateStr);
+      if (!scheduleDataCache || !scheduleDataCache[dateStr]) return;
+      const pills = document.querySelectorAll('#schedule-days-nav .schedule-pill');
       
-      pills.forEach((p, i) => {
-        if (i === index) {
+      pills.forEach(p => {
+        if (p.getAttribute('data-date') === dateStr) {
           p.classList.add('active');
           p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         } else {
@@ -1670,6 +1679,10 @@ let currentGuestEmail = "";
       
       renderScheduleForDate(dateStr);
     }
+
+    window.selectScheduleDate = selectScheduleDate;
+    window.renderScheduleTabs = renderScheduleTabs;
+    window.renderScheduleForDate = renderScheduleForDate;
     
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
@@ -1694,10 +1707,10 @@ let currentGuestEmail = "";
       events.forEach(e => {
         const timeText = e.endTime ? `${e.startTime}-${e.endTime}` : e.startTime;
         
-        let mapsUrl = "";
+        let mapsUrl = (e.locationLink && String(e.locationLink).trim() !== "") ? String(e.locationLink).trim() : "";
         let locName = e.location ? e.location.trim() : "";
 
-        if (locName !== "") {
+        if (!mapsUrl && locName !== "") {
           if (locName.startsWith('http://') || locName.startsWith('https://')) {
             mapsUrl = locName;
           } else {
@@ -1721,11 +1734,28 @@ let currentGuestEmail = "";
           }
         }
 
+        let catBadge = "";
+        if (e.category) {
+          const catColors = {
+            'Concerts': { bg: 'rgba(168, 85, 247, 0.15)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.35)', icon: '🎸' },
+            'Shuttle': { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.35)', icon: '🚌' },
+            'Food & Drinks': { bg: 'rgba(249, 115, 22, 0.15)', text: '#fb923c', border: 'rgba(249, 115, 22, 0.35)', icon: '🍽️' },
+            'Social & Food': { bg: 'rgba(249, 115, 22, 0.15)', text: '#fb923c', border: 'rgba(249, 115, 22, 0.35)', icon: '🍽️' },
+            'Free Time': { bg: 'rgba(34, 197, 94, 0.15)', text: '#4ade80', border: 'rgba(34, 197, 94, 0.35)', icon: '🌴' },
+            'Tour': { bg: 'rgba(234, 179, 8, 0.15)', text: '#facc15', border: 'rgba(234, 179, 8, 0.35)', icon: '🧭' },
+            'Networking': { bg: 'rgba(99, 102, 241, 0.15)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.35)', icon: '🤝' },
+            'Party': { bg: 'rgba(236, 72, 153, 0.15)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.35)', icon: '🎉' },
+            'Logistics': { bg: 'rgba(148, 163, 184, 0.15)', text: '#94a3b8', border: 'rgba(148, 163, 184, 0.35)', icon: 'ℹ️' }
+          };
+          const c = catColors[e.category] || { bg: 'rgba(255, 255, 255, 0.08)', text: '#e2e8f0', border: 'rgba(255, 255, 255, 0.15)', icon: '📌' };
+          catBadge = `<span class="schedule-cat-badge" style="background:${c.bg}; color:${c.text}; border:1px solid ${c.border}; font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; letter-spacing:0.3px; white-space:nowrap;">${c.icon} ${escapeHtml(e.category)}</span>`;
+        }
+
         let titleHtml = `<span class="event-title">${escapeHtml(e.title)}</span>`;
         let locHtml = "";
         if (locName !== "" && mapsUrl !== "") {
           locHtml = `
-            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="schedule-loc-link" title="Open in Google Maps">
+            <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="schedule-loc-link" title="Open in Maps / Info">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1739,8 +1769,9 @@ let currentGuestEmail = "";
           <div class="schedule-event-inline fade-up">
             <span class="event-time">${escapeHtml(timeText)}</span>
             <div class="schedule-event-details">
-              <div class="schedule-title-row">
+              <div class="schedule-title-row" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                 ${titleHtml}
+                ${catBadge}
                 ${locHtml}
               </div>
               ${e.description ? `<span class="event-desc">${escapeHtml(e.description)}</span>` : ''}
@@ -4539,3 +4570,6 @@ window.switchAdminNetworkingTab = switchAdminNetworkingTab;
 window.openNetworkingDetail = openNetworkingDetail;
 window.closeNetworkingDetailSheet = closeNetworkingDetailSheet;
 window.renderAdminNetworkingKPIs = renderAdminNetworkingKPIs;
+window.selectScheduleDate = selectScheduleDate;
+window.renderScheduleTabs = renderScheduleTabs;
+window.renderScheduleForDate = renderScheduleForDate;
