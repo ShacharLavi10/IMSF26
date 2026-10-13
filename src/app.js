@@ -2588,6 +2588,12 @@ let currentGuestEmail = "";
       if (window.location.hash !== "#adminsheet" && document.getElementById('admin-bottom-sheet') && document.getElementById('admin-bottom-sheet').classList.contains('active')) {
         closeAdminModal(true);
       }
+      // If the hash is no longer #networkingsheet, but the networking sheet is open, close it.
+      if (window.location.hash !== "#networkingsheet" && document.getElementById('networking-bottom-sheet') && document.getElementById('networking-bottom-sheet').classList.contains('active')) {
+        if (typeof closeNetworkingDetailSheet === 'function') {
+          closeNetworkingDetailSheet(true);
+        }
+      }
     });
 
     function toggleSheetFav(event) {
@@ -2833,7 +2839,7 @@ function renderAdminDashboard() {
 
       <!-- Lineup & Networking Leads -->
       <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border); grid-column: 1 / -1;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
           <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
             <span>🎸</span> Lineup & Networking Leads
           </h3>
@@ -2842,13 +2848,27 @@ function renderAdminDashboard() {
             <button class="primary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="triggerFullLeadsSync()">⚡ Run Full Sync</button>
           </div>
         </div>
-        <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
+        <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 14px;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
+        
+        <!-- Slide Toggle for Artists / Guests -->
+        <div class="networking-toggle-container">
+          <div class="networking-slide-toggle">
+            <button type="button" id="networking-toggle-artists" class="networking-toggle-btn active" onclick="switchAdminNetworkingTab('artists')">
+              🎸 Artists <span id="networking-artists-count" class="networking-toggle-badge">0</span>
+            </button>
+            <button type="button" id="networking-toggle-guests" class="networking-toggle-btn" onclick="switchAdminNetworkingTab('guests')">
+              👥 Guests <span id="networking-guests-count" class="networking-toggle-badge">0</span>
+            </button>
+          </div>
+        </div>
+
         <div style="margin-bottom: 12px; position: relative;">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input type="text" id="admin-networking-search" placeholder="Search artist, country, delegate or booking..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground);" onkeyup="filterAdminNetworking(this.value)">
+          <input type="text" id="admin-networking-search" placeholder="Search artists..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground);" onkeyup="filterAdminNetworking(this.value)">
         </div>
-        <div id="admin-networking-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 420px; overflow-y: auto;">
-          <p style="color: var(--foreground-muted); text-align: center; padding: 15px;">Loading networking insights...</p>
+
+        <div id="admin-networking-list" class="networking-cubes-grid">
+          <p style="color: var(--foreground-muted); text-align: center; padding: 15px; grid-column: 1 / -1;">Loading networking insights...</p>
         </div>
       </div>
       
@@ -2870,28 +2890,420 @@ function renderAdminDashboard() {
   loadAdminNetworkingData(false);
 }
 
+function escapeHtmlAdmin(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+let currentNetworkingTab = 'artists';
+let networkingArtistsList = [];
+let networkingGuestsList = [];
 let adminNetworkingData = null;
+
+function switchAdminNetworkingTab(tab) {
+  currentNetworkingTab = tab;
+  const btnArtists = document.getElementById('networking-toggle-artists');
+  const btnGuests = document.getElementById('networking-toggle-guests');
+  const searchInput = document.getElementById('admin-networking-search');
+
+  if (tab === 'artists') {
+    if (btnArtists) btnArtists.classList.add('active');
+    if (btnGuests) btnGuests.classList.remove('active');
+    if (searchInput) searchInput.placeholder = "Search artists...";
+  } else {
+    if (btnArtists) btnArtists.classList.remove('active');
+    if (btnGuests) btnGuests.classList.add('active');
+    if (searchInput) searchInput.placeholder = "Search guests...";
+  }
+
+  const query = searchInput ? searchInput.value : '';
+  renderAdminNetworkingCubes(query);
+}
+
+function getResolvedGuestsNetworkingList() {
+  const result = [];
+  const prefMap = new Map();
+
+  if (adminNetworkingData && adminNetworkingData.guestsPreferences) {
+    adminNetworkingData.guestsPreferences.forEach(g => {
+      if (g.email) prefMap.set(g.email.toLowerCase().trim(), g);
+    });
+  }
+
+  // Cross-reference with adminData.guests to ensure no guest is missed
+  if (adminData && adminData.guests && adminData.guests.length > 1) {
+    const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf("מייל אורח");
+    const fnIdx = headers.indexOf("שם פרטי");
+    const lnIdx = headers.indexOf("שם משפחה");
+    const roleIdx = headers.indexOf("תפקיד");
+    const compIdx = headers.indexOf("שם חברה");
+    const countryIdx = headers.indexOf("מדינה");
+
+    for (let i = 1; i < adminData.guests.length; i++) {
+      const row = adminData.guests[i];
+      if (roleIdx !== -1 && String(row[roleIdx]).trim() === "הפקה חשיפה") continue; // skip admin
+      const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim().toLowerCase() : "";
+      const fname = fnIdx !== -1 ? String(row[fnIdx] || "").trim() : "";
+      const lname = lnIdx !== -1 ? String(row[lnIdx] || "").trim() : "";
+      const fullName = `${fname} ${lname}`.trim();
+      if (!fullName && !email) continue;
+
+      if (prefMap.has(email)) {
+        result.push(prefMap.get(email));
+        prefMap.delete(email);
+      } else {
+        result.push({
+          email: email,
+          name: fullName || email,
+          country: countryIdx !== -1 ? String(row[countryIdx] || "").trim() : "",
+          company: compIdx !== -1 ? String(row[compIdx] || "").trim() : "",
+          role: roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "",
+          status: "🔴 טרם סימן אומנים",
+          favs: "",
+          booking: "",
+          connect: "",
+          press: "",
+          totalLikes: 0,
+          notes: ""
+        });
+      }
+    }
+  }
+
+  // Include any remaining guests from prefMap
+  prefMap.forEach(g => result.push(g));
+
+  return result;
+}
+
+function renderAdminNetworkingCubes(query = "") {
+  const container = document.getElementById('admin-networking-list');
+  if (!container || !adminNetworkingData) return;
+
+  const q = query.toLowerCase().trim();
+
+  const artists = adminNetworkingData.artistsLeads || [];
+  const guests = getResolvedGuestsNetworkingList();
+
+  const artistsCountEl = document.getElementById('networking-artists-count');
+  const guestsCountEl = document.getElementById('networking-guests-count');
+  if (artistsCountEl) artistsCountEl.innerText = artists.length;
+  if (guestsCountEl) guestsCountEl.innerText = guests.length;
+
+  if (currentNetworkingTab === 'artists') {
+    const filteredArtists = artists.filter(a => {
+      if (!q) return true;
+      return a.name.toLowerCase().includes(q) ||
+             (a.genre && a.genre.toLowerCase().includes(q)) ||
+             (a.countries && a.countries.toLowerCase().includes(q)) ||
+             (a.bookingLeads && a.bookingLeads.toLowerCase().includes(q)) ||
+             (a.notes && a.notes.toLowerCase().includes(q));
+    });
+
+    if (filteredArtists.length === 0) {
+      container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">No artists match your search.</p>';
+      return;
+    }
+
+    // Sort: artists with booking leads or highest likes first, then alphabetically
+    const sorted = [...filteredArtists].sort((a, b) => {
+      const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
+      const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
+      if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
+      if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
+      return a.name.localeCompare(b.name);
+    });
+
+    networkingArtistsList = sorted;
+
+    let html = '';
+    sorted.forEach((a, idx) => {
+      html += `
+        <div class="networking-cube" onclick="openNetworkingDetail('artist', ${idx})" title="${escapeHtmlAdmin(a.name)}">
+          <div class="networking-cube-name">${escapeHtmlAdmin(a.name)}</div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } else {
+    // Guests tab
+    const filteredGuests = guests.filter(g => {
+      if (!q) return true;
+      return g.name.toLowerCase().includes(q) ||
+             (g.email && g.email.toLowerCase().includes(q)) ||
+             (g.company && g.company.toLowerCase().includes(q)) ||
+             (g.country && g.country.toLowerCase().includes(q)) ||
+             (g.favs && g.favs.toLowerCase().includes(q)) ||
+             (g.notes && g.notes.toLowerCase().includes(q));
+    });
+
+    if (filteredGuests.length === 0) {
+      container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">No guests match your search.</p>';
+      return;
+    }
+
+    // Sort: guests with activity/likes first, then alphabetically
+    const sorted = [...filteredGuests].sort((a, b) => {
+      const aActive = (a.totalLikes > 0 || (a.favs && a.favs.trim().length > 0)) ? 1 : 0;
+      const bActive = (b.totalLikes > 0 || (b.favs && b.favs.trim().length > 0)) ? 1 : 0;
+      if (bActive !== aActive) return bActive - aActive;
+      if (b.totalLikes !== a.totalLikes) return b.totalLikes - a.totalLikes;
+      return a.name.localeCompare(b.name);
+    });
+
+    networkingGuestsList = sorted;
+
+    let html = '';
+    sorted.forEach((g, idx) => {
+      html += `
+        <div class="networking-cube" onclick="openNetworkingDetail('guest', ${idx})" title="${escapeHtmlAdmin(g.name)}">
+          <div class="networking-cube-name">${escapeHtmlAdmin(g.name)}</div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+}
+
+function filterAdminNetworking(query) {
+  renderAdminNetworkingCubes(query);
+}
+
+function openNetworkingDetail(type, index) {
+  const overlay = document.getElementById('networking-sheet-overlay');
+  const sheet = document.getElementById('networking-bottom-sheet');
+  const content = document.getElementById('networking-modal-content');
+  if (!overlay || !sheet || !content) return;
+
+  if (type === 'artist') {
+    const artist = networkingArtistsList[index];
+    if (!artist) return;
+
+    const hasBooking = artist.bookingLeads && artist.bookingLeads.trim().length > 0;
+    const hasConnect = artist.connectLeads && artist.connectLeads.trim().length > 0;
+    const hasPress = artist.pressLeads && artist.pressLeads.trim().length > 0;
+    const hasNotes = artist.notes && artist.notes.trim().length > 0;
+
+    content.innerHTML = `
+      <div class="networking-detail-header">
+        <div>
+          <h2 class="networking-detail-title">${escapeHtmlAdmin(artist.name)}</h2>
+          <span style="font-size: 0.9rem; font-weight: 700; color: var(--accent-bright);">${escapeHtmlAdmin(artist.genre || 'General')}</span>
+        </div>
+        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Stats Row -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+        <span class="networking-stat-badge" style="background: rgba(241,169,160,0.2); color: var(--accent);">
+          ❤️ ${artist.likesCount || 0} Likes
+        </span>
+        <span class="networking-stat-badge" style="background: var(--surface); color: var(--foreground);">
+          🌍 ${escapeHtmlAdmin(artist.tourPotential || 'No leads yet')}
+        </span>
+      </div>
+
+      ${artist.countries ? `
+        <div class="networking-section-box">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--foreground-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Interested Countries</div>
+          <div style="font-weight: 600; font-size: 0.95rem; color: var(--foreground);">${escapeHtmlAdmin(artist.countries)}</div>
+        </div>
+      ` : ''}
+
+      ${hasBooking ? `
+        <div class="networking-section-box" style="border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.08);">
+          <div style="font-weight: 700; color: #10b981; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🎯</span> Booking Interest
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.4;">${escapeHtmlAdmin(artist.bookingLeads)}</div>
+        </div>
+      ` : ''}
+
+      ${hasConnect ? `
+        <div class="networking-section-box" style="border-left: 4px solid #3b82f6; background: rgba(59, 130, 246, 0.08);">
+          <div style="font-weight: 700; color: #3b82f6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🤝</span> Connect Requests
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.4;">${escapeHtmlAdmin(artist.connectLeads)}</div>
+        </div>
+      ` : ''}
+
+      ${hasPress ? `
+        <div class="networking-section-box" style="border-left: 4px solid #8b5cf6; background: rgba(139, 92, 246, 0.08);">
+          <div style="font-weight: 700; color: #8b5cf6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>📰</span> Press Coverage
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.4;">${escapeHtmlAdmin(artist.pressLeads)}</div>
+        </div>
+      ` : ''}
+
+      ${hasNotes ? `
+        <div class="networking-section-box">
+          <div style="font-weight: 700; color: var(--foreground-muted); margin-bottom: 6px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>💬</span> Delegate Notes & Feedback
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.5; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px dashed var(--border);">${escapeHtmlAdmin(artist.notes)}</div>
+        </div>
+      ` : ''}
+
+      ${!hasBooking && !hasConnect && !hasPress && !hasNotes && !artist.countries ? `
+        <div style="text-align: center; padding: 25px; color: var(--foreground-muted); font-size: 0.9rem;">
+          No leads, booking requests, or notes recorded for this artist yet.
+        </div>
+      ` : ''}
+    `;
+  } else {
+    // Guest detail
+    const guest = networkingGuestsList[index];
+    if (!guest) return;
+
+    const hasFavs = guest.favs && guest.favs.trim().length > 0;
+    const hasBooking = guest.booking && guest.booking.trim().length > 0;
+    const hasConnect = guest.connect && guest.connect.trim().length > 0;
+    const hasPress = guest.press && guest.press.trim().length > 0;
+    const hasNotes = guest.notes && guest.notes.trim().length > 0;
+    const isActive = guest.totalLikes > 0 || hasFavs;
+
+    content.innerHTML = `
+      <div class="networking-detail-header">
+        <div>
+          <h2 class="networking-detail-title">${escapeHtmlAdmin(guest.name)}</h2>
+          <div style="font-size: 0.88rem; color: var(--foreground-muted); margin-top: 2px;">
+            ${guest.role ? escapeHtmlAdmin(guest.role) + ' • ' : ''}
+            ${guest.company ? escapeHtmlAdmin(guest.company) + ' • ' : ''}
+            ${escapeHtmlAdmin(guest.country || 'N/A')}
+          </div>
+        </div>
+        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Badges -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+        <span class="networking-stat-badge" style="background: ${isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.15)'}; color: ${isActive ? '#10b981' : '#ef4444'};">
+          ${isActive ? '🟢 Active' : '🔴 No Selections Yet'}
+        </span>
+        <span class="networking-stat-badge" style="background: rgba(241,169,160,0.2); color: var(--accent);">
+          ❤️ ${guest.totalLikes || 0} Liked Artists
+        </span>
+        ${guest.email ? `
+          <span class="networking-stat-badge" style="background: var(--surface); color: var(--foreground-muted);">
+            ✉️ ${escapeHtmlAdmin(guest.email)}
+          </span>
+        ` : ''}
+      </div>
+
+      ${hasFavs ? `
+        <div class="networking-section-box">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
+            <span>❤️</span> Liked Artists
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${guest.favs.split(',').map(aName => `<span style="display: inline-block; background: var(--surface); border: 1.5px solid #000; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; box-shadow: 1px 1px 0px rgba(0,0,0,1);">${escapeHtmlAdmin(aName.trim())}</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${hasBooking ? `
+        <div class="networking-section-box" style="border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.08);">
+          <div style="font-weight: 700; color: #10b981; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🎯</span> Booking Inquiries
+          </div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--foreground);">${escapeHtmlAdmin(guest.booking)}</div>
+        </div>
+      ` : ''}
+
+      ${hasConnect ? `
+        <div class="networking-section-box" style="border-left: 4px solid #3b82f6; background: rgba(59, 130, 246, 0.08);">
+          <div style="font-weight: 700; color: #3b82f6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🤝</span> Connect Requests
+          </div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--foreground);">${escapeHtmlAdmin(guest.connect)}</div>
+        </div>
+      ` : ''}
+
+      ${hasPress ? `
+        <div class="networking-section-box" style="border-left: 4px solid #8b5cf6; background: rgba(139, 92, 246, 0.08);">
+          <div style="font-weight: 700; color: #8b5cf6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>📰</span> Press Coverage
+          </div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--foreground);">${escapeHtmlAdmin(guest.press)}</div>
+        </div>
+      ` : ''}
+
+      ${hasNotes ? `
+        <div class="networking-section-box">
+          <div style="font-weight: 700; color: var(--foreground-muted); margin-bottom: 6px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>💬</span> Notes on Artists
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.5; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px dashed var(--border);">${escapeHtmlAdmin(guest.notes)}</div>
+        </div>
+      ` : ''}
+
+      ${!hasFavs && !hasBooking && !hasConnect && !hasPress && !hasNotes ? `
+        <div style="text-align: center; padding: 25px; color: var(--foreground-muted); font-size: 0.9rem;">
+          This guest has not submitted any artist preferences or notes yet.
+        </div>
+      ` : ''}
+    `;
+  }
+
+  overlay.classList.add('active');
+  sheet.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  window.location.hash = "networkingsheet";
+}
+
+function closeNetworkingDetailSheet(isHashChange) {
+  const overlay = document.getElementById('networking-sheet-overlay');
+  const sheet = document.getElementById('networking-bottom-sheet');
+  if (overlay) overlay.classList.remove('active');
+  if (sheet) sheet.classList.remove('active');
+  document.body.style.overflow = '';
+  
+  if (isHashChange !== true && window.location.hash === "#networkingsheet") {
+    history.back();
+  }
+}
+
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const sheet = document.getElementById('networking-bottom-sheet');
+    if (sheet && sheet.classList.contains('active')) {
+      closeNetworkingDetailSheet();
+    }
+  }
+});
 
 function loadAdminNetworkingData(forceRefresh = false) {
   const container = document.getElementById('admin-networking-list');
   if (!container) return;
   if (adminNetworkingData && !forceRefresh) {
-    renderAdminNetworkingList(adminNetworkingData);
+    renderAdminNetworkingCubes();
     return;
   }
-  container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Loading networking insights...</p>';
+  container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Loading networking insights...</p>';
   if (window.google && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(res) {
         if (res && res.success) {
           adminNetworkingData = res;
-          renderAdminNetworkingList(adminNetworkingData);
+          renderAdminNetworkingCubes();
         } else {
-          container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">No networking data available yet.</p>';
+          container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">No networking data available yet.</p>';
         }
       })
       .withFailureHandler(function(err) {
-        container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Could not load networking data.</p>';
+        container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Could not load networking data.</p>';
       })
       .getAdminArtistsNetworkingData();
   }
@@ -2900,7 +3312,7 @@ function loadAdminNetworkingData(forceRefresh = false) {
 function triggerFullLeadsSync() {
   const container = document.getElementById('admin-networking-list');
   if (container) {
-    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Scanning local test data and running full recalculation...</p>';
+    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Scanning local test data and running full recalculation...</p>';
   }
 
   // Scan localStorage for any guest emails that have saved favorites in this browser
@@ -2947,86 +3359,6 @@ function triggerFullLeadsSync() {
     });
   } else {
     runServerSync();
-  }
-}
-
-
-function renderAdminNetworkingList(data, query = "") {
-  const container = document.getElementById('admin-networking-list');
-  if (!container || !data || !data.artistsLeads) return;
-
-  const q = query.toLowerCase().trim();
-  const leads = data.artistsLeads.filter(a => {
-    if (!q) return true;
-    return a.name.toLowerCase().includes(q) ||
-           (a.genre && a.genre.toLowerCase().includes(q)) ||
-           (a.countries && a.countries.toLowerCase().includes(q)) ||
-           (a.bookingLeads && a.bookingLeads.toLowerCase().includes(q)) ||
-           (a.notes && a.notes.toLowerCase().includes(q));
-  });
-
-  if (leads.length === 0) {
-    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">No artists match your search.</p>';
-    return;
-  }
-
-  const sortedLeads = [...leads].sort((a, b) => {
-    const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
-    const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
-    if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
-    if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
-    return a.name.localeCompare(b.name);
-  });
-
-  let html = '';
-  sortedLeads.forEach(a => {
-    const hasBooking = a.bookingLeads && a.bookingLeads.trim().length > 0;
-    const hasNotes = a.notes && a.notes.trim().length > 0;
-    html += `
-      <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 6px;">
-          <div>
-            <div style="font-weight: 700; font-size: 1rem; color: var(--foreground);">${a.name}</div>
-            <div style="font-size: 0.8rem; color: var(--accent-bright); font-weight: 600;">${a.genre || 'General'}</div>
-          </div>
-          <div style="text-align: right;">
-            <span style="display:inline-block; font-size: 0.85rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: rgba(241,169,160,0.15); color: var(--accent);">❤️ ${a.likesCount || 0}</span>
-          </div>
-        </div>
-
-        <div style="font-size: 0.8rem; margin-bottom: 6px;">
-          <span style="font-weight: 600;">Tour Status:</span> <span>${a.tourPotential}</span>
-        </div>
-
-        ${a.countries ? `
-          <div style="font-size: 0.78rem; color: var(--foreground-muted); margin-bottom: 6px;">
-            <span style="font-weight: 600;">Countries:</span> ${a.countries}
-          </div>
-        ` : ''}
-
-        ${hasBooking ? `
-          <div style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 6px 8px; border-radius: 4px; margin-top: 6px; font-size: 0.8rem;">
-            <div style="font-weight: 700; color: #10b981; margin-bottom: 2px;">🎯 Booking Interest:</div>
-            <div style="white-space: pre-line; color: var(--foreground);">${a.bookingLeads}</div>
-          </div>
-        ` : ''}
-
-        ${hasNotes ? `
-          <div style="background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--border); padding: 6px 8px; border-radius: 4px; margin-top: 6px; font-size: 0.78rem;">
-            <div style="font-weight: 600; color: var(--foreground-subtle); margin-bottom: 2px;">💬 Delegate Feedback:</div>
-            <div style="white-space: pre-line; color: var(--foreground);">${a.notes}</div>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
-}
-
-function filterAdminNetworking(query) {
-  if (adminNetworkingData) {
-    renderAdminNetworkingList(adminNetworkingData, query);
   }
 }
 
@@ -3584,6 +3916,13 @@ window.loadAdminDashboard = loadAdminDashboard;
 window.filterAdminGuests = filterAdminGuests;
 window.viewAdminGuestDetails = viewAdminGuestDetails;
 window.closeAdminModal = closeAdminModal;
+window.switchAdminNetworkingTab = switchAdminNetworkingTab;
+window.renderAdminNetworkingCubes = renderAdminNetworkingCubes;
+window.openNetworkingDetail = openNetworkingDetail;
+window.closeNetworkingDetailSheet = closeNetworkingDetailSheet;
+window.filterAdminNetworking = filterAdminNetworking;
+window.loadAdminNetworkingData = loadAdminNetworkingData;
+window.triggerFullLeadsSync = triggerFullLeadsSync;
 
 
 window.sendAdminAlert = function() {

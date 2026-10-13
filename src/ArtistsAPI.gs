@@ -553,19 +553,59 @@ function getAdminArtistsNetworkingData() {
       }
     }
 
+    const guestsPreferences = [];
     const inactiveGuests = [];
-    if (prefSheet) {
+    if (prefSheet && prefSheet.getLastRow() > 1) {
       const pData = prefSheet.getDataRange().getValues();
+      const headers = pData[0];
+      const colMap = {};
+      headers.forEach((h, idx) => {
+        const s = String(h).trim().toLowerCase();
+        if (s.includes("מייל")) colMap.email = idx;
+        else if (s.includes("שם מלא")) colMap.fullName = idx;
+        else if (s.includes("מדינה")) colMap.country = idx;
+        else if (s.includes("חברה") || s.includes("עושה")) colMap.company = idx;
+        else if (s.includes("תפקיד")) colMap.role = idx;
+        else if (s.includes("סטטוס")) colMap.status = idx;
+        else if (s.includes("אהב") || s.includes("❤️")) colMap.favs = idx;
+        else if (s.includes("booking") || s.includes("הזמנות")) colMap.booking = idx;
+        else if (s.includes("connect") || s.includes("קשר")) colMap.connect = idx;
+        else if (s.includes("press") || s.includes("עיתונות")) colMap.press = idx;
+        else if (s.includes("לייקים")) colMap.totalLikes = idx;
+        else if (s.includes("הערות")) colMap.notes = idx;
+      });
+
       for (let r = 1; r < pData.length; r++) {
         const row = pData[r];
-        const status = String(row[5] || "");
+        const email = String((colMap.email !== undefined ? row[colMap.email] : row[0]) || "").trim();
+        const fullName = String((colMap.fullName !== undefined ? row[colMap.fullName] : row[1]) || "").trim();
+        if (!email && !fullName) continue;
+
+        const status = String((colMap.status !== undefined ? row[colMap.status] : row[5]) || "").trim();
+        const guestObj = {
+          email: email,
+          name: fullName || email,
+          country: String((colMap.country !== undefined ? row[colMap.country] : row[2]) || "").trim(),
+          company: String((colMap.company !== undefined ? row[colMap.company] : row[3]) || "").trim(),
+          role: String((colMap.role !== undefined ? row[colMap.role] : row[4]) || "").trim(),
+          status: status,
+          favs: String((colMap.favs !== undefined ? row[colMap.favs] : row[6]) || "").trim(),
+          booking: String((colMap.booking !== undefined ? row[colMap.booking] : row[7]) || "").trim(),
+          connect: String((colMap.connect !== undefined ? row[colMap.connect] : row[8]) || "").trim(),
+          press: String((colMap.press !== undefined ? row[colMap.press] : row[9]) || "").trim(),
+          totalLikes: Number((colMap.totalLikes !== undefined ? row[colMap.totalLikes] : row[10]) || 0),
+          notes: String((colMap.notes !== undefined ? row[colMap.notes] : row[11]) || "").trim()
+        };
+
+        guestsPreferences.push(guestObj);
+
         if (status.includes("טרם סימן")) {
           inactiveGuests.push({
-            email: String(row[0] || "").trim(),
-            name: String(row[1] || "").trim(),
-            country: String(row[2] || "").trim(),
-            company: String(row[3] || "").trim(),
-            role: String(row[4] || "").trim()
+            email: email,
+            name: fullName,
+            country: guestObj.country,
+            company: guestObj.company,
+            role: guestObj.role
           });
         }
       }
@@ -574,6 +614,7 @@ function getAdminArtistsNetworkingData() {
     return {
       success: true,
       artistsLeads: artistsLeads,
+      guestsPreferences: guestsPreferences,
       inactiveGuests: inactiveGuests
     };
   } catch (err) {
