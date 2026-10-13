@@ -5,7 +5,7 @@
 ## 🟡 סביבת ניסוי (Sandbox) - סביבת הפיתוח השוטפת!
 
 * **Vercel Frontend (GitHub `sandbox` branch):** `https://imsf26sandbox-git-sandbox-imsf-26.vercel.app/` או `https://imsf26sandbox.vercel.app/`
-* **Apps Script Web App:** `AKfycbydLP8CsZv1sE2faart0dViAe73zhldsXlbiX6FQ_T0qRxu8vz7lnd3qyjE24AtK61a`
+* **Apps Script Web App:** `AKfycbzK3tyvdqCU1UDLvYqC-6IvH2zFoLsOvEGGwXslGQQK0f7cuYgCb0U4MbISSuldV3RM`
 * **Script ID:** `1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW`
 * **Google Sheet המרכזי לטסטים:** `1Er377KhxxmpnagJY_7t0q4K3wfNxS4dKYWxAPHOmYNE`
 * **קובץ אומנים מדומה (ניסויים אומנים 26):** `11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo`

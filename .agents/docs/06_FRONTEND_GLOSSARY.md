@@ -27,3 +27,16 @@
    * 🧭 **רכיבי מדריך (Guide Components):** מתג 3 עמודות ללא גלילה (`#guide-city-switcher`), קוביית מקום קומפקטית (`.guide-place-row`), וכפתור ניווט מהיר (`.guide-maps-btn`).
    * 🏨 **כרטיסיית מפרט מלון (Hotel Spec Card):** תצוגת פרטי מלון מעוצבת בטבלה נקייה וניאו-ברוטליסטית (`.hotel-spec-card`, `.hotel-map-btn`).
 
+5. **🎸 רכיבי לשונית אומנים ונטוורקינג (Artists & Networking Components)**
+   * **כרטיסיית אמן בגריד:** `.artist-card`, כפתור לב מהיר `.fav-btn-inline`.
+   * **חלונית תחתונה לאמן:** `#artist-bottom-sheet`, `#artist-sheet-overlay`.
+   * **תגיות כוונות מהירות (Quick Intent Tags):** `.sheet-intent-tags`, `.sheet-intent-tag-btn` (כולל `data-tag="Booking"`, `data-tag="Connect"`, `data-tag="Press"`, `data-tag="General Note"`).
+   * **הערה אישית של האורח:** `#sheet-private-note` (שמירה אוטומטית בהשהיה של 3.5 שניות).
+   * **אינדיקטור סטטוס שמירה:** `#sheet-save-status` (מציג `Saving...` / `Saved ✓`).
+   * **פילטרים עליונים:** `#artist-search`, `#clear-artist-search-btn`, `#artist-genre-filter`, כפתור מועדפים בלבד `#artist-fav-filter-btn`.
+   * **מזוודת ייצוא אישית:** `#export-briefcase-container`, `#export-briefcase-btn` (מציג את האומנים שאהב).
+
+6. **📊 רכיבי דשבורד הפקה לנטוורקינג (Admin Lineup & Networking Leads)**
+   * **תיבת חיפוש וסינון לידים:** `#admin-networking-search` (חיפוש לפי אמן, ז'אנר, מדינה, בוקר או הערה).
+   * **רשימת כרטיסי לידים:** `#admin-networking-list`.
+   * **כפתור סנכרון וחישוב מחדש:** `#admin-sync-leads-btn` ("⚡ Run Full Sync" - מפעיל `triggerFullLeadsSync()`).
