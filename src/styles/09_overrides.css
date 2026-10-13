@@ -1915,6 +1915,210 @@ body.light-mode .networking-top-tag {
   color: #b91c1c;
 }
 
+/* ==========================================================================
+   ADMIN DASHBOARD ACCORDIONS (MATCHING GUIDE DESIGN)
+   ========================================================================== */
+.admin-sections-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-section-accordion {
+  background: var(--surface);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+  border-radius: var(--radius-md, 10px);
+  overflow: hidden;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body.light-mode .admin-section-accordion {
+  background: #ffffff;
+  border-color: #000;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
+}
+
+.admin-section-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms ease;
+  min-height: 52px;
+  box-sizing: border-box;
+  background: var(--surface);
+}
+
+body.light-mode .admin-section-summary {
+  background: #ffffff;
+}
+
+.admin-section-summary::-webkit-details-marker,
+.admin-section-summary::marker {
+  display: none;
+}
+
+.admin-section-summary:focus {
+  outline: none;
+}
+
+.admin-section-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-section-summary:hover {
+    background: rgba(241, 169, 160, 0.08);
+  }
+  body.light-mode .admin-section-summary:hover {
+    background: #f8fafc;
+  }
+}
+
+.admin-section-summary:active {
+  background: rgba(241, 169, 160, 0.15);
+}
+
+.admin-section-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-section-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.admin-section-title {
+  font-family: var(--font-display, 'Oswald', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--foreground);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+body.light-mode .admin-section-title {
+  color: #0f172a;
+}
+
+.admin-section-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.admin-section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--foreground-muted);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  line-height: 1.2;
+}
+
+body.light-mode .admin-section-badge {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.admin-section-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(241, 169, 160, 0.15);
+  color: var(--accent);
+  transition: transform 200ms ease, background-color 200ms ease, color 200ms ease;
+  flex-shrink: 0;
+}
+
+.admin-section-accordion[open] > .admin-section-summary {
+  border-bottom: 2px solid #000;
+  background: rgba(241, 169, 160, 0.08);
+}
+
+body.light-mode .admin-section-accordion[open] > .admin-section-summary {
+  background: #fef2f2;
+}
+
+.admin-section-accordion[open] > .admin-section-summary .admin-section-chevron {
+  transform: rotate(180deg);
+  background: var(--accent);
+  color: #000;
+}
+
+.admin-section-accordion[open] > .admin-section-summary .admin-section-badge {
+  background: rgba(241, 169, 160, 0.2);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+body.light-mode .admin-section-accordion[open] > .admin-section-summary .admin-section-badge {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.admin-section-content {
+  padding: 18px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .admin-section-content {
+    padding: 12px;
+  }
+}
+
+.admin-section-accordion[open] > .admin-section-content {
+  animation: adminSectionOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes adminSectionOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 
 
 

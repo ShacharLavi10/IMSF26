@@ -2740,152 +2740,165 @@ function renderAdminDashboard() {
   }
   
   let html = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-      <h3 style="margin:0; font-size: 1.5rem;">Production Overview</h3>
-      <button class="primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="loadAdminDashboard(true)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Refresh Data
-      </button>
-    </div>
-    
-    <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 30px;">
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: var(--accent-bright);">${totalGuests}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Total Delegates</p>
-      </div>
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: #f59e0b;">${missingHotel}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Hotel Form</p>
-      </div>
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: #ef4444;">${missingFlight}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Flights</p>
-      </div>
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: #8b5cf6;">${missingPassport}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Passport</p>
-      </div>
-    </div>
-  `;
-  
-  // -- ALERT CENTER & LOGISTICS --
-  let hotelJlmCount = 0;
-  let hotelTlvCount = 0;
-  let flightArrivals = 0;
-  
-  if (adminData.hotelJlm) {
-    const h = adminData.hotelJlm[0].map(x => String(x).trim().toLowerCase());
-    const nightCol = h.indexOf("סה\"כ לילות");
-    if (nightCol !== -1) {
-      for (let i = 1; i < adminData.hotelJlm.length; i++) {
-        hotelJlmCount += Number(adminData.hotelJlm[i][nightCol]) || 0;
-      }
-    } else {
-      hotelJlmCount = adminData.hotelJlm.length - 1;
-    }
-  }
-  
-  if (adminData.hotelTlv) {
-    const h = adminData.hotelTlv[0].map(x => String(x).trim().toLowerCase());
-    const nightCol = h.indexOf("סה\"כ לילות");
-    if (nightCol !== -1) {
-      for (let i = 1; i < adminData.hotelTlv.length; i++) {
-        hotelTlvCount += Number(adminData.hotelTlv[i][nightCol]) || 0;
-      }
-    } else {
-      hotelTlvCount = adminData.hotelTlv.length - 1;
-    }
-  }
-  
-  if (adminData.flights) {
-    flightArrivals = adminData.flights.length > 1 ? adminData.flights.length - 1 : 0;
-  }
-
-  html += `
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px;">
+    <div class="admin-sections-wrapper">
       
-      <!-- Alert Center -->
-      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
-        <h3 style="margin: 0 0 15px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-          Live Alert Center
-        </h3>
-        <p style="font-size: 0.9rem; color: var(--foreground-muted); margin-bottom: 15px;">Send a push notification to all delegates. (Will appear in their updates bell).</p>
-        <textarea id="admin-alert-msg" placeholder="Type your announcement here..." style="width: 100%; height: 80px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); margin-bottom: 10px; resize: none; font-family: inherit;"></textarea>
-        <button class="primary" style="width: 100%; justify-content: center;" onclick="sendAdminAlert()">Send Global Alert</button>
-      </div>
-      
-      <!-- Logistics -->
-      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
-        <h3 style="margin: 0 0 15px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-          Logistics Summary
-        </h3>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
-            <span style="color: var(--foreground-muted);">Tel Aviv Hotel</span>
-            <span style="font-weight: 600;">\${hotelTlvCount} Nights</span>
+      <!-- 1. PRODUCTION OVERVIEW ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-overview">
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">📊</span>
+            <span class="admin-section-title">Production Overview</span>
           </div>
-          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
-            <span style="color: var(--foreground-muted);">Jerusalem Hotel</span>
-            <span style="font-weight: 600;">\${hotelJlmCount} Nights</span>
+          <div class="admin-section-meta">
+            <span class="admin-section-badge">${totalGuests} Delegates</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
           </div>
-          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
-            <span style="color: var(--foreground-muted);">Flights Handled</span>
-            <span style="font-weight: 600;">\${flightArrivals} Delegates</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lineup & Networking Leads -->
-      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border); grid-column: 1 / -1;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-          <h3 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-            <span>🎸</span> Lineup & Networking Leads
-          </h3>
-          <div style="display: flex; gap: 8px;">
-            <button class="secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="loadAdminNetworkingData(true)">Refresh</button>
-            <button class="primary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="triggerFullLeadsSync()">⚡ Run Full Sync</button>
-          </div>
-        </div>
-        <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 14px;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
-        
-        <!-- Slide Toggle for Artists / Guests -->
-        <div class="networking-toggle-container">
-          <div class="networking-slide-toggle">
-            <button type="button" id="networking-toggle-artists" class="networking-toggle-btn active" onclick="switchAdminNetworkingTab('artists')">
-              🎸 Artists <span id="networking-artists-count" class="networking-toggle-badge">0</span>
-            </button>
-            <button type="button" id="networking-toggle-guests" class="networking-toggle-btn" onclick="switchAdminNetworkingTab('guests')">
-              👥 Guests <span id="networking-guests-count" class="networking-toggle-badge">0</span>
+        </summary>
+        <div class="admin-section-content">
+          <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 14px;">
+            <button class="primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="loadAdminDashboard(true)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Refresh Data
             </button>
           </div>
-        </div>
+          
+          <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: var(--accent-bright);">${totalGuests}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Total Delegates</p>
+            </div>
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: #f59e0b;">${missingHotel}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Missing Hotel Form</p>
+            </div>
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: #ef4444;">${missingFlight}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Missing Flights</p>
+            </div>
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: #8b5cf6;">${missingPassport}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Missing Passport</p>
+            </div>
+          </div>
 
-        <!-- Dynamic KPI Overview Cards -->
-        <div id="admin-networking-kpis" class="networking-kpis-grid"></div>
-
-        <div style="margin-bottom: 12px; position: relative;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input type="text" id="admin-networking-search" placeholder="Search artists..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground);" onkeyup="filterAdminNetworking(this.value)">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <!-- Alert Center -->
+            <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1.5px solid var(--border);">
+              <h4 style="margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Live Alert Center
+              </h4>
+              <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px;">Send a push notification to all delegates. (Will appear in their updates bell).</p>
+              <textarea id="admin-alert-msg" placeholder="Type your announcement here..." style="width: 100%; height: 75px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); margin-bottom: 10px; resize: none; font-family: inherit; box-sizing: border-box;"></textarea>
+              <button class="primary" style="width: 100%; justify-content: center;" onclick="sendAdminAlert()">Send Global Alert</button>
+            </div>
+            
+            <!-- Logistics -->
+            <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1.5px solid var(--border);">
+              <h4 style="margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                Logistics Summary
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Tel Aviv Hotel</span>
+                  <span style="font-weight: 600; font-size: 0.9rem;">${hotelTlvCount} Nights</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Jerusalem Hotel</span>
+                  <span style="font-weight: 600; font-size: 0.9rem;">${hotelJlmCount} Nights</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Flights Handled</span>
+                  <span style="font-weight: 600; font-size: 0.9rem;">${flightArrivals} Delegates</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </details>
 
-        <div id="admin-networking-list" class="networking-cubes-grid">
-          <p style="color: var(--foreground-muted); text-align: center; padding: 15px; grid-column: 1 / -1;">Loading networking insights...</p>
+      <!-- 2. LINEUP & NETWORKING LEADS ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-networking">
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">🎸</span>
+            <span class="admin-section-title">Lineup & Networking Leads</span>
+          </div>
+          <div class="admin-section-meta">
+            <span class="admin-section-badge">Leads & Feedback</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="admin-section-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin: 0;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
+            <div style="display: flex; gap: 8px;">
+              <button class="secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="loadAdminNetworkingData(true)">Refresh</button>
+              <button class="primary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="triggerFullLeadsSync()">⚡ Run Full Sync</button>
+            </div>
+          </div>
+          
+          <!-- Slide Toggle for Artists / Guests -->
+          <div class="networking-toggle-container">
+            <div class="networking-slide-toggle">
+              <button type="button" id="networking-toggle-artists" class="networking-toggle-btn active" onclick="switchAdminNetworkingTab('artists')">
+                🎸 Artists <span id="networking-artists-count" class="networking-toggle-badge">0</span>
+              </button>
+              <button type="button" id="networking-toggle-guests" class="networking-toggle-btn" onclick="switchAdminNetworkingTab('guests')">
+                👥 Guests <span id="networking-guests-count" class="networking-toggle-badge">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic KPI Overview Cards -->
+          <div id="admin-networking-kpis" class="networking-kpis-grid"></div>
+
+          <div style="margin-bottom: 12px; position: relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="admin-networking-search" placeholder="Search artists..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); box-sizing: border-box;" onkeyup="filterAdminNetworking(this.value)">
+          </div>
+
+          <div id="admin-networking-list" class="networking-cubes-grid">
+            <p style="color: var(--foreground-muted); text-align: center; padding: 15px; grid-column: 1 / -1;">Loading networking insights...</p>
+          </div>
         </div>
-      </div>
-      
+      </details>
+
+      <!-- 3. GUEST MANAGEMENT ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-guests">
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">👥</span>
+            <span class="admin-section-title">Guest Management</span>
+          </div>
+          <div class="admin-section-meta">
+            <span class="admin-section-badge">${totalGuests} Registered</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="admin-section-content">
+          <div style="margin-bottom: 14px; position: relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 12px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="admin-guest-search" placeholder="Search by name, email, or company..." style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); font-size: 1rem; box-sizing: border-box;" onkeyup="filterAdminGuests(this.value)">
+          </div>
+          <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
+        </div>
+      </details>
+
     </div>
-  `;
-
-  // Search Bar & Guest List
-  html += `
-    <h3 style="margin-top: 30px; margin-bottom: 15px; font-size: 1.2rem;">Guest Management</h3>
-    <div style="margin-bottom: 15px; position: relative;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 12px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <input type="text" id="admin-guest-search" placeholder="Search by name, email, or company..." style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); font-size: 1rem;" onkeyup="filterAdminGuests(this.value)">
-    </div>
-    <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
   `;
   
   container.innerHTML = html;
