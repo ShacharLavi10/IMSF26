@@ -403,26 +403,28 @@ function inspectBackupsAndHotels() {
   };
 
   try {
-    const parentFolderId = "1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz";
-    const parentFolder = DriveApp.getFolderById(parentFolderId);
-    let backupFolder = null;
-    const folders = parentFolder.getFoldersByName('IMSF 2026 Backups');
-    if (folders.hasNext()) {
-      backupFolder = folders.next();
-      const files = backupFolder.getFiles();
-      while (files.hasNext()) {
-        const file = files.next();
-        result.backups.push({
-          id: file.getId(),
-          name: file.getName(),
-          dateCreated: file.getDateCreated(),
-          lastUpdated: file.getLastUpdated()
-        });
+    try {
+      const parentFolderId = "1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz";
+      const parentFolder = DriveApp.getFolderById(parentFolderId);
+      let backupFolder = null;
+      const folders = parentFolder.getFoldersByName('IMSF 2026 Backups');
+      if (folders.hasNext()) {
+        backupFolder = folders.next();
+        const files = backupFolder.getFiles();
+        while (files.hasNext()) {
+          const file = files.next();
+          result.backups.push({
+            id: file.getId(),
+            name: file.getName(),
+            dateCreated: file.getDateCreated(),
+            lastUpdated: file.getLastUpdated()
+          });
+        }
       }
+    } catch(e) {
+      result.driveError = e.toString();
     }
-  } catch(e) {
-    result.driveError = e.toString();
-  }
+
 
 
     // Sort backups newest first
