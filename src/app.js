@@ -1643,17 +1643,53 @@ let currentGuestEmail = "";
       currentSelectedScheduleDate = activeDate;
       
       dates.forEach(d => {
-        const parts = d.split('-');
         let dayName = d;
-        let monthDay = d;
-        if (parts.length === 3) {
-          const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        let dayNum = '';
+        
+        // Parse date gracefully (YYYY-MM-DD, DD.MM.YYYY, DD/MM/YYYY)
+        let dateObj = null;
+        if (d.includes('-')) {
+          const parts = d.split('-');
+          if (parts.length === 3) {
+            if (parts[0].length === 4) {
+              dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            } else {
+              dateObj = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+            }
+          }
+        } else if (d.includes('.')) {
+          const parts = d.split('.');
+          if (parts.length === 3) {
+            if (parts[0].length === 4) {
+              dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            } else {
+              dateObj = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+            }
+          }
+        } else if (d.includes('/')) {
+          const parts = d.split('/');
+          if (parts.length === 3) {
+            dateObj = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+          }
+        } else {
+          dateObj = new Date(d);
+        }
+
+        if (dateObj && !isNaN(dateObj.getTime())) {
           dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
-          monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          dayNum = dateObj.getDate();
+        } else {
+          dayName = d;
+          dayNum = '';
         }
         
         const isActive = d === activeDate;
-        html += `<button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}">${dayName}, ${monthDay}</button>`;
+        html += `
+          <button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" title="${d}">
+            <span class="day-weekday">${escapeHtml(dayName)}</span>
+            <span class="day-num">${escapeHtml(String(dayNum || d))}</span>
+          </button>
+        `;
       });
 
       if (nav) {
@@ -1719,9 +1755,18 @@ let currentGuestEmail = "";
         return;
       }
       
-      let html = '<div style="margin-top: 10px; display: flex; flex-direction: column; gap: 16px;">';
+      let html = '<div class="schedule-events-list">';
       events.forEach(e => {
-        const timeText = e.endTime ? `${e.startTime}-${e.endTime}` : e.startTime;
+        const sTime = e.startTime ? String(e.startTime).trim() : "";
+        const eTime = e.endTime ? String(e.endTime).trim() : "";
+        let timeHtml = "";
+        if (sTime && eTime) {
+          timeHtml = `<span class="event-time"><span class="time-part">${escapeHtml(sTime)}</span><span class="time-dash">-</span><span class="time-part">${escapeHtml(eTime)}</span></span>`;
+        } else if (sTime) {
+          timeHtml = `<span class="event-time"><span class="time-part">${escapeHtml(sTime)}</span></span>`;
+        } else {
+          timeHtml = `<span class="event-time"><span class="time-part">-</span></span>`;
+        }
         
         let mapsUrl = (e.locationLink && String(e.locationLink).trim() !== "") ? String(e.locationLink).trim() : "";
         let locName = e.location ? e.location.trim() : "";
@@ -1772,7 +1817,7 @@ let currentGuestEmail = "";
         if (locName !== "" && mapsUrl !== "") {
           locHtml = `
             <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="schedule-loc-link" title="Open in Maps / Info">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -1783,9 +1828,9 @@ let currentGuestEmail = "";
 
         html += `
           <div class="schedule-event-inline fade-up">
-            <span class="event-time">${escapeHtml(timeText)}</span>
+            ${timeHtml}
             <div class="schedule-event-details">
-              <div class="schedule-title-row" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div class="schedule-title-row">
                 ${titleHtml}
                 ${catBadge}
                 ${locHtml}
