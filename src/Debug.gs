@@ -575,6 +575,24 @@ function restoreJerusalemHotelsAndSync(targetSsId) {
     jlmSheet.getRange(2, 2).setValue(CONFIG.FIRST_NAME_COL); // "שם פרטי"
     jlmSheet.getRange(2, 3).setValue(CONFIG.LAST_NAME_COL);  // "שם משפחה"
 
+    // If restoring Sandbox, ensure columns D..N (booking data) are populated from Prod
+    if (!targetSsId) {
+      try {
+        const prodSs = SpreadsheetApp.openById("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos");
+        const prodJlm = prodSs.getSheetByName(CONFIG.JERUSALEM_SHEET);
+        if (prodJlm) {
+          const pVals = prodJlm.getRange(2, 4, 32, 11).getValues();
+          const pForms = prodJlm.getRange(2, 4, 32, 11).getFormulas();
+          const combinedD_N = pVals.map((row, rIdx) => row.map((cell, cIdx) => {
+            return (pForms[rIdx] && pForms[rIdx][cIdx]) ? pForms[rIdx][cIdx] : cell;
+          }));
+          jlmSheet.getRange(2, 4, 32, 11).setValues(combinedD_N);
+        }
+      } catch(e) {
+        Logger.log("Could not copy D..N from prod: " + e.toString());
+      }
+    }
+
     // 3. For rows 3 to 28, set the email values in Column A
     const emailValues = knownGuestEmails.map(em => [em]);
     jlmSheet.getRange(3, 1, emailValues.length, 1).setValues(emailValues);
@@ -589,7 +607,7 @@ function restoreJerusalemHotelsAndSync(targetSsId) {
         `=IF(ISBLANK(A${rowNum}), "", XLOOKUP(A${rowNum}, 'אורחים'!$K:$K, 'אורחים'!$B:$B, ""))`
       ]);
     }
-    jlmSheet.getRange(3, 2, nameFormulas.length, 2).setFormulas(nameFormulas);
+    jlmSheet.getRange(3, 2, nameFormulas.length, 2).setValues(nameFormulas);
 
     // 5. Run syncAllSheets(ss) to align all sheets and ensure full data integrity
     syncAllSheets(ss);
@@ -605,6 +623,7 @@ function restoreJerusalemHotelsAndSync(targetSsId) {
       finalLastRow: finalLastRow,
       finalSample: finalSample
     };
+
   } catch (err) {
     return { success: false, error: err.toString(), stack: err.stack };
   }

@@ -214,15 +214,26 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder, masterCols,
     return indexA - indexB;
   });
   
-  const finalValues = values.slice(0, startDataRowIdx).map(row => row.slice());
-  const finalFormulas = formulas.slice(0, startDataRowIdx).map(row => row.slice());
+  // Reconstruct headers/title in output matrix
+  const finalMatrix = [];
+  for (let r = 0; r < startDataRowIdx; r++) {
+    const headerRow = [];
+    for (let c = 0; c < lastCol; c++) {
+      if (formulas[r] && formulas[r][c]) {
+        headerRow.push(formulas[r][c]);
+      } else {
+        headerRow.push(values[r] && values[r][c] !== undefined ? values[r][c] : "");
+      }
+    }
+    finalMatrix.push(headerRow);
+  }
+
   const emailBackgrounds = [];
   const emailColLetter = colToLetter(emailColIndex);
 
   combinedRows.forEach((row, idx) => {
     emailBackgrounds.push([row.isDeleted ? "#ffcccc" : null]);
-    const rowVal = []; 
-    const rowForm = [];
+    const rowOut = [];
     const currentRowNum = idx + startDataRowIdx + 1;
 
     row.forEach((cell, cIdx) => {
@@ -245,35 +256,30 @@ function sortTargetSheetByMasterOrder(targetSheet, masterEmailOrder, masterCols,
         }
       }
 
-      if (fStr !== "") { 
-        rowForm.push(fStr); 
-        rowVal.push(""); 
-      } else { 
-        rowForm.push(""); 
-        rowVal.push(cellVal); 
+      if (fStr !== "") {
+        rowOut.push(fStr); // In GAS, strings starting with '=' are treated as formulas by setValues
+      } else {
+        rowOut.push(cellVal);
       }
     });
-    finalValues.push(rowVal); 
-    finalFormulas.push(rowForm);
+    finalMatrix.push(rowOut);
   });
   
-  const numRows = finalValues.length;
-  const numCols = Math.max(lastCol, finalValues[0] ? finalValues[0].length : 1);
+  const numRows = finalMatrix.length;
+  const numCols = Math.max(lastCol, finalMatrix[0] ? finalMatrix[0].length : 1);
   
   if (lastRow > numRows) {
     targetSheet.getRange(numRows + 1, 1, lastRow - numRows, lastCol).clearContent().setBackground(null);
   }
   
-  // Set all values atomically
-  targetSheet.getRange(1, 1, numRows, numCols).setValues(finalValues);
-  
-  // Set all formulas atomically in one single call
-  targetSheet.getRange(1, 1, numRows, numCols).setFormulas(finalFormulas);
+  // Set all values and formulas atomically in ONE single call
+  targetSheet.getRange(1, 1, numRows, numCols).setValues(finalMatrix);
 
   if (emailBackgrounds.length > 0) {
     targetSheet.getRange(startDataRowIdx + 1, emailColIndex + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
   }
 }
+
 
 function syncAnatSheetWithMasterOrder() {
   if (!CONFIG.ANAT_SPREADSHEET_ID || CONFIG.ANAT_SPREADSHEET_ID === "YOUR_ANAT_SPREADSHEET_ID_HERE") return;
@@ -401,8 +407,20 @@ function syncAnatSheetWithMasterOrder() {
         return indexA - indexB;
       });
 
-      const finalValues = values.slice(0, startDataRowIdx).map(row => row.slice());
-      const finalFormulas = formulas.slice(0, startDataRowIdx).map(row => row.slice());
+      // Reconstruct headers/title in output matrix
+      const finalMatrix = [];
+      for (let r = 0; r < startDataRowIdx; r++) {
+        const headerRow = [];
+        for (let c = 0; c < lastCol; c++) {
+          if (formulas[r] && formulas[r][c]) {
+            headerRow.push(formulas[r][c]);
+          } else {
+            headerRow.push(values[r] && values[r][c] !== undefined ? values[r][c] : "");
+          }
+        }
+        finalMatrix.push(headerRow);
+      }
+
       const emailBackgrounds = [];
       const targetEmailColLetter = colToLetter(targetEmailColIdx);
 
@@ -414,8 +432,7 @@ function syncAnatSheetWithMasterOrder() {
 
       combinedRows.forEach((row, idx) => {
         emailBackgrounds.push([row.isDeleted ? "#ffcccc" : null]);
-        const rowVal = []; 
-        const rowForm = [];
+        const rowOut = [];
         const currentRowNum = idx + startDataRowIdx + 1;
 
         row.forEach((cell, cIdx) => {
@@ -437,31 +454,28 @@ function syncAnatSheetWithMasterOrder() {
             }
           }
 
-          if (fStr !== "") { 
-            rowForm.push(fStr); 
-            rowVal.push(""); 
-          } else { 
-            rowForm.push(""); 
-            rowVal.push(cellVal); 
+          if (fStr !== "") {
+            rowOut.push(fStr); // In GAS, strings starting with '=' are treated as formulas by setValues
+          } else {
+            rowOut.push(cellVal);
           }
         });
-        finalValues.push(rowVal); 
-        finalFormulas.push(rowForm);
+        finalMatrix.push(rowOut);
       });
 
-      const numRows = finalValues.length;
-      const numCols = Math.max(lastCol, finalValues[0] ? finalValues[0].length : 1);
+      const numRows = finalMatrix.length;
+      const numCols = Math.max(lastCol, finalMatrix[0] ? finalMatrix[0].length : 1);
 
       if (lastRow > numRows) {
         targetSheet.getRange(numRows + 1, 1, lastRow - numRows, lastCol).clearContent().setBackground(null);
       }
 
-      targetSheet.getRange(1, 1, numRows, numCols).setValues(finalValues);
-      targetSheet.getRange(1, 1, numRows, numCols).setFormulas(finalFormulas);
+      targetSheet.getRange(1, 1, numRows, numCols).setValues(finalMatrix);
 
       if (emailBackgrounds.length > 0) {
         targetSheet.getRange(startDataRowIdx + 1, targetEmailColIdx + 1, emailBackgrounds.length, 1).setBackgrounds(emailBackgrounds);
       }
+
     });
   } catch (err) {
     Logger.log("Error syncing Anat sheet order: " + err.toString());
