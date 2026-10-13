@@ -420,6 +420,10 @@ function inspectBackupsAndHotels() {
         });
       }
     }
+  } catch(e) {
+    result.driveError = e.toString();
+  }
+
 
     // Sort backups newest first
     result.backups.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
