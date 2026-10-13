@@ -1752,19 +1752,19 @@ let currentGuestEmail = "";
 
         let catBadge = "";
         if (e.category) {
-          const catColors = {
-            'Concerts': { bg: 'rgba(168, 85, 247, 0.15)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.35)', icon: '🎸' },
-            'Shuttle': { bg: 'rgba(59, 130, 246, 0.15)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.35)', icon: '🚌' },
-            'Food & Drinks': { bg: 'rgba(249, 115, 22, 0.15)', text: '#fb923c', border: 'rgba(249, 115, 22, 0.35)', icon: '🍽️' },
-            'Social & Food': { bg: 'rgba(249, 115, 22, 0.15)', text: '#fb923c', border: 'rgba(249, 115, 22, 0.35)', icon: '🍽️' },
-            'Free Time': { bg: 'rgba(34, 197, 94, 0.15)', text: '#4ade80', border: 'rgba(34, 197, 94, 0.35)', icon: '🌴' },
-            'Tour': { bg: 'rgba(234, 179, 8, 0.15)', text: '#facc15', border: 'rgba(234, 179, 8, 0.35)', icon: '🧭' },
-            'Networking': { bg: 'rgba(99, 102, 241, 0.15)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.35)', icon: '🤝' },
-            'Party': { bg: 'rgba(236, 72, 153, 0.15)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.35)', icon: '🎉' },
-            'Logistics': { bg: 'rgba(148, 163, 184, 0.15)', text: '#94a3b8', border: 'rgba(148, 163, 184, 0.35)', icon: 'ℹ️' }
+          const catIcons = {
+            'Concerts': '🎸',
+            'Shuttle': '🚌',
+            'Food & Drinks': '🍽️',
+            'Social & Food': '🍽️',
+            'Free Time': '🌴',
+            'Tour': '🧭',
+            'Networking': '🤝',
+            'Party': '🎉',
+            'Logistics': 'ℹ️'
           };
-          const c = catColors[e.category] || { bg: 'rgba(255, 255, 255, 0.08)', text: '#e2e8f0', border: 'rgba(255, 255, 255, 0.15)', icon: '📌' };
-          catBadge = `<span class="schedule-cat-badge" style="background:${c.bg}; color:${c.text}; border:1px solid ${c.border}; font-size:0.68rem; font-weight:600; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px; letter-spacing:0.3px; white-space:nowrap;">${c.icon} ${escapeHtml(e.category)}</span>`;
+          const icon = catIcons[e.category] || '📌';
+          catBadge = `<span class="schedule-cat-badge" data-category="${escapeHtml(e.category)}">${icon} <span>${escapeHtml(e.category)}</span></span>`;
         }
 
         let titleHtml = `<span class="event-title">${escapeHtml(e.title)}</span>`;

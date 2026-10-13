@@ -732,60 +732,87 @@ body.light-mode .shuttle-info-card h4 {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ========================================================= */
+/* SCHEDULE & ITINERARY - NEO-BRUTALIST FESTIVAL DESIGN     */
+/* ========================================================= */
+
+#schedule-days-nav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
 #schedule-days-nav::-webkit-scrollbar {
   display: none;
 }
 
 #schedule-days-nav .schedule-pill {
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 8px 18px;
   border-radius: 9999px;
-  color: var(--foreground-muted);
-  font-size: 0.92rem;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.95rem;
   font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.6);
-  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
   user-select: none;
   touch-action: manipulation;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+/* Day pills - Dark Mode (Default) */
+#schedule-days-nav .schedule-pill {
+  background: #11233a;
+  color: #cbd5e1;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 3px 3px 0px #000000;
 }
 
 #schedule-days-nav .schedule-pill:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: #172e4c;
+  color: #ffffff;
+  border-color: var(--accent);
   transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.8);
+  box-shadow: 4px 4px 0px #000000;
 }
 
 #schedule-days-nav .schedule-pill.active {
-  background: var(--accent);
-  color: #000;
-  border-color: #fff;
+  background: var(--accent); /* Salmon Pink */
+  color: #000000;
   font-weight: 700;
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.9);
-  transform: translate(-1px, -1px);
+  border: 2px solid #000000;
+  box-shadow: 1px 1px 0px #000000;
+  transform: translate(2px, 2px);
 }
 
+/* Day pills - Light Mode */
 body.light-mode #schedule-days-nav .schedule-pill {
   background: #ffffff;
-  color: #0f172a;
-  border: 2px solid #0f172a;
-  box-shadow: 2px 2px 0px #0f172a;
+  color: #0a1626;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
 }
 
 body.light-mode #schedule-days-nav .schedule-pill:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  box-shadow: 3px 3px 0px #0f172a;
+  background: #E8F4FA; /* Ice Blue */
+  color: #0a1626;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000;
 }
 
 body.light-mode #schedule-days-nav .schedule-pill.active {
-  background: #0f172a;
-  color: #ffffff;
-  border: 2px solid #0f172a;
-  box-shadow: 3px 3px 0px rgba(241, 169, 160, 1);
+  background: var(--accent); /* Salmon Pink */
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: 1px 1px 0px #000000;
+  transform: translate(2px, 2px);
 }
 
 /* EVENT ROW CARD */
@@ -793,50 +820,88 @@ body.light-mode #schedule-days-nav .schedule-pill.active {
   display: flex !important;
   align-items: flex-start !important;
   gap: 16px !important;
-  padding: 14px 16px !important;
+  padding: 16px 18px !important;
   margin-bottom: 14px !important;
-  border-radius: 12px !important;
-  background: rgba(30, 41, 59, 0.75) !important;
-  border: 2px solid rgba(255, 255, 255, 0.2) !important;
-  border-left: 6px solid var(--accent) !important;
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.8) !important;
-  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
-}
-
-.schedule-event-inline:nth-child(even) {
-  background: rgba(15, 23, 42, 0.85) !important;
+  border-radius: var(--radius-xl, 12px) !important;
+  border: 2px solid #000000 !important;
+  border-left: 6px solid var(--accent) !important; /* Salmon Pink Accent Stripe */
+  box-shadow: 3px 3px 0px #000000 !important;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
 }
 
 .schedule-event-inline:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.95) !important;
+  box-shadow: 4px 4px 0px #000000 !important;
 }
 
 .schedule-event-inline:last-child {
   margin-bottom: 0 !important;
 }
 
-/* TIME BLOCK */
+/* Dark Mode Event Card */
+.schedule-event-inline {
+  background: #0f1f33 !important; /* Deep Sea Navy */
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.schedule-event-inline:nth-child(even) {
+  background: #0a1626 !important;
+}
+
+.schedule-event-inline:hover {
+  background: #142842 !important;
+}
+
+/* Light Mode Event Card */
+body.light-mode .schedule-event-inline {
+  background: #E8F4FA !important; /* Official Ice Blue */
+  border: 2px solid #000000 !important;
+  border-left: 6px solid var(--accent) !important; /* Salmon Pink Accent Stripe */
+  box-shadow: 3px 3px 0px #000000 !important;
+}
+
+body.light-mode .schedule-event-inline:nth-child(even) {
+  background: #dff0fa !important; /* Alternating subtle ice-blue tone */
+}
+
+body.light-mode .schedule-event-inline:hover {
+  background: #D6EAF8 !important; /* Deeper Ice Blue */
+}
+
+/* TIME BADGE */
 .schedule-event-inline .event-time {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 95px;
+  min-width: 90px;
   padding: 6px 12px;
-  border-radius: 8px;
-  background: rgba(241, 169, 160, 0.15);
-  color: var(--accent);
-  border: 1.5px solid rgba(241, 169, 160, 0.4);
+  border-radius: var(--radius-lg, 8px);
   font-family: 'Oswald', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.04em;
   text-align: center;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4);
+  border: 2px solid #000000;
 }
 
-/* DETAILS & TITLE */
+/* Time Badge - Dark Mode */
+.schedule-event-inline .event-time {
+  background: rgba(241, 169, 160, 0.15);
+  color: var(--accent);
+  border: 1.5px solid rgba(241, 169, 160, 0.5);
+  box-shadow: 2px 2px 0px #000000;
+}
+
+/* Time Badge - Light Mode */
+body.light-mode .schedule-event-inline .event-time {
+  background: #0a1626; /* Deep Sea contrast */
+  color: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px var(--accent); /* Salmon Pink shadow */
+}
+
+/* EVENT DETAILS & TITLE */
 .schedule-event-details {
   display: flex;
   flex-direction: column;
@@ -856,93 +921,187 @@ body.light-mode #schedule-days-nav .schedule-pill.active {
   font-family: 'Oswald', sans-serif;
   font-size: 1.15rem;
   font-weight: 600;
-  color: #f8fafc;
-  line-height: 1.25;
-}
-
-.schedule-event-inline .event-desc {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: #94a3b8;
-  margin-left: 0;
-}
-
-.schedule-loc-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  background: rgba(241, 169, 160, 0.15);
-  color: var(--accent);
-  border: 1.5px solid var(--accent);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
-  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
-}
-
-.schedule-loc-link:hover {
-  background: var(--accent);
-  color: #000;
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1);
-}
-
-.schedule-loc-link:active {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0px rgba(0, 0, 0, 1);
-}
-
-/* LIGHT MODE SCHEDULE EVENT CARD OVERRIDES */
-body.light-mode .schedule-event-inline {
-  background: #f1f5f9 !important; /* Tinted slate card to clearly stand out from the white parent card */
-  border: 2px solid #0f172a !important;
-  border-left: 6px solid #e11d48 !important; /* Bold high-contrast left border */
-  box-shadow: 3px 3px 0px #0f172a !important;
-}
-
-body.light-mode .schedule-event-inline:nth-child(even) {
-  background: #e2e8f0 !important; /* Subtle zebra striping for effortless reading */
-}
-
-body.light-mode .schedule-event-inline:hover {
-  background: #e2e8f0 !important;
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px #0f172a !important;
-}
-
-body.light-mode .schedule-event-inline .event-time {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border: 1.5px solid #0f172a !important;
-  box-shadow: 2px 2px 0px rgba(225, 29, 72, 0.9) !important;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
 }
 
 body.light-mode .schedule-event-inline .event-title {
-  color: #0f172a !important;
-  font-family: 'Oswald', sans-serif !important;
-  font-size: 1.15rem !important;
-  font-weight: 700 !important;
+  color: #0a1626 !important;
+}
+
+.schedule-event-inline .event-title {
+  color: #F8FAFC !important;
+}
+
+/* EVENT DESCRIPTION */
+.schedule-event-inline .event-desc {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin-top: 2px;
 }
 
 body.light-mode .schedule-event-inline .event-desc {
   color: #334155 !important;
-  font-weight: 500 !important;
-  font-size: 0.92rem !important;
 }
 
-body.light-mode .schedule-loc-link {
+.schedule-event-inline .event-desc {
+  color: #94a3b8 !important;
+}
+
+/* CATEGORY BADGES */
+.schedule-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1.5px solid #000000;
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* Dark Mode Category Badges */
+.schedule-cat-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.schedule-cat-badge[data-category="Concerts"] {
   background: rgba(241, 169, 160, 0.25);
-  color: #8c2518;
-  border-color: #8c2518;
-  box-shadow: 2px 2px 0px #000;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.schedule-cat-badge[data-category="Shuttle"] {
+  background: rgba(214, 234, 248, 0.2);
+  color: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+.schedule-cat-badge[data-category="Food & Drinks"],
+.schedule-cat-badge[data-category="Social & Food"] {
+  background: rgba(254, 243, 199, 0.2);
+  color: #fde68a;
+  border-color: #fde68a;
+}
+
+.schedule-cat-badge[data-category="Party"] {
+  background: rgba(244, 114, 182, 0.2);
+  color: #f472b6;
+  border-color: #f472b6;
+}
+
+.schedule-cat-badge[data-category="Networking"] {
+  background: rgba(199, 210, 254, 0.2);
+  color: #c7d2fe;
+  border-color: #c7d2fe;
+}
+
+.schedule-cat-badge[data-category="Tour"],
+.schedule-cat-badge[data-category="Free Time"] {
+  background: rgba(167, 243, 208, 0.2);
+  color: #a7f3d0;
+  border-color: #a7f3d0;
+}
+
+/* Light Mode Category Badges */
+body.light-mode .schedule-cat-badge {
+  background: #ffffff;
+  color: #0a1626;
+  border: 1.5px solid #000000;
+  box-shadow: 1px 1px 0px #000000;
+}
+
+body.light-mode .schedule-cat-badge[data-category="Concerts"] {
+  background: var(--accent); /* Salmon Pink */
+  color: #000000;
+}
+
+body.light-mode .schedule-cat-badge[data-category="Shuttle"] {
+  background: #D6EAF8; /* Ice Blue */
+  color: #0a1626;
+}
+
+body.light-mode .schedule-cat-badge[data-category="Food & Drinks"],
+body.light-mode .schedule-cat-badge[data-category="Social & Food"] {
+  background: #fef3c7;
+  color: #78350f;
+}
+
+body.light-mode .schedule-cat-badge[data-category="Party"] {
+  background: #fce7f3;
+  color: #831843;
+}
+
+body.light-mode .schedule-cat-badge[data-category="Networking"] {
+  background: #e0e7ff;
+  color: #312e81;
+}
+
+body.light-mode .schedule-cat-badge[data-category="Tour"],
+body.light-mode .schedule-cat-badge[data-category="Free Time"] {
+  background: #d1fae5;
+  color: #064e3b;
+}
+
+/* LOCATION LINK BUTTON */
+.schedule-loc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1.5px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+/* Location Link - Dark Mode */
+.schedule-loc-link {
+  background: #11233a;
+  color: var(--accent);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 2px 2px 0px #000000;
+}
+
+.schedule-loc-link:hover {
+  background: var(--accent);
+  color: #000000;
+  border-color: #000000;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.schedule-loc-link:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* Location Link - Light Mode */
+body.light-mode .schedule-loc-link {
+  background: #ffffff;
+  color: #0a1626;
+  border: 1.5px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
 }
 
 body.light-mode .schedule-loc-link:hover {
-  background: #f1a9a0;
-  color: #000;
+  background: var(--accent);
+  color: #000000;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+body.light-mode .schedule-loc-link:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
 }
 
 /* MOBILE RESPONSIVE TWEAKS FOR SCHEDULE */
