@@ -3596,21 +3596,83 @@ function loadAdminDashboard(forceRefresh = false) {
   if (adminDataLoaded && !forceRefresh) return;
   
   const container = document.getElementById("admin-dashboard-container");
-  container.innerHTML = '<div style="text-align:center; padding: 40px;"><div class="musical-loader-wrapper" style="display:block;"><div class="musical-loader"><span class="music-note music-note-1">dYZ</span><span class="drummer-emoji">dY?</span><span class="music-note music-note-2">dYZ </span></div><p class="loader-text">Loading production data...</p></div></div>';
+  if (!container) return;
+
+  // 1. Instant display from SWR cache if available
+  const cachedAdmin = localStorage.getItem('swr_adminData');
+  if (cachedAdmin && !forceRefresh && !adminDataLoaded) {
+    try {
+      const parsed = JSON.parse(cachedAdmin);
+      if (parsed && parsed.success && parsed.guests) {
+        adminData = parsed;
+        adminDataLoaded = true;
+        renderAdminDashboard();
+      }
+    } catch(e) {}
+  }
   
-  const token = localStorage.getItem('guestSessionToken');
+  // 2. If no cached data displayed yet, show the polite mascot loader
+  if (!adminDataLoaded) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 40px;">
+        <div class="musical-loader-wrapper" style="display:flex; flex-direction:column; align-items:center;">
+          <div class="musical-loader">
+            <span class="music-note music-note-1">🎵</span>
+            <img src="/polar-bear.png" alt="IMSF Mascot" class="polar-bear-loader-img">
+            <span class="music-note music-note-2">🎶</span>
+          </div>
+          <p class="loader-text">Loading production data...</p>
+        </div>
+      </div>
+    `;
+  }
+  
+  const token = localStorage.getItem('guestSessionToken') || localStorage.getItem('originalAdminToken');
+  if (!token) {
+    if (!adminDataLoaded) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px; box-shadow: 3px 3px 0px rgba(0,0,0,1);">
+          <p class="error-text" style="font-weight: bold; margin-bottom: 12px;">Session token not found. Please log in again.</p>
+          <button class="primary" onclick="resetLogin()">Log In</button>
+        </div>
+      `;
+    }
+    return;
+  }
+
   google.script.run
     .withSuccessHandler(function(res) {
-      if (!res.success) {
-        container.innerHTML = '<p class="error-text">Failed to load admin data: ' + res.message + '</p>';
+      if (!res || !res.success) {
+        const msg = (res && res.message) ? res.message : "Failed to load admin data.";
+        if (!adminDataLoaded) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px; box-shadow: 3px 3px 0px rgba(0,0,0,1);">
+              <p class="error-text" style="font-weight: bold; margin-bottom: 12px;">${msg}</p>
+              <button class="primary" onclick="loadAdminDashboard(true)">🔄 Try Again</button>
+            </div>
+          `;
+        }
         return;
       }
       adminData = res;
       adminDataLoaded = true;
+      try {
+        localStorage.setItem('swr_adminData', JSON.stringify(res));
+      } catch(e) {}
       renderAdminDashboard();
     })
     .withFailureHandler(function(err) {
-      container.innerHTML = '<p class="error-text">Error: ' + err.toString() + '</p>';
+      console.error("loadAdminDashboard failed:", err);
+      if (!adminDataLoaded) {
+        const cleanErr = String(err && err.message ? err.message : err).replace(/^Error:\s*/i, '');
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px; box-shadow: 3px 3px 0px rgba(0,0,0,1); max-width: 480px; margin: 20px auto;">
+            <p class="error-text" style="font-weight: bold; margin-bottom: 10px; font-size: 1.05rem;">${cleanErr}</p>
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 16px;">We encountered a temporary connection issue fetching production data.</p>
+            <button class="primary" onclick="loadAdminDashboard(true)" style="padding: 10px 20px; font-weight: bold;">🔄 Retry Connection</button>
+          </div>
+        `;
+      }
     })
     .getAdminDashboardData(token);
 }

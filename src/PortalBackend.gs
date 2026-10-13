@@ -1022,22 +1022,21 @@ function getAdminDashboardData(sessionToken) {
     if (!isAdmin) return { success: false, message: 'Unauthorized. Admins only.' };
     
     // Fetch full data for admin
+    const tz = ss.getSpreadsheetTimeZone();
     const getSheetData = (sheetName) => {
       const sheet = ss.getSheetByName(sheetName);
       if (!sheet) return null;
-      const range = sheet.getDataRange();
-      const data = range.getValues();
-      const displayData = range.getDisplayValues();
-      const tz = ss.getSpreadsheetTimeZone();
-      return data.map((row, rIdx) => row.map((cell, cIdx) => {
-        let dispVal = displayData && displayData[rIdx] ? String(displayData[rIdx][cIdx] || "").trim() : "";
-        if (dispVal.startsWith("#") || dispVal.startsWith("=")) {
-          return "";
-        }
-        if (typeof cell === "string" && (cell.startsWith("#") || cell.startsWith("="))) {
-          return "";
+      const data = sheet.getDataRange().getValues();
+      return data.map((row) => row.map((cell) => {
+        if (typeof cell === "string") {
+          const trimmed = cell.trim();
+          if (trimmed.startsWith("#") || trimmed.startsWith("=")) {
+            return "";
+          }
+          return cell;
         }
         if (cell instanceof Date) {
+          if (isNaN(cell.getTime())) return "";
           return Utilities.formatDate(cell, tz, 'yyyy-MM-dd HH:mm');
         }
         return cell;
@@ -1050,11 +1049,10 @@ function getAdminDashboardData(sessionToken) {
       flights: getSheetData(CONFIG.FLIGHTS_SHEET),
       flightsUpdates: getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME),
       hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
-      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
-      infoSheet: getSheetData('מידע כללי'),
-      dashboardStats: getSheetData('דשבורד הפקה')
+      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET)
     };
   } catch (err) {
+    console.error("Error in getAdminDashboardData:", err);
     return { success: false, message: 'Server Error: ' + err.toString() };
   }
 }
