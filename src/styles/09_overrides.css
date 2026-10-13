@@ -1612,6 +1612,271 @@ body.light-mode .networking-section-box {
   border-color: #000;
 }
 
+/* Dynamic Networking KPI Overview Cards */
+.networking-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 700px) {
+  .networking-kpis-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.networking-kpi-card {
+  background: var(--bg);
+  border: 2px solid #000;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 3px 3px 0px rgba(0,0,0,1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+}
+
+body.light-mode .networking-kpi-card {
+  background: #ffffff;
+  border-color: #000;
+  box-shadow: 3px 3px 0px rgba(0,0,0,1);
+}
+
+.networking-kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.networking-kpi-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+body.light-mode .networking-kpi-title {
+  color: #0f172a;
+}
+
+.networking-kpi-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(241, 169, 160, 0.2);
+  color: var(--accent);
+  border: 1px solid rgba(241, 169, 160, 0.4);
+}
+
+body.light-mode .networking-kpi-badge {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.networking-kpi-stat-box {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.networking-kpi-stat-number {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1;
+}
+
+body.light-mode .networking-kpi-stat-number {
+  color: #0f172a;
+}
+
+.networking-kpi-stat-sub {
+  font-size: 0.85rem;
+  color: var(--foreground-muted);
+  font-weight: 500;
+}
+
+.networking-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .networking-progress-track {
+  background: #e2e8f0;
+}
+
+.networking-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.networking-progress-fill.green {
+  background: #10b981;
+}
+
+.networking-kpi-footer-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.networking-pill {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+body.light-mode .networking-pill {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* Ranked Top 5 Mini List */
+.networking-top-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.networking-top-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+body.light-mode .networking-top-item {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.networking-top-item:hover {
+  background: rgba(241, 169, 160, 0.15);
+  border-color: var(--accent);
+  transform: translate(-1px, -1px);
+}
+
+body.light-mode .networking-top-item:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.networking-top-item:active {
+  transform: translate(1px, 1px);
+}
+
+.networking-top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.networking-top-rank {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--foreground);
+  flex-shrink: 0;
+}
+
+.networking-top-item:nth-child(1) .networking-top-rank {
+  background: #ffd700;
+  color: #000;
+}
+
+.networking-top-item:nth-child(2) .networking-top-rank {
+  background: #c0c0c0;
+  color: #000;
+}
+
+.networking-top-item:nth-child(3) .networking-top-rank {
+  background: #cd7f32;
+  color: #fff;
+}
+
+.networking-top-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.light-mode .networking-top-name {
+  color: #0f172a;
+}
+
+.networking-top-meta {
+  font-size: 0.74rem;
+  color: var(--foreground-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.networking-top-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.networking-top-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(241, 169, 160, 0.2);
+  color: var(--accent);
+}
+
+body.light-mode .networking-top-tag {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+
 
 
 

@@ -2862,6 +2862,9 @@ function renderAdminDashboard() {
           </div>
         </div>
 
+        <!-- Dynamic KPI Overview Cards -->
+        <div id="admin-networking-kpis" class="networking-kpis-grid"></div>
+
         <div style="margin-bottom: 12px; position: relative;">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <input type="text" id="admin-networking-search" placeholder="Search artists..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground);" onkeyup="filterAdminNetworking(this.value)">
@@ -2982,7 +2985,204 @@ function getResolvedGuestsNetworkingList() {
   return result;
 }
 
+function renderAdminNetworkingKPIs() {
+  const container = document.getElementById('admin-networking-kpis');
+  if (!container || !adminNetworkingData) return;
+
+  const artists = adminNetworkingData.artistsLeads || [];
+  const guests = getResolvedGuestsNetworkingList();
+
+  if (currentNetworkingTab === 'artists') {
+    // 1. Lineup Coverage
+    const totalArtists = artists.length;
+    const engagedArtists = artists.filter(a => 
+      (a.likesCount > 0) || 
+      (a.bookingLeads && a.bookingLeads.trim().length > 0) ||
+      (a.notes && a.notes.trim().length > 0)
+    ).length;
+    const unengagedArtists = Math.max(0, totalArtists - engagedArtists);
+    const coveragePercent = totalArtists > 0 ? Math.round((engagedArtists / totalArtists) * 100) : 0;
+
+    // 2. Top 5 In-Demand Artists
+    const topArtists = [...artists]
+      .filter(a => (a.likesCount > 0) || (a.bookingLeads && a.bookingLeads.trim().length > 0))
+      .sort((a, b) => {
+        if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
+        const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
+        const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
+        if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+      })
+      .slice(0, 5);
+
+    let topArtistsHtml = '';
+    if (topArtists.length === 0) {
+      topArtistsHtml = '<p style="color: var(--foreground-muted); font-size: 0.85rem; margin: 14px 0; text-align: center;">No likes or leads recorded yet.</p>';
+    } else {
+      topArtistsHtml = '<div class="networking-top-list">';
+      topArtists.forEach((a, idx) => {
+        const hasBooking = a.bookingLeads && a.bookingLeads.trim().length > 0;
+        const safeName = escapeHtmlAdmin(a.name);
+        topArtistsHtml += `
+          <div class="networking-top-item" onclick="openNetworkingDetail('artist', '${safeName.replace(/'/g, "\\'")}')" title="View ${safeName} details">
+            <div class="networking-top-left">
+              <span class="networking-top-rank">#${idx + 1}</span>
+              <span class="networking-top-name">${safeName}</span>
+            </div>
+            <div class="networking-top-right">
+              <span class="networking-top-tag">❤️ ${a.likesCount || 0}</span>
+              ${hasBooking ? `<span class="networking-top-tag" style="background: rgba(16,185,129,0.15); color: #10b981;" title="Booking inquiries">🎯</span>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      topArtistsHtml += '</div>';
+    }
+
+    container.innerHTML = `
+      <!-- Card 1: Lineup Coverage -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>📈</span> Lineup Coverage
+            </h4>
+            <span class="networking-kpi-badge">${coveragePercent}% Engaged</span>
+          </div>
+          <div class="networking-kpi-stat-box">
+            <div class="networking-kpi-stat-number">${coveragePercent}%</div>
+            <div class="networking-kpi-stat-sub">${engagedArtists} of ${totalArtists} artists engaged</div>
+          </div>
+          <div class="networking-progress-track">
+            <div class="networking-progress-fill" style="width: ${coveragePercent}%;"></div>
+          </div>
+        </div>
+        <div class="networking-kpi-footer-pills">
+          <span class="networking-pill">🎯 ${engagedArtists} With feedback</span>
+          <span class="networking-pill">⚪ ${unengagedArtists} No feedback yet</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Top 5 In-Demand Artists -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>🏆</span> Top In-Demand Artists
+            </h4>
+            <span class="networking-kpi-badge">Top ${topArtists.length}</span>
+          </div>
+          ${topArtistsHtml}
+        </div>
+      </div>
+    `;
+  } else {
+    // Guests tab
+    // 1. Delegate Engagement Rate
+    const totalGuests = guests.length;
+    const activeGuests = guests.filter(g => {
+      const isInactive = (g.status && g.status.includes('טרם סימן')) ||
+                         ((!g.totalLikes || Number(g.totalLikes) === 0) &&
+                          (!g.favs || !g.favs.trim()) &&
+                          (!g.notes || !g.notes.trim()) &&
+                          (!g.booking || !g.booking.trim()) &&
+                          (!g.connect || !g.connect.trim()) &&
+                          (!g.press || !g.press.trim()));
+      return !isInactive;
+    });
+    const activeCount = activeGuests.length;
+    const inactiveCount = Math.max(0, totalGuests - activeCount);
+    const ratePercent = totalGuests > 0 ? Math.round((activeCount / totalGuests) * 100) : 0;
+
+    // 2. Top 5 Most Engaged Delegates
+    const topGuests = [...activeGuests]
+      .map(g => {
+        const likes = Number(g.totalLikes) || 0;
+        const hasNotes = (g.notes && g.notes.trim().length > 0);
+        const notesCount = hasNotes ? g.notes.split('\n').filter(Boolean).length : 0;
+        const tagsCount = ((g.booking && g.booking.trim()) ? 1 : 0) +
+                          ((g.connect && g.connect.trim()) ? 1 : 0) +
+                          ((g.press && g.press.trim()) ? 1 : 0);
+        const score = (likes * 2) + (notesCount * 3) + tagsCount;
+        return { ...g, likes, notesCount, score };
+      })
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (b.likes !== a.likes) return b.likes - a.likes;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+      })
+      .slice(0, 5);
+
+    let topGuestsHtml = '';
+    if (topGuests.length === 0) {
+      topGuestsHtml = '<p style="color: var(--foreground-muted); font-size: 0.85rem; margin: 14px 0; text-align: center;">No active delegates yet.</p>';
+    } else {
+      topGuestsHtml = '<div class="networking-top-list">';
+      topGuests.forEach((g, idx) => {
+        const safeName = escapeHtmlAdmin(g.name);
+        const safeKey = escapeHtmlAdmin(g.email || g.name);
+        const subInfo = escapeHtmlAdmin(g.company || g.country || '');
+        topGuestsHtml += `
+          <div class="networking-top-item" onclick="openNetworkingDetail('guest', '${safeKey.replace(/'/g, "\\'")}')" title="View ${safeName} activity">
+            <div class="networking-top-left">
+              <span class="networking-top-rank">#${idx + 1}</span>
+              <div style="overflow: hidden; text-overflow: ellipsis;">
+                <div class="networking-top-name">${safeName}</div>
+                ${subInfo ? `<div class="networking-top-meta">${subInfo}</div>` : ''}
+              </div>
+            </div>
+            <div class="networking-top-right">
+              <span class="networking-top-tag">❤️ ${g.likes}</span>
+              ${g.notesCount > 0 ? `<span class="networking-top-tag" style="background: rgba(59,130,246,0.15); color: #3b82f6;" title="${g.notesCount} Notes">💬 ${g.notesCount}</span>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      topGuestsHtml += '</div>';
+    }
+
+    container.innerHTML = `
+      <!-- Card 1: Delegate Engagement Rate -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>📊</span> Delegate Engagement
+            </h4>
+            <span class="networking-kpi-badge" style="background: rgba(16,185,129,0.15); color: #10b981; border-color: rgba(16,185,129,0.3);">${ratePercent}% Active</span>
+          </div>
+          <div class="networking-kpi-stat-box">
+            <div class="networking-kpi-stat-number">${ratePercent}%</div>
+            <div class="networking-kpi-stat-sub">${activeCount} of ${totalGuests} delegates active</div>
+          </div>
+          <div class="networking-progress-track">
+            <div class="networking-progress-fill green" style="width: ${ratePercent}%;"></div>
+          </div>
+        </div>
+        <div class="networking-kpi-footer-pills">
+          <span class="networking-pill" style="border-color: rgba(16,185,129,0.4); color: #10b981;">🟢 ${activeCount} Active</span>
+          <span class="networking-pill" style="border-color: rgba(239,68,68,0.4); color: #ef4444;">🔴 ${inactiveCount} Inactive</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Top 5 Active Delegates -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>🌟</span> Top Active Delegates
+            </h4>
+            <span class="networking-kpi-badge">Top ${topGuests.length}</span>
+          </div>
+          ${topGuestsHtml}
+        </div>
+      </div>
+    `;
+  }
+}
+
 function renderAdminNetworkingCubes(query = "") {
+  renderAdminNetworkingKPIs();
   const container = document.getElementById('admin-networking-list');
   if (!container || !adminNetworkingData) return;
 
@@ -3071,14 +3271,21 @@ function filterAdminNetworking(query) {
   renderAdminNetworkingCubes(query);
 }
 
-function openNetworkingDetail(type, index) {
+function openNetworkingDetail(type, target) {
   const overlay = document.getElementById('networking-sheet-overlay');
   const sheet = document.getElementById('networking-bottom-sheet');
   const content = document.getElementById('networking-modal-content');
   if (!overlay || !sheet || !content) return;
 
   if (type === 'artist') {
-    const artist = networkingArtistsList[index];
+    let artist = null;
+    if (typeof target === 'number') {
+      artist = networkingArtistsList[target];
+    } else {
+      const allArtists = (adminNetworkingData && adminNetworkingData.artistsLeads) ? adminNetworkingData.artistsLeads : networkingArtistsList;
+      artist = allArtists.find(a => a.name.toLowerCase() === String(target).toLowerCase()) ||
+               networkingArtistsList.find(a => a.name.toLowerCase() === String(target).toLowerCase());
+    }
     if (!artist) return;
 
     const hasBooking = artist.bookingLeads && artist.bookingLeads.trim().length > 0;
@@ -3158,7 +3365,19 @@ function openNetworkingDetail(type, index) {
     `;
   } else {
     // Guest detail
-    const guest = networkingGuestsList[index];
+    let guest = null;
+    if (typeof target === 'number') {
+      guest = networkingGuestsList[target];
+    } else {
+      const allGuests = getResolvedGuestsNetworkingList();
+      guest = allGuests.find(g => 
+        (g.email && g.email.toLowerCase() === String(target).toLowerCase()) ||
+        (g.name && g.name.toLowerCase() === String(target).toLowerCase())
+      ) || networkingGuestsList.find(g => 
+        (g.email && g.email.toLowerCase() === String(target).toLowerCase()) ||
+        (g.name && g.name.toLowerCase() === String(target).toLowerCase())
+      );
+    }
     if (!guest) return;
 
     const hasFavs = guest.favs && guest.favs.trim().length > 0;
@@ -4113,3 +4332,7 @@ window.fetchGuideData = fetchGuideData;
 window.loadAdminNetworkingData = loadAdminNetworkingData;
 window.filterAdminNetworking = filterAdminNetworking;
 window.triggerFullLeadsSync = triggerFullLeadsSync;
+window.switchAdminNetworkingTab = switchAdminNetworkingTab;
+window.openNetworkingDetail = openNetworkingDetail;
+window.closeNetworkingDetailSheet = closeNetworkingDetailSheet;
+window.renderAdminNetworkingKPIs = renderAdminNetworkingKPIs;
