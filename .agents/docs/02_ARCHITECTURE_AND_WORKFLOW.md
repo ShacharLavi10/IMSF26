@@ -207,7 +207,7 @@ The portal contains an internal Production Dashboard hidden from regular guests.
 1. **`saveGuestArtistFeedback(email, payload)`:**
    * מקבלת את מפת המועדפים, ההערות והתגיות.
    * שולפת את נתוני האורח מהגיליון הראשי `אורחים` (`שם מלא`, `מדינה`, `תפקיד`, `חברה/ביוגרפיה`).
-   * מעדכנת/מוסיפה שורה בגיליון `העדפות אורחים`.
+   * מעדכנת/מוסיפה שורה בגיליון `העדפות אורחים` (כולל עמודות עיתונות וסיקור 📰 וסה"כ לייקים ❤️ במבנה עמודות דינמי).
    * מפעילה מיד את `syncArtistLeadsSheet()`.
 2. **`syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList)`:**
    * קוראת את כל נתוני `העדפות אורחים` ומקבצת לפי אמן.

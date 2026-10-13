@@ -145,13 +145,16 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     // 1. Locate or create 'העדפות אורחים' sheet
     const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
     let prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
+    const defaultHeaders = [
+      "מייל אורח", "שם מלא", "מדינה", "מה החברה עושה", "תפקיד",
+      "סטטוס פעילות", "אומנים שאהב (❤️)", "הזמנות להופעה (🎯 Booking)",
+      "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)", "סה\"כ לייקים (❤️)",
+      "הערות אורח", "Raw Data"
+    ];
+
     if (!prefSheet) {
       prefSheet = ss.insertSheet(prefSheetName);
-      prefSheet.appendRow([
-        "מייל אורח", "שם מלא", "מדינה", "מה החברה עושה", "תפקיד",
-        "סטטוס פעילות", "אומנים שאהב (❤️)", "הזמנות להופעה (🎯 Booking)",
-        "בקשות לקשר (🤝 Connect)", "הערות אורח", "Raw Data"
-      ]);
+      prefSheet.appendRow(defaultHeaders);
       prefSheet.setFrozenRows(1);
     }
 
@@ -187,6 +190,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     const favNames = [];
     const bookingNames = [];
     const connectNames = [];
+    const pressNames = [];
     const notesList = [];
 
     Object.keys(favorites).forEach(aId => {
@@ -201,6 +205,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
       const a = artistMap[aId] || { name: aId };
       if (tList.includes("Booking")) bookingNames.push(a.name);
       if (tList.includes("Connect")) connectNames.push(a.name);
+      if (tList.includes("Press")) pressNames.push(a.name);
     });
 
     Object.keys(notes).forEach(aId => {
@@ -221,29 +226,79 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
       updatedAt: new Date().toISOString()
     });
 
+    // Inspect existing headers dynamically
+    let headers = prefSheet.getRange(1, 1, 1, Math.max(prefSheet.getLastColumn(), defaultHeaders.length)).getValues()[0];
+    if (!headers[0]) {
+      prefSheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
+      headers = defaultHeaders;
+    }
+
+    const colMap = {};
+    headers.forEach((h, idx) => {
+      const headerStr = String(h).trim().toLowerCase();
+      if (headerStr.includes("מייל")) colMap.email = idx;
+      else if (headerStr.includes("שם מלא")) colMap.fullName = idx;
+      else if (headerStr.includes("מדינה")) colMap.country = idx;
+      else if (headerStr.includes("חברה") || headerStr.includes("עושה")) colMap.companyBio = idx;
+      else if (headerStr.includes("תפקיד")) colMap.role = idx;
+      else if (headerStr.includes("סטטוס")) colMap.status = idx;
+      else if (headerStr.includes("אומנים שאהב") || (headerStr.includes("אהב") && headerStr.includes("❤️"))) colMap.favs = idx;
+      else if (headerStr.includes("booking") || headerStr.includes("הזמנות להופעה")) colMap.booking = idx;
+      else if (headerStr.includes("connect") || headerStr.includes("בקשות לקשר")) colMap.connect = idx;
+      else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
+      else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
+      else if (headerStr.includes("הערות")) colMap.notes = idx;
+      else if (headerStr.includes("raw")) colMap.raw = idx;
+    });
+
+    // If sheet had old 11 columns and is missing the new ones, update headers row to defaultHeaders
+    if (colMap.press === undefined || colMap.totalLikes === undefined) {
+      prefSheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
+      headers = defaultHeaders;
+      defaultHeaders.forEach((h, idx) => {
+        const headerStr = String(h).trim().toLowerCase();
+        if (headerStr.includes("מייל")) colMap.email = idx;
+        else if (headerStr.includes("שם מלא")) colMap.fullName = idx;
+        else if (headerStr.includes("מדינה")) colMap.country = idx;
+        else if (headerStr.includes("חברה") || headerStr.includes("עושה")) colMap.companyBio = idx;
+        else if (headerStr.includes("תפקיד")) colMap.role = idx;
+        else if (headerStr.includes("סטטוס")) colMap.status = idx;
+        else if (headerStr.includes("אומנים שאהב") || (headerStr.includes("אהב") && headerStr.includes("❤️"))) colMap.favs = idx;
+        else if (headerStr.includes("booking") || headerStr.includes("הזמנות להופעה")) colMap.booking = idx;
+        else if (headerStr.includes("connect") || headerStr.includes("בקשות לקשר")) colMap.connect = idx;
+        else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
+        else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
+        else if (headerStr.includes("הערות")) colMap.notes = idx;
+        else if (headerStr.includes("raw")) colMap.raw = idx;
+      });
+    }
+
+    // Build row values strictly matching column layout
+    const rowValues = new Array(headers.length).fill("");
+    if (colMap.email !== undefined) rowValues[colMap.email] = cleanEmail;
+    if (colMap.fullName !== undefined) rowValues[colMap.fullName] = guestInfo.fullName;
+    if (colMap.country !== undefined) rowValues[colMap.country] = guestInfo.country;
+    if (colMap.companyBio !== undefined) rowValues[colMap.companyBio] = guestInfo.companyBio;
+    if (colMap.role !== undefined) rowValues[colMap.role] = guestInfo.role;
+    if (colMap.status !== undefined) rowValues[colMap.status] = activityStatus;
+    if (colMap.favs !== undefined) rowValues[colMap.favs] = favNames.join(", ");
+    if (colMap.booking !== undefined) rowValues[colMap.booking] = bookingNames.join(", ");
+    if (colMap.connect !== undefined) rowValues[colMap.connect] = connectNames.join(", ");
+    if (colMap.press !== undefined) rowValues[colMap.press] = pressNames.join(", ");
+    if (colMap.totalLikes !== undefined) rowValues[colMap.totalLikes] = totalLiked;
+    if (colMap.notes !== undefined) rowValues[colMap.notes] = notesList.join("\n\n");
+    if (colMap.raw !== undefined) rowValues[colMap.raw] = rawJson;
+
     // Write / Update row in prefSheet
     const prefData = prefSheet.getDataRange().getValues();
     let guestRowIdx = -1;
+    const emailColIdx = (colMap.email !== undefined) ? colMap.email : 0;
     for (let r = 1; r < prefData.length; r++) {
-      if (String(prefData[r][0]).trim().toLowerCase() === cleanEmail) {
+      if (String(prefData[r][emailColIdx]).trim().toLowerCase() === cleanEmail) {
         guestRowIdx = r + 1;
         break;
       }
     }
-
-    const rowValues = [
-      cleanEmail,
-      guestInfo.fullName,
-      guestInfo.country,
-      guestInfo.companyBio,
-      guestInfo.role,
-      activityStatus,
-      favNames.join(", "),
-      bookingNames.join(", "),
-      connectNames.join(", "),
-      notesList.join("\n\n"),
-      rawJson
-    ];
 
     if (guestRowIdx > 0) {
       prefSheet.getRange(guestRowIdx, 1, 1, rowValues.length).setValues([rowValues]);
@@ -280,9 +335,20 @@ function getGuestArtistFeedback(email) {
     }
 
     const data = prefSheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return { success: true, feedback: { favorites: {}, notes: {}, tags: {} } };
+    }
+
+    const headers = data[0];
+    let rawJsonIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("raw"));
+    if (rawJsonIdx === -1) rawJsonIdx = headers.length - 1;
+
+    let emailIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("מייל"));
+    if (emailIdx === -1) emailIdx = 0;
+
     for (let r = 1; r < data.length; r++) {
-      if (String(data[r][0]).trim().toLowerCase() === cleanEmail) {
-        const rawJsonCol = data[r][10]; // Column K
+      if (String(data[r][emailIdx]).trim().toLowerCase() === cleanEmail) {
+        const rawJsonCol = data[r][rawJsonIdx];
         if (rawJsonCol) {
           try {
             const parsed = JSON.parse(rawJsonCol);
@@ -324,13 +390,29 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
     });
 
     if (hasPreferences) {
+      const headers = prefData[0];
+      let rawJsonIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("raw"));
+      if (rawJsonIdx === -1) rawJsonIdx = headers.length - 1;
+
+      let emailIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("מייל"));
+      if (emailIdx === -1) emailIdx = 0;
+
+      let nameIdx = headers.findIndex(h => String(h).trim().includes("שם מלא"));
+      if (nameIdx === -1) nameIdx = 1;
+
+      let countryIdx = headers.findIndex(h => String(h).trim().includes("מדינה"));
+      if (countryIdx === -1) countryIdx = 2;
+
+      let roleIdx = headers.findIndex(h => String(h).trim().includes("תפקיד"));
+      let companyIdx = headers.findIndex(h => String(h).trim().includes("חברה") || String(h).trim().includes("עושה"));
+
       for (let r = 1; r < prefData.length; r++) {
         const row = prefData[r];
-        const cleanEmail = String(row[0] || "").trim();
-        const guestName = String(row[1] || "").trim();
-        const country = String(row[2] || "").trim();
-        const company = String(row[4] || row[3] || "").trim(); // role or company
-        const rawJson = row[10];
+        const cleanEmail = String(row[emailIdx] || "").trim();
+        const guestName = String(row[nameIdx] || "").trim();
+        const country = String(row[countryIdx] || "").trim();
+        const company = String((roleIdx >= 0 && row[roleIdx]) || (companyIdx >= 0 && row[companyIdx]) || "").trim();
+        const rawJson = row[rawJsonIdx];
         if (!rawJson) continue;
 
         let payload = null;
@@ -554,6 +636,51 @@ function syncAllArtistsAndLeads() {
     const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
 
     if (prefSheet && leadsSheet) {
+      // Backfill any missing columns in prefSheet if headers exist
+      if (prefSheet.getLastRow() > 1) {
+        const pData = prefSheet.getDataRange().getValues();
+        const headers = pData[0];
+        const colMap = {};
+        headers.forEach((h, idx) => {
+          const headerStr = String(h).trim().toLowerCase();
+          if (headerStr.includes("מייל")) colMap.email = idx;
+          else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
+          else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
+          else if (headerStr.includes("raw")) colMap.raw = idx;
+        });
+
+        if (colMap.raw !== undefined && (colMap.press !== undefined || colMap.totalLikes !== undefined)) {
+          const artistMap = {};
+          artistsList.forEach(a => { artistMap[a.id] = a; });
+          for (let r = 1; r < pData.length; r++) {
+            const rawJson = pData[r][colMap.raw];
+            if (!rawJson) continue;
+            try {
+              const parsed = JSON.parse(rawJson);
+              const favs = parsed.favorites || {};
+              const tags = parsed.tags || {};
+              
+              const totalLiked = Object.keys(favs).filter(k => !!favs[k]).length;
+              const pressNames = [];
+              Object.keys(tags).forEach(aId => {
+                const tList = tags[aId] || [];
+                if (tList.includes("Press")) {
+                  const a = artistMap[aId] || { name: aId };
+                  pressNames.push(a.name);
+                }
+              });
+
+              if (colMap.press !== undefined) {
+                prefSheet.getRange(r + 1, colMap.press + 1).setValue(pressNames.join(", "));
+              }
+              if (colMap.totalLikes !== undefined) {
+                prefSheet.getRange(r + 1, colMap.totalLikes + 1).setValue(totalLiked);
+              }
+            } catch(e) {}
+          }
+        }
+      }
+
       syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList);
     }
 
