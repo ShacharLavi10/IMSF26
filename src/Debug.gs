@@ -629,7 +629,112 @@ function restoreJerusalemHotelsAndSync(targetSsId) {
   }
 }
 
-
-
-
-
+function populateSandboxSchedule() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('לוז פסטיבל') || ss.getSheetByName('לו"ז פסטיבל');
+    if (!sheet) {
+      sheet = ss.insertSheet('לוז פסטיבל');
+    }
+    
+    // Clear sheet
+    sheet.clear();
+    
+    const headers = [
+      "תאריך",
+      "שעת התחלה",
+      "שעת סיום",
+      "כותרת",
+      "תיאור",
+      "מיקום",
+      "קטגוריה"
+    ];
+    
+    const rows = [
+      // Tuesday Nov 17
+      ["2026-11-17", "17:30", "", "Bus Pickup to Yellow Submarine", "Bus pickup from the JLM hotels to Yellow Submarine Venue.", '=HYPERLINK("https://yellowsubmarine.org.il/en/", "Yellow Submarine")', "Shuttle"],
+      ["2026-11-17", "18:00", "", "Welcome Drink & Delegation Meetup", "Welcome to the Israel Music Showcase Festival 2026. First drink and meeting the delegation.", '=HYPERLINK("https://yellowsubmarine.org.il/en/", "Yellow Submarine")', "Food & Drinks"],
+      ["2026-11-17", "19:45", "", "Opening Concerts (7 shows)", "Opening showcases. Delegation-Designated Green Room with snacks and beverages available.", '=HYPERLINK("https://yellowsubmarine.org.il/en/", "Yellow Submarine")', "Concerts"],
+      ["2026-11-17", "00:30", "", "Bus Pickup to Hotels", "Bus pickup from the venue back to the hotels.", "Arthur Hotel Jerusalem", "Shuttle"],
+      
+      // Wednesday Nov 18
+      ["2026-11-18", "12:10", "", "Bus Pickup to Tower of David", "Bus pickup from the hotels to Tower of David.", '=HYPERLINK("https://www.tod.org.il/", "Tower of David")', "Shuttle"],
+      ["2026-11-18", "13:00", "14:45", "Noon Concerts (3 shows)", "Showcases at Tower of David in the Old City.", '=HYPERLINK("https://www.tod.org.il/", "Tower of David")', "Concerts"],
+      ["2026-11-18", "15:00", "", "Bus Pickup to Hotel", "Bus pickup to the hotel.", "Arthur Hotel Jerusalem", "Shuttle"],
+      ["2026-11-18", "15:15", "19:15", "Free Time", "Free time to rest or explore Jerusalem.", "Jerusalem", "Free Time"],
+      ["2026-11-18", "19:15", "", "Bus Pickup to Yellow Submarine", "Bus pickup from the hotel to Yellow Submarine.", '=HYPERLINK("https://yellowsubmarine.org.il/en/", "Yellow Submarine")', "Shuttle"],
+      ["2026-11-18", "19:30", "00:00", "Night Concerts (6 shows)", "Night showcases at Yellow Submarine. Delegation-Designated Green Room with snacks and beverages available.", '=HYPERLINK("https://yellowsubmarine.org.il/en/", "Yellow Submarine")', "Concerts"],
+      ["2026-11-18", "00:30", "", "Bus Pickup to Hotel", "Bus pickup from Yellow Submarine back to the hotel.", "Arthur Hotel Jerusalem", "Shuttle"],
+      
+      // Thursday Nov 19
+      ["2026-11-19", "09:45", "", "Bus Pickup to Old City Tour (Optional)", "Bus pickup from hotel lobby to a guided tour in the Old City.", "Arthur Hotel Jerusalem", "Shuttle"],
+      ["2026-11-19", "10:00", "13:30", "Guided Tour in the Old City (Optional)", "Guided tour in the Old City of Jerusalem.", "Old City Jerusalem", "Tour"],
+      ["2026-11-19", "13:30", "14:30", "Lunch - Authentic Arab Food", "Authentic Arab food lunch together.", "Old City Jerusalem", "Food & Drinks"],
+      ["2026-11-19", "14:30", "18:20", "Free Time in Old City Market", "Free time to explore and hang in the Old City Market.", '=HYPERLINK("https://maps.app.goo.gl/y2maW7VRxZmsfuLD6", "Old City Market")', "Free Time"],
+      ["2026-11-19", "18:20", "", "Walk to Venues", "Gather at hotel lobby and walk together to the venues.", "Arthur Hotel Jerusalem", "Logistics"],
+      ["2026-11-19", "19:00", "23:45", "BIG EVENT - Night Concerts (15 shows)", "15 shows, performances & surprises at Museum of Tolerance. Delegation-Designated Green Room with snacks and beverages available.", '=HYPERLINK("https://maps.google.com/?q=Museum+of+Tolerance+Jerusalem", "Museum of Tolerance")', "Concerts"],
+      ["2026-11-19", "00:00", "02:00", "Late Night AfterParty & DJ Sets", "Mazkeka (Rock/Alt), Nocturno (Funky Jazz), Besarabia (Karaoke Rave), Pergamon (Drum&Bass). Walking independently to hotel.", '=HYPERLINK("https://mazkeka.com/en/", "Mazkeka / Nocturno / Besarabia / Pergamon")', "Party"],
+      
+      // Friday Nov 20
+      ["2026-11-20", "11:00", "", "Checkout from Jerusalem Hotel", "Checkout from hotel in Jerusalem.", "Arthur Hotel Jerusalem", "Logistics"],
+      ["2026-11-20", "11:15", "", "Bus Transfer: Jerusalem to Tel Aviv", "Bus pickup from Jerusalem hotel to Tel Aviv hotel.", "Arthur Hotel Jerusalem", "Shuttle"],
+      ["2026-11-20", "12:30", "17:00", "Check-in & Free Time in Tel Aviv", "Check-in at Cinema Hotel and free time in Tel Aviv.", "Cinema Hotel Tel Aviv", "Free Time"],
+      ["2026-11-20", "17:30", "", "Bus Pickup to TEDER", "Bus pickup to TEDER venue.", "Cinema Hotel Tel Aviv", "Shuttle"],
+      ["2026-11-20", "18:00", "19:00", "TEDER Venue - Afternoon Shows (2 shows)", "Opening showcase sets at TEDER.", '=HYPERLINK("https://maps.google.com/?q=TEDER+Tel+Aviv", "TEDER")', "Concerts"],
+      ["2026-11-20", "19:00", "20:15", "Dinner", "Dinner with the delegation (venue details coming soon).", "Tel Aviv", "Food & Drinks"],
+      ["2026-11-20", "20:30", "01:30", "TEDER Venue - Night Shows (5 shows)", "Night showcases at TEDER. Delegation-Designated Green Room with snacks and beverages available.", '=HYPERLINK("https://maps.google.com/?q=TEDER+Tel+Aviv", "TEDER")', "Concerts"],
+      ["2026-11-20", "01:30", "", "Bus Pickup to Hotel", "Bus pickup from TEDER back to Cinema Hotel.", "Cinema Hotel Tel Aviv", "Shuttle"],
+      
+      // Saturday Nov 21
+      ["2026-11-21", "10:00", "13:45", "Free Time - Beach & City Exploration", "Go to the beach, travel and explore Tel Aviv.", "Tel Aviv Beach / City", "Free Time"],
+      ["2026-11-21", "13:45", "", "Bus Pickup to The Radical", "Bus pickup from hotel to The Radical venue.", "Cinema Hotel Tel Aviv", "Shuttle"],
+      ["2026-11-21", "14:00", "18:30", "Noon Concerts & Artist Sessions", "Noon concerts and artist sessions at The Radical.", '=HYPERLINK("https://maps.google.com/?q=The+Radical+Tel+Aviv", "The Radical")', "Concerts"],
+      ["2026-11-21", "18:30", "19:15", "Dinner at Le Mala", "Dinner at Mexican eatery Le Mala.", '=HYPERLINK("https://ontopo.com/en/il/page/26731676", "Le Mala")', "Food & Drinks"],
+      ["2026-11-21", "19:15", "", "Walk to Hameretz 2", "Walk from the restaurant to the Hameretz 2 venue.", '=HYPERLINK("https://www.instagram.com/hameretz2/?hl=he", "Hameretz 2")', "Logistics"],
+      ["2026-11-21", "19:30", "23:30", "Closing Night Concerts (3 shows)", "Closing Night showcase concerts at Hameretz 2.", '=HYPERLINK("https://www.instagram.com/hameretz2/?hl=he", "Hameretz 2")', "Concerts"],
+      ["2026-11-21", "00:00", "", "Bus Pickup to Hotel", "Bus pickup from Hameretz 2 back to the hotel.", "Cinema Hotel Tel Aviv", "Shuttle"],
+      ["2026-11-21", "01:00", "", "AfterParty at Hotel Rooftop", "Late night celebration at the Cinema Hotel rooftop.", "Cinema Hotel Rooftop", "Party"],
+      
+      // Sunday Nov 22
+      ["2026-11-22", "12:30", "", "Bus Pickup to Beit HaMecholot", "Bus pickup from hotel to Beit HaMecholot.", "Cinema Hotel Tel Aviv", "Shuttle"],
+      ["2026-11-22", "14:00", "17:00", "Networking & Trade Fair Event", "Private trade fair event with International Showcase guests and musicians.", '=HYPERLINK("https://maps.google.com/?q=Beit+Hamecholot+Tel+Aviv", "Beit HaMecholot")', "Networking"],
+      ["2026-11-22", "17:00", "19:00", "Industry Mingling & DJ Set", "Mingling event with the Israeli music industry + background DJ set.", '=HYPERLINK("https://maps.google.com/?q=Beit+Hamecholot+Tel+Aviv", "Beit HaMecholot")', "Networking"],
+      ["2026-11-22", "19:00", "", "Bus Pickup to Hotel", "Bus pickup back to Cinema Hotel.", "Cinema Hotel Tel Aviv", "Shuttle"],
+      
+      // Monday Nov 23
+      ["2026-11-23", "10:00", "", "Farewell Meeting", "Farewell meeting with International Showcase crew and Head of Music Department at Ministry of Foreign Affairs.", "Cinema Hotel Terrace", "Networking"],
+      ["2026-11-23", "11:00", "", "Check-out & Airport Departures", "Check-out until 11:00. Guests depart independently to Ben Gurion Airport (TLV). Please arrive at airport at least 3 hours prior to flight.", "Cinema Hotel Tel Aviv / TLV Airport", "Logistics"]
+    ];
+    
+    // Write headers
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#e2e8f0");
+    
+    // Write rows
+    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+    
+    // Format column A (Date) as yyyy-mm-dd
+    sheet.getRange(2, 1, rows.length, 1).setNumberFormat("yyyy-mm-dd");
+    
+    // Format columns B & C as HH:mm or text
+    sheet.getRange(2, 2, rows.length, 2).setNumberFormat("@");
+    
+    // Auto-fit column widths
+    for (let c = 1; c <= headers.length; c++) {
+      sheet.autoResizeColumn(c);
+    }
+    
+    // Clear global schedule cache so fresh data is loaded immediately
+    try {
+      CacheService.getScriptCache().remove('global_schedule_data');
+    } catch(e) {}
+    
+    return {
+      success: true,
+      sheetName: sheet.getName(),
+      totalEvents: rows.length
+    };
+  } catch (err) {
+    return { success: false, error: err.toString(), stack: err.stack };
+  }
+}

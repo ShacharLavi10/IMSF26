@@ -221,6 +221,9 @@ function getGuestPortalData(sessionToken) {
                        !checklist.generalMissing;
                        
     const isAdmin = String(getColVal("תפקיד") || "").trim() === "הפקה חשיפה";
+    if (isAdmin) {
+      checklist.approvalSchedule = true;
+    }
     const firstName = String(getColVal(CONFIG.FIRST_NAME_COL) || "");
     const lastName = String(getColVal(CONFIG.LAST_NAME_COL) || "");
     const bioText = String(getColVal("ביוגרפיה אנגלית") || "");
@@ -737,6 +740,9 @@ function getScheduleData(forceRefresh) {
     const titleIdx = headers.findIndex(h => h.includes('כותרת') || h.includes('title') || h.includes('event'));
     const descIdx = headers.findIndex(h => h.includes('תיאור') || h.includes('description') || h.includes('details'));
     const locIdx = headers.findIndex(h => h.includes('מיקום') || h.includes('location') || h.includes('venue'));
+    const catIdx = headers.findIndex(h => h.includes('קטגוריה') || h.includes('category') || h.includes('tag'));
+    
+    const formulas = sheet.getDataRange().getFormulas();
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {
       const row = data[i];
@@ -768,12 +774,29 @@ function getScheduleData(forceRefresh) {
         etStr = String(etRaw).trim();
       }
       
+      let locVal = locIdx !== -1 ? String(row[locIdx] || "").trim() : "";
+      let locLink = "";
+      let locFormula = (locIdx !== -1 && formulas[i]) ? String(formulas[i][locIdx] || "") : "";
+      if (locFormula) {
+        const match = locFormula.match(/HYPERLINK\(\s*"([^"]+)"/i);
+        if (match && match[1]) {
+          locLink = match[1];
+        }
+      }
+      if (!locLink && (locVal.startsWith('http://') || locVal.startsWith('https://'))) {
+        locLink = locVal;
+      }
+      
+      let catVal = catIdx !== -1 ? String(row[catIdx] || "").trim() : "";
+      
       const event = {
         startTime: stStr,
         endTime: etStr,
         title: titleIdx !== -1 ? String(row[titleIdx] || "").trim() : "",
         description: descIdx !== -1 ? String(row[descIdx] || "").trim() : "",
-        location: locIdx !== -1 ? String(row[locIdx] || "").trim() : ""
+        location: locVal,
+        locationLink: locLink,
+        category: catVal
       };
       
       if (!scheduleByDate[dateStr]) {
