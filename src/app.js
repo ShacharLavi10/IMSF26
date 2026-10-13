@@ -1619,59 +1619,75 @@ let currentGuestEmail = "";
 
     /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
-
-    
-
-    
+    let currentSelectedScheduleDate = null;
 
     function renderScheduleTabs() {
+      if (!scheduleDataCache) return;
       const dates = Object.keys(scheduleDataCache).sort();
       const nav = document.getElementById("schedule-days-nav");
       const container = document.getElementById("schedule-container");
       
       if (dates.length === 0) {
-        nav.style.display = "none";
-        container.innerHTML = `<p class="empty-state">Itinerary will be published here.</p>`;
+        if (nav) nav.style.display = "none";
+        if (container) container.innerHTML = `<p class="empty-state">Itinerary will be published here.</p>`;
         return;
       }
       
-      nav.style.display = "flex";
+      if (nav) nav.style.display = "flex";
       let html = "";
       
       const todayStr = new Date().toISOString().split('T')[0];
-      let activeDate = dates.includes(todayStr) ? todayStr : dates[0];
+      let activeDate = (currentSelectedScheduleDate && dates.includes(currentSelectedScheduleDate))
+        ? currentSelectedScheduleDate
+        : (dates.includes(todayStr) ? todayStr : dates[0]);
+      currentSelectedScheduleDate = activeDate;
       
       dates.forEach(d => {
-        const dateObj = new Date(d);
-        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
-        const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const parts = d.split('-');
+        let dayName = d;
+        let monthDay = d;
+        if (parts.length === 3) {
+          const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+          monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
         
         const isActive = d === activeDate;
-        html += `<button class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectScheduleDate('${d}')">${dayName}, ${monthDay}</button>`;
+        html += `<button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}">${dayName}, ${monthDay}</button>`;
       });
-      nav.innerHTML = html;
 
-      // Add direct event listeners for rock-solid click response on both desktop & mobile touch
-      nav.querySelectorAll('.schedule-pill').forEach(btn => {
-        btn.addEventListener('click', function(ev) {
-          const targetDate = this.getAttribute('data-date');
-          if (targetDate) {
-            selectScheduleDate(targetDate);
-          }
-        });
-      });
+      if (nav) {
+        nav.innerHTML = html;
+
+        // Rock-solid delegated listener on nav container
+        if (!nav.dataset.listenerAttached) {
+          nav.dataset.listenerAttached = "true";
+          nav.addEventListener('click', function(ev) {
+            const btn = ev.target.closest('.schedule-pill');
+            if (btn) {
+              const targetDate = btn.getAttribute('data-date');
+              if (targetDate) {
+                selectScheduleDate(targetDate);
+              }
+            }
+          });
+        }
+      }
       
       renderScheduleForDate(activeDate);
     }
     
     function selectScheduleDate(dateStr) {
       if (!scheduleDataCache || !scheduleDataCache[dateStr]) return;
+      currentSelectedScheduleDate = dateStr;
       const pills = document.querySelectorAll('#schedule-days-nav .schedule-pill');
       
       pills.forEach(p => {
         if (p.getAttribute('data-date') === dateStr) {
           p.classList.add('active');
-          p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          try {
+            p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          } catch(e) {}
         } else {
           p.classList.remove('active');
         }

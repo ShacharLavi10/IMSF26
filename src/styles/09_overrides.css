@@ -796,16 +796,20 @@ body.light-mode #schedule-days-nav .schedule-pill.active {
   padding: 14px 16px !important;
   margin-bottom: 14px !important;
   border-radius: 12px !important;
-  background: rgba(15, 23, 42, 0.7) !important;
-  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(30, 41, 59, 0.75) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
   border-left: 6px solid var(--accent) !important;
-  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.8) !important;
   transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.schedule-event-inline:nth-child(even) {
+  background: rgba(15, 23, 42, 0.85) !important;
 }
 
 .schedule-event-inline:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.9) !important;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.95) !important;
 }
 
 .schedule-event-inline:last-child {
@@ -893,13 +897,18 @@ body.light-mode #schedule-days-nav .schedule-pill.active {
 
 /* LIGHT MODE SCHEDULE EVENT CARD OVERRIDES */
 body.light-mode .schedule-event-inline {
-  background: #ffffff !important;
+  background: #f1f5f9 !important; /* Tinted slate card to clearly stand out from the white parent card */
   border: 2px solid #0f172a !important;
   border-left: 6px solid #e11d48 !important; /* Bold high-contrast left border */
   box-shadow: 3px 3px 0px #0f172a !important;
 }
 
+body.light-mode .schedule-event-inline:nth-child(even) {
+  background: #e2e8f0 !important; /* Subtle zebra striping for effortless reading */
+}
+
 body.light-mode .schedule-event-inline:hover {
+  background: #e2e8f0 !important;
   transform: translate(-1px, -1px);
   box-shadow: 4px 4px 0px #0f172a !important;
 }
@@ -913,11 +922,15 @@ body.light-mode .schedule-event-inline .event-time {
 
 body.light-mode .schedule-event-inline .event-title {
   color: #0f172a !important;
+  font-family: 'Oswald', sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
 }
 
 body.light-mode .schedule-event-inline .event-desc {
   color: #334155 !important;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
+  font-size: 0.92rem !important;
 }
 
 body.light-mode .schedule-loc-link {
