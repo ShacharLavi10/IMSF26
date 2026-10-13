@@ -58,6 +58,14 @@ function processAllTicketsBulk() {
     const link = String(sourceData[i][linkColIdx]).trim();
     const email = String(sourceData[i][sourceEmailColIdx]).trim();
     
+    // Check if cell has 2 or more links (e.g. inbound and outbound) - skip automatic bulk parsing to preserve manual entries
+    const driveCount = (link.match(/drive\.google\.com/gi) || []).length;
+    const urlCount = (link.match(/https?:\/\/[^\s"',;<>]+/gi) || []).length;
+    if (driveCount >= 2 || urlCount >= 2) {
+      Logger.log(`processAllTicketsBulk: שורה ${i + 1} (${email}) מכילה 2 כרטיסים (הלוך וחזור). דילוג על פענוח אוטומטי.`);
+      continue;
+    }
+    
     if (link.includes("drive.google.com") && email) {
       // Find matching row in target
       const targetRowIdx = targetData.findIndex((row, idx) => idx > 0 && String(row[targetEmailColIdx]).trim() === email);
@@ -74,14 +82,14 @@ function processAllTicketsBulk() {
               const extractedData = callGeminiAPI(Utilities.base64Encode(file.getBlob().getBytes()), file.getMimeType());
               
               if (extractedData && !extractedData.error) {
-                if (colTarget.arrDate > 0) targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate || "");
-                if (colTarget.arrTime > 0) targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime || "");
-                if (colTarget.arrFlight > 0) targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight || "");
-                if (colTarget.arrAirline > 0) targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline || "");
-                if (colTarget.depDate > 0) targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate || "");
-                if (colTarget.depTime > 0) targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime || "");
-                if (colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight || "");
-                if (colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline || "");
+                if (extractedData.arrivalDate && colTarget.arrDate > 0) targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate);
+                if (extractedData.arrivalTime && colTarget.arrTime > 0) targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime);
+                if (extractedData.arrivalFlight && colTarget.arrFlight > 0) targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight);
+                if (extractedData.arrivalAirline && colTarget.arrAirline > 0) targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline);
+                if (extractedData.departureDate && colTarget.depDate > 0) targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate);
+                if (extractedData.departureTime && colTarget.depTime > 0) targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime);
+                if (extractedData.departureFlight && colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight);
+                if (extractedData.departureAirline && colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline);
                 targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
                 processedCount++;
                 Utilities.sleep(5000); // Respect 15 RPM
@@ -118,7 +126,20 @@ function triggerFlightParsing(e, isManual = false) {
   
   const value = String(range.getValue()).trim();
   
-  if (isManual || (col === ticketLinkCol && value.includes("http"))) {
+  if (isManual || (col === ticketLinkCol && (value.includes("http") || value.includes("drive.google")))) {
+    const allLinks = extractAllLinksFromCell(range, value);
+    const driveMatches = value.match(/drive\.google\.com/gi) || [];
+
+    // Rule 1: If 2 or more links exist (e.g. inbound and outbound), do NOT parse automatically.
+    // Allow the user to input the flight details manually without the agent overwriting or getting stuck.
+    if (allLinks.length >= 2 || driveMatches.length >= 2) {
+      sheet.getParent().toast("זוהו 2 לינקים לכרטיסים (הלוך וחזור). הפענוח האוטומטי מושבת כדי שתוכל להזין ידנית.", "זיהוי כרטיסים כפול", 8);
+      Logger.log(`triggerFlightParsing: שורה ${row} מכילה מספר כרטיסים (${allLinks.length}). הפענוח האוטומטי מושבת להזנה ידנית.`);
+      return;
+    }
+
+    if (allLinks.length === 0 && !value.includes("http")) return;
+
     sheet.getParent().toast("מזהה לינק ב'עדכוני טיסות'! מתחיל לפענח...", "פענוח טיסות", 5);
     
     const email = String(sheet.getRange(row, sourceEmailCol).getValue()).trim();
@@ -128,7 +149,8 @@ function triggerFlightParsing(e, isManual = false) {
     }
     
     try {
-      const fileId = extractDriveId(value);
+      const targetUrl = allLinks.length > 0 ? allLinks[0] : value;
+      const fileId = extractDriveId(targetUrl);
       if (!fileId) throw new Error("לא זוהה מזהה קובץ דרייב תקין");
       
       const file = DriveApp.getFileById(fileId);
@@ -161,14 +183,14 @@ function triggerFlightParsing(e, isManual = false) {
           notes: getColIdx(targetHeaders, ["הערות סריקה", "סטטוס", "הערות"]) + 1 || 14
         };
         
-        if (colTarget.arrDate > 0) targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate || "");
-        if (colTarget.arrTime > 0) targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime || "");
-        if (colTarget.arrFlight > 0) targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight || "");
-        if (colTarget.arrAirline > 0) targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline || "");
-        if (colTarget.depDate > 0) targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate || "");
-        if (colTarget.depTime > 0) targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime || "");
-        if (colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight || "");
-        if (colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline || "");
+        if (extractedData.arrivalDate && colTarget.arrDate > 0) targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate);
+        if (extractedData.arrivalTime && colTarget.arrTime > 0) targetSheet.getRange(targetRow, colTarget.arrTime).setValue(extractedData.arrivalTime);
+        if (extractedData.arrivalFlight && colTarget.arrFlight > 0) targetSheet.getRange(targetRow, colTarget.arrFlight).setValue(extractedData.arrivalFlight);
+        if (extractedData.arrivalAirline && colTarget.arrAirline > 0) targetSheet.getRange(targetRow, colTarget.arrAirline).setValue(extractedData.arrivalAirline);
+        if (extractedData.departureDate && colTarget.depDate > 0) targetSheet.getRange(targetRow, colTarget.depDate).setValue(extractedData.departureDate);
+        if (extractedData.departureTime && colTarget.depTime > 0) targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime);
+        if (extractedData.departureFlight && colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight);
+        if (extractedData.departureAirline && colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline);
         
         targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
         sheet.getParent().toast("הפענוח הושלם בהצלחה והוזן לטבלת טיסות!", "הצלחה", 5);
@@ -180,6 +202,31 @@ function triggerFlightParsing(e, isManual = false) {
       sheet.getParent().toast(err.message, "שגיאה בפענוח", 8);
     }
   }
+}
+
+function extractAllLinksFromCell(range, textValue) {
+  const links = [];
+  try {
+    if (range && range.getRichTextValue) {
+      const rt = range.getRichTextValue();
+      if (rt) {
+        const runs = rt.getRuns();
+        runs.forEach(r => {
+          const u = r.getLinkUrl();
+          if (u && !links.includes(u)) links.push(u);
+        });
+      }
+    }
+  } catch (e) {}
+
+  const urlRegex = /https?:\/\/[^\s"',;<>]+/gi;
+  const matches = String(textValue || "").match(urlRegex) || [];
+  matches.forEach(m => {
+    const clean = m.replace(/[.,;)]+$/, '');
+    if (clean && !links.includes(clean)) links.push(clean);
+  });
+
+  return links;
 }
 
 function extractDriveId(url) {

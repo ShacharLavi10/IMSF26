@@ -523,6 +523,87 @@ let currentGuestEmail = "";
       container.innerHTML = html;
     }
 
+    function parseTicketLinks(rawVal) {
+      if (!rawVal) return [];
+      const text = String(rawVal).trim();
+      if (!text || text === '-' || /^#|^=/i.test(text) || /^n\/?a$/i.test(text) || /^none$/i.test(text) || /^null$/i.test(text)) {
+        return [];
+      }
+
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/gi;
+      const matches = text.match(urlRegex) || [];
+
+      if (matches.length === 0) {
+        const driveIdMatch = text.match(/[-\w]{25,}/);
+        if (driveIdMatch) {
+          return [{ url: `https://drive.google.com/file/d/${driveIdMatch[0]}/view`, type: 'single', label: 'View E-Ticket (PDF)' }];
+        }
+        return [];
+      }
+
+      // Clean trailing punctuation
+      const urls = matches.map(u => u.replace(/[.,;)]+$/, '')).filter(Boolean);
+
+      if (urls.length === 1) {
+        return [{ url: urls[0], type: 'single', label: 'View E-Ticket (PDF)' }];
+      }
+
+      // 2 or more links
+      const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+      let inboundUrl = null;
+      let outboundUrl = null;
+
+      lines.forEach(line => {
+        const lineUrls = line.match(urlRegex) || [];
+        if (lineUrls.length > 0) {
+          const u = lineUrls[0].replace(/[.,;)]+$/, '');
+          const lower = line.toLowerCase();
+          if (lower.includes('חזור') || lower.includes('outbound') || lower.includes('return') || lower.includes('departure') || lower.includes('from tlv') || lower.includes('יציאה')) {
+            outboundUrl = u;
+          } else if (lower.includes('הלוך') || lower.includes('inbound') || lower.includes('arrival') || lower.includes('to tlv') || lower.includes('הגעה')) {
+            inboundUrl = u;
+          }
+        }
+      });
+
+      if (!inboundUrl || !outboundUrl || inboundUrl === outboundUrl) {
+        inboundUrl = urls[0];
+        outboundUrl = urls[1];
+      }
+
+      return [
+        { url: inboundUrl, type: 'inbound', label: 'Inbound Ticket (PDF)' },
+        { url: outboundUrl, type: 'outbound', label: 'Outbound Ticket (PDF)' }
+      ];
+    }
+
+    function renderTicketButtonsHtml(ticketLink) {
+      const tickets = parseTicketLinks(ticketLink);
+      if (!tickets || tickets.length === 0) return '';
+
+      if (tickets.length === 1) {
+        return `
+          <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <a href="${tickets[0].url}" target="_blank" rel="noopener noreferrer" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              View E-Ticket (PDF)
+            </a>
+          </div>
+        `;
+      }
+
+      return `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+          ${tickets.map(t => `
+            <a href="${t.url}" target="_blank" rel="noopener noreferrer" class="primary" style="flex: 1 1 calc(50% - 6px); min-width: 140px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 0.95rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; text-align: center; box-sizing: border-box;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>${t.label}</span>
+            </a>
+          `).join('')}
+        </div>
+      `;
+    }
+
     function renderBoardingPassData(containerId, dataArray, emptyText) {
       const container = document.getElementById(containerId);
       if (!dataArray || dataArray.length === 0) {
@@ -685,14 +766,7 @@ let currentGuestEmail = "";
       let html = '';
 
       if (ticketLink) {
-        html += `
-          <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-            <a href="${ticketLink}" target="_blank" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              View E-Ticket (PDF)
-            </a>
-          </div>
-        `;
+        html += renderTicketButtonsHtml(ticketLink);
       }
 
       html += `
@@ -2739,6 +2813,39 @@ function renderAdminDashboard() {
     if (hPassport !== -1 && row[hPassport] !== true && String(row[hPassport]).toLowerCase() !== 'true') missingPassport++;
   }
   
+  // Logistics counts
+  let hotelJlmCount = 0;
+  let hotelTlvCount = 0;
+  let flightArrivals = 0;
+  
+  if (adminData.hotelJlm && adminData.hotelJlm.length > 1) {
+    const h = adminData.hotelJlm[0].map(x => String(x).trim().toLowerCase());
+    const nightCol = h.indexOf("סה\"כ לילות");
+    if (nightCol !== -1) {
+      for (let i = 1; i < adminData.hotelJlm.length; i++) {
+        hotelJlmCount += Number(adminData.hotelJlm[i][nightCol]) || 0;
+      }
+    } else {
+      hotelJlmCount = adminData.hotelJlm.length - 1;
+    }
+  }
+  
+  if (adminData.hotelTlv && adminData.hotelTlv.length > 1) {
+    const h = adminData.hotelTlv[0].map(x => String(x).trim().toLowerCase());
+    const nightCol = h.indexOf("סה\"כ לילות");
+    if (nightCol !== -1) {
+      for (let i = 1; i < adminData.hotelTlv.length; i++) {
+        hotelTlvCount += Number(adminData.hotelTlv[i][nightCol]) || 0;
+      }
+    } else {
+      hotelTlvCount = adminData.hotelTlv.length - 1;
+    }
+  }
+  
+  if (adminData.flights && adminData.flights.length > 1) {
+    flightArrivals = adminData.flights.length - 1;
+  }
+  
   let html = `
     <div class="admin-sections-wrapper">
       
@@ -3659,7 +3766,17 @@ function loadAdminDashboard(forceRefresh = false) {
       try {
         localStorage.setItem('swr_adminData', JSON.stringify(res));
       } catch(e) {}
-      renderAdminDashboard();
+      try {
+        renderAdminDashboard();
+      } catch(renderErr) {
+        console.error("renderAdminDashboard threw error:", renderErr);
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px;">
+            <p class="error-text" style="font-weight: bold; margin-bottom: 10px;">Rendering error: ${renderErr.message}</p>
+            <button class="primary" onclick="loadAdminDashboard(true)">🔄 Try Again</button>
+          </div>
+        `;
+      }
     })
     .withFailureHandler(function(err) {
       console.error("loadAdminDashboard failed:", err);
@@ -3812,7 +3929,23 @@ function viewAdminGuestDetails(rowIndex) {
 
   const fDataRaw = getRowByEmail(adminData.flights);
   const fUpRaw = getRowByEmail(adminData.flightsUpdates);
-  const fData = (fDataRaw || fUpRaw) ? Object.assign({}, fUpRaw || {}, fDataRaw || {}) : null;
+  const fData = (fDataRaw || fUpRaw) ? Object.assign({}, fUpRaw || {}) : null;
+  if (fData && fDataRaw) {
+    Object.keys(fDataRaw).forEach(k => {
+      const val = fDataRaw[k];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        if (k.includes('כרטיס') || k.includes('ticket')) {
+          const existingCount = (String(fData[k] || '').match(/https?:\/\/[^\s"',;<>]+/gi) || []).length;
+          const newCount = (String(val).match(/https?:\/\/[^\s"',;<>]+/gi) || []).length;
+          if (newCount >= existingCount) {
+            fData[k] = val;
+          }
+        } else {
+          fData[k] = val;
+        }
+      }
+    });
+  }
   const hjData = getRowByEmail(adminData.hotelJlm);
   const htData = getRowByEmail(adminData.hotelTlv);
 
@@ -3850,7 +3983,7 @@ function viewAdminGuestDetails(rowIndex) {
     
     let shuttle = getFlightVal(["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"]);
     let togetherWith = getFlightVal(["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"]);
-    let ticketLink = getFlightVal(["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"]);
+    let ticketLink = getFlightVal(["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי", "final ticket link"]);
     let flightNotes = fData['הערות טיסות'] || '';
 
     function formatFlightDate(dStr) {
@@ -3958,14 +4091,7 @@ function viewAdminGuestDetails(rowIndex) {
     flightHtml = '';
 
     if (ticketLink) {
-      flightHtml += `
-        <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-          <a href="${ticketLink}" target="_blank" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            View E-Ticket (PDF)
-          </a>
-        </div>
-      `;
+      flightHtml += renderTicketButtonsHtml(ticketLink);
     }
 
     flightHtml += `
