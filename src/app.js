@@ -1647,20 +1647,29 @@ let currentGuestEmail = "";
         const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         
         const isActive = d === activeDate;
-        html += `<button class="schedule-pill ${isActive ? 'active' : ''}" onclick="selectScheduleDate('${d}')">${dayName}, ${monthDay}</button>`;
+        html += `<button class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectScheduleDate('${d}')">${dayName}, ${monthDay}</button>`;
       });
       nav.innerHTML = html;
+
+      // Add direct event listeners for rock-solid click response on both desktop & mobile touch
+      nav.querySelectorAll('.schedule-pill').forEach(btn => {
+        btn.addEventListener('click', function(ev) {
+          const targetDate = this.getAttribute('data-date');
+          if (targetDate) {
+            selectScheduleDate(targetDate);
+          }
+        });
+      });
       
       renderScheduleForDate(activeDate);
     }
     
     function selectScheduleDate(dateStr) {
-      const pills = document.querySelectorAll('.schedule-pill');
-      const dates = Object.keys(scheduleDataCache).sort();
-      const index = dates.indexOf(dateStr);
+      if (!scheduleDataCache || !scheduleDataCache[dateStr]) return;
+      const pills = document.querySelectorAll('#schedule-days-nav .schedule-pill');
       
-      pills.forEach((p, i) => {
-        if (i === index) {
+      pills.forEach(p => {
+        if (p.getAttribute('data-date') === dateStr) {
           p.classList.add('active');
           p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         } else {
@@ -1670,6 +1679,10 @@ let currentGuestEmail = "";
       
       renderScheduleForDate(dateStr);
     }
+
+    window.selectScheduleDate = selectScheduleDate;
+    window.renderScheduleTabs = renderScheduleTabs;
+    window.renderScheduleForDate = renderScheduleForDate;
     
     function escapeHtml(str) {
       if (str === null || str === undefined) return '';
@@ -4557,3 +4570,6 @@ window.switchAdminNetworkingTab = switchAdminNetworkingTab;
 window.openNetworkingDetail = openNetworkingDetail;
 window.closeNetworkingDetailSheet = closeNetworkingDetailSheet;
 window.renderAdminNetworkingKPIs = renderAdminNetworkingKPIs;
+window.selectScheduleDate = selectScheduleDate;
+window.renderScheduleTabs = renderScheduleTabs;
+window.renderScheduleForDate = renderScheduleForDate;
