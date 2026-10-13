@@ -2102,21 +2102,98 @@ let currentGuestEmail = "";
       }
     }
 
+    // Helper to push feedback for any specific email to server
+    function syncLocalGuestFeedbackToServer(targetEmail, callback) {
+      if (!targetEmail || !window.google || !google.script || !google.script.run) {
+        if (callback) callback(new Error("Environment not ready"));
+        return;
+      }
+      const cleanEmail = targetEmail.trim().toLowerCase();
+      
+      let favs = {};
+      try {
+        const rawFavs = localStorage.getItem('artist_favs_' + cleanEmail);
+        if (rawFavs) favs = JSON.parse(rawFavs);
+      } catch(e) {}
+
+      const allNotes = {};
+      const allTags = {};
+      try {
+        const notePrefix = `artist_note_${cleanEmail}_`;
+        const tagPrefix = `artist_tags_${cleanEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const aId = k.replace(notePrefix, '');
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) allNotes[aId] = val.trim();
+          } else if (k && k.startsWith(tagPrefix)) {
+            const aId = k.replace(tagPrefix, '');
+            const val = localStorage.getItem(k);
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed) && parsed.length > 0) allTags[aId] = parsed;
+              } catch(e) {}
+            }
+          }
+        }
+      } catch(e) {}
+
+      const hasFavs = Object.keys(favs).some(k => !!favs[k]);
+      const hasNotes = Object.keys(allNotes).length > 0;
+      const hasTags = Object.keys(allTags).length > 0;
+
+      if (hasFavs || hasNotes || hasTags) {
+        const payload = {
+          favorites: favs,
+          notes: allNotes,
+          tags: allTags
+        };
+        google.script.run
+          .withSuccessHandler(function(res) {
+            console.log("[Auto-Sync] Saved feedback for:", cleanEmail, res);
+            if (callback) callback(null, res);
+          })
+          .withFailureHandler(function(err) {
+            console.warn("[Auto-Sync] Error saving feedback for:", cleanEmail, err);
+            if (callback) callback(err);
+          })
+          .saveGuestArtistFeedback(cleanEmail, payload);
+      } else {
+        if (callback) callback(null, { skipped: true });
+      }
+    }
+
     function syncArtistFeedbackToServer() {
       if (!currentGuestEmail) return;
       const statusElem = document.getElementById('sheet-save-status');
 
-      // Aggregate all notes and tags
+      // Aggregate all notes and tags directly from localStorage
       const allNotes = {};
       const allTags = {};
-      if (Array.isArray(globalArtistsData)) {
-        globalArtistsData.forEach(a => {
-          const n = getPrivateNote(a.id);
-          if (n && n.trim()) allNotes[a.id] = n.trim();
-          const t = getArtistTags(a.id);
-          if (t && t.length > 0) allTags[a.id] = t;
-        });
-      }
+      try {
+        const notePrefix = `artist_note_${currentGuestEmail}_`;
+        const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const aId = k.replace(notePrefix, '');
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) allNotes[aId] = val.trim();
+          } else if (k && k.startsWith(tagPrefix)) {
+            const aId = k.replace(tagPrefix, '');
+            const val = localStorage.getItem(k);
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed) && parsed.length > 0) allTags[aId] = parsed;
+              } catch(e) {}
+            }
+          }
+        }
+      } catch(e) {}
+
       // Also ensure current open artist's latest inputs are captured
       if (currentOpenArtistId) {
         const currentInput = document.getElementById('sheet-private-note');
@@ -2153,23 +2230,36 @@ let currentGuestEmail = "";
       }
     }
 
-    // Fetch remote feedback on startup for cross-device persistence
+    // Fetch remote feedback on startup for cross-device persistence & trigger retroactive sync if needed
     function fetchGuestArtistFeedback() {
       if (!currentGuestEmail || !window.google || !google.script || !google.script.run) return;
       google.script.run
         .withSuccessHandler(function(res) {
           if (res && res.success && res.feedback) {
             const fb = res.feedback;
-            if (fb.favorites) {
-              const localFavs = getFavorites();
-              const mergedFavs = Object.assign({}, localFavs, fb.favorites);
-              saveFavorites(mergedFavs);
+            const localFavs = getFavorites();
+            const serverFavs = fb.favorites || {};
+            let needsServerPush = false;
+
+            // Merge favorites
+            const mergedFavs = Object.assign({}, serverFavs, localFavs);
+            saveFavorites(mergedFavs);
+
+            // Check if local storage has any favorites not yet recorded on the server
+            const localFavKeys = Object.keys(localFavs).filter(k => !!localFavs[k]);
+            const serverFavKeys = Object.keys(serverFavs).filter(k => !!serverFavs[k]);
+            if (localFavKeys.some(k => !serverFavs[k])) {
+              needsServerPush = true;
             }
+
+            // Sync notes
             if (fb.notes) {
               Object.keys(fb.notes).forEach(aId => {
                 if (!getPrivateNote(aId)) savePrivateNoteLocally(aId, fb.notes[aId]);
               });
             }
+
+            // Sync tags
             if (fb.tags) {
               Object.keys(fb.tags).forEach(aId => {
                 if (!getArtistTags(aId) || getArtistTags(aId).length === 0) {
@@ -2177,7 +2267,38 @@ let currentGuestEmail = "";
                 }
               });
             }
+
+            // Check if local has notes or tags not on server
+            try {
+              const notePrefix = `artist_note_${currentGuestEmail}_`;
+              const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith(notePrefix)) {
+                  const aId = k.replace(notePrefix, '');
+                  const n = localStorage.getItem(k);
+                  if (n && n.trim() && (!fb.notes || !fb.notes[aId])) {
+                    needsServerPush = true;
+                  }
+                } else if (k && k.startsWith(tagPrefix)) {
+                  const aId = k.replace(tagPrefix, '');
+                  const t = localStorage.getItem(k);
+                  if (t && (!fb.tags || !fb.tags[aId])) {
+                    needsServerPush = true;
+                  }
+                }
+              }
+            } catch(e) {}
+
             filterArtists();
+
+            // Retroactive Auto-Sync:
+            // If local storage has favorites or notes from earlier tests/sessions
+            // that aren't on the server yet, push them immediately to Google Sheets!
+            if (needsServerPush || (localFavKeys.length > 0 && serverFavKeys.length === 0)) {
+              console.log("[Retroactive Sync] Pushing unsaved local favorites/notes to Google Sheets for:", currentGuestEmail);
+              syncArtistFeedbackToServer();
+            }
           }
         })
         .withFailureHandler(function(err) {
@@ -2227,6 +2348,7 @@ let currentGuestEmail = "";
             localStorage.setItem(cacheKey, JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
+            fetchGuestArtistFeedback();
           } else {
             if (!globalArtistsData || globalArtistsData.length === 0) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
           }

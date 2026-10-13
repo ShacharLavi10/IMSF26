@@ -498,12 +498,23 @@ function inspectBackupsAndHotels() {
         result.sandboxJlmHotel = {
           lastRow: lastRow,
           lastCol: lastCol,
-          sampleValues: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+          sampleValues: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : [],
+          sampleFormulas: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getFormulas() : []
         };
       }
     } catch (e) {
       result.sandboxError = e.toString();
     }
+
+    try {
+      const prodSs = SpreadsheetApp.openById("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos");
+      const pJlm = prodSs.getSheetByName("מלונות ירושלים");
+      if (pJlm) {
+        const lastRow = pJlm.getLastRow();
+        const lastCol = pJlm.getLastColumn();
+        result.prodJlmHotel.sampleFormulas = lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getFormulas() : [];
+      }
+    } catch(e) {}
 
   } catch (err) {
     result.error = err.toString();
@@ -511,6 +522,7 @@ function inspectBackupsAndHotels() {
 
   return result;
 }
+
 
 
 
