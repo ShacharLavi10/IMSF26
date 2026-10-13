@@ -3027,7 +3027,9 @@ function renderAdminNetworkingKPIs() {
           <div class="networking-top-item" onclick="openNetworkingDetail('artist', '${safeName.replace(/'/g, "\\'")}')" title="View ${safeName} details">
             <div class="networking-top-left">
               <span class="networking-top-rank">#${idx + 1}</span>
-              <span class="networking-top-name">${safeName}</span>
+              <div style="overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                <div class="networking-top-name">${safeName}</div>
+              </div>
             </div>
             <div class="networking-top-right">
               <span class="networking-top-tag">❤️ ${a.likesCount || 0}</span>
@@ -3058,8 +3060,8 @@ function renderAdminNetworkingKPIs() {
           </div>
         </div>
         <div class="networking-kpi-footer-pills">
-          <span class="networking-pill">🎯 ${engagedArtists} With feedback</span>
-          <span class="networking-pill">⚪ ${unengagedArtists} No feedback yet</span>
+          <span class="networking-pill">🎯 ${engagedArtists} Engaged</span>
+          <span class="networking-pill">⚪ ${unengagedArtists} Unengaged</span>
         </div>
       </div>
 
@@ -3070,7 +3072,7 @@ function renderAdminNetworkingKPIs() {
             <h4 class="networking-kpi-title">
               <span>🏆</span> Top In-Demand Artists
             </h4>
-            <span class="networking-kpi-badge">Top ${topArtists.length}</span>
+            <span class="networking-kpi-badge">Top 5</span>
           </div>
           ${topArtistsHtml}
         </div>
@@ -3094,8 +3096,8 @@ function renderAdminNetworkingKPIs() {
     const inactiveCount = Math.max(0, totalGuests - activeCount);
     const ratePercent = totalGuests > 0 ? Math.round((activeCount / totalGuests) * 100) : 0;
 
-    // 2. Top 5 Most Engaged Delegates
-    const topGuests = [...activeGuests]
+    // 2. Top 5 Most Engaged Delegates (Ensure 5 delegates are shown)
+    const topGuests = [...guests]
       .map(g => {
         const likes = Number(g.totalLikes) || 0;
         const hasNotes = (g.notes && g.notes.trim().length > 0);
@@ -3126,7 +3128,7 @@ function renderAdminNetworkingKPIs() {
           <div class="networking-top-item" onclick="openNetworkingDetail('guest', '${safeKey.replace(/'/g, "\\'")}')" title="View ${safeName} activity">
             <div class="networking-top-left">
               <span class="networking-top-rank">#${idx + 1}</span>
-              <div style="overflow: hidden; text-overflow: ellipsis;">
+              <div style="overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
                 <div class="networking-top-name">${safeName}</div>
                 ${subInfo ? `<div class="networking-top-meta">${subInfo}</div>` : ''}
               </div>
@@ -3172,7 +3174,7 @@ function renderAdminNetworkingKPIs() {
             <h4 class="networking-kpi-title">
               <span>🌟</span> Top Active Delegates
             </h4>
-            <span class="networking-kpi-badge">Top ${topGuests.length}</span>
+            <span class="networking-kpi-badge">Top 5</span>
           </div>
           ${topGuestsHtml}
         </div>

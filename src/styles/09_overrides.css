@@ -1616,14 +1616,18 @@ body.light-mode .networking-section-box {
 .networking-kpis-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 700px) {
   .networking-kpis-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 }
 
@@ -1631,12 +1635,21 @@ body.light-mode .networking-section-box {
   background: var(--bg);
   border: 2px solid #000;
   border-radius: 10px;
-  padding: 16px;
+  padding: 12px 14px;
   box-shadow: 3px 3px 0px rgba(0,0,0,1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 160px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@media (max-width: 700px) {
+  .networking-kpi-card {
+    padding: 10px 12px;
+  }
 }
 
 body.light-mode .networking-kpi-card {
@@ -1649,19 +1662,24 @@ body.light-mode .networking-kpi-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  min-width: 0;
+  gap: 6px;
 }
 
 .networking-kpi-title {
   font-family: 'Oswald', sans-serif;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--foreground);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   margin: 0;
   letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 body.light-mode .networking-kpi-title {
@@ -1669,13 +1687,14 @@ body.light-mode .networking-kpi-title {
 }
 
 .networking-kpi-badge {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 999px;
   background: rgba(241, 169, 160, 0.2);
   color: var(--accent);
   border: 1px solid rgba(241, 169, 160, 0.4);
+  flex-shrink: 0;
 }
 
 body.light-mode .networking-kpi-badge {
@@ -1687,16 +1706,24 @@ body.light-mode .networking-kpi-badge {
 .networking-kpi-stat-box {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .networking-kpi-stat-number {
   font-family: 'Oswald', sans-serif;
-  font-size: 2.2rem;
+  font-size: 1.65rem;
   font-weight: 700;
   color: var(--foreground);
   line-height: 1;
+}
+
+@media (max-width: 700px) {
+  .networking-kpi-stat-number {
+    font-size: 1.45rem;
+  }
 }
 
 body.light-mode .networking-kpi-stat-number {
@@ -1704,19 +1731,21 @@ body.light-mode .networking-kpi-stat-number {
 }
 
 .networking-kpi-stat-sub {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--foreground-muted);
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .networking-progress-track {
   width: 100%;
-  height: 8px;
+  height: 6px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   border: 1px solid rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
 }
 
 body.light-mode .networking-progress-track {
@@ -1736,19 +1765,21 @@ body.light-mode .networking-progress-track {
 
 .networking-kpi-footer-pills {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
-  font-size: 0.8rem;
-  margin-top: 4px;
+  font-size: 0.75rem;
+  margin-top: 2px;
 }
 
 .networking-pill {
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);
   color: var(--foreground);
   font-weight: 600;
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 body.light-mode .networking-pill {
@@ -1760,19 +1791,24 @@ body.light-mode .networking-pill {
 .networking-top-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .networking-top-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
+  padding: 4px 8px;
   background: var(--surface);
   border: 1.5px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   cursor: pointer;
   transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 body.light-mode .networking-top-item {
@@ -1798,17 +1834,18 @@ body.light-mode .networking-top-item:hover {
 .networking-top-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .networking-top-rank {
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
-  font-size: 0.8rem;
-  width: 22px;
-  height: 22px;
+  font-size: 0.75rem;
+  width: 19px;
+  height: 19px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1835,11 +1872,13 @@ body.light-mode .networking-top-item:hover {
 
 .networking-top-name {
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: var(--foreground);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 body.light-mode .networking-top-name {
@@ -1847,7 +1886,7 @@ body.light-mode .networking-top-name {
 }
 
 .networking-top-meta {
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   color: var(--foreground-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1857,15 +1896,15 @@ body.light-mode .networking-top-name {
 .networking-top-right {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 .networking-top-tag {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
   background: rgba(241, 169, 160, 0.2);
   color: var(--accent);
