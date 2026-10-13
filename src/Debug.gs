@@ -391,4 +391,120 @@ function checkAllTogetherWithSources() {
   return results;
 }
 
+function inspectBackupsAndHotels() {
+  const result = {
+    backups: [],
+    backupJlmHotel: null,
+    backupTlvHotel: null,
+    prodJlmHotel: null,
+    prodTlvHotel: null,
+    sandboxJlmHotel: null,
+    error: null
+  };
+
+  try {
+    const parentFolderId = "1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz";
+    const parentFolder = DriveApp.getFolderById(parentFolderId);
+    let backupFolder = null;
+    const folders = parentFolder.getFoldersByName('IMSF 2026 Backups');
+    if (folders.hasNext()) {
+      backupFolder = folders.next();
+      const files = backupFolder.getFiles();
+      while (files.hasNext()) {
+        const file = files.next();
+        result.backups.push({
+          id: file.getId(),
+          name: file.getName(),
+          dateCreated: file.getDateCreated(),
+          lastUpdated: file.getLastUpdated()
+        });
+      }
+    }
+
+    // Sort backups newest first
+    result.backups.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+
+    // Inspect latest master backup
+    const latestMasterBackup = result.backups.find(b => b.name.startsWith("BACKUP_MASTER_"));
+    if (latestMasterBackup) {
+      result.latestMasterBackupId = latestMasterBackup.id;
+      result.latestMasterBackupName = latestMasterBackup.name;
+      const bSs = SpreadsheetApp.openById(latestMasterBackup.id);
+      
+      const bJlm = bSs.getSheetByName("מלונות ירושלים");
+      if (bJlm) {
+        const lastRow = bJlm.getLastRow();
+        const lastCol = bJlm.getLastColumn();
+        result.backupJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? bJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : [],
+          sampleFormulas: lastRow > 0 && lastCol > 0 ? bJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getFormulas() : []
+        };
+      }
+
+      const bTlv = bSs.getSheetByName("מלונות תל אביב");
+      if (bTlv) {
+        const lastRow = bTlv.getLastRow();
+        const lastCol = bTlv.getLastColumn();
+        result.backupTlvHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? bTlv.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+        };
+      }
+    }
+
+    // Inspect Prod master
+    try {
+      const prodSs = SpreadsheetApp.openById("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos");
+      const pJlm = prodSs.getSheetByName("מלונות ירושלים");
+      if (pJlm) {
+        const lastRow = pJlm.getLastRow();
+        const lastCol = pJlm.getLastColumn();
+        result.prodJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+        };
+      }
+      const pTlv = prodSs.getSheetByName("מלונות תל אביב");
+      if (pTlv) {
+        const lastRow = pTlv.getLastRow();
+        const lastCol = pTlv.getLastColumn();
+        result.prodTlvHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? pTlv.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+        };
+      }
+    } catch (e) {
+      result.prodError = e.toString();
+    }
+
+    // Inspect Sandbox master
+    try {
+      const sSs = SpreadsheetApp.getActiveSpreadsheet();
+      const sJlm = sSs.getSheetByName("מלונות ירושלים");
+      if (sJlm) {
+        const lastRow = sJlm.getLastRow();
+        const lastCol = sJlm.getLastColumn();
+        result.sandboxJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+        };
+      }
+    } catch (e) {
+      result.sandboxError = e.toString();
+    }
+
+  } catch (err) {
+    result.error = err.toString();
+  }
+
+  return result;
+}
+
+
 
