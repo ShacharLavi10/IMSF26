@@ -93,6 +93,11 @@ let currentGuestEmail = "";
             }
           }
         }
+        if (t === 'artists' && tabName === 'artists') {
+          if (typeof fetchGuestArtistFeedback === 'function') {
+            fetchGuestArtistFeedback();
+          }
+        }
       });
     }
 
@@ -2895,25 +2900,56 @@ function loadAdminNetworkingData(forceRefresh = false) {
 function triggerFullLeadsSync() {
   const container = document.getElementById('admin-networking-list');
   if (container) {
-    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Running full leads recalculation...</p>';
+    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px;">Scanning local test data and running full recalculation...</p>';
   }
-  if (window.google && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(function(res) {
-        if (typeof showToast === 'function') {
-          showToast(res.message || "Sync completed successfully!", "success");
+
+  // Scan localStorage for any guest emails that have saved favorites in this browser
+  const emailsToSync = new Set();
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('artist_favs_')) {
+        const em = k.replace('artist_favs_', '').trim();
+        if (em && em.includes('@')) emailsToSync.add(em);
+      }
+    }
+  } catch(e) {}
+
+  const runServerSync = () => {
+    if (window.google && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (typeof showToast === 'function') {
+            showToast(res.message || "Sync completed successfully!", "success");
+          }
+          loadAdminNetworkingData(true);
+        })
+        .withFailureHandler(function(err) {
+          if (typeof showToast === 'function') {
+            showToast("Sync failed: " + err.toString(), "error");
+          }
+          loadAdminNetworkingData(true);
+        })
+        .syncAllArtistsAndLeads();
+    }
+  };
+
+  const emailList = Array.from(emailsToSync);
+  if (emailList.length > 0) {
+    let pending = emailList.length;
+    emailList.forEach(em => {
+      syncLocalGuestFeedbackToServer(em, () => {
+        pending--;
+        if (pending <= 0) {
+          runServerSync();
         }
-        loadAdminNetworkingData(true);
-      })
-      .withFailureHandler(function(err) {
-        if (typeof showToast === 'function') {
-          showToast("Sync failed: " + err.toString(), "error");
-        }
-        loadAdminNetworkingData(true);
-      })
-      .syncAllArtistsAndLeads();
+      });
+    });
+  } else {
+    runServerSync();
   }
 }
+
 
 function renderAdminNetworkingList(data, query = "") {
   const container = document.getElementById('admin-networking-list');
