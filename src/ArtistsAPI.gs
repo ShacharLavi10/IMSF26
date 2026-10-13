@@ -1,7 +1,10 @@
 function getArtistsData(forceRefresh) {
   try {
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'global_artists_data_v2';
+    const cacheKey = 'global_artists_data_' + ssId;
     
     if (!forceRefresh) {
       const cached = cache.get(cacheKey);
@@ -9,13 +12,11 @@ function getArtistsData(forceRefresh) {
         return { success: true, artists: JSON.parse(cached) };
       }
     }
-
-    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
-    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
     
     const ss = SpreadsheetApp.openById(ssId);
     const sheet = (CONFIG.ARTISTS_SHEET_NAME && ss.getSheetByName(CONFIG.ARTISTS_SHEET_NAME)) || 
                   ss.getSheetByName("שיקוף! - מידע אומנים") || 
+                  ss.getSheetByName("מידע אומנים") || 
                   ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
     
@@ -475,11 +476,13 @@ function getAdminArtistsNetworkingData() {
  */
 function syncAllArtistsAndLeads() {
   try {
-    // 1. Clear server-side artists cache
-    CacheService.getScriptCache().remove('global_artists_data_v2');
-
     const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
     if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+
+    // 1. Clear server-side artists cache
+    CacheService.getScriptCache().remove('global_artists_data_' + ssId);
+    CacheService.getScriptCache().remove('global_artists_data_v2');
+
     const ss = SpreadsheetApp.openById(ssId);
 
     const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
