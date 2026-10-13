@@ -515,11 +515,14 @@ function inspectBackupsAndHotels() {
         result.prodJlmHotel = {
           lastRow: lastRow,
           lastCol: lastCol,
-          sampleValues: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getValues() : [],
-          sampleFormulas: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getFormulas() : []
+          allValues: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, lastRow, lastCol).getValues() : [],
+          allFormulas: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, lastRow, lastCol).getFormulas() : []
         };
       }
-    } catch(e) {}
+    } catch(e) {
+      result.prodError = e.toString();
+    }
+
 
 
   } catch (err) {
