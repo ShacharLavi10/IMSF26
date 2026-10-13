@@ -391,4 +391,245 @@ function checkAllTogetherWithSources() {
   return results;
 }
 
+function inspectBackupsAndHotels() {
+  const result = {
+    backups: [],
+    backupJlmHotel: null,
+    backupTlvHotel: null,
+    prodJlmHotel: null,
+    prodTlvHotel: null,
+    sandboxJlmHotel: null,
+    error: null
+  };
+
+  try {
+    try {
+      const parentFolderId = "1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz";
+      const parentFolder = DriveApp.getFolderById(parentFolderId);
+      let backupFolder = null;
+      const folders = parentFolder.getFoldersByName('IMSF 2026 Backups');
+      if (folders.hasNext()) {
+        backupFolder = folders.next();
+        const files = backupFolder.getFiles();
+        while (files.hasNext()) {
+          const file = files.next();
+          result.backups.push({
+            id: file.getId(),
+            name: file.getName(),
+            dateCreated: file.getDateCreated(),
+            lastUpdated: file.getLastUpdated()
+          });
+        }
+      }
+    } catch(e) {
+      result.driveError = e.toString();
+    }
+
+
+
+    // Sort backups newest first
+    result.backups.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+
+    // Inspect latest master backup
+    const latestMasterBackup = result.backups.find(b => b.name.startsWith("BACKUP_MASTER_"));
+    if (latestMasterBackup) {
+      result.latestMasterBackupId = latestMasterBackup.id;
+      result.latestMasterBackupName = latestMasterBackup.name;
+      const bSs = SpreadsheetApp.openById(latestMasterBackup.id);
+      
+      const bJlm = bSs.getSheetByName("מלונות ירושלים");
+      if (bJlm) {
+        const lastRow = bJlm.getLastRow();
+        const lastCol = bJlm.getLastColumn();
+        result.backupJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? bJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : [],
+          sampleFormulas: lastRow > 0 && lastCol > 0 ? bJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getFormulas() : []
+        };
+      }
+
+      const bTlv = bSs.getSheetByName("מלונות תל אביב");
+      if (bTlv) {
+        const lastRow = bTlv.getLastRow();
+        const lastCol = bTlv.getLastColumn();
+        result.backupTlvHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? bTlv.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+        };
+      }
+    }
+
+    // Inspect Prod master
+    try {
+      const prodSs = SpreadsheetApp.openById("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos");
+      const pJlm = prodSs.getSheetByName("מלונות ירושלים");
+      if (pJlm) {
+        const lastRow = pJlm.getLastRow();
+        const lastCol = pJlm.getLastColumn();
+        result.prodJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+        };
+      }
+      const pTlv = prodSs.getSheetByName("מלונות תל אביב");
+      if (pTlv) {
+        const lastRow = pTlv.getLastRow();
+        const lastCol = pTlv.getLastColumn();
+        result.prodTlvHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? pTlv.getRange(1, 1, Math.min(10, lastRow), lastCol).getValues() : []
+        };
+      }
+    } catch (e) {
+      result.prodError = e.toString();
+    }
+
+    // Inspect Sandbox master
+    try {
+      const sSs = SpreadsheetApp.getActiveSpreadsheet();
+      const sJlm = sSs.getSheetByName("מלונות ירושלים");
+      if (sJlm) {
+        const lastRow = sJlm.getLastRow();
+        const lastCol = sJlm.getLastColumn();
+        result.sandboxJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          sampleValues: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getValues() : [],
+          sampleFormulas: lastRow > 0 && lastCol > 0 ? sJlm.getRange(1, 1, Math.min(50, lastRow), lastCol).getFormulas() : []
+        };
+      }
+    } catch (e) {
+      result.sandboxError = e.toString();
+    }
+
+    try {
+      const prodSs = SpreadsheetApp.openById("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos");
+      const pJlm = prodSs.getSheetByName("מלונות ירושלים");
+      if (pJlm) {
+        const lastRow = pJlm.getLastRow();
+        const lastCol = pJlm.getLastColumn();
+        result.prodJlmHotel = {
+          lastRow: lastRow,
+          lastCol: lastCol,
+          allValues: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, lastRow, lastCol).getValues() : [],
+          allFormulas: lastRow > 0 && lastCol > 0 ? pJlm.getRange(1, 1, lastRow, lastCol).getFormulas() : []
+        };
+      }
+    } catch(e) {
+      result.prodError = e.toString();
+    }
+
+
+
+  } catch (err) {
+    result.error = err.toString();
+  }
+
+  return result;
+}
+
+function restoreJerusalemHotelsAndSync(targetSsId) {
+  try {
+    const ss = targetSsId ? SpreadsheetApp.openById(targetSsId) : SpreadsheetApp.getActiveSpreadsheet();
+    const jlmSheet = ss.getSheetByName(CONFIG.JERUSALEM_SHEET);
+    if (!jlmSheet) return { success: false, error: "Jerusalem sheet not found" };
+
+    const knownGuestEmails = [
+      "benson@chaptertwoent.com",
+      "bv@asphalt-festival.de",
+      "carlos@mcmxvi.com",
+      "eventi.alexanderplatz@gmail.com",
+      "buihuytuan@gmail.com",
+      "isaac.green@warnerrecords.com",
+      "johannes.graesser@jlgt.org",
+      "jon@ba-concerts.com",
+      "joshblakkmusic@gmail.com",
+      "karanbajaj@gaah.in",
+      "kira.triumph@gmail.com",
+      "booking@festteam.bg",
+      "laurence@lolaziza.com",
+      "marcusgora@pm.me",
+      "mark.kass@enterprise4good.org",
+      "matt@crazyplanetrecords.com",
+      "direction@festivaldechaillol.com",
+      "michele@francerocks.com",
+      "peter@futureechoes.se",
+      "svidal@ducdeslombards.com",
+      "shunsuke.asakawa@me.com",
+      "y.trakhman@afisha.ru",
+      "shacharlavi10@gmail.com",
+      "exposubmarine@gmail.com",
+      "shacharlavi888@gmail.com",
+      "shlomo@citywinery.com"
+    ];
+
+    // 1. Set Title in A1
+    jlmSheet.getRange(1, 1).setValue("ירושלים");
+
+    // 2. Set Headers in row 2: A2, B2, C2
+    jlmSheet.getRange(2, 1).setValue(CONFIG.EMAIL_COL);      // "מייל אורח"
+    jlmSheet.getRange(2, 2).setValue(CONFIG.FIRST_NAME_COL); // "שם פרטי"
+    jlmSheet.getRange(2, 3).setValue(CONFIG.LAST_NAME_COL);  // "שם משפחה"
+
+    // If restoring Sandbox, ensure columns D..N (booking data) are populated from Prod
+    if (!targetSsId) {
+      try {
+        const prodSs = SpreadsheetApp.openById("17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos");
+        const prodJlm = prodSs.getSheetByName(CONFIG.JERUSALEM_SHEET);
+        if (prodJlm) {
+          const pVals = prodJlm.getRange(2, 4, 32, 11).getValues();
+          const pForms = prodJlm.getRange(2, 4, 32, 11).getFormulas();
+          const combinedD_N = pVals.map((row, rIdx) => row.map((cell, cIdx) => {
+            return (pForms[rIdx] && pForms[rIdx][cIdx]) ? pForms[rIdx][cIdx] : cell;
+          }));
+          jlmSheet.getRange(2, 4, 32, 11).setValues(combinedD_N);
+        }
+      } catch(e) {
+        Logger.log("Could not copy D..N from prod: " + e.toString());
+      }
+    }
+
+    // 3. For rows 3 to 28, set the email values in Column A
+    const emailValues = knownGuestEmails.map(em => [em]);
+    jlmSheet.getRange(3, 1, emailValues.length, 1).setValues(emailValues);
+
+    // 4. For rows 3 to 28, set formulas for First Name (col B) and Last Name (col C)
+    // In 'אורחים': Email is K ($K:$K), First Name is C ($C:$C), Last Name is B ($B:$B)
+    const nameFormulas = [];
+    for (let i = 0; i < knownGuestEmails.length; i++) {
+      const rowNum = i + 3;
+      nameFormulas.push([
+        `=IF(ISBLANK(A${rowNum}), "", XLOOKUP(A${rowNum}, 'אורחים'!$K:$K, 'אורחים'!$C:$C, ""))`,
+        `=IF(ISBLANK(A${rowNum}), "", XLOOKUP(A${rowNum}, 'אורחים'!$K:$K, 'אורחים'!$B:$B, ""))`
+      ]);
+    }
+    jlmSheet.getRange(3, 2, nameFormulas.length, 2).setValues(nameFormulas);
+
+    // 5. Run syncAllSheets(ss) to align all sheets and ensure full data integrity
+    syncAllSheets(ss);
+
+    // Inspect result after restoration
+    const finalLastRow = jlmSheet.getLastRow();
+    const finalSample = jlmSheet.getRange(1, 1, Math.min(10, finalLastRow), 5).getValues();
+
+    return {
+      success: true,
+      message: "Jerusalem hotel restored and synchronized successfully",
+      targetId: ss.getId(),
+      finalLastRow: finalLastRow,
+      finalSample: finalSample
+    };
+
+  } catch (err) {
+    return { success: false, error: err.toString(), stack: err.stack };
+  }
+}
+
+
+
+
 

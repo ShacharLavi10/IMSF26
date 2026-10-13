@@ -93,6 +93,11 @@ let currentGuestEmail = "";
             }
           }
         }
+        if (t === 'artists' && tabName === 'artists') {
+          if (typeof fetchGuestArtistFeedback === 'function') {
+            fetchGuestArtistFeedback();
+          }
+        }
       });
     }
 
@@ -518,6 +523,87 @@ let currentGuestEmail = "";
       container.innerHTML = html;
     }
 
+    function parseTicketLinks(rawVal) {
+      if (!rawVal) return [];
+      const text = String(rawVal).trim();
+      if (!text || text === '-' || /^#|^=/i.test(text) || /^n\/?a$/i.test(text) || /^none$/i.test(text) || /^null$/i.test(text)) {
+        return [];
+      }
+
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/gi;
+      const matches = text.match(urlRegex) || [];
+
+      if (matches.length === 0) {
+        const driveIdMatch = text.match(/[-\w]{25,}/);
+        if (driveIdMatch) {
+          return [{ url: `https://drive.google.com/file/d/${driveIdMatch[0]}/view`, type: 'single', label: 'View E-Ticket (PDF)' }];
+        }
+        return [];
+      }
+
+      // Clean trailing punctuation
+      const urls = matches.map(u => u.replace(/[.,;)]+$/, '')).filter(Boolean);
+
+      if (urls.length === 1) {
+        return [{ url: urls[0], type: 'single', label: 'View E-Ticket (PDF)' }];
+      }
+
+      // 2 or more links
+      const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+      let inboundUrl = null;
+      let outboundUrl = null;
+
+      lines.forEach(line => {
+        const lineUrls = line.match(urlRegex) || [];
+        if (lineUrls.length > 0) {
+          const u = lineUrls[0].replace(/[.,;)]+$/, '');
+          const lower = line.toLowerCase();
+          if (lower.includes('חזור') || lower.includes('outbound') || lower.includes('return') || lower.includes('departure') || lower.includes('from tlv') || lower.includes('יציאה')) {
+            outboundUrl = u;
+          } else if (lower.includes('הלוך') || lower.includes('inbound') || lower.includes('arrival') || lower.includes('to tlv') || lower.includes('הגעה')) {
+            inboundUrl = u;
+          }
+        }
+      });
+
+      if (!inboundUrl || !outboundUrl || inboundUrl === outboundUrl) {
+        inboundUrl = urls[0];
+        outboundUrl = urls[1];
+      }
+
+      return [
+        { url: inboundUrl, type: 'inbound', label: 'Inbound Ticket (PDF)' },
+        { url: outboundUrl, type: 'outbound', label: 'Outbound Ticket (PDF)' }
+      ];
+    }
+
+    function renderTicketButtonsHtml(ticketLink) {
+      const tickets = parseTicketLinks(ticketLink);
+      if (!tickets || tickets.length === 0) return '';
+
+      if (tickets.length === 1) {
+        return `
+          <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <a href="${tickets[0].url}" target="_blank" rel="noopener noreferrer" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              View E-Ticket (PDF)
+            </a>
+          </div>
+        `;
+      }
+
+      return `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+          ${tickets.map(t => `
+            <a href="${t.url}" target="_blank" rel="noopener noreferrer" class="primary" style="flex: 1 1 calc(50% - 6px); min-width: 140px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 0.95rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; text-align: center; box-sizing: border-box;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>${t.label}</span>
+            </a>
+          `).join('')}
+        </div>
+      `;
+    }
+
     function renderBoardingPassData(containerId, dataArray, emptyText) {
       const container = document.getElementById(containerId);
       if (!dataArray || dataArray.length === 0) {
@@ -680,14 +766,7 @@ let currentGuestEmail = "";
       let html = '';
 
       if (ticketLink) {
-        html += `
-          <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-            <a href="${ticketLink}" target="_blank" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              View E-Ticket (PDF)
-            </a>
-          </div>
-        `;
+        html += renderTicketButtonsHtml(ticketLink);
       }
 
       html += `
@@ -2016,7 +2095,7 @@ let currentGuestEmail = "";
     let showFavsOnly = false;
     let currentOpenArtistId = null;
 
-    // Load favorites from local storage for now
+    // Load favorites from local storage
     function getFavorites() {
       try {
         const stored = localStorage.getItem('artist_favs_' + currentGuestEmail);
@@ -2038,6 +2117,281 @@ let currentGuestEmail = "";
       localStorage.setItem(`artist_note_${currentGuestEmail}_${artistId}`, note);
     }
 
+    // Load & Save intent tags
+    function getArtistTags(artistId) {
+      try {
+        const stored = localStorage.getItem(`artist_tags_${currentGuestEmail}_${artistId}`);
+        return stored ? JSON.parse(stored) : [];
+      } catch(e) { return []; }
+    }
+    function saveArtistTagsLocally(artistId, tags) {
+      localStorage.setItem(`artist_tags_${currentGuestEmail}_${artistId}`, JSON.stringify(tags));
+    }
+
+    // Toggle Intent Tag
+    function toggleIntentTag(tag) {
+      if (!currentOpenArtistId) return;
+      const currentTags = getArtistTags(currentOpenArtistId);
+      const idx = currentTags.indexOf(tag);
+      if (idx >= 0) {
+        currentTags.splice(idx, 1);
+      } else {
+        currentTags.push(tag);
+      }
+      saveArtistTagsLocally(currentOpenArtistId, currentTags);
+
+      // Update button visual
+      const btn = document.querySelector(`.sheet-intent-tag-btn[data-tag="${tag}"]`);
+      if (btn) {
+        if (currentTags.includes(tag)) btn.classList.add('active');
+        else btn.classList.remove('active');
+      }
+
+      // If user tags Booking or Connect, automatically mark artist as favorite if not already
+      const favs = getFavorites();
+      if (!favs[currentOpenArtistId] && (tag === "Booking" || tag === "Connect")) {
+        favs[currentOpenArtistId] = true;
+        saveFavorites(favs);
+        const favBtn = document.getElementById('sheet-fav-btn');
+        if (favBtn) {
+          favBtn.classList.add('active');
+          document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
+        }
+      }
+
+      triggerFeedbackAutoSave(1500);
+    }
+
+    // Auto-Save & Debounce Engine
+    let feedbackSaveTimer = null;
+    function triggerFeedbackAutoSave(delay = 3500) {
+      const statusElem = document.getElementById('sheet-save-status');
+      if (statusElem) statusElem.innerText = 'Saving...';
+      if (feedbackSaveTimer) clearTimeout(feedbackSaveTimer);
+      feedbackSaveTimer = setTimeout(() => {
+        syncArtistFeedbackToServer();
+      }, delay);
+    }
+
+    function flushFeedbackAutoSave() {
+      if (feedbackSaveTimer) {
+        clearTimeout(feedbackSaveTimer);
+        feedbackSaveTimer = null;
+        syncArtistFeedbackToServer();
+      }
+    }
+
+    // Helper to push feedback for any specific email to server
+    function syncLocalGuestFeedbackToServer(targetEmail, callback) {
+      if (!targetEmail || !window.google || !google.script || !google.script.run) {
+        if (callback) callback(new Error("Environment not ready"));
+        return;
+      }
+      const cleanEmail = targetEmail.trim().toLowerCase();
+      
+      let favs = {};
+      try {
+        const rawFavs = localStorage.getItem('artist_favs_' + cleanEmail);
+        if (rawFavs) favs = JSON.parse(rawFavs);
+      } catch(e) {}
+
+      const allNotes = {};
+      const allTags = {};
+      try {
+        const notePrefix = `artist_note_${cleanEmail}_`;
+        const tagPrefix = `artist_tags_${cleanEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const aId = k.replace(notePrefix, '');
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) allNotes[aId] = val.trim();
+          } else if (k && k.startsWith(tagPrefix)) {
+            const aId = k.replace(tagPrefix, '');
+            const val = localStorage.getItem(k);
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed) && parsed.length > 0) allTags[aId] = parsed;
+              } catch(e) {}
+            }
+          }
+        }
+      } catch(e) {}
+
+      const hasFavs = Object.keys(favs).some(k => !!favs[k]);
+      const hasNotes = Object.keys(allNotes).length > 0;
+      const hasTags = Object.keys(allTags).length > 0;
+
+      if (hasFavs || hasNotes || hasTags) {
+        const payload = {
+          favorites: favs,
+          notes: allNotes,
+          tags: allTags
+        };
+        google.script.run
+          .withSuccessHandler(function(res) {
+            console.log("[Auto-Sync] Saved feedback for:", cleanEmail, res);
+            if (callback) callback(null, res);
+          })
+          .withFailureHandler(function(err) {
+            console.warn("[Auto-Sync] Error saving feedback for:", cleanEmail, err);
+            if (callback) callback(err);
+          })
+          .saveGuestArtistFeedback(cleanEmail, payload);
+      } else {
+        if (callback) callback(null, { skipped: true });
+      }
+    }
+
+    function syncArtistFeedbackToServer() {
+      if (!currentGuestEmail) return;
+      const statusElem = document.getElementById('sheet-save-status');
+
+      // Aggregate all notes and tags directly from localStorage
+      const allNotes = {};
+      const allTags = {};
+      try {
+        const notePrefix = `artist_note_${currentGuestEmail}_`;
+        const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const aId = k.replace(notePrefix, '');
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) allNotes[aId] = val.trim();
+          } else if (k && k.startsWith(tagPrefix)) {
+            const aId = k.replace(tagPrefix, '');
+            const val = localStorage.getItem(k);
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed) && parsed.length > 0) allTags[aId] = parsed;
+              } catch(e) {}
+            }
+          }
+        }
+      } catch(e) {}
+
+      // Also ensure current open artist's latest inputs are captured
+      if (currentOpenArtistId) {
+        const currentInput = document.getElementById('sheet-private-note');
+        if (currentInput && currentInput.value.trim()) {
+          allNotes[currentOpenArtistId] = currentInput.value.trim();
+        }
+        const currentTags = getArtistTags(currentOpenArtistId);
+        if (currentTags && currentTags.length > 0) {
+          allTags[currentOpenArtistId] = currentTags;
+        }
+      }
+
+      const payload = {
+        favorites: getFavorites(),
+        notes: allNotes,
+        tags: allTags
+      };
+
+      if (window.google && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (statusElem) {
+              statusElem.innerText = 'Saved ✓';
+              setTimeout(() => {
+                if (statusElem.innerText === 'Saved ✓') statusElem.innerText = '';
+              }, 3000);
+            }
+          })
+          .withFailureHandler(function(err) {
+            console.warn("Auto-save error:", err);
+            if (statusElem) statusElem.innerText = '';
+          })
+          .saveGuestArtistFeedback(currentGuestEmail, payload);
+      }
+    }
+
+    // Fetch remote feedback on startup for cross-device persistence & trigger retroactive sync if needed
+    function fetchGuestArtistFeedback() {
+      if (!currentGuestEmail || !window.google || !google.script || !google.script.run) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success && res.feedback) {
+            const fb = res.feedback;
+            const localFavs = getFavorites();
+            const serverFavs = fb.favorites || {};
+            let needsServerPush = false;
+
+            // Merge favorites
+            const mergedFavs = Object.assign({}, serverFavs, localFavs);
+            saveFavorites(mergedFavs);
+
+            // Check if local storage has any favorites not yet recorded on the server
+            const localFavKeys = Object.keys(localFavs).filter(k => !!localFavs[k]);
+            const serverFavKeys = Object.keys(serverFavs).filter(k => !!serverFavs[k]);
+            if (localFavKeys.some(k => !serverFavs[k])) {
+              needsServerPush = true;
+            }
+
+            // Sync notes
+            if (fb.notes) {
+              Object.keys(fb.notes).forEach(aId => {
+                if (!getPrivateNote(aId)) savePrivateNoteLocally(aId, fb.notes[aId]);
+              });
+            }
+
+            // Sync tags
+            if (fb.tags) {
+              Object.keys(fb.tags).forEach(aId => {
+                if (!getArtistTags(aId) || getArtistTags(aId).length === 0) {
+                  saveArtistTagsLocally(aId, fb.tags[aId]);
+                }
+              });
+            }
+
+            // Check if local has notes or tags not on server
+            try {
+              const notePrefix = `artist_note_${currentGuestEmail}_`;
+              const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith(notePrefix)) {
+                  const aId = k.replace(notePrefix, '');
+                  const n = localStorage.getItem(k);
+                  if (n && n.trim() && (!fb.notes || !fb.notes[aId])) {
+                    needsServerPush = true;
+                  }
+                } else if (k && k.startsWith(tagPrefix)) {
+                  const aId = k.replace(tagPrefix, '');
+                  const t = localStorage.getItem(k);
+                  if (t && (!fb.tags || !fb.tags[aId])) {
+                    needsServerPush = true;
+                  }
+                }
+              }
+            } catch(e) {}
+
+            filterArtists();
+
+            // Retroactive Auto-Sync:
+            // If local storage has favorites or notes from earlier tests/sessions
+            // that aren't on the server yet, push them immediately to Google Sheets!
+            if (needsServerPush || (localFavKeys.length > 0 && serverFavKeys.length === 0)) {
+              console.log("[Retroactive Sync] Pushing unsaved local favorites/notes to Google Sheets for:", currentGuestEmail);
+              syncArtistFeedbackToServer();
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.warn("Could not fetch remote artist feedback:", err);
+        })
+        .getGuestArtistFeedback(currentGuestEmail);
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        flushFeedbackAutoSave();
+      }
+    });
+
     function fetchArtistsData() {
       const grid = document.getElementById('artists-grid');
       const cacheKey = 'swr_artistsData_v3';
@@ -2049,6 +2403,7 @@ let currentGuestEmail = "";
           if (Array.isArray(parsed) && parsed.some(a => a.genre)) {
             globalArtistsData = parsed.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
+            fetchGuestArtistFeedback();
           }
         } catch(e) {}
       }
@@ -2072,6 +2427,7 @@ let currentGuestEmail = "";
             localStorage.setItem(cacheKey, JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
+            fetchGuestArtistFeedback();
           } else {
             if (!globalArtistsData || globalArtistsData.length === 0) grid.innerHTML = `<p class="empty-state">The artists lineup is currently being updated. Please check back shortly.</p>`;
           }
@@ -2150,6 +2506,7 @@ let currentGuestEmail = "";
         favs[artistId] = true;
       }
       saveFavorites(favs);
+      triggerFeedbackAutoSave(1500);
       filterArtists(); // Re-render grid
     }
 
@@ -2232,6 +2589,17 @@ let currentGuestEmail = "";
       // Notes
       document.getElementById('sheet-private-note').value = getPrivateNote(artistId);
 
+      // Intent Tags
+      const currentTags = getArtistTags(artistId);
+      document.querySelectorAll('.sheet-intent-tag-btn').forEach(btn => {
+        const t = btn.getAttribute('data-tag');
+        if (currentTags.includes(t)) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+
+      const statusElem = document.getElementById('sheet-save-status');
+      if (statusElem) statusElem.innerText = '';
+
       // Media Embed - Removed Spotify Embed
       const mediaContainer = document.getElementById('sheet-media-container');
       const embedWrapper = document.getElementById('sheet-embed-wrapper');
@@ -2263,6 +2631,7 @@ let currentGuestEmail = "";
     }
 
     function closeArtistSheet(isHashChange) {
+      flushFeedbackAutoSave();
       document.getElementById('artist-sheet-overlay').classList.remove('active');
       document.getElementById('artist-bottom-sheet').classList.remove('active');
       document.body.style.overflow = '';
@@ -2293,6 +2662,12 @@ let currentGuestEmail = "";
       if (window.location.hash !== "#adminsheet" && document.getElementById('admin-bottom-sheet') && document.getElementById('admin-bottom-sheet').classList.contains('active')) {
         closeAdminModal(true);
       }
+      // If the hash is no longer #networkingsheet, but the networking sheet is open, close it.
+      if (window.location.hash !== "#networkingsheet" && document.getElementById('networking-bottom-sheet') && document.getElementById('networking-bottom-sheet').classList.contains('active')) {
+        if (typeof closeNetworkingDetailSheet === 'function') {
+          closeNetworkingDetailSheet(true);
+        }
+      }
     });
 
     function toggleSheetFav(event) {
@@ -2311,12 +2686,14 @@ let currentGuestEmail = "";
         document.getElementById('sheet-fav-icon').setAttribute('fill', 'currentColor');
       }
       saveFavorites(favs);
+      triggerFeedbackAutoSave(1500);
     }
 
     function savePrivateNote() {
       if (!currentOpenArtistId) return;
       const note = document.getElementById('sheet-private-note').value;
       savePrivateNoteLocally(currentOpenArtistId, note);
+      triggerFeedbackAutoSave(3500);
     }
 
     function exportBriefcase() {
@@ -2392,6 +2769,7 @@ window.exportBriefcase = exportBriefcase;
 window.closeArtistSheet = closeArtistSheet;
 window.toggleSheetFav = toggleSheetFav;
 window.savePrivateNote = savePrivateNote;
+window.toggleIntentTag = toggleIntentTag;
 window.closeGuestSheet = closeGuestSheet;
 window.toggleUpdatesPanel = toggleUpdatesPanel;
 window.toggleTheme = toggleTheme;
@@ -2435,41 +2813,12 @@ function renderAdminDashboard() {
     if (hPassport !== -1 && row[hPassport] !== true && String(row[hPassport]).toLowerCase() !== 'true') missingPassport++;
   }
   
-  let html = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-      <h3 style="margin:0; font-size: 1.5rem;">Production Overview</h3>
-      <button class="primary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="loadAdminDashboard(true)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Refresh Data
-      </button>
-    </div>
-    
-    <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 30px;">
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: var(--accent-bright);">${totalGuests}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Total Delegates</p>
-      </div>
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: #f59e0b;">${missingHotel}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Hotel Form</p>
-      </div>
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: #ef4444;">${missingFlight}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Flights</p>
-      </div>
-      <div class="stat-card" style="background: var(--surface); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border);">
-        <h3 style="margin: 0; font-size: 28px; color: #8b5cf6;">${missingPassport}</h3>
-        <p style="margin: 5px 0 0; font-size: 13px; color: var(--foreground-muted); font-weight: 500;">Missing Passport</p>
-      </div>
-    </div>
-  `;
-  
-  // -- ALERT CENTER & LOGISTICS --
+  // Logistics counts
   let hotelJlmCount = 0;
   let hotelTlvCount = 0;
   let flightArrivals = 0;
   
-  if (adminData.hotelJlm) {
+  if (adminData.hotelJlm && adminData.hotelJlm.length > 1) {
     const h = adminData.hotelJlm[0].map(x => String(x).trim().toLowerCase());
     const nightCol = h.indexOf("סה\"כ לילות");
     if (nightCol !== -1) {
@@ -2481,7 +2830,7 @@ function renderAdminDashboard() {
     }
   }
   
-  if (adminData.hotelTlv) {
+  if (adminData.hotelTlv && adminData.hotelTlv.length > 1) {
     const h = adminData.hotelTlv[0].map(x => String(x).trim().toLowerCase());
     const nightCol = h.indexOf("סה\"כ לילות");
     if (nightCol !== -1) {
@@ -2493,82 +2842,954 @@ function renderAdminDashboard() {
     }
   }
   
-  if (adminData.flights) {
-    flightArrivals = adminData.flights.length > 1 ? adminData.flights.length - 1 : 0;
+  if (adminData.flights && adminData.flights.length > 1) {
+    flightArrivals = adminData.flights.length - 1;
   }
+  
+  let html = `
+    <div class="admin-sections-wrapper">
+      
+      <!-- 1. PRODUCTION OVERVIEW ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-overview">
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">📊</span>
+            <span class="admin-section-title">Production Overview</span>
+          </div>
+          <div class="admin-section-meta">
+            <span class="admin-section-badge">${totalGuests} Delegates</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="admin-section-content">
+          <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 14px;">
+            <button class="primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="loadAdminDashboard(true)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Refresh Data
+            </button>
+          </div>
+          
+          <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: var(--accent-bright);">${totalGuests}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Total Delegates</p>
+            </div>
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: #f59e0b;">${missingHotel}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Missing Hotel Form</p>
+            </div>
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: #ef4444;">${missingFlight}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Missing Flights</p>
+            </div>
+            <div class="stat-card" style="background: var(--surface); padding: 14px; border-radius: 10px; text-align: center; border: 1.5px solid var(--border);">
+              <h3 style="margin: 0; font-size: 26px; color: #8b5cf6;">${missingPassport}</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--foreground-muted); font-weight: 500;">Missing Passport</p>
+            </div>
+          </div>
 
-  html += `
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px;">
-      
-      <!-- Alert Center -->
-      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
-        <h3 style="margin: 0 0 15px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-          Live Alert Center
-        </h3>
-        <p style="font-size: 0.9rem; color: var(--foreground-muted); margin-bottom: 15px;">Send a push notification to all delegates. (Will appear in their updates bell).</p>
-        <textarea id="admin-alert-msg" placeholder="Type your announcement here..." style="width: 100%; height: 80px; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); margin-bottom: 10px; resize: none; font-family: inherit;"></textarea>
-        <button class="primary" style="width: 100%; justify-content: center;" onclick="sendAdminAlert()">Send Global Alert</button>
-      </div>
-      
-      <!-- Logistics -->
-      <div style="background: var(--surface); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
-        <h3 style="margin: 0 0 15px 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-          Logistics Summary
-        </h3>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
-            <span style="color: var(--foreground-muted);">Tel Aviv Hotel</span>
-            <span style="font-weight: 600;">\${hotelTlvCount} Nights</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
-            <span style="color: var(--foreground-muted);">Jerusalem Hotel</span>
-            <span style="font-weight: 600;">\${hotelJlmCount} Nights</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
-            <span style="color: var(--foreground-muted);">Flights Handled</span>
-            <span style="font-weight: 600;">\${flightArrivals} Delegates</span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <!-- Alert Center -->
+            <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1.5px solid var(--border);">
+              <h4 style="margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Live Alert Center
+              </h4>
+              <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px;">Send a push notification to all delegates. (Will appear in their updates bell).</p>
+              <textarea id="admin-alert-msg" placeholder="Type your announcement here..." style="width: 100%; height: 75px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); margin-bottom: 10px; resize: none; font-family: inherit; box-sizing: border-box;"></textarea>
+              <button class="primary" style="width: 100%; justify-content: center;" onclick="sendAdminAlert()">Send Global Alert</button>
+            </div>
+            
+            <!-- Logistics -->
+            <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1.5px solid var(--border);">
+              <h4 style="margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                Logistics Summary
+              </h4>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Tel Aviv Hotel</span>
+                  <span style="font-weight: 600; font-size: 0.9rem;">${hotelTlvCount} Nights</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Jerusalem Hotel</span>
+                  <span style="font-weight: 600; font-size: 0.9rem;">${hotelJlmCount} Nights</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Flights Handled</span>
+                  <span style="font-weight: 600; font-size: 0.9rem;">${flightArrivals} Delegates</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      
-    </div>
-  `;
+      </details>
 
-  // Search Bar & Guest List
-  html += `
-    <h3 style="margin-top: 30px; margin-bottom: 15px; font-size: 1.2rem;">Guest Management</h3>
-    <div style="margin-bottom: 15px; position: relative;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 12px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <input type="text" id="admin-guest-search" placeholder="Search by name, email, or company..." style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); font-size: 1rem;" onkeyup="filterAdminGuests(this.value)">
+      <!-- 2. LINEUP & NETWORKING LEADS ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-networking">
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">🎸</span>
+            <span class="admin-section-title">Lineup & Networking Leads</span>
+          </div>
+          <div class="admin-section-meta">
+            <span class="admin-section-badge">Leads & Feedback</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="admin-section-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin: 0;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
+            <div style="display: flex; gap: 8px;">
+              <button class="secondary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="loadAdminNetworkingData(true)">Refresh</button>
+              <button class="primary" style="font-size: 0.8rem; padding: 4px 10px;" onclick="triggerFullLeadsSync()">⚡ Run Full Sync</button>
+            </div>
+          </div>
+          
+          <!-- Slide Toggle for Artists / Guests -->
+          <div class="networking-toggle-container">
+            <div class="networking-slide-toggle">
+              <button type="button" id="networking-toggle-artists" class="networking-toggle-btn active" onclick="switchAdminNetworkingTab('artists')">
+                🎸 Artists <span id="networking-artists-count" class="networking-toggle-badge">0</span>
+              </button>
+              <button type="button" id="networking-toggle-guests" class="networking-toggle-btn" onclick="switchAdminNetworkingTab('guests')">
+                👥 Guests <span id="networking-guests-count" class="networking-toggle-badge">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic KPI Overview Cards -->
+          <div id="admin-networking-kpis" class="networking-kpis-grid"></div>
+
+          <div style="margin-bottom: 12px; position: relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="admin-networking-search" placeholder="Search artists..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); box-sizing: border-box;" onkeyup="filterAdminNetworking(this.value)">
+          </div>
+
+          <div id="admin-networking-list" class="networking-cubes-grid">
+            <p style="color: var(--foreground-muted); text-align: center; padding: 15px; grid-column: 1 / -1;">Loading networking insights...</p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 3. GUEST MANAGEMENT ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-guests">
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">👥</span>
+            <span class="admin-section-title">Guest Management</span>
+          </div>
+          <div class="admin-section-meta">
+            <span class="admin-section-badge">${totalGuests} Registered</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="admin-section-content">
+          <div style="margin-bottom: 14px; position: relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 12px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="admin-guest-search" placeholder="Search by name, email, or company..." style="width: 100%; padding: 12px 12px 12px 40px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--foreground); font-size: 1rem; box-sizing: border-box;" onkeyup="filterAdminGuests(this.value)">
+          </div>
+          <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
+        </div>
+      </details>
+
     </div>
-    <div id="admin-guest-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 5px;"></div>
   `;
   
   container.innerHTML = html;
   filterAdminGuests("");
+  loadAdminNetworkingData(false);
+}
+
+function escapeHtmlAdmin(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+let currentNetworkingTab = 'artists';
+let networkingArtistsList = [];
+let networkingGuestsList = [];
+let adminNetworkingData = null;
+
+function switchAdminNetworkingTab(tab) {
+  currentNetworkingTab = tab;
+  const btnArtists = document.getElementById('networking-toggle-artists');
+  const btnGuests = document.getElementById('networking-toggle-guests');
+  const searchInput = document.getElementById('admin-networking-search');
+
+  if (tab === 'artists') {
+    if (btnArtists) btnArtists.classList.add('active');
+    if (btnGuests) btnGuests.classList.remove('active');
+    if (searchInput) searchInput.placeholder = "Search artists...";
+  } else {
+    if (btnArtists) btnArtists.classList.remove('active');
+    if (btnGuests) btnGuests.classList.add('active');
+    if (searchInput) searchInput.placeholder = "Search guests...";
+  }
+
+  const query = searchInput ? searchInput.value : '';
+  renderAdminNetworkingCubes(query);
+}
+
+function getResolvedGuestsNetworkingList() {
+  const result = [];
+  const prefMap = new Map();
+
+  if (adminNetworkingData && adminNetworkingData.guestsPreferences) {
+    adminNetworkingData.guestsPreferences.forEach(g => {
+      if (g.email) prefMap.set(g.email.toLowerCase().trim(), g);
+    });
+  }
+
+  // Cross-reference with adminData.guests to ensure no guest is missed
+  if (adminData && adminData.guests && adminData.guests.length > 1) {
+    const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf("מייל אורח");
+    const fnIdx = headers.indexOf("שם פרטי");
+    const lnIdx = headers.indexOf("שם משפחה");
+    const roleIdx = headers.indexOf("תפקיד");
+    const compIdx = headers.indexOf("שם חברה");
+    const countryIdx = headers.indexOf("מדינה");
+
+    for (let i = 1; i < adminData.guests.length; i++) {
+      const row = adminData.guests[i];
+      if (roleIdx !== -1 && String(row[roleIdx]).trim() === "הפקה חשיפה") continue; // skip admin
+      const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim().toLowerCase() : "";
+      const fname = fnIdx !== -1 ? String(row[fnIdx] || "").trim() : "";
+      const lname = lnIdx !== -1 ? String(row[lnIdx] || "").trim() : "";
+      const fullName = `${fname} ${lname}`.trim();
+      if (!fullName && !email) continue;
+
+      if (prefMap.has(email)) {
+        result.push(prefMap.get(email));
+        prefMap.delete(email);
+      } else {
+        result.push({
+          email: email,
+          name: fullName || email,
+          country: countryIdx !== -1 ? String(row[countryIdx] || "").trim() : "",
+          company: compIdx !== -1 ? String(row[compIdx] || "").trim() : "",
+          role: roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "",
+          status: "🔴 טרם סימן אומנים",
+          favs: "",
+          booking: "",
+          connect: "",
+          press: "",
+          totalLikes: 0,
+          notes: ""
+        });
+      }
+    }
+  }
+
+  // Include any remaining guests from prefMap
+  prefMap.forEach(g => result.push(g));
+
+  return result;
+}
+
+function renderAdminNetworkingKPIs() {
+  const container = document.getElementById('admin-networking-kpis');
+  if (!container || !adminNetworkingData) return;
+
+  const artists = adminNetworkingData.artistsLeads || [];
+  const guests = getResolvedGuestsNetworkingList();
+
+  if (currentNetworkingTab === 'artists') {
+    // 1. Lineup Coverage
+    const totalArtists = artists.length;
+    const engagedArtists = artists.filter(a => 
+      (a.likesCount > 0) || 
+      (a.bookingLeads && a.bookingLeads.trim().length > 0) ||
+      (a.notes && a.notes.trim().length > 0)
+    ).length;
+    const unengagedArtists = Math.max(0, totalArtists - engagedArtists);
+    const coveragePercent = totalArtists > 0 ? Math.round((engagedArtists / totalArtists) * 100) : 0;
+
+    // 2. Top 5 In-Demand Artists
+    const topArtists = [...artists]
+      .filter(a => (a.likesCount > 0) || (a.bookingLeads && a.bookingLeads.trim().length > 0))
+      .sort((a, b) => {
+        if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
+        const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
+        const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
+        if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+      })
+      .slice(0, 5);
+
+    let topArtistsHtml = '';
+    if (topArtists.length === 0) {
+      topArtistsHtml = '<p style="color: var(--foreground-muted); font-size: 0.85rem; margin: 14px 0; text-align: center;">No likes or leads recorded yet.</p>';
+    } else {
+      topArtistsHtml = '<div class="networking-top-list">';
+      topArtists.forEach((a, idx) => {
+        const hasBooking = a.bookingLeads && a.bookingLeads.trim().length > 0;
+        const safeName = escapeHtmlAdmin(a.name);
+        topArtistsHtml += `
+          <div class="networking-top-item" onclick="openNetworkingDetail('artist', '${safeName.replace(/'/g, "\\'")}')" title="View ${safeName} details">
+            <div class="networking-top-left">
+              <span class="networking-top-rank">#${idx + 1}</span>
+              <div style="overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                <div class="networking-top-name">${safeName}</div>
+              </div>
+            </div>
+            <div class="networking-top-right">
+              <span class="networking-top-tag">❤️ ${a.likesCount || 0}</span>
+              ${hasBooking ? `<span class="networking-top-tag" style="background: rgba(16,185,129,0.15); color: #10b981;" title="Booking inquiries">🎯</span>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      topArtistsHtml += '</div>';
+    }
+
+    container.innerHTML = `
+      <!-- Card 1: Lineup Coverage -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>📈</span> Lineup Coverage
+            </h4>
+            <span class="networking-kpi-badge">${coveragePercent}% Engaged</span>
+          </div>
+          <div class="networking-kpi-stat-box">
+            <div class="networking-kpi-stat-number">${coveragePercent}%</div>
+            <div class="networking-kpi-stat-sub">${engagedArtists} of ${totalArtists} artists engaged</div>
+          </div>
+          <div class="networking-progress-track">
+            <div class="networking-progress-fill" style="width: ${coveragePercent}%;"></div>
+          </div>
+        </div>
+        <div class="networking-kpi-footer-pills">
+          <span class="networking-pill">🎯 ${engagedArtists} Engaged</span>
+          <span class="networking-pill">⚪ ${unengagedArtists} Unengaged</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Top 5 In-Demand Artists -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>🏆</span> Top In-Demand Artists
+            </h4>
+            <span class="networking-kpi-badge">Top 5</span>
+          </div>
+          ${topArtistsHtml}
+        </div>
+      </div>
+    `;
+  } else {
+    // Guests tab
+    // 1. Delegate Engagement Rate
+    const totalGuests = guests.length;
+    const activeGuests = guests.filter(g => {
+      const isInactive = (g.status && g.status.includes('טרם סימן')) ||
+                         ((!g.totalLikes || Number(g.totalLikes) === 0) &&
+                          (!g.favs || !g.favs.trim()) &&
+                          (!g.notes || !g.notes.trim()) &&
+                          (!g.booking || !g.booking.trim()) &&
+                          (!g.connect || !g.connect.trim()) &&
+                          (!g.press || !g.press.trim()));
+      return !isInactive;
+    });
+    const activeCount = activeGuests.length;
+    const inactiveCount = Math.max(0, totalGuests - activeCount);
+    const ratePercent = totalGuests > 0 ? Math.round((activeCount / totalGuests) * 100) : 0;
+
+    // 2. Top 5 Most Engaged Delegates (Ensure 5 delegates are shown)
+    const topGuests = [...guests]
+      .map(g => {
+        const likes = Number(g.totalLikes) || 0;
+        const hasNotes = (g.notes && g.notes.trim().length > 0);
+        const notesCount = hasNotes ? g.notes.split('\n').filter(Boolean).length : 0;
+        const tagsCount = ((g.booking && g.booking.trim()) ? 1 : 0) +
+                          ((g.connect && g.connect.trim()) ? 1 : 0) +
+                          ((g.press && g.press.trim()) ? 1 : 0);
+        const score = (likes * 2) + (notesCount * 3) + tagsCount;
+        return { ...g, likes, notesCount, score };
+      })
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (b.likes !== a.likes) return b.likes - a.likes;
+        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+      })
+      .slice(0, 5);
+
+    let topGuestsHtml = '';
+    if (topGuests.length === 0) {
+      topGuestsHtml = '<p style="color: var(--foreground-muted); font-size: 0.85rem; margin: 14px 0; text-align: center;">No active delegates yet.</p>';
+    } else {
+      topGuestsHtml = '<div class="networking-top-list">';
+      topGuests.forEach((g, idx) => {
+        const safeName = escapeHtmlAdmin(g.name);
+        const safeKey = escapeHtmlAdmin(g.email || g.name);
+        const subInfo = escapeHtmlAdmin(g.company || g.country || '');
+        topGuestsHtml += `
+          <div class="networking-top-item" onclick="openNetworkingDetail('guest', '${safeKey.replace(/'/g, "\\'")}')" title="View ${safeName} activity">
+            <div class="networking-top-left">
+              <span class="networking-top-rank">#${idx + 1}</span>
+              <div style="overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                <div class="networking-top-name">${safeName}</div>
+                ${subInfo ? `<div class="networking-top-meta">${subInfo}</div>` : ''}
+              </div>
+            </div>
+            <div class="networking-top-right">
+              <span class="networking-top-tag">❤️ ${g.likes}</span>
+              ${g.notesCount > 0 ? `<span class="networking-top-tag" style="background: rgba(59,130,246,0.15); color: #3b82f6;" title="${g.notesCount} Notes">💬 ${g.notesCount}</span>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      topGuestsHtml += '</div>';
+    }
+
+    container.innerHTML = `
+      <!-- Card 1: Delegate Engagement Rate -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>📊</span> Delegate Engagement
+            </h4>
+            <span class="networking-kpi-badge" style="background: rgba(16,185,129,0.15); color: #10b981; border-color: rgba(16,185,129,0.3);">${ratePercent}% Active</span>
+          </div>
+          <div class="networking-kpi-stat-box">
+            <div class="networking-kpi-stat-number">${ratePercent}%</div>
+            <div class="networking-kpi-stat-sub">${activeCount} of ${totalGuests} delegates active</div>
+          </div>
+          <div class="networking-progress-track">
+            <div class="networking-progress-fill green" style="width: ${ratePercent}%;"></div>
+          </div>
+        </div>
+        <div class="networking-kpi-footer-pills">
+          <span class="networking-pill" style="border-color: rgba(16,185,129,0.4); color: #10b981;">🟢 ${activeCount} Active</span>
+          <span class="networking-pill" style="border-color: rgba(239,68,68,0.4); color: #ef4444;">🔴 ${inactiveCount} Inactive</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Top 5 Active Delegates -->
+      <div class="networking-kpi-card">
+        <div>
+          <div class="networking-kpi-header">
+            <h4 class="networking-kpi-title">
+              <span>🌟</span> Top Active Delegates
+            </h4>
+            <span class="networking-kpi-badge">Top 5</span>
+          </div>
+          ${topGuestsHtml}
+        </div>
+      </div>
+    `;
+  }
+}
+
+function renderAdminNetworkingCubes(query = "") {
+  renderAdminNetworkingKPIs();
+  const container = document.getElementById('admin-networking-list');
+  if (!container || !adminNetworkingData) return;
+
+  const q = query.toLowerCase().trim();
+
+  const artists = adminNetworkingData.artistsLeads || [];
+  const guests = getResolvedGuestsNetworkingList();
+
+  const artistsCountEl = document.getElementById('networking-artists-count');
+  const guestsCountEl = document.getElementById('networking-guests-count');
+  if (artistsCountEl) artistsCountEl.innerText = artists.length;
+  if (guestsCountEl) guestsCountEl.innerText = guests.length;
+
+  if (currentNetworkingTab === 'artists') {
+    const filteredArtists = artists.filter(a => {
+      if (!q) return true;
+      return a.name.toLowerCase().includes(q) ||
+             (a.genre && a.genre.toLowerCase().includes(q)) ||
+             (a.countries && a.countries.toLowerCase().includes(q)) ||
+             (a.bookingLeads && a.bookingLeads.toLowerCase().includes(q)) ||
+             (a.notes && a.notes.toLowerCase().includes(q));
+    });
+
+    if (filteredArtists.length === 0) {
+      container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">No artists match your search.</p>';
+      return;
+    }
+
+    // Sort: strictly alphabetical (A-Z)
+    const sorted = [...filteredArtists].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+    networkingArtistsList = sorted;
+
+    let html = '';
+    sorted.forEach((a, idx) => {
+      html += `
+        <div class="networking-cube" onclick="openNetworkingDetail('artist', ${idx})" title="${escapeHtmlAdmin(a.name)}">
+          <div class="networking-cube-name">${escapeHtmlAdmin(a.name)}</div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  } else {
+    // Guests tab
+    const filteredGuests = guests.filter(g => {
+      if (!q) return true;
+      return g.name.toLowerCase().includes(q) ||
+             (g.email && g.email.toLowerCase().includes(q)) ||
+             (g.company && g.company.toLowerCase().includes(q)) ||
+             (g.country && g.country.toLowerCase().includes(q)) ||
+             (g.favs && g.favs.toLowerCase().includes(q)) ||
+             (g.notes && g.notes.toLowerCase().includes(q));
+    });
+
+    if (filteredGuests.length === 0) {
+      container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">No guests match your search.</p>';
+      return;
+    }
+
+    // Sort: strictly alphabetical (A-Z)
+    const sorted = [...filteredGuests].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+    networkingGuestsList = sorted;
+
+    let html = '';
+    sorted.forEach((g, idx) => {
+      const isInactive = (g.status && g.status.includes('טרם סימן')) ||
+                         ((!g.totalLikes || Number(g.totalLikes) === 0) &&
+                          (!g.favs || !g.favs.trim()) &&
+                          (!g.notes || !g.notes.trim()) &&
+                          (!g.booking || !g.booking.trim()) &&
+                          (!g.connect || !g.connect.trim()) &&
+                          (!g.press || !g.press.trim()));
+      const inactiveClass = isInactive ? ' inactive-guest' : '';
+      html += `
+        <div class="networking-cube${inactiveClass}" onclick="openNetworkingDetail('guest', ${idx})" title="${escapeHtmlAdmin(g.name)}${isInactive ? ' (Inactive)' : ''}">
+          <div class="networking-cube-name">${escapeHtmlAdmin(g.name)}</div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+}
+
+function filterAdminNetworking(query) {
+  renderAdminNetworkingCubes(query);
+}
+
+function openNetworkingDetail(type, target) {
+  const overlay = document.getElementById('networking-sheet-overlay');
+  const sheet = document.getElementById('networking-bottom-sheet');
+  const content = document.getElementById('networking-modal-content');
+  if (!overlay || !sheet || !content) return;
+
+  if (type === 'artist') {
+    let artist = null;
+    if (typeof target === 'number') {
+      artist = networkingArtistsList[target];
+    } else {
+      const allArtists = (adminNetworkingData && adminNetworkingData.artistsLeads) ? adminNetworkingData.artistsLeads : networkingArtistsList;
+      artist = allArtists.find(a => a.name.toLowerCase() === String(target).toLowerCase()) ||
+               networkingArtistsList.find(a => a.name.toLowerCase() === String(target).toLowerCase());
+    }
+    if (!artist) return;
+
+    const hasBooking = artist.bookingLeads && artist.bookingLeads.trim().length > 0;
+    const hasConnect = artist.connectLeads && artist.connectLeads.trim().length > 0;
+    const hasPress = artist.pressLeads && artist.pressLeads.trim().length > 0;
+    const hasNotes = artist.notes && artist.notes.trim().length > 0;
+
+    content.innerHTML = `
+      <div class="networking-detail-header">
+        <div>
+          <h2 class="networking-detail-title">${escapeHtmlAdmin(artist.name)}</h2>
+          <span style="font-size: 0.9rem; font-weight: 700; color: var(--accent-bright);">${escapeHtmlAdmin(artist.genre || 'General')}</span>
+        </div>
+        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Stats Row -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+        <span class="networking-stat-badge" style="background: rgba(241,169,160,0.2); color: var(--accent);">
+          ❤️ ${artist.likesCount || 0} Likes
+        </span>
+        <span class="networking-stat-badge" style="background: var(--surface); color: var(--foreground);">
+          🌍 ${escapeHtmlAdmin(artist.tourPotential || 'No leads yet')}
+        </span>
+      </div>
+
+      ${artist.countries ? `
+        <div class="networking-section-box">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--foreground-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Interested Countries</div>
+          <div style="font-weight: 600; font-size: 0.95rem; color: var(--foreground);">${escapeHtmlAdmin(artist.countries)}</div>
+        </div>
+      ` : ''}
+
+      ${hasBooking ? `
+        <div class="networking-section-box" style="border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.08);">
+          <div style="font-weight: 700; color: #10b981; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🎯</span> Booking Interest
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.4;">${escapeHtmlAdmin(artist.bookingLeads)}</div>
+        </div>
+      ` : ''}
+
+      ${hasConnect ? `
+        <div class="networking-section-box" style="border-left: 4px solid #3b82f6; background: rgba(59, 130, 246, 0.08);">
+          <div style="font-weight: 700; color: #3b82f6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🤝</span> Connect Requests
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.4;">${escapeHtmlAdmin(artist.connectLeads)}</div>
+        </div>
+      ` : ''}
+
+      ${hasPress ? `
+        <div class="networking-section-box" style="border-left: 4px solid #8b5cf6; background: rgba(139, 92, 246, 0.08);">
+          <div style="font-weight: 700; color: #8b5cf6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>📰</span> Press Coverage
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.4;">${escapeHtmlAdmin(artist.pressLeads)}</div>
+        </div>
+      ` : ''}
+
+      ${hasNotes ? `
+        <div class="networking-section-box">
+          <div style="font-weight: 700; color: var(--foreground-muted); margin-bottom: 6px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>💬</span> Delegate Notes & Feedback
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.5; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px dashed var(--border);">${escapeHtmlAdmin(artist.notes)}</div>
+        </div>
+      ` : ''}
+
+      ${!hasBooking && !hasConnect && !hasPress && !hasNotes && !artist.countries ? `
+        <div style="text-align: center; padding: 25px; color: var(--foreground-muted); font-size: 0.9rem;">
+          No leads, booking requests, or notes recorded for this artist yet.
+        </div>
+      ` : ''}
+    `;
+  } else {
+    // Guest detail
+    let guest = null;
+    if (typeof target === 'number') {
+      guest = networkingGuestsList[target];
+    } else {
+      const allGuests = getResolvedGuestsNetworkingList();
+      guest = allGuests.find(g => 
+        (g.email && g.email.toLowerCase() === String(target).toLowerCase()) ||
+        (g.name && g.name.toLowerCase() === String(target).toLowerCase())
+      ) || networkingGuestsList.find(g => 
+        (g.email && g.email.toLowerCase() === String(target).toLowerCase()) ||
+        (g.name && g.name.toLowerCase() === String(target).toLowerCase())
+      );
+    }
+    if (!guest) return;
+
+    const hasFavs = guest.favs && guest.favs.trim().length > 0;
+    const hasBooking = guest.booking && guest.booking.trim().length > 0;
+    const hasConnect = guest.connect && guest.connect.trim().length > 0;
+    const hasPress = guest.press && guest.press.trim().length > 0;
+    const hasNotes = guest.notes && guest.notes.trim().length > 0;
+    const isActive = guest.totalLikes > 0 || hasFavs;
+
+    content.innerHTML = `
+      <div class="networking-detail-header">
+        <div>
+          <h2 class="networking-detail-title">${escapeHtmlAdmin(guest.name)}</h2>
+          <div style="font-size: 0.88rem; color: var(--foreground-muted); margin-top: 2px;">
+            ${guest.role ? escapeHtmlAdmin(guest.role) + ' • ' : ''}
+            ${guest.company ? escapeHtmlAdmin(guest.company) + ' • ' : ''}
+            ${escapeHtmlAdmin(guest.country || 'N/A')}
+          </div>
+        </div>
+        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Badges -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+        <span class="networking-stat-badge" style="background: ${isActive ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.15)'}; color: ${isActive ? '#10b981' : '#ef4444'};">
+          ${isActive ? '🟢 Active' : '🔴 No Selections Yet'}
+        </span>
+        <span class="networking-stat-badge" style="background: rgba(241,169,160,0.2); color: var(--accent);">
+          ❤️ ${guest.totalLikes || 0} Liked Artists
+        </span>
+        ${guest.email ? `
+          <span class="networking-stat-badge" style="background: var(--surface); color: var(--foreground-muted);">
+            ✉️ ${escapeHtmlAdmin(guest.email)}
+          </span>
+        ` : ''}
+      </div>
+
+      ${hasFavs ? `
+        <div class="networking-section-box">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
+            <span>❤️</span> Liked Artists
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${guest.favs.split(',').map(aName => `<span style="display: inline-block; background: var(--surface); border: 1.5px solid #000; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; box-shadow: 1px 1px 0px rgba(0,0,0,1);">${escapeHtmlAdmin(aName.trim())}</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      ${hasBooking ? `
+        <div class="networking-section-box" style="border-left: 4px solid #10b981; background: rgba(16, 185, 129, 0.08);">
+          <div style="font-weight: 700; color: #10b981; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🎯</span> Booking Inquiries
+          </div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--foreground);">${escapeHtmlAdmin(guest.booking)}</div>
+        </div>
+      ` : ''}
+
+      ${hasConnect ? `
+        <div class="networking-section-box" style="border-left: 4px solid #3b82f6; background: rgba(59, 130, 246, 0.08);">
+          <div style="font-weight: 700; color: #3b82f6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🤝</span> Connect Requests
+          </div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--foreground);">${escapeHtmlAdmin(guest.connect)}</div>
+        </div>
+      ` : ''}
+
+      ${hasPress ? `
+        <div class="networking-section-box" style="border-left: 4px solid #8b5cf6; background: rgba(139, 92, 246, 0.08);">
+          <div style="font-weight: 700; color: #8b5cf6; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>📰</span> Press Coverage
+          </div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--foreground);">${escapeHtmlAdmin(guest.press)}</div>
+        </div>
+      ` : ''}
+
+      ${hasNotes ? `
+        <div class="networking-section-box">
+          <div style="font-weight: 700; color: var(--foreground-muted); margin-bottom: 6px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>💬</span> Notes on Artists
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.5; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px dashed var(--border);">${escapeHtmlAdmin(guest.notes)}</div>
+        </div>
+      ` : ''}
+
+      ${!hasFavs && !hasBooking && !hasConnect && !hasPress && !hasNotes ? `
+        <div style="text-align: center; padding: 25px; color: var(--foreground-muted); font-size: 0.9rem;">
+          This guest has not submitted any artist preferences or notes yet.
+        </div>
+      ` : ''}
+    `;
+  }
+
+  overlay.classList.add('active');
+  sheet.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  window.location.hash = "networkingsheet";
+}
+
+function closeNetworkingDetailSheet(isHashChange) {
+  const overlay = document.getElementById('networking-sheet-overlay');
+  const sheet = document.getElementById('networking-bottom-sheet');
+  if (overlay) overlay.classList.remove('active');
+  if (sheet) sheet.classList.remove('active');
+  document.body.style.overflow = '';
+  
+  if (isHashChange !== true && window.location.hash === "#networkingsheet") {
+    history.back();
+  }
+}
+
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const sheet = document.getElementById('networking-bottom-sheet');
+    if (sheet && sheet.classList.contains('active')) {
+      closeNetworkingDetailSheet();
+    }
+  }
+});
+
+function loadAdminNetworkingData(forceRefresh = false) {
+  const container = document.getElementById('admin-networking-list');
+  if (!container) return;
+  if (adminNetworkingData && !forceRefresh) {
+    renderAdminNetworkingCubes();
+    return;
+  }
+  container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Loading networking insights...</p>';
+  if (window.google && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          adminNetworkingData = res;
+          renderAdminNetworkingCubes();
+        } else {
+          container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">No networking data available yet.</p>';
+        }
+      })
+      .withFailureHandler(function(err) {
+        container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Could not load networking data.</p>';
+      })
+      .getAdminArtistsNetworkingData();
+  }
+}
+
+function triggerFullLeadsSync() {
+  const container = document.getElementById('admin-networking-list');
+  if (container) {
+    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Scanning local test data and running full recalculation...</p>';
+  }
+
+  // Scan localStorage for any guest emails that have saved favorites in this browser
+  const emailsToSync = new Set();
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('artist_favs_')) {
+        const em = k.replace('artist_favs_', '').trim();
+        if (em && em.includes('@')) emailsToSync.add(em);
+      }
+    }
+  } catch(e) {}
+
+  const runServerSync = () => {
+    if (window.google && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (typeof showToast === 'function') {
+            showToast(res.message || "Sync completed successfully!", "success");
+          }
+          loadAdminNetworkingData(true);
+        })
+        .withFailureHandler(function(err) {
+          if (typeof showToast === 'function') {
+            showToast("Sync failed: " + err.toString(), "error");
+          }
+          loadAdminNetworkingData(true);
+        })
+        .syncAllArtistsAndLeads();
+    }
+  };
+
+  const emailList = Array.from(emailsToSync);
+  if (emailList.length > 0) {
+    let pending = emailList.length;
+    emailList.forEach(em => {
+      syncLocalGuestFeedbackToServer(em, () => {
+        pending--;
+        if (pending <= 0) {
+          runServerSync();
+        }
+      });
+    });
+  } else {
+    runServerSync();
+  }
 }
 
 function loadAdminDashboard(forceRefresh = false) {
   if (adminDataLoaded && !forceRefresh) return;
   
   const container = document.getElementById("admin-dashboard-container");
-  container.innerHTML = '<div style="text-align:center; padding: 40px;"><div class="musical-loader-wrapper" style="display:block;"><div class="musical-loader"><span class="music-note music-note-1">dYZ</span><span class="drummer-emoji">dY?</span><span class="music-note music-note-2">dYZ </span></div><p class="loader-text">Loading production data...</p></div></div>';
+  if (!container) return;
+
+  // 1. Instant display from SWR cache if available
+  const cachedAdmin = localStorage.getItem('swr_adminData');
+  if (cachedAdmin && !forceRefresh && !adminDataLoaded) {
+    try {
+      const parsed = JSON.parse(cachedAdmin);
+      if (parsed && parsed.success && parsed.guests) {
+        adminData = parsed;
+        adminDataLoaded = true;
+        renderAdminDashboard();
+      }
+    } catch(e) {}
+  }
   
-  const token = localStorage.getItem('guestSessionToken');
+  // 2. If no cached data displayed yet, show the polite mascot loader
+  if (!adminDataLoaded) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 40px;">
+        <div class="musical-loader-wrapper" style="display:flex; flex-direction:column; align-items:center;">
+          <div class="musical-loader">
+            <span class="music-note music-note-1">🎵</span>
+            <img src="/polar-bear.png" alt="IMSF Mascot" class="polar-bear-loader-img">
+            <span class="music-note music-note-2">🎶</span>
+          </div>
+          <p class="loader-text">Loading production data...</p>
+        </div>
+      </div>
+    `;
+  }
+  
+  const token = localStorage.getItem('guestSessionToken') || localStorage.getItem('originalAdminToken');
+  if (!token) {
+    if (!adminDataLoaded) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px; box-shadow: 3px 3px 0px rgba(0,0,0,1);">
+          <p class="error-text" style="font-weight: bold; margin-bottom: 12px;">Session token not found. Please log in again.</p>
+          <button class="primary" onclick="resetLogin()">Log In</button>
+        </div>
+      `;
+    }
+    return;
+  }
+
   google.script.run
     .withSuccessHandler(function(res) {
-      if (!res.success) {
-        container.innerHTML = '<p class="error-text">Failed to load admin data: ' + res.message + '</p>';
+      if (!res || !res.success) {
+        const msg = (res && res.message) ? res.message : "Failed to load admin data.";
+        if (!adminDataLoaded) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px; box-shadow: 3px 3px 0px rgba(0,0,0,1);">
+              <p class="error-text" style="font-weight: bold; margin-bottom: 12px;">${msg}</p>
+              <button class="primary" onclick="loadAdminDashboard(true)">🔄 Try Again</button>
+            </div>
+          `;
+        }
         return;
       }
       adminData = res;
       adminDataLoaded = true;
-      renderAdminDashboard();
+      try {
+        localStorage.setItem('swr_adminData', JSON.stringify(res));
+      } catch(e) {}
+      try {
+        renderAdminDashboard();
+      } catch(renderErr) {
+        console.error("renderAdminDashboard threw error:", renderErr);
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px;">
+            <p class="error-text" style="font-weight: bold; margin-bottom: 10px;">Rendering error: ${renderErr.message}</p>
+            <button class="primary" onclick="loadAdminDashboard(true)">🔄 Try Again</button>
+          </div>
+        `;
+      }
     })
     .withFailureHandler(function(err) {
-      container.innerHTML = '<p class="error-text">Error: ' + err.toString() + '</p>';
+      console.error("loadAdminDashboard failed:", err);
+      if (!adminDataLoaded) {
+        const cleanErr = String(err && err.message ? err.message : err).replace(/^Error:\s*/i, '');
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; background: var(--surface); border: 2px solid #000; border-radius: 8px; box-shadow: 3px 3px 0px rgba(0,0,0,1); max-width: 480px; margin: 20px auto;">
+            <p class="error-text" style="font-weight: bold; margin-bottom: 10px; font-size: 1.05rem;">${cleanErr}</p>
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 16px;">We encountered a temporary connection issue fetching production data.</p>
+            <button class="primary" onclick="loadAdminDashboard(true)" style="padding: 10px 20px; font-weight: bold;">🔄 Retry Connection</button>
+          </div>
+        `;
+      }
     })
     .getAdminDashboardData(token);
 }
@@ -2708,7 +3929,23 @@ function viewAdminGuestDetails(rowIndex) {
 
   const fDataRaw = getRowByEmail(adminData.flights);
   const fUpRaw = getRowByEmail(adminData.flightsUpdates);
-  const fData = (fDataRaw || fUpRaw) ? Object.assign({}, fUpRaw || {}, fDataRaw || {}) : null;
+  const fData = (fDataRaw || fUpRaw) ? Object.assign({}, fUpRaw || {}) : null;
+  if (fData && fDataRaw) {
+    Object.keys(fDataRaw).forEach(k => {
+      const val = fDataRaw[k];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        if (k.includes('כרטיס') || k.includes('ticket')) {
+          const existingCount = (String(fData[k] || '').match(/https?:\/\/[^\s"',;<>]+/gi) || []).length;
+          const newCount = (String(val).match(/https?:\/\/[^\s"',;<>]+/gi) || []).length;
+          if (newCount >= existingCount) {
+            fData[k] = val;
+          }
+        } else {
+          fData[k] = val;
+        }
+      }
+    });
+  }
   const hjData = getRowByEmail(adminData.hotelJlm);
   const htData = getRowByEmail(adminData.hotelTlv);
 
@@ -2746,7 +3983,7 @@ function viewAdminGuestDetails(rowIndex) {
     
     let shuttle = getFlightVal(["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"]);
     let togetherWith = getFlightVal(["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"]);
-    let ticketLink = getFlightVal(["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"]);
+    let ticketLink = getFlightVal(["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי", "final ticket link"]);
     let flightNotes = fData['הערות טיסות'] || '';
 
     function formatFlightDate(dStr) {
@@ -2854,14 +4091,7 @@ function viewAdminGuestDetails(rowIndex) {
     flightHtml = '';
 
     if (ticketLink) {
-      flightHtml += `
-        <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-          <a href="${ticketLink}" target="_blank" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            View E-Ticket (PDF)
-          </a>
-        </div>
-      `;
+      flightHtml += renderTicketButtonsHtml(ticketLink);
     }
 
     flightHtml += `
@@ -3104,6 +4334,13 @@ window.loadAdminDashboard = loadAdminDashboard;
 window.filterAdminGuests = filterAdminGuests;
 window.viewAdminGuestDetails = viewAdminGuestDetails;
 window.closeAdminModal = closeAdminModal;
+window.switchAdminNetworkingTab = switchAdminNetworkingTab;
+window.renderAdminNetworkingCubes = renderAdminNetworkingCubes;
+window.openNetworkingDetail = openNetworkingDetail;
+window.closeNetworkingDetailSheet = closeNetworkingDetailSheet;
+window.filterAdminNetworking = filterAdminNetworking;
+window.loadAdminNetworkingData = loadAdminNetworkingData;
+window.triggerFullLeadsSync = triggerFullLeadsSync;
 
 
 window.sendAdminAlert = function() {
@@ -3295,3 +4532,10 @@ window.showToast = showToast;
 window.handleAdminResetCache = handleAdminResetCache;
 window.selectGuideCity = selectGuideCity;
 window.fetchGuideData = fetchGuideData;
+window.loadAdminNetworkingData = loadAdminNetworkingData;
+window.filterAdminNetworking = filterAdminNetworking;
+window.triggerFullLeadsSync = triggerFullLeadsSync;
+window.switchAdminNetworkingTab = switchAdminNetworkingTab;
+window.openNetworkingDetail = openNetworkingDetail;
+window.closeNetworkingDetailSheet = closeNetworkingDetailSheet;
+window.renderAdminNetworkingKPIs = renderAdminNetworkingKPIs;

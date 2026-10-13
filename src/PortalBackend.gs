@@ -247,22 +247,31 @@ function getGuestPortalData(sessionToken) {
     const anatData2 = anatFlightsSheet2 ? fetchMappedData(anatFlightsSheet2, cleanEmail, MAPPINGS.FLIGHTS) : [];
 
     let flightsDataMap = {};
-    // Base layer: Master spreadsheet mirror
-    [masterData1, masterData2].forEach(arr => {
-      arr.forEach(item => {
-        if (item && item.value && String(item.value).trim() !== "") {
-          flightsDataMap[item.label] = item.value;
+    const countUrls = (str) => (String(str || "").match(/https?:\/\/[^\s"',;<>]+/gi) || []).length;
+
+    const assignFlightItem = (item) => {
+      if (!item || item.value === undefined || item.value === null) return;
+      const valStr = String(item.value).trim();
+      if (valStr === "") return;
+
+      if (item.label === "Final Ticket Link") {
+        const existingVal = flightsDataMap[item.label];
+        if (existingVal) {
+          const existingCount = countUrls(existingVal);
+          const newCount = countUrls(valStr);
+          // If existing already has 2 or more links and new has fewer, preserve multiple links!
+          if (existingCount >= 2 && newCount < 2) {
+            return;
+          }
         }
-      });
-    });
-    // Priority layer: Anat's live spreadsheet (overrides with latest edits)
-    [anatData1, anatData2].forEach(arr => {
-      arr.forEach(item => {
-        if (item && item.value && String(item.value).trim() !== "") {
-          flightsDataMap[item.label] = item.value;
-        }
-      });
-    });
+      }
+      flightsDataMap[item.label] = valStr;
+    };
+
+    // Base layer: Master spreadsheet mirror (masterData1: 'טיסות - שיקוף', masterData2: 'טבלת טיסות - שיקוף')
+    [masterData1, masterData2].forEach(arr => arr.forEach(assignFlightItem));
+    // Priority layer: Anat's live spreadsheet (anatData1: 'עדכוני טיסות', anatData2: 'טבלת טיסות')
+    [anatData1, anatData2].forEach(arr => arr.forEach(assignFlightItem));
 
     const flightsData = Object.keys(flightsDataMap).map(label => ({ label: label, value: flightsDataMap[label] }));
     const hotelJerusalemData = fetchMappedData(ss.getSheetByName(CONFIG.JERUSALEM_SHEET), cleanEmail, MAPPINGS.HOTELS);
@@ -426,6 +435,25 @@ function fetchMappedData(sheet, email, mappingArray) {
           }
 
           let finalVal = rawVal;
+
+          if (item.label === "Final Ticket Link" && cIdx !== -1) {
+            try {
+              const rt = sheet.getRange(i + 1, cIdx + 1).getRichTextValue();
+              if (rt) {
+                const runs = rt.getRuns();
+                const runLinks = [];
+                runs.forEach(r => {
+                  const url = r.getLinkUrl();
+                  if (url && !runLinks.includes(url)) runLinks.push(url);
+                });
+                if (runLinks.length > 0) {
+                  dispVal = runLinks.join("\n");
+                  rawVal = dispVal;
+                  finalVal = dispVal;
+                }
+              }
+            } catch(rtErr) {}
+          }
 
           if (item.label === "Shuttle") {
             // If rawVal is a Date object, always format as HH:mm
@@ -1022,22 +1050,21 @@ function getAdminDashboardData(sessionToken) {
     if (!isAdmin) return { success: false, message: 'Unauthorized. Admins only.' };
     
     // Fetch full data for admin
+    const tz = ss.getSpreadsheetTimeZone();
     const getSheetData = (sheetName) => {
       const sheet = ss.getSheetByName(sheetName);
       if (!sheet) return null;
-      const range = sheet.getDataRange();
-      const data = range.getValues();
-      const displayData = range.getDisplayValues();
-      const tz = ss.getSpreadsheetTimeZone();
-      return data.map((row, rIdx) => row.map((cell, cIdx) => {
-        let dispVal = displayData && displayData[rIdx] ? String(displayData[rIdx][cIdx] || "").trim() : "";
-        if (dispVal.startsWith("#") || dispVal.startsWith("=")) {
-          return "";
-        }
-        if (typeof cell === "string" && (cell.startsWith("#") || cell.startsWith("="))) {
-          return "";
+      const data = sheet.getDataRange().getValues();
+      return data.map((row) => row.map((cell) => {
+        if (typeof cell === "string") {
+          const trimmed = cell.trim();
+          if (trimmed.startsWith("#") || trimmed.startsWith("=")) {
+            return "";
+          }
+          return cell;
         }
         if (cell instanceof Date) {
+          if (isNaN(cell.getTime())) return "";
           return Utilities.formatDate(cell, tz, 'yyyy-MM-dd HH:mm');
         }
         return cell;
@@ -1050,11 +1077,10 @@ function getAdminDashboardData(sessionToken) {
       flights: getSheetData(CONFIG.FLIGHTS_SHEET),
       flightsUpdates: getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME),
       hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
-      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
-      infoSheet: getSheetData('מידע כללי'),
-      dashboardStats: getSheetData('דשבורד הפקה')
+      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET)
     };
   } catch (err) {
+    console.error("Error in getAdminDashboardData:", err);
     return { success: false, message: 'Server Error: ' + err.toString() };
   }
 }

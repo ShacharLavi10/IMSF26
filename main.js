@@ -69,6 +69,7 @@ window.google = {
                   try {
                     result = JSON.parse(responseText);
                   } catch (parseError) {
+                    console.error(`[GAS Run Proxy] Non-JSON HTML response for method '${prop}':`, responseText.slice(0, 300));
                     throw new Error("HTML_ERROR");
                   }
 
@@ -86,6 +87,7 @@ window.google = {
                     success = true;
                   }
                 } catch (e) {
+                  console.warn(`[GAS Run Proxy] Attempt ${attempt}/${maxRetries} failed for method '${prop}':`, e.message || e);
                   if (attempt >= maxRetries) {
                     const genericError = new Error("Oops, there's a connection error. Please try refreshing the page.");
                     if (state.failureHandler) state.failureHandler(genericError);

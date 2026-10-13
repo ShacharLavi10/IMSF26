@@ -732,6 +732,85 @@
       container.innerHTML = html;
     }
 
+    function parseTicketLinks(rawVal) {
+      if (!rawVal) return [];
+      const text = String(rawVal).trim();
+      if (!text || text === '-' || /^#|^=/i.test(text) || /^n\/?a$/i.test(text) || /^none$/i.test(text) || /^null$/i.test(text)) {
+        return [];
+      }
+
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/gi;
+      const matches = text.match(urlRegex) || [];
+
+      if (matches.length === 0) {
+        const driveIdMatch = text.match(/[-\w]{25,}/);
+        if (driveIdMatch) {
+          return [{ url: `https://drive.google.com/file/d/${driveIdMatch[0]}/view`, type: 'single', label: 'View E-Ticket (PDF)' }];
+        }
+        return [];
+      }
+
+      const urls = matches.map(u => u.replace(/[.,;)]+$/, '')).filter(Boolean);
+
+      if (urls.length === 1) {
+        return [{ url: urls[0], type: 'single', label: 'View E-Ticket (PDF)' }];
+      }
+
+      const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+      let inboundUrl = null;
+      let outboundUrl = null;
+
+      lines.forEach(line => {
+        const lineUrls = line.match(urlRegex) || [];
+        if (lineUrls.length > 0) {
+          const u = lineUrls[0].replace(/[.,;)]+$/, '');
+          const lower = line.toLowerCase();
+          if (lower.includes('חזור') || lower.includes('outbound') || lower.includes('return') || lower.includes('departure') || lower.includes('from tlv') || lower.includes('יציאה')) {
+            outboundUrl = u;
+          } else if (lower.includes('הלוך') || lower.includes('inbound') || lower.includes('arrival') || lower.includes('to tlv') || lower.includes('הגעה')) {
+            inboundUrl = u;
+          }
+        }
+      });
+
+      if (!inboundUrl || !outboundUrl || inboundUrl === outboundUrl) {
+        inboundUrl = urls[0];
+        outboundUrl = urls[1];
+      }
+
+      return [
+        { url: inboundUrl, type: 'inbound', label: 'Inbound Ticket (PDF)' },
+        { url: outboundUrl, type: 'outbound', label: 'Outbound Ticket (PDF)' }
+      ];
+    }
+
+    function renderTicketButtonsHtml(ticketLink) {
+      const tickets = parseTicketLinks(ticketLink);
+      if (!tickets || tickets.length === 0) return '';
+
+      if (tickets.length === 1) {
+        return `
+          <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <a href="${tickets[0].url}" target="_blank" rel="noopener noreferrer" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              View E-Ticket (PDF)
+            </a>
+          </div>
+        `;
+      }
+
+      return `
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+          ${tickets.map(t => `
+            <a href="${t.url}" target="_blank" rel="noopener noreferrer" class="primary" style="flex: 1 1 calc(50% - 6px); min-width: 140px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 0.95rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; text-align: center; box-sizing: border-box;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>${t.label}</span>
+            </a>
+          `).join('')}
+        </div>
+      `;
+    }
+
     function renderBoardingPassData(containerId, dataArray, emptyText) {
       const container = document.getElementById(containerId);
       if (!dataArray || dataArray.length === 0) {
@@ -889,14 +968,7 @@
       let html = '';
 
       if (ticketLink) {
-        html += `
-          <div style="display: flex; justify-content: flex-start; margin-bottom: 12px;">
-            <a href="${ticketLink}" target="_blank" class="primary button-download-small" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              View E-Ticket
-            </a>
-          </div>
-        `;
+        html += renderTicketButtonsHtml(ticketLink);
       }
 
       html += `

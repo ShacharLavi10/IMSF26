@@ -1,7 +1,10 @@
 function getArtistsData(forceRefresh) {
   try {
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'global_artists_data_v2';
+    const cacheKey = 'global_artists_data_' + ssId;
     
     if (!forceRefresh) {
       const cached = cache.get(cacheKey);
@@ -9,12 +12,12 @@ function getArtistsData(forceRefresh) {
         return { success: true, artists: JSON.parse(cached) };
       }
     }
-
-    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
-    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
     
     const ss = SpreadsheetApp.openById(ssId);
-    const sheet = ss.getSheets()[0];
+    const sheet = (CONFIG.ARTISTS_SHEET_NAME && ss.getSheetByName(CONFIG.ARTISTS_SHEET_NAME)) || 
+                  ss.getSheetByName("שיקוף! - מידע אומנים") || 
+                  ss.getSheetByName("מידע אומנים") || 
+                  ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
     
     if (data.length < 2) return { success: true, artists: [] };
@@ -84,3 +87,653 @@ function getArtistsData(forceRefresh) {
     return { success: false, message: "Error fetching artists: " + err.toString() };
   }
 }
+
+/**
+ * Retrieve guest profile info from Master Sheet ('אורחים')
+ */
+function getGuestDetailsFromMaster(email) {
+  const result = { fullName: "", country: "", companyBio: "", role: "", companyName: "" };
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET || "אורחים");
+    if (!masterSheet) return result;
+
+    const data = masterSheet.getDataRange().getValues();
+    if (data.length < 2) return result;
+
+    const headers = data[0].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf((CONFIG.EMAIL_COL || "מייל אורח").toLowerCase());
+    const firstIdx = headers.indexOf("שם פרטי");
+    const lastIdx = headers.indexOf("שם משפחה");
+    const countryIdx = headers.indexOf("מדינה");
+    const roleIdx = headers.indexOf("תפקיד");
+    const companyIdx = headers.indexOf("שם חברה");
+    const bioIdx = headers.indexOf("ביוגרפיה אנגלית");
+
+    const cleanEmail = email.toLowerCase().trim();
+    for (let r = 1; r < data.length; r++) {
+      const row = data[r];
+      if (row[emailIdx] && String(row[emailIdx]).trim().toLowerCase() === cleanEmail) {
+        const first = firstIdx >= 0 ? String(row[firstIdx]).trim() : "";
+        const last = lastIdx >= 0 ? String(row[lastIdx]).trim() : "";
+        result.fullName = (first + " " + last).trim();
+        result.country = countryIdx >= 0 ? String(row[countryIdx]).trim() : "";
+        result.role = roleIdx >= 0 ? String(row[roleIdx]).trim() : "";
+        result.companyName = companyIdx >= 0 ? String(row[companyIdx]).trim() : "";
+        result.companyBio = bioIdx >= 0 ? String(row[bioIdx]).trim() : result.companyName;
+        break;
+      }
+    }
+  } catch (err) {
+    console.error("Error in getGuestDetailsFromMaster:", err);
+  }
+  return result;
+}
+
+/**
+ * Save Guest Feedback (Favorites, Notes, and Quick Intent Tags)
+ */
+function saveGuestArtistFeedback(email, feedbackPayload) {
+  try {
+    if (!email) return { success: false, message: "Email is required." };
+    const cleanEmail = email.toString().trim().toLowerCase();
+
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+    const ss = SpreadsheetApp.openById(ssId);
+
+    // 1. Locate or create 'העדפות אורחים' sheet
+    const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
+    let prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
+    const defaultHeaders = [
+      "מייל אורח", "שם מלא", "מדינה", "מה החברה עושה", "תפקיד",
+      "סטטוס פעילות", "אומנים שאהב (❤️)", "הזמנות להופעה (🎯 Booking)",
+      "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)", "סה\"כ לייקים (❤️)",
+      "הערות אורח", "Raw Data"
+    ];
+
+    if (!prefSheet) {
+      prefSheet = ss.insertSheet(prefSheetName);
+      prefSheet.appendRow(defaultHeaders);
+      prefSheet.setFrozenRows(1);
+    }
+
+    // 2. Locate or create 'לידים והזדמנויות אומנים' sheet
+    const leadsSheetName = CONFIG.ARTIST_LEADS_SHEET || "לידים והזדמנויות אומנים";
+    let leadsSheet = ss.getSheetByName(leadsSheetName);
+    if (!leadsSheet) {
+      leadsSheet = ss.insertSheet(leadsSheetName);
+      leadsSheet.appendRow([
+        "שם האמן", "ז'אנר", "פוטנציאל סיבוב הופעות (Tour Match)",
+        "מדינות מתעניינות", "בוקרים להופעה (🎯 Booking)",
+        "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)",
+        "סה\"כ לייקים (❤️)", "הערות אורחים", "Raw Data"
+      ]);
+      leadsSheet.setFrozenRows(1);
+    }
+
+    // Get guest details from master sheet
+    const guestInfo = getGuestDetailsFromMaster(cleanEmail);
+
+    // Build artists map
+    const artistsRes = getArtistsData(false);
+    const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
+    const artistMap = {};
+    artistsList.forEach(a => { artistMap[a.id] = a; });
+
+    // Parse payload
+    const payload = (typeof feedbackPayload === "string") ? JSON.parse(feedbackPayload) : (feedbackPayload || {});
+    const favorites = payload.favorites || {};
+    const notes = payload.notes || {};
+    const tags = payload.tags || {};
+
+    const favNames = [];
+    const bookingNames = [];
+    const connectNames = [];
+    const pressNames = [];
+    const notesList = [];
+
+    Object.keys(favorites).forEach(aId => {
+      if (favorites[aId]) {
+        const a = artistMap[aId] || { name: aId };
+        favNames.push(a.name);
+      }
+    });
+
+    Object.keys(tags).forEach(aId => {
+      const tList = tags[aId] || [];
+      const a = artistMap[aId] || { name: aId };
+      if (tList.includes("Booking")) bookingNames.push(a.name);
+      if (tList.includes("Connect")) connectNames.push(a.name);
+      if (tList.includes("Press")) pressNames.push(a.name);
+    });
+
+    Object.keys(notes).forEach(aId => {
+      const noteText = (notes[aId] || "").trim();
+      if (noteText) {
+        const a = artistMap[aId] || { name: aId };
+        notesList.push(`[${a.name}]: ${noteText}`);
+      }
+    });
+
+    const totalLiked = favNames.length;
+    const activityStatus = totalLiked > 0 ? `🟢 פעיל (${totalLiked} אומנים)` : `🔴 טרם סימן אומנים`;
+
+    const rawJson = JSON.stringify({
+      favorites: favorites,
+      notes: notes,
+      tags: tags,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Inspect existing headers dynamically
+    let headers = prefSheet.getRange(1, 1, 1, Math.max(prefSheet.getLastColumn(), defaultHeaders.length)).getValues()[0];
+    if (!headers[0]) {
+      prefSheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
+      headers = defaultHeaders;
+    }
+
+    const colMap = {};
+    headers.forEach((h, idx) => {
+      const headerStr = String(h).trim().toLowerCase();
+      if (headerStr.includes("מייל")) colMap.email = idx;
+      else if (headerStr.includes("שם מלא")) colMap.fullName = idx;
+      else if (headerStr.includes("מדינה")) colMap.country = idx;
+      else if (headerStr.includes("חברה") || headerStr.includes("עושה")) colMap.companyBio = idx;
+      else if (headerStr.includes("תפקיד")) colMap.role = idx;
+      else if (headerStr.includes("סטטוס")) colMap.status = idx;
+      else if (headerStr.includes("אומנים שאהב") || (headerStr.includes("אהב") && headerStr.includes("❤️"))) colMap.favs = idx;
+      else if (headerStr.includes("booking") || headerStr.includes("הזמנות להופעה")) colMap.booking = idx;
+      else if (headerStr.includes("connect") || headerStr.includes("בקשות לקשר")) colMap.connect = idx;
+      else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
+      else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
+      else if (headerStr.includes("הערות")) colMap.notes = idx;
+      else if (headerStr.includes("raw")) colMap.raw = idx;
+    });
+
+    // If sheet had old 11 columns and is missing the new ones, update headers row to defaultHeaders
+    if (colMap.press === undefined || colMap.totalLikes === undefined) {
+      prefSheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
+      headers = defaultHeaders;
+      defaultHeaders.forEach((h, idx) => {
+        const headerStr = String(h).trim().toLowerCase();
+        if (headerStr.includes("מייל")) colMap.email = idx;
+        else if (headerStr.includes("שם מלא")) colMap.fullName = idx;
+        else if (headerStr.includes("מדינה")) colMap.country = idx;
+        else if (headerStr.includes("חברה") || headerStr.includes("עושה")) colMap.companyBio = idx;
+        else if (headerStr.includes("תפקיד")) colMap.role = idx;
+        else if (headerStr.includes("סטטוס")) colMap.status = idx;
+        else if (headerStr.includes("אומנים שאהב") || (headerStr.includes("אהב") && headerStr.includes("❤️"))) colMap.favs = idx;
+        else if (headerStr.includes("booking") || headerStr.includes("הזמנות להופעה")) colMap.booking = idx;
+        else if (headerStr.includes("connect") || headerStr.includes("בקשות לקשר")) colMap.connect = idx;
+        else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
+        else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
+        else if (headerStr.includes("הערות")) colMap.notes = idx;
+        else if (headerStr.includes("raw")) colMap.raw = idx;
+      });
+    }
+
+    // Build row values strictly matching column layout
+    const rowValues = new Array(headers.length).fill("");
+    if (colMap.email !== undefined) rowValues[colMap.email] = cleanEmail;
+    if (colMap.fullName !== undefined) rowValues[colMap.fullName] = guestInfo.fullName;
+    if (colMap.country !== undefined) rowValues[colMap.country] = guestInfo.country;
+    if (colMap.companyBio !== undefined) rowValues[colMap.companyBio] = guestInfo.companyBio;
+    if (colMap.role !== undefined) rowValues[colMap.role] = guestInfo.role;
+    if (colMap.status !== undefined) rowValues[colMap.status] = activityStatus;
+    if (colMap.favs !== undefined) rowValues[colMap.favs] = favNames.join(", ");
+    if (colMap.booking !== undefined) rowValues[colMap.booking] = bookingNames.join(", ");
+    if (colMap.connect !== undefined) rowValues[colMap.connect] = connectNames.join(", ");
+    if (colMap.press !== undefined) rowValues[colMap.press] = pressNames.join(", ");
+    if (colMap.totalLikes !== undefined) rowValues[colMap.totalLikes] = totalLiked;
+    if (colMap.notes !== undefined) rowValues[colMap.notes] = notesList.join("\n\n");
+    if (colMap.raw !== undefined) rowValues[colMap.raw] = rawJson;
+
+    // Write / Update row in prefSheet
+    const prefData = prefSheet.getDataRange().getValues();
+    let guestRowIdx = -1;
+    const emailColIdx = (colMap.email !== undefined) ? colMap.email : 0;
+    for (let r = 1; r < prefData.length; r++) {
+      if (String(prefData[r][emailColIdx]).trim().toLowerCase() === cleanEmail) {
+        guestRowIdx = r + 1;
+        break;
+      }
+    }
+
+    if (guestRowIdx > 0) {
+      prefSheet.getRange(guestRowIdx, 1, 1, rowValues.length).setValues([rowValues]);
+    } else {
+      prefSheet.appendRow(rowValues);
+    }
+
+    // Synchronize the Artist Leads sheet
+    syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList);
+
+    return { success: true, message: "Feedback saved successfully." };
+  } catch (err) {
+    console.error("Error in saveGuestArtistFeedback:", err);
+    return { success: false, message: "Error saving feedback: " + err.toString() };
+  }
+}
+
+/**
+ * Retrieve saved feedback for a specific guest
+ */
+function getGuestArtistFeedback(email) {
+  try {
+    if (!email) return { success: false, message: "Email required." };
+    const cleanEmail = email.toString().trim().toLowerCase();
+
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+    const ss = SpreadsheetApp.openById(ssId);
+
+    const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
+    const prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
+    if (!prefSheet) {
+      return { success: true, feedback: { favorites: {}, notes: {}, tags: {} } };
+    }
+
+    const data = prefSheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return { success: true, feedback: { favorites: {}, notes: {}, tags: {} } };
+    }
+
+    const headers = data[0];
+    let rawJsonIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("raw"));
+    if (rawJsonIdx === -1) rawJsonIdx = headers.length - 1;
+
+    let emailIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("מייל"));
+    if (emailIdx === -1) emailIdx = 0;
+
+    for (let r = 1; r < data.length; r++) {
+      if (String(data[r][emailIdx]).trim().toLowerCase() === cleanEmail) {
+        const rawJsonCol = data[r][rawJsonIdx];
+        if (rawJsonCol) {
+          try {
+            const parsed = JSON.parse(rawJsonCol);
+            return { success: true, feedback: parsed };
+          } catch (e) {}
+        }
+        break;
+      }
+    }
+    return { success: true, feedback: { favorites: {}, notes: {}, tags: {} } };
+  } catch (err) {
+    console.error("Error in getGuestArtistFeedback:", err);
+    return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Recalculate and update the 'לידים והזדמנויות אומנים' sheet
+ */
+function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
+  try {
+    const prefData = (prefSheet && prefSheet.getLastRow() > 0) ? prefSheet.getDataRange().getValues() : [];
+    const hasPreferences = prefData.length > 1;
+
+    // Aggregates per artistId
+    // artistId -> { likes: 0, countries: {}, booking: [], connect: [], press: [], notes: [] }
+    const agg = {};
+    artistsList.forEach(a => {
+      agg[a.id] = {
+        name: a.name,
+        genre: a.genre || "",
+        likes: 0,
+        countries: {},
+        booking: [],
+        connect: [],
+        press: [],
+        notes: []
+      };
+    });
+
+    if (hasPreferences) {
+      const headers = prefData[0];
+      let rawJsonIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("raw"));
+      if (rawJsonIdx === -1) rawJsonIdx = headers.length - 1;
+
+      let emailIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("מייל"));
+      if (emailIdx === -1) emailIdx = 0;
+
+      let nameIdx = headers.findIndex(h => String(h).trim().includes("שם מלא"));
+      if (nameIdx === -1) nameIdx = 1;
+
+      let countryIdx = headers.findIndex(h => String(h).trim().includes("מדינה"));
+      if (countryIdx === -1) countryIdx = 2;
+
+      let roleIdx = headers.findIndex(h => String(h).trim().includes("תפקיד"));
+      let companyIdx = headers.findIndex(h => String(h).trim().includes("חברה") || String(h).trim().includes("עושה"));
+
+      for (let r = 1; r < prefData.length; r++) {
+        const row = prefData[r];
+        const cleanEmail = String(row[emailIdx] || "").trim();
+        const guestName = String(row[nameIdx] || "").trim();
+        const country = String(row[countryIdx] || "").trim();
+        const company = String((roleIdx >= 0 && row[roleIdx]) || (companyIdx >= 0 && row[companyIdx]) || "").trim();
+        const rawJson = row[rawJsonIdx];
+        if (!rawJson) continue;
+
+        let payload = null;
+        try { payload = JSON.parse(rawJson); } catch (e) { continue; }
+
+        const favs = payload.favorites || {};
+        const notes = payload.notes || {};
+        const tags = payload.tags || {};
+
+        const displayName = guestName || cleanEmail;
+        const delegateLabel = country 
+          ? `${displayName} (${country}${company ? " - " + company : ""})` 
+          : `${displayName}${company ? " (" + company + ")" : ""}`;
+
+        Object.keys(favs).forEach(aId => {
+          if (favs[aId] && agg[aId]) {
+            agg[aId].likes++;
+            if (country) {
+              agg[aId].countries[country] = (agg[aId].countries[country] || 0) + 1;
+            }
+          }
+        });
+
+        Object.keys(tags).forEach(aId => {
+          if (!agg[aId]) return;
+          const tList = tags[aId] || [];
+          if (tList.includes("Booking")) agg[aId].booking.push(delegateLabel);
+          if (tList.includes("Connect")) agg[aId].connect.push(delegateLabel);
+          if (tList.includes("Press")) agg[aId].press.push(delegateLabel);
+        });
+
+        Object.keys(notes).forEach(aId => {
+          if (!agg[aId]) return;
+          const text = (notes[aId] || "").trim();
+          if (text) {
+            agg[aId].notes.push(`[${delegateLabel}]: ${text}`);
+          }
+        });
+      }
+    }
+
+    const rowsToWrite = [];
+    artistsList.forEach(a => {
+      const data = agg[a.id];
+      const countryKeys = Object.keys(data.countries);
+      const countryBreakdown = countryKeys.map(c => `${c} (${data.countries[c]})`).join(", ");
+
+      let tourPotential = "⚪ ללא עניין בינתיים";
+      if (countryKeys.length >= 2) {
+        tourPotential = `🟢 חם: ${countryKeys.join(", ")}`;
+      } else if (countryKeys.length === 1) {
+        tourPotential = `🟡 עניין מקומי: ${countryKeys[0]}`;
+      }
+
+      rowsToWrite.push([
+        data.name,
+        data.genre,
+        tourPotential,
+        countryBreakdown,
+        data.booking.join("\n"),
+        data.connect.join("\n"),
+        data.press.join("\n"),
+        data.likes,
+        data.notes.join("\n\n"),
+        JSON.stringify({ likes: data.likes, countries: data.countries, bookingCount: data.booking.length })
+      ]);
+    });
+
+    if (rowsToWrite.length > 0) {
+      // Clear previous rows starting from row 2
+      const maxRows = leadsSheet.getMaxRows();
+      const maxCols = leadsSheet.getMaxColumns();
+      if (maxRows > 1) {
+        leadsSheet.getRange(2, 1, maxRows - 1, maxCols).clearContent();
+      }
+      leadsSheet.getRange(2, 1, rowsToWrite.length, rowsToWrite[0].length).setValues(rowsToWrite);
+    }
+  } catch (err) {
+    console.error("Error in syncArtistLeadsSheet:", err);
+  }
+}
+
+/**
+ * Endpoint for the Admin Production Dashboard
+ */
+function getAdminArtistsNetworkingData() {
+  try {
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+    const ss = SpreadsheetApp.openById(ssId);
+
+    const leadsSheetName = CONFIG.ARTIST_LEADS_SHEET || "לידים והזדמנויות אומנים";
+    let leadsSheet = ss.getSheetByName(leadsSheetName);
+    const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
+    const prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
+
+    let artistsLeads = [];
+    if (leadsSheet && leadsSheet.getLastRow() > 1) {
+      const data = leadsSheet.getDataRange().getValues();
+      for (let r = 1; r < data.length; r++) {
+        const row = data[r];
+        if (!row[0]) continue;
+        artistsLeads.push({
+          name: String(row[0]).trim(),
+          genre: String(row[1] || "").trim(),
+          tourPotential: String(row[2] || "").trim(),
+          countries: String(row[3] || "").trim(),
+          bookingLeads: String(row[4] || "").trim(),
+          connectLeads: String(row[5] || "").trim(),
+          pressLeads: String(row[6] || "").trim(),
+          likesCount: Number(row[7] || 0),
+          notes: String(row[8] || "").trim()
+        });
+      }
+    }
+
+    // Auto-populate if leads sheet is empty
+    if (artistsLeads.length === 0) {
+      syncAllArtistsAndLeads();
+      leadsSheet = ss.getSheetByName(leadsSheetName);
+      if (leadsSheet && leadsSheet.getLastRow() > 1) {
+        const data = leadsSheet.getDataRange().getValues();
+        for (let r = 1; r < data.length; r++) {
+          const row = data[r];
+          if (!row[0]) continue;
+          artistsLeads.push({
+            name: String(row[0]).trim(),
+            genre: String(row[1] || "").trim(),
+            tourPotential: String(row[2] || "").trim(),
+            countries: String(row[3] || "").trim(),
+            bookingLeads: String(row[4] || "").trim(),
+            connectLeads: String(row[5] || "").trim(),
+            pressLeads: String(row[6] || "").trim(),
+            likesCount: Number(row[7] || 0),
+            notes: String(row[8] || "").trim()
+          });
+        }
+      }
+    }
+
+    const guestsPreferences = [];
+    const inactiveGuests = [];
+    if (prefSheet && prefSheet.getLastRow() > 1) {
+      const pData = prefSheet.getDataRange().getValues();
+      const headers = pData[0];
+      const colMap = {};
+      headers.forEach((h, idx) => {
+        const s = String(h).trim().toLowerCase();
+        if (s.includes("מייל")) colMap.email = idx;
+        else if (s.includes("שם מלא")) colMap.fullName = idx;
+        else if (s.includes("מדינה")) colMap.country = idx;
+        else if (s.includes("חברה") || s.includes("עושה")) colMap.company = idx;
+        else if (s.includes("תפקיד")) colMap.role = idx;
+        else if (s.includes("סטטוס")) colMap.status = idx;
+        else if (s.includes("אהב") || s.includes("❤️")) colMap.favs = idx;
+        else if (s.includes("booking") || s.includes("הזמנות")) colMap.booking = idx;
+        else if (s.includes("connect") || s.includes("קשר")) colMap.connect = idx;
+        else if (s.includes("press") || s.includes("עיתונות")) colMap.press = idx;
+        else if (s.includes("לייקים")) colMap.totalLikes = idx;
+        else if (s.includes("הערות")) colMap.notes = idx;
+      });
+
+      for (let r = 1; r < pData.length; r++) {
+        const row = pData[r];
+        const email = String((colMap.email !== undefined ? row[colMap.email] : row[0]) || "").trim();
+        const fullName = String((colMap.fullName !== undefined ? row[colMap.fullName] : row[1]) || "").trim();
+        if (!email && !fullName) continue;
+
+        const status = String((colMap.status !== undefined ? row[colMap.status] : row[5]) || "").trim();
+        const guestObj = {
+          email: email,
+          name: fullName || email,
+          country: String((colMap.country !== undefined ? row[colMap.country] : row[2]) || "").trim(),
+          company: String((colMap.company !== undefined ? row[colMap.company] : row[3]) || "").trim(),
+          role: String((colMap.role !== undefined ? row[colMap.role] : row[4]) || "").trim(),
+          status: status,
+          favs: String((colMap.favs !== undefined ? row[colMap.favs] : row[6]) || "").trim(),
+          booking: String((colMap.booking !== undefined ? row[colMap.booking] : row[7]) || "").trim(),
+          connect: String((colMap.connect !== undefined ? row[colMap.connect] : row[8]) || "").trim(),
+          press: String((colMap.press !== undefined ? row[colMap.press] : row[9]) || "").trim(),
+          totalLikes: Number((colMap.totalLikes !== undefined ? row[colMap.totalLikes] : row[10]) || 0),
+          notes: String((colMap.notes !== undefined ? row[colMap.notes] : row[11]) || "").trim()
+        };
+
+        guestsPreferences.push(guestObj);
+
+        if (status.includes("טרם סימן")) {
+          inactiveGuests.push({
+            email: email,
+            name: fullName,
+            country: guestObj.country,
+            company: guestObj.company,
+            role: guestObj.role
+          });
+        }
+      }
+    }
+
+    return {
+      success: true,
+      artistsLeads: artistsLeads,
+      guestsPreferences: guestsPreferences,
+      inactiveGuests: inactiveGuests
+    };
+  } catch (err) {
+    console.error("Error in getAdminArtistsNetworkingData:", err);
+    return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Run a full recalculation and sync of all artist leads from guest preferences.
+ * Can be called manually from Apps Script or from the Production Dashboard.
+ */
+function syncAllArtistsAndLeads() {
+  try {
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+
+    // 1. Clear server-side artists cache
+    CacheService.getScriptCache().remove('global_artists_data_' + ssId);
+    CacheService.getScriptCache().remove('global_artists_data_v2');
+
+    const ss = SpreadsheetApp.openById(ssId);
+
+    const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
+    let prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
+    
+    // Check active spreadsheet fallback
+    if (!prefSheet) {
+      try {
+        const activeSs = SpreadsheetApp.getActiveSpreadsheet();
+        if (activeSs && activeSs.getId() !== ss.getId()) {
+          prefSheet = activeSs.getSheetByName(prefSheetName) || activeSs.getSheetByName("הערות אורחים");
+        }
+      } catch (e) {}
+    }
+
+    const leadsSheetName = CONFIG.ARTIST_LEADS_SHEET || "לידים והזדמנויות אומנים";
+    let leadsSheet = ss.getSheetByName(leadsSheetName);
+    if (!leadsSheet) {
+      try {
+        const activeSs = SpreadsheetApp.getActiveSpreadsheet();
+        if (activeSs && activeSs.getId() !== ss.getId()) {
+          leadsSheet = activeSs.getSheetByName(leadsSheetName);
+        }
+      } catch (e) {}
+    }
+
+    if (!leadsSheet) {
+      leadsSheet = ss.insertSheet(leadsSheetName);
+      leadsSheet.appendRow([
+        "שם האמן", "ז'אנר", "פוטנציאל סיבוב הופעות (Tour Match)",
+        "מדינות מתעניינות", "בוקרים להופעה (🎯 Booking)",
+        "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)",
+        "סה\"כ לייקים (❤️)", "הערות אורחים", "Raw Data"
+      ]);
+      leadsSheet.setFrozenRows(1);
+    }
+
+    const artistsRes = getArtistsData(true);
+    const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
+
+    if (prefSheet && leadsSheet) {
+      // Backfill any missing columns in prefSheet if headers exist
+      if (prefSheet.getLastRow() > 1) {
+        const pData = prefSheet.getDataRange().getValues();
+        const headers = pData[0];
+        const colMap = {};
+        headers.forEach((h, idx) => {
+          const headerStr = String(h).trim().toLowerCase();
+          if (headerStr.includes("מייל")) colMap.email = idx;
+          else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
+          else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
+          else if (headerStr.includes("raw")) colMap.raw = idx;
+        });
+
+        if (colMap.raw !== undefined && (colMap.press !== undefined || colMap.totalLikes !== undefined)) {
+          const artistMap = {};
+          artistsList.forEach(a => { artistMap[a.id] = a; });
+          for (let r = 1; r < pData.length; r++) {
+            const rawJson = pData[r][colMap.raw];
+            if (!rawJson) continue;
+            try {
+              const parsed = JSON.parse(rawJson);
+              const favs = parsed.favorites || {};
+              const tags = parsed.tags || {};
+              
+              const totalLiked = Object.keys(favs).filter(k => !!favs[k]).length;
+              const pressNames = [];
+              Object.keys(tags).forEach(aId => {
+                const tList = tags[aId] || [];
+                if (tList.includes("Press")) {
+                  const a = artistMap[aId] || { name: aId };
+                  pressNames.push(a.name);
+                }
+              });
+
+              if (colMap.press !== undefined) {
+                prefSheet.getRange(r + 1, colMap.press + 1).setValue(pressNames.join(", "));
+              }
+              if (colMap.totalLikes !== undefined) {
+                prefSheet.getRange(r + 1, colMap.totalLikes + 1).setValue(totalLiked);
+              }
+            } catch(e) {}
+          }
+        }
+      }
+
+      syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList);
+    }
+
+    return { 
+      success: true, 
+      message: "Sync complete! All artist leads and preferences have been recalculated.",
+      artistsCount: artistsList.length
+    };
+  } catch (err) {
+    console.error("Error in syncAllArtistsAndLeads:", err);
+    return { success: false, message: err.toString() };
+  }
+}
+
+

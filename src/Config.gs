@@ -11,12 +11,14 @@ const ENVIRONMENTS = {
   PRODUCTION: {
     ANAT_SPREADSHEET_ID: "1UDzPjGWdvjJ1yOQHmORY-itX0yr52BMOkSrdac3t95M",
     PASSPORT_FOLDER_ID: "1gHSfIH1175u09sQEtp5gOSI_oNF6WrDUqUnxUPT4umwKNM-J0dxeNLI3qYQBqcevujCWq6rI",
-    PHOTO_FOLDER_ID: "1ia1t0xqowQbYKjsYQl9PRy396dDNr7fXbKXzr20suy9waDJEcxMcvYDtb7w3J_d3Q_b8w6c9"
+    PHOTO_FOLDER_ID: "1ia1t0xqowQbYKjsYQl9PRy396dDNr7fXbKXzr20suy9waDJEcxMcvYDtb7w3J_d3Q_b8w6c9",
+    ARTISTS_SPREADSHEET_ID: "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ" // אומנים 26
   },
   SANDBOX: {
     ANAT_SPREADSHEET_ID: "1mrKQ-10d1wLSjY3pjPyDO6dY8UZ9k-IiePXOOWTYBZY",
     PASSPORT_FOLDER_ID: "1loqPR_oRFxvrznzYGrsaNqhTJbtbe8lr",
-    PHOTO_FOLDER_ID: "1-eKETDgCwA0tTennT6egrpfROpLeGzse"
+    PHOTO_FOLDER_ID: "1-eKETDgCwA0tTennT6egrpfROpLeGzse",
+    ARTISTS_SPREADSHEET_ID: "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo" // ניסויים אומנים 26
   }
 };
 
@@ -59,7 +61,10 @@ const CONFIG = {
   },
   PASSPORT_FOLDER_ID: ACTIVE_ENV.PASSPORT_FOLDER_ID,
   PHOTO_FOLDER_ID: ACTIVE_ENV.PHOTO_FOLDER_ID,
-  ARTISTS_SPREADSHEET_ID: "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ"
+  ARTISTS_SPREADSHEET_ID: ACTIVE_ENV.ARTISTS_SPREADSHEET_ID,
+  ARTISTS_SHEET_NAME: "שיקוף! - מידע אומנים",
+  GUEST_PREFERENCES_SHEET: "העדפות אורחים",
+  ARTIST_LEADS_SHEET: "לידים והזדמנויות אומנים"
 };
 
 const MAPPINGS = {
@@ -76,7 +81,7 @@ const MAPPINGS = {
     { key: "יעד חזרה", altKeys: ["יעד חזרה", "לאיפה", "מדינת חזרה", "לאן"], label: "Destination / To" },
     { key: "שיוך לשאטל", altKeys: ["שיוך לשאטל", "שיוך שאטל", "שאטל", "שעת שאטל", "שעה שאטל", "שאטלים", "הסעה נדרשת", "הסעה", "שעת הסעה", "הסעות", "shuttle", "shuttle time"], label: "Shuttle" },
     { key: "ביחד עם", altKeys: ["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "Together with", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"], label: "Together With" },
-    { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס"], label: "Final Ticket Link" }
+    { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי"], label: "Final Ticket Link" }
   ],
   HOTELS: [
     { key: "כמות לילות", label: "Nights Count" },
