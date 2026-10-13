@@ -1523,6 +1523,24 @@ body.light-mode .networking-cube {
   box-shadow: 3px 3px 0px rgba(0,0,0,1);
 }
 
+.networking-cube.inactive-guest {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.networking-cube.inactive-guest:hover {
+  background: rgba(239, 68, 68, 0.18);
+}
+
+body.light-mode .networking-cube.inactive-guest {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+body.light-mode .networking-cube.inactive-guest:hover {
+  background: #fecaca;
+}
+
 .networking-cube:hover {
   transform: translate(-1px, -1px);
   box-shadow: 4px 4px 0px rgba(0,0,0,1);

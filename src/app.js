@@ -3011,14 +3011,8 @@ function renderAdminNetworkingCubes(query = "") {
       return;
     }
 
-    // Sort: artists with booking leads or highest likes first, then alphabetically
-    const sorted = [...filteredArtists].sort((a, b) => {
-      const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
-      const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
-      if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
-      if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
-      return a.name.localeCompare(b.name);
-    });
+    // Sort: strictly alphabetical (A-Z)
+    const sorted = [...filteredArtists].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
     networkingArtistsList = sorted;
 
@@ -3048,21 +3042,23 @@ function renderAdminNetworkingCubes(query = "") {
       return;
     }
 
-    // Sort: guests with activity/likes first, then alphabetically
-    const sorted = [...filteredGuests].sort((a, b) => {
-      const aActive = (a.totalLikes > 0 || (a.favs && a.favs.trim().length > 0)) ? 1 : 0;
-      const bActive = (b.totalLikes > 0 || (b.favs && b.favs.trim().length > 0)) ? 1 : 0;
-      if (bActive !== aActive) return bActive - aActive;
-      if (b.totalLikes !== a.totalLikes) return b.totalLikes - a.totalLikes;
-      return a.name.localeCompare(b.name);
-    });
+    // Sort: strictly alphabetical (A-Z)
+    const sorted = [...filteredGuests].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
     networkingGuestsList = sorted;
 
     let html = '';
     sorted.forEach((g, idx) => {
+      const isInactive = (g.status && g.status.includes('טרם סימן')) ||
+                         ((!g.totalLikes || Number(g.totalLikes) === 0) &&
+                          (!g.favs || !g.favs.trim()) &&
+                          (!g.notes || !g.notes.trim()) &&
+                          (!g.booking || !g.booking.trim()) &&
+                          (!g.connect || !g.connect.trim()) &&
+                          (!g.press || !g.press.trim()));
+      const inactiveClass = isInactive ? ' inactive-guest' : '';
       html += `
-        <div class="networking-cube" onclick="openNetworkingDetail('guest', ${idx})" title="${escapeHtmlAdmin(g.name)}">
+        <div class="networking-cube${inactiveClass}" onclick="openNetworkingDetail('guest', ${idx})" title="${escapeHtmlAdmin(g.name)}${isInactive ? ' (Inactive)' : ''}">
           <div class="networking-cube-name">${escapeHtmlAdmin(g.name)}</div>
         </div>
       `;
