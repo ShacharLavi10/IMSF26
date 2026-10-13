@@ -532,6 +532,85 @@ function inspectBackupsAndHotels() {
   return result;
 }
 
+function restoreJerusalemHotelsAndSync(targetSsId) {
+  try {
+    const ss = targetSsId ? SpreadsheetApp.openById(targetSsId) : SpreadsheetApp.getActiveSpreadsheet();
+    const jlmSheet = ss.getSheetByName(CONFIG.JERUSALEM_SHEET);
+    if (!jlmSheet) return { success: false, error: "Jerusalem sheet not found" };
+
+    const knownGuestEmails = [
+      "benson@chaptertwoent.com",
+      "bv@asphalt-festival.de",
+      "carlos@mcmxvi.com",
+      "eventi.alexanderplatz@gmail.com",
+      "buihuytuan@gmail.com",
+      "isaac.green@warnerrecords.com",
+      "johannes.graesser@jlgt.org",
+      "jon@ba-concerts.com",
+      "joshblakkmusic@gmail.com",
+      "karanbajaj@gaah.in",
+      "kira.triumph@gmail.com",
+      "booking@festteam.bg",
+      "laurence@lolaziza.com",
+      "marcusgora@pm.me",
+      "mark.kass@enterprise4good.org",
+      "matt@crazyplanetrecords.com",
+      "direction@festivaldechaillol.com",
+      "michele@francerocks.com",
+      "peter@futureechoes.se",
+      "svidal@ducdeslombards.com",
+      "shunsuke.asakawa@me.com",
+      "y.trakhman@afisha.ru",
+      "shacharlavi10@gmail.com",
+      "exposubmarine@gmail.com",
+      "shacharlavi888@gmail.com",
+      "shlomo@citywinery.com"
+    ];
+
+    // 1. Set Title in A1
+    jlmSheet.getRange(1, 1).setValue("ירושלים");
+
+    // 2. Set Headers in row 2: A2, B2, C2
+    jlmSheet.getRange(2, 1).setValue(CONFIG.EMAIL_COL);      // "מייל אורח"
+    jlmSheet.getRange(2, 2).setValue(CONFIG.FIRST_NAME_COL); // "שם פרטי"
+    jlmSheet.getRange(2, 3).setValue(CONFIG.LAST_NAME_COL);  // "שם משפחה"
+
+    // 3. For rows 3 to 28, set the email values in Column A
+    const emailValues = knownGuestEmails.map(em => [em]);
+    jlmSheet.getRange(3, 1, emailValues.length, 1).setValues(emailValues);
+
+    // 4. For rows 3 to 28, set formulas for First Name (col B) and Last Name (col C)
+    // In 'אורחים': Email is K ($K:$K), First Name is C ($C:$C), Last Name is B ($B:$B)
+    const nameFormulas = [];
+    for (let i = 0; i < knownGuestEmails.length; i++) {
+      const rowNum = i + 3;
+      nameFormulas.push([
+        `=IF(ISBLANK(A${rowNum}), "", XLOOKUP(A${rowNum}, 'אורחים'!$K:$K, 'אורחים'!$C:$C, ""))`,
+        `=IF(ISBLANK(A${rowNum}), "", XLOOKUP(A${rowNum}, 'אורחים'!$K:$K, 'אורחים'!$B:$B, ""))`
+      ]);
+    }
+    jlmSheet.getRange(3, 2, nameFormulas.length, 2).setFormulas(nameFormulas);
+
+    // 5. Run syncAllSheets(ss) to align all sheets and ensure full data integrity
+    syncAllSheets(ss);
+
+    // Inspect result after restoration
+    const finalLastRow = jlmSheet.getLastRow();
+    const finalSample = jlmSheet.getRange(1, 1, Math.min(10, finalLastRow), 5).getValues();
+
+    return {
+      success: true,
+      message: "Jerusalem hotel restored and synchronized successfully",
+      targetId: ss.getId(),
+      finalLastRow: finalLastRow,
+      finalSample: finalSample
+    };
+  } catch (err) {
+    return { success: false, error: err.toString(), stack: err.stack };
+  }
+}
+
+
 
 
 
