@@ -837,7 +837,8 @@ function getGuideData(forceRefresh) {
     let sheet = findSheetFuzzy(ss, ['מידע כללי', 'מידע כללי והמלצות', 'General Info', 'Guide']);
     if (!sheet) return { success: false, message: 'Guide / Info sheet not found' };
     
-    const data = sheet.getDataRange().getValues();
+    const range = sheet.getDataRange();
+    const data = range.getValues();
     if (data.length < 2) return { success: true, guide: { jerusalem: [], telAviv: [], essentials: [], items: [] } };
     
     let headerRowIdx = -1;
@@ -860,6 +861,14 @@ function getGuideData(forceRefresh) {
     const descIdx = headers.findIndex(h => h.includes('תיאור') || h.includes('desc'));
     const linkIdx = headers.findIndex(h => h.includes('לינק') || h.includes('קישור') || h.includes('link') || h.includes('url'));
     const tagIdx = headers.findIndex(h => h.includes('תגית') || h.includes('tag') || h.includes('badge'));
+
+    const formulas = range.getFormulas();
+    let richTexts = null;
+    try {
+      richTexts = range.getRichTextValues();
+    } catch (e) {
+      Logger.log("getRichTextValues note: " + e);
+    }
     
     const items = [];
     for (let i = headerRowIdx + 1; i < data.length; i++) {
@@ -871,8 +880,85 @@ function getGuideData(forceRefresh) {
       const category = catIdx !== -1 ? String(row[catIdx] || "").trim() : "";
       const address = addrIdx !== -1 ? String(row[addrIdx] || "").trim() : "";
       const description = descIdx !== -1 ? String(row[descIdx] || "").trim() : "";
-      const link = linkIdx !== -1 ? String(row[linkIdx] || "").trim() : "";
       const tag = tagIdx !== -1 ? String(row[tagIdx] || "").trim() : "";
+      
+      let cellLink = "";
+      let cellLabel = "";
+      
+      if (linkIdx !== -1) {
+        const rawVal = String(row[linkIdx] || "").trim();
+        const formula = (formulas && formulas[i]) ? String(formulas[i][linkIdx] || "").trim() : "";
+        const rt = (richTexts && richTexts[i]) ? richTexts[i][linkIdx] : null;
+
+        // 1. Check Formula: =HYPERLINK("https://...", "Label")
+        if (formula && formula.toUpperCase().includes("HYPERLINK")) {
+          const match = formula.match(/HYPERLINK\(\s*["']([^"']+)["'](?:\s*[,;]\s*["']([^"']+)["'])?/i);
+          if (match) {
+            cellLink = match[1].trim();
+            if (match[2]) {
+              cellLabel = match[2].trim();
+            } else if (rawVal && rawVal !== cellLink) {
+              cellLabel = rawVal;
+            }
+          }
+        }
+
+        // 2. Check RichTextValue (Ctrl+K or inserted link in text)
+        if (!cellLink && rt) {
+          try {
+            const rtUrl = rt.getLinkUrl();
+            const rtText = (rt.getText ? rt.getText() : "").trim();
+            if (rtUrl) {
+              cellLink = rtUrl.trim();
+              cellLabel = rtText;
+            } else if (rt.getRuns) {
+              const runs = rt.getRuns();
+              for (let r = 0; r < runs.length; r++) {
+                const u = runs[r].getLinkUrl();
+                if (u) {
+                  cellLink = u.trim();
+                  cellLabel = (runs[r].getText ? runs[r].getText() : "").trim() || rtText;
+                  break;
+                }
+              }
+            }
+          } catch (rtErr) {}
+        }
+
+        // 3. Fallback to raw string parsing (Markdown [Text](URL), HTML <a href="...">, or "Text https://...")
+        if (!cellLink && rawVal) {
+          const mdMatch = rawVal.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+          if (mdMatch) {
+            cellLabel = mdMatch[1].trim();
+            cellLink = mdMatch[2].trim();
+          } else {
+            const htmlMatch = rawVal.match(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/i);
+            if (htmlMatch) {
+              cellLink = htmlMatch[1].trim();
+              cellLabel = htmlMatch[2].replace(/<[^>]+>/g, '').trim();
+            } else {
+              const urlMatch = rawVal.match(/(https?:\/\/[^\s]+)/i);
+              if (urlMatch) {
+                cellLink = urlMatch[1].trim();
+                const remainder = rawVal.replace(cellLink, '').replace(/^[-–—:\s()]+|[-–—:\s()]+$/g, '').trim();
+                if (remainder) {
+                  cellLabel = remainder;
+                }
+              } else {
+                cellLink = rawVal;
+              }
+            }
+          }
+        }
+
+        // Clean up cellLabel if it's identical to the link or just a URL
+        if (cellLabel) {
+          const lLower = cellLabel.toLowerCase();
+          if (cellLabel === cellLink || lLower.startsWith('http://') || lLower.startsWith('https://') || lLower.startsWith('www.')) {
+            cellLabel = "";
+          }
+        }
+      }
       
       items.push({
         city: city,
@@ -880,7 +966,8 @@ function getGuideData(forceRefresh) {
         name: name,
         address: address,
         description: description,
-        link: link,
+        link: cellLink,
+        linkLabel: cellLabel,
         tag: tag
       });
     }
@@ -1340,7 +1427,8 @@ function clearAppCache(sessionToken) {
       'global_guests_directory',
       'global_schedule_data',
       'global_artists_data_v2',
-      'global_artists_data'
+      'global_artists_data',
+      'global_guide_data'
     ]);
     
     return { success: true, message: 'Server cache purged successfully.' };

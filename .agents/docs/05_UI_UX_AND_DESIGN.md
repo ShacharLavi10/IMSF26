@@ -77,5 +77,23 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Horizontal row layout strictly preserved on mobile screens (`flex-direction: row !important`), card padding `8px 10px`, gap `9px`.
     - Compact event height (~50-65px) enables an entire day's schedule (e.g. 4 events on Nov 17) to fit in a single smartphone viewport without vertical scrolling.
 
+- **Guide & Essentials Tab UI (`#tab-guide`, `#guide-container`, `.guide-category-accordion`)**:
+  - **Single Exclusive Accordion**:
+    - Only one category accordion can be open at a time. Expanding any category collapses all other open categories across both desktop and mobile viewports.
+  - **Direct Open Cards for Q&A and Essentials**:
+    - All recommendations and FAQ questions render directly as full cards upon opening the category accordion, eliminating redundant nested `<details>` rows.
+    - Each card displays venue/item name, category tag, address with pin, full description, and direct action button.
+  - **Adaptive Action Buttons (`.guide-map-btn`)**:
+    - If cell contains custom hyperlink text (e.g. `Download`, `Tickets`, `Menu`), the button displays that exact text with an external link arrow icon.
+    - If only a raw link or coordinate is provided, the button defaults to `Maps` with a map folded-paper icon.
+    - Protected with `max-width` and `text-overflow: ellipsis` to prevent mobile overflow on narrow screens.
+  - **Mobile Wrap & Overflow Safety**:
+    - Category titles set to `white-space: normal; word-break: break-word;` so long names wrap elegantly without getting clipped.
+    - Descriptions display full text without `-webkit-line-clamp` cutoff.
+
+- **Artist Cards & Favoriting UX (`.artist-card`, `.artist-fav-badge`)**:
+  - Direct heart button on artist cards in the main grid allows one-tap toggling without opening the details modal.
+  - In the "Favorites Only" filtered view, heart toggling on the card is disabled to prevent accidental list collapse; unfavoriting requires confirming within the artist modal.
+
 
 

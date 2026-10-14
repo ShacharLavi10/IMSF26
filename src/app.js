@@ -86,11 +86,10 @@ let currentGuestEmail = "";
         if (t === 'guide' && tabName === 'guide') {
           const isPending = document.getElementById('guide-pending-container') && document.getElementById('guide-pending-container').style.display === 'block';
           if (!isPending) {
-            if (!guideDataCache) {
-              fetchGuideData();
-            } else {
+            if (guideDataCache) {
               renderGuideCityContent(currentGuideCity);
             }
+            fetchGuideData();
           }
         }
         if (t === 'artists' && tabName === 'artists') {
@@ -468,8 +467,18 @@ let currentGuestEmail = "";
         if (guidePills) guidePills.style.display = "flex";
         if (guideContainer) guideContainer.style.display = "block";
         if (guidePending) guidePending.style.display = "none";
-        if (response.guideData) {
-          initGuide(response.guideData);
+        
+        let validGuideData = response.guideData;
+        if (validGuideData && validGuideData.items) {
+          const links = validGuideData.items.filter(it => it.link);
+          const hasLabels = links.some(it => typeof it.linkLabel !== 'undefined');
+          if (links.length > 0 && !hasLabels) {
+            validGuideData = null;
+          }
+        }
+
+        if (validGuideData) {
+          initGuide(validGuideData);
         } else {
           fetchGuideData();
         }
@@ -1859,15 +1868,28 @@ let currentGuestEmail = "";
       } else {
         const cached = localStorage.getItem('imsf_guide_cache');
         if (cached) {
-          try { guideDataCache = JSON.parse(cached); } catch(e) {}
+          try {
+            const parsed = JSON.parse(cached);
+            const items = parsed && parsed.items ? parsed.items : [];
+            const itemsWithLinks = items.filter(it => it.link);
+            const hasLabels = itemsWithLinks.some(it => typeof it.linkLabel !== 'undefined');
+            if (itemsWithLinks.length > 0 && !hasLabels) {
+              localStorage.removeItem('imsf_guide_cache');
+              guideDataCache = null;
+            } else {
+              guideDataCache = parsed;
+            }
+          } catch(e) {}
         }
       }
-      renderGuideCityContent(currentGuideCity);
+      if (guideDataCache) {
+        renderGuideCityContent(currentGuideCity);
+      }
     }
 
     function fetchGuideData() {
       const loader = document.getElementById('guide-loader');
-      if (loader) loader.style.display = 'flex';
+      if (!guideDataCache && loader) loader.style.display = 'flex';
       
       google.script.run
         .withSuccessHandler(function(res) {
@@ -1916,6 +1938,113 @@ let currentGuestEmail = "";
       return '📍';
     }
 
+    function resolveGuideItemLink(item, defaultCity) {
+      let url = (item.link || '').trim();
+      let label = (item.linkLabel || '').trim();
+
+      // Client-side fallback if label was not pre-parsed by backend
+      if (!label && url) {
+        const md = url.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+        if (md) {
+          label = md[1].trim();
+          url = md[2].trim();
+        } else {
+          const html = url.match(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/i);
+          if (html) {
+            url = html[1].trim();
+            label = html[2].replace(/<[^>]+>/g, '').trim();
+          } else {
+            const urlM = url.match(/(https?:\/\/[^\s]+)/i);
+            if (urlM) {
+              const found = urlM[1].trim();
+              const rest = url.replace(found, '').replace(/^[-–—:\s()]+|[-–—:\s()]+$/g, '').trim();
+              if (rest) {
+                url = found;
+                label = rest;
+              }
+            } else if (!url.includes('.') && !url.includes('/')) {
+              label = url;
+              url = '';
+            }
+          }
+        }
+      }
+
+      if (label) {
+        const lLower = label.toLowerCase();
+        if (label === url || lLower.startsWith('http://') || lLower.startsWith('https://') || lLower.startsWith('www.')) {
+          label = '';
+        }
+      }
+
+      // If no URL but has address or venue name in Jerusalem/Tel Aviv, generate Google Maps query
+      if (!url && (item.address || (item.name && defaultCity && defaultCity !== 'essentials'))) {
+        const cityNameStr = (defaultCity === 'jerusalem' ? 'Jerusalem' : (defaultCity === 'telaviv' ? 'Tel Aviv' : ''));
+        const query = [item.name, item.address, cityNameStr, 'Israel'].filter(Boolean).join(', ');
+        url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+      }
+
+      // Rule: If custom text with link is present -> use it. If only raw link -> display "Maps".
+      const isCustom = Boolean(label);
+      const btnLabel = isCustom ? label : 'Maps';
+
+      return { url, btnLabel, isCustom };
+    }
+
+    function renderGuideItemCards(catItems, defaultCity) {
+      return catItems.map(item => {
+        const { url, btnLabel, isCustom } = resolveGuideItemLink(item, defaultCity);
+
+        let btnHtml = '';
+        if (url) {
+          let href = url;
+          if (!href.startsWith('http://') && !href.startsWith('https://')) {
+            href = 'https://' + href;
+          }
+
+          const isMap = !isCustom || btnLabel.toLowerCase().includes('map');
+          const iconSvg = isMap
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+               </svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+               </svg>`;
+
+          btnHtml = `
+            <div class="guide-item-side">
+              <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="guide-map-btn" title="${escapeHtml(btnLabel)}">
+                ${iconSvg}
+                <span>${escapeHtml(btnLabel)}</span>
+              </a>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="guide-item-card fade-up">
+            <div class="guide-item-main">
+              <div class="guide-item-header">
+                <span class="guide-item-name" dir="auto">${escapeHtml(item.name || '')}</span>
+                ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
+              </div>
+              ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
+              ${item.address ? `
+                <div class="guide-item-address" dir="auto">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>${escapeHtml(item.address)}</span>
+                </div>
+              ` : ''}
+            </div>
+            ${btnHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
     function renderGuideCityContent(city) {
       const container = document.getElementById('guide-content-area');
       if (!container) return;
@@ -1958,7 +2087,7 @@ let currentGuestEmail = "";
         const catIcon = getGuideCategoryIcon(catName);
 
         html += `
-          <details class="guide-category-accordion">
+          <details class="guide-category-accordion" name="guide-category">
             <summary class="guide-category-summary">
               <div class="guide-category-info">
                 <span class="guide-category-icon">${catIcon}</span>
@@ -1975,47 +2104,7 @@ let currentGuestEmail = "";
             </summary>
             <div class="guide-category-content">
               <div class="guide-cards-list">
-        `;
-
-        catItems.forEach(item => {
-          let mapUrl = item.link ? item.link.trim() : '';
-          if (!mapUrl.startsWith('http')) {
-            const cityNameStr = (city === 'jerusalem' ? 'Jerusalem' : 'Tel Aviv');
-            const query = [item.name, item.address, cityNameStr, 'Israel'].filter(Boolean).join(', ');
-            mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-          }
-
-          html += `
-            <div class="guide-item-card fade-up">
-              <div class="guide-item-main">
-                <div class="guide-item-header">
-                  <span class="guide-item-name" dir="auto">${escapeHtml(item.name)}</span>
-                  ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
-                </div>
-                ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
-                ${item.address ? `
-                  <div class="guide-item-address" dir="auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>${escapeHtml(item.address)}</span>
-                  </div>
-                ` : ''}
-              </div>
-              <div class="guide-item-side">
-                <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="guide-map-btn" title="Open in Google Maps">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                  <span>Maps</span>
-                </a>
-              </div>
-            </div>
-          `;
-        });
-
-        html += `
+                ${renderGuideItemCards(catItems, city)}
               </div>
             </div>
           </details>
@@ -2026,31 +2115,37 @@ let currentGuestEmail = "";
     }
 
     function renderEssentialsContent(items, container) {
-      const actionItems = [];
-      const faqItems = [];
-
+      // Group by Category (Q&A, Apps & Transit, Payments, etc.)
+      const categories = {};
       items.forEach(item => {
-        const catLower = (item.category || "").toLowerCase();
-        const tagLower = (item.tag || "").toLowerCase();
-        if (catLower.includes('faq') || catLower.includes('q&a') || catLower.includes('שאלה') || tagLower.includes('faq')) {
-          faqItems.push(item);
-        } else {
-          actionItems.push(item);
+        let cat = (item.category || '').trim();
+        if (!cat) {
+          const tagLower = (item.tag || '').toLowerCase();
+          const nameLower = (item.name || '').toLowerCase();
+          if (tagLower.includes('faq') || tagLower.includes('q&a') || nameLower.includes('faq') || nameLower.includes('q&a')) {
+            cat = 'Q&A';
+          } else {
+            cat = 'Essential Apps & Services';
+          }
         }
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(item);
       });
 
-      let html = '<div class="guide-essentials-wrapper">';
+      let html = '<div class="guide-sections-wrapper">';
+      Object.keys(categories).forEach(catName => {
+        const catItems = categories[catName];
+        const catIcon = getGuideCategoryIcon(catName);
 
-      if (actionItems.length > 0) {
         html += `
-          <details class="guide-category-accordion">
+          <details class="guide-category-accordion" name="guide-category">
             <summary class="guide-category-summary">
               <div class="guide-category-info">
-                <span class="guide-category-icon">📱</span>
-                <span class="guide-category-title">Essential Apps & Services</span>
+                <span class="guide-category-icon">${catIcon}</span>
+                <span class="guide-category-title">${escapeHtml(catName)}</span>
               </div>
               <div class="guide-category-meta">
-                <span class="guide-category-badge">${actionItems.length}</span>
+                <span class="guide-category-badge">${catItems.length}</span>
                 <span class="guide-category-chevron">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
@@ -2060,126 +2155,49 @@ let currentGuestEmail = "";
             </summary>
             <div class="guide-category-content">
               <div class="guide-cards-list">
-        `;
-        actionItems.forEach(item => {
-          let btnLabel = "Open";
-          const lowerName = (item.name || "").toLowerCase();
-          const lowerCat = (item.category || "").toLowerCase();
-          if (lowerCat.includes('taxi') || lowerName.includes('gett') || lowerName.includes('yango') || lowerName.includes('מוניות')) {
-            btnLabel = "Taxi App";
-          } else if (lowerCat.includes('transit') || lowerName.includes('moovit') || lowerName.includes('hopon')) {
-            btnLabel = "Transit";
-          } else if (lowerCat.includes('pay') || lowerName.includes('pay') || lowerCat.includes('תשלום')) {
-            btnLabel = "Pay";
-          } else if (lowerCat.includes('rsvp') || lowerName.includes('rsvp') || lowerCat.includes('אישור')) {
-            btnLabel = "RSVP";
-          }
-
-          let linkHtml = '';
-          if (item.link && item.link.trim() !== '') {
-            let href = item.link.trim();
-            if (!href.startsWith('http')) href = 'https://' + href;
-            linkHtml = `
-              <div class="guide-item-side">
-                <a href="${href}" target="_blank" rel="noopener noreferrer" class="guide-action-btn">
-                  <span>${btnLabel}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
-            `;
-          }
-
-          html += `
-            <div class="guide-item-card fade-up">
-              <div class="guide-item-main">
-                <div class="guide-item-header">
-                  <span class="guide-item-name" dir="auto">${escapeHtml(item.name)}</span>
-                  ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
-                </div>
-                ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
-                ${item.address ? `
-                  <div class="guide-item-address" dir="auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>${escapeHtml(item.address)}</span>
-                  </div>
-                ` : ''}
-              </div>
-              ${linkHtml}
-            </div>
-          `;
-        });
-        html += `
+                ${renderGuideItemCards(catItems, 'essentials')}
               </div>
             </div>
           </details>
         `;
-      }
-
-      if (faqItems.length > 0) {
-        html += `
-          <details class="guide-category-accordion">
-            <summary class="guide-category-summary">
-              <div class="guide-category-info">
-                <span class="guide-category-icon">💡</span>
-                <span class="guide-category-title">Need to Know & FAQs</span>
-              </div>
-              <div class="guide-category-meta">
-                <span class="guide-category-badge">${faqItems.length}</span>
-                <span class="guide-category-chevron">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
-            </summary>
-            <div class="guide-category-content">
-              <div class="guide-cards-list">
-        `;
-        faqItems.forEach((faq) => {
-          let linkHtml = '';
-          if (faq.link && faq.link.trim() !== '') {
-            let href = faq.link.trim();
-            if (!href.startsWith('http')) href = 'https://' + href;
-            linkHtml = `
-              <div style="margin-top: 10px;">
-                <a href="${href}" target="_blank" rel="noopener noreferrer" class="guide-action-btn" style="display: inline-flex; width: auto; padding: 6px 14px; font-size: 0.8rem;">
-                  <span>More Info</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
-            `;
-          }
-
-          html += `
-            <details class="guide-faq-item fade-up">
-              <summary class="guide-faq-question">
-                <span dir="auto">${escapeHtml(faq.name)}</span>
-                <span class="faq-chevron">▾</span>
-              </summary>
-              <div class="guide-faq-answer">
-                <p dir="auto">${escapeHtml(faq.description)}</p>
-                ${linkHtml}
-              </div>
-            </details>
-          `;
-        });
-        html += `
-              </div>
-            </div>
-          </details>
-        `;
-      }
-
+      });
       html += '</div>';
       container.innerHTML = html;
     }
+
+    // Exclusive accordion: only one category can be open at a time (Desktop & Mobile)
+    document.addEventListener('click', function(e) {
+      const summary = e.target.closest('.guide-category-summary');
+      if (!summary) return;
+      const acc = summary.closest('details.guide-category-accordion');
+      if (!acc) return;
+
+      if (!acc.open) {
+        const container = acc.closest('#guide-content-area') || acc.parentElement;
+        if (container) {
+          container.querySelectorAll('details.guide-category-accordion[open]').forEach(other => {
+            if (other !== acc) {
+              other.removeAttribute('open');
+            }
+          });
+        }
+      }
+    });
+
+    document.addEventListener('toggle', function(e) {
+      const acc = e.target;
+      if (!acc || !acc.classList || !acc.classList.contains('guide-category-accordion')) return;
+      if (acc.open) {
+        const container = acc.closest('#guide-content-area') || acc.parentElement;
+        if (container) {
+          container.querySelectorAll('details.guide-category-accordion[open]').forEach(other => {
+            if (other !== acc) {
+              other.removeAttribute('open');
+            }
+          });
+        }
+      }
+    }, true);
     /* ========================================================= */
     /* ARTISTS UI LOGIC                                          */
     /* ========================================================= */
@@ -2486,7 +2504,7 @@ let currentGuestEmail = "";
 
     function fetchArtistsData() {
       const grid = document.getElementById('artists-grid');
-      const cacheKey = 'swr_artistsData_v3';
+      const cacheKey = 'swr_artistsData_v4';
       
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -2568,14 +2586,20 @@ let currentGuestEmail = "";
       let html = '';
       artists.forEach(artist => {
         const isFav = !!favs[artist.id];
+        const favButtonHtml = showFavsOnly
+          ? `<span class="fav-btn-inline active" style="pointer-events: none;" aria-label="Favorite">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </span>`
+          : `<button class="fav-btn-inline ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </button>`;
+
         html += `
           <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
             <div class="artist-card-overlay">
               <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 2px;">
                 <div class="artist-card-name" style="margin-bottom: 0;">${artist.name}</div>
-                <button class="fav-btn-inline ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                </button>
+                ${favButtonHtml}
               </div>
               <div class="artist-card-genre">${artist.genre}</div>
             </div>
@@ -2590,16 +2614,40 @@ let currentGuestEmail = "";
     }
 
     function toggleCardFav(event, artistId) {
-      event.stopPropagation(); // prevent opening sheet
+      if (showFavsOnly) {
+        if (event) event.stopPropagation();
+        openArtistSheet(artistId);
+        return;
+      }
+      if (event) {
+        event.stopPropagation();
+        if (event.preventDefault) event.preventDefault();
+      }
       const favs = getFavorites();
-      if (favs[artistId]) {
-        delete favs[artistId];
-      } else {
+      const willBeFav = !favs[artistId];
+      if (willBeFav) {
         favs[artistId] = true;
+      } else {
+        delete favs[artistId];
       }
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
-      filterArtists(); // Re-render grid
+
+      const btn = (event && event.currentTarget) || (event && event.target && event.target.closest('.fav-btn-inline'));
+      if (btn) {
+        if (willBeFav) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      } else {
+        filterArtists();
+      }
+
+      // Handle Export Briefcase visibility
+      const hasFavs = Object.keys(favs).length > 0;
+      const exportContainer = document.getElementById('export-briefcase-container');
+      if (exportContainer) exportContainer.style.display = hasFavs ? 'block' : 'none';
     }
 
     function filterArtists() {
@@ -2664,6 +2712,38 @@ let currentGuestEmail = "";
       if (genreElem) {
         genreElem.innerText = artist.genre || "";
         genreElem.style.display = artist.genre ? "block" : "none";
+      }
+
+      const contactElem = document.getElementById('sheet-artist-contact');
+      if (contactElem) {
+        const contactName = (artist.contactName || "").trim();
+        const rawEmail = (artist.contactEmail || "").trim();
+        contactElem.innerHTML = "";
+
+        const emails = rawEmail ? rawEmail.split(/[\r\n,;]+/).map(e => e.trim()).filter(Boolean) : [];
+
+        if (contactName || emails.length > 0) {
+          contactElem.appendChild(document.createTextNode("Contact: "));
+          if (contactName) {
+            contactElem.appendChild(document.createTextNode(contactName));
+            if (emails.length > 0) {
+              contactElem.appendChild(document.createTextNode(" - "));
+            }
+          }
+          emails.forEach((email, idx) => {
+            if (idx > 0) {
+              contactElem.appendChild(document.createTextNode(", "));
+            }
+            const link = document.createElement("a");
+            link.href = "mailto:" + email;
+            link.className = "sheet-contact-email";
+            link.textContent = email;
+            contactElem.appendChild(link);
+          });
+          contactElem.style.display = "block";
+        } else {
+          contactElem.style.display = "none";
+        }
       }
 
       document.getElementById('sheet-artist-bio').innerText = artist.bio;
@@ -2860,6 +2940,7 @@ window.toggleFavFilter = toggleFavFilter;
 window.exportBriefcase = exportBriefcase;
 window.closeArtistSheet = closeArtistSheet;
 window.toggleSheetFav = toggleSheetFav;
+window.toggleCardFav = toggleCardFav;
 window.savePrivateNote = savePrivateNote;
 window.toggleIntentTag = toggleIntentTag;
 window.closeGuestSheet = closeGuestSheet;
@@ -4514,7 +4595,7 @@ function triggerBackgroundRefresh() {
       google.script.run
         .withSuccessHandler(function(res) {
           if (res && res.success && res.artists) {
-            localStorage.setItem('swr_artistsData_v3', JSON.stringify(res.artists));
+            localStorage.setItem('swr_artistsData_v4', JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           }
@@ -4578,7 +4659,7 @@ function handleAdminResetCache() {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('swr_') || key.startsWith('lastSeenUpdatesHash_'))) {
+      if (key && (key.startsWith('swr_') || key.startsWith('lastSeenUpdatesHash_') || key.startsWith('imsf_'))) {
         keysToRemove.push(key);
       }
     }

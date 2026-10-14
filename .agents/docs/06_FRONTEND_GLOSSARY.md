@@ -62,3 +62,18 @@
    * **מיכל המתנה (לפני אישור לו"ז):** `#schedule-pending-container` (מוצג כשהלו"ז טרם אושר לאורח).
    * **אנימציית טעינה:** `#schedule-loader-container`.
 
+10. **לשונית מידע והמלצות (Guide & Recommendations Tab):**
+    * **כרטיסיית הלשונית:** `#guide-card`.
+    * **סרגל בחירת אזור:** `#guide-pills-nav`.
+    * **כפתורי אזורים:** `#guide-pill-jerusalem`, `#guide-pill-telaviv`, `#guide-pill-essentials`.
+    * **אזור תוכן המדריך:** `#guide-content-area`.
+    * **מיכל המתנה (לפני אישור):** `#guide-pending-container`.
+    * **אנימציית טעינה:** `#guide-loader`.
+    * **אקורדיון קטגוריה:** `.guide-category-accordion` (רכיב `<details>` עם התנהגות בלעדית - פתיחת אחד סוגרת את השאר).
+    * **שורת כותרת קטגוריה:** `.guide-category-summary` (כולל אייקון, כותרת עם גלישת שורות בטוחה, מונה פריטים וחץ מסתובב).
+    * **רשימת כרטיסיות המלצה:** `.guide-cards-list`.
+    * **כרטיסיית המלצה בודדת:** `.guide-item-card` (פתוחה לחלוטין ללא קיפול פנימי נוסף).
+    * **חלק תוכן מרכזי:** `.guide-item-main` (שם המקום `.guide-item-name`, תגית `.guide-item-tag`, תיאור `.guide-item-desc`, כתובת ומפה `.guide-item-address`).
+    * **כפתור פעולה חכם:** `.guide-map-btn` (דינמי: מציג מלל היפרלינק מותאם אישית או `Maps`, עם אייקון תואם ומגבלת רוחב למניעת שבירה).
+
+
