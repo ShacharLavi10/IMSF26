@@ -1916,6 +1916,110 @@ let currentGuestEmail = "";
       return '📍';
     }
 
+    function resolveGuideItemLink(item, defaultCity) {
+      let url = (item.link || '').trim();
+      let label = (item.linkLabel || '').trim();
+
+      // Client-side fallback if label was not pre-parsed by backend
+      if (!label && url) {
+        const md = url.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+        if (md) {
+          label = md[1].trim();
+          url = md[2].trim();
+        } else {
+          const html = url.match(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/i);
+          if (html) {
+            url = html[1].trim();
+            label = html[2].replace(/<[^>]+>/g, '').trim();
+          } else {
+            const urlM = url.match(/(https?:\/\/[^\s]+)/i);
+            if (urlM) {
+              const found = urlM[1].trim();
+              const rest = url.replace(found, '').replace(/^[-–—:\s()]+|[-–—:\s()]+$/g, '').trim();
+              if (rest) {
+                url = found;
+                label = rest;
+              }
+            }
+          }
+        }
+      }
+
+      if (label) {
+        const lLower = label.toLowerCase();
+        if (label === url || lLower.startsWith('http://') || lLower.startsWith('https://') || lLower.startsWith('www.')) {
+          label = '';
+        }
+      }
+
+      // If no URL but has address or venue name in Jerusalem/Tel Aviv, generate Google Maps query
+      if (!url && (item.address || (item.name && defaultCity && defaultCity !== 'essentials'))) {
+        const cityNameStr = (defaultCity === 'jerusalem' ? 'Jerusalem' : (defaultCity === 'telaviv' ? 'Tel Aviv' : ''));
+        const query = [item.name, item.address, cityNameStr, 'Israel'].filter(Boolean).join(', ');
+        url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+      }
+
+      // Rule: If custom text with link is present -> use it. If only raw link -> display "Maps".
+      const isCustom = Boolean(label);
+      const btnLabel = isCustom ? label : 'Maps';
+
+      return { url, btnLabel, isCustom };
+    }
+
+    function renderGuideItemCards(catItems, defaultCity) {
+      return catItems.map(item => {
+        const { url, btnLabel, isCustom } = resolveGuideItemLink(item, defaultCity);
+
+        let btnHtml = '';
+        if (url) {
+          let href = url;
+          if (!href.startsWith('http://') && !href.startsWith('https://')) {
+            href = 'https://' + href;
+          }
+
+          const isMap = !isCustom || btnLabel.toLowerCase().includes('map');
+          const iconSvg = isMap
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+               </svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+               </svg>`;
+
+          btnHtml = `
+            <div class="guide-item-side">
+              <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="guide-map-btn" title="${escapeHtml(btnLabel)}">
+                ${iconSvg}
+                <span>${escapeHtml(btnLabel)}</span>
+              </a>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="guide-item-card fade-up">
+            <div class="guide-item-main">
+              <div class="guide-item-header">
+                <span class="guide-item-name" dir="auto">${escapeHtml(item.name || '')}</span>
+                ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
+              </div>
+              ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
+              ${item.address ? `
+                <div class="guide-item-address" dir="auto">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>${escapeHtml(item.address)}</span>
+                </div>
+              ` : ''}
+            </div>
+            ${btnHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
     function renderGuideCityContent(city) {
       const container = document.getElementById('guide-content-area');
       if (!container) return;
@@ -1958,7 +2062,7 @@ let currentGuestEmail = "";
         const catIcon = getGuideCategoryIcon(catName);
 
         html += `
-          <details class="guide-category-accordion">
+          <details class="guide-category-accordion" name="guide-category">
             <summary class="guide-category-summary">
               <div class="guide-category-info">
                 <span class="guide-category-icon">${catIcon}</span>
@@ -1975,47 +2079,7 @@ let currentGuestEmail = "";
             </summary>
             <div class="guide-category-content">
               <div class="guide-cards-list">
-        `;
-
-        catItems.forEach(item => {
-          let mapUrl = item.link ? item.link.trim() : '';
-          if (!mapUrl.startsWith('http')) {
-            const cityNameStr = (city === 'jerusalem' ? 'Jerusalem' : 'Tel Aviv');
-            const query = [item.name, item.address, cityNameStr, 'Israel'].filter(Boolean).join(', ');
-            mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-          }
-
-          html += `
-            <div class="guide-item-card fade-up">
-              <div class="guide-item-main">
-                <div class="guide-item-header">
-                  <span class="guide-item-name" dir="auto">${escapeHtml(item.name)}</span>
-                  ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
-                </div>
-                ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
-                ${item.address ? `
-                  <div class="guide-item-address" dir="auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>${escapeHtml(item.address)}</span>
-                  </div>
-                ` : ''}
-              </div>
-              <div class="guide-item-side">
-                <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="guide-map-btn" title="Open in Google Maps">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                  <span>Maps</span>
-                </a>
-              </div>
-            </div>
-          `;
-        });
-
-        html += `
+                ${renderGuideItemCards(catItems, city)}
               </div>
             </div>
           </details>
@@ -2026,31 +2090,37 @@ let currentGuestEmail = "";
     }
 
     function renderEssentialsContent(items, container) {
-      const actionItems = [];
-      const faqItems = [];
-
+      // Group by Category (Q&A, Apps & Transit, Payments, etc.)
+      const categories = {};
       items.forEach(item => {
-        const catLower = (item.category || "").toLowerCase();
-        const tagLower = (item.tag || "").toLowerCase();
-        if (catLower.includes('faq') || catLower.includes('q&a') || catLower.includes('שאלה') || tagLower.includes('faq')) {
-          faqItems.push(item);
-        } else {
-          actionItems.push(item);
+        let cat = (item.category || '').trim();
+        if (!cat) {
+          const tagLower = (item.tag || '').toLowerCase();
+          const nameLower = (item.name || '').toLowerCase();
+          if (tagLower.includes('faq') || tagLower.includes('q&a') || nameLower.includes('faq') || nameLower.includes('q&a')) {
+            cat = 'Q&A';
+          } else {
+            cat = 'Essential Apps & Services';
+          }
         }
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(item);
       });
 
-      let html = '<div class="guide-essentials-wrapper">';
+      let html = '<div class="guide-sections-wrapper">';
+      Object.keys(categories).forEach(catName => {
+        const catItems = categories[catName];
+        const catIcon = getGuideCategoryIcon(catName);
 
-      if (actionItems.length > 0) {
         html += `
-          <details class="guide-category-accordion">
+          <details class="guide-category-accordion" name="guide-category">
             <summary class="guide-category-summary">
               <div class="guide-category-info">
-                <span class="guide-category-icon">📱</span>
-                <span class="guide-category-title">Essential Apps & Services</span>
+                <span class="guide-category-icon">${catIcon}</span>
+                <span class="guide-category-title">${escapeHtml(catName)}</span>
               </div>
               <div class="guide-category-meta">
-                <span class="guide-category-badge">${actionItems.length}</span>
+                <span class="guide-category-badge">${catItems.length}</span>
                 <span class="guide-category-chevron">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
@@ -2060,126 +2130,49 @@ let currentGuestEmail = "";
             </summary>
             <div class="guide-category-content">
               <div class="guide-cards-list">
-        `;
-        actionItems.forEach(item => {
-          let btnLabel = "Open";
-          const lowerName = (item.name || "").toLowerCase();
-          const lowerCat = (item.category || "").toLowerCase();
-          if (lowerCat.includes('taxi') || lowerName.includes('gett') || lowerName.includes('yango') || lowerName.includes('מוניות')) {
-            btnLabel = "Taxi App";
-          } else if (lowerCat.includes('transit') || lowerName.includes('moovit') || lowerName.includes('hopon')) {
-            btnLabel = "Transit";
-          } else if (lowerCat.includes('pay') || lowerName.includes('pay') || lowerCat.includes('תשלום')) {
-            btnLabel = "Pay";
-          } else if (lowerCat.includes('rsvp') || lowerName.includes('rsvp') || lowerCat.includes('אישור')) {
-            btnLabel = "RSVP";
-          }
-
-          let linkHtml = '';
-          if (item.link && item.link.trim() !== '') {
-            let href = item.link.trim();
-            if (!href.startsWith('http')) href = 'https://' + href;
-            linkHtml = `
-              <div class="guide-item-side">
-                <a href="${href}" target="_blank" rel="noopener noreferrer" class="guide-action-btn">
-                  <span>${btnLabel}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
-            `;
-          }
-
-          html += `
-            <div class="guide-item-card fade-up">
-              <div class="guide-item-main">
-                <div class="guide-item-header">
-                  <span class="guide-item-name" dir="auto">${escapeHtml(item.name)}</span>
-                  ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
-                </div>
-                ${item.description ? `<p class="guide-item-desc" dir="auto">${escapeHtml(item.description)}</p>` : ''}
-                ${item.address ? `
-                  <div class="guide-item-address" dir="auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>${escapeHtml(item.address)}</span>
-                  </div>
-                ` : ''}
-              </div>
-              ${linkHtml}
-            </div>
-          `;
-        });
-        html += `
+                ${renderGuideItemCards(catItems, 'essentials')}
               </div>
             </div>
           </details>
         `;
-      }
-
-      if (faqItems.length > 0) {
-        html += `
-          <details class="guide-category-accordion">
-            <summary class="guide-category-summary">
-              <div class="guide-category-info">
-                <span class="guide-category-icon">💡</span>
-                <span class="guide-category-title">Need to Know & FAQs</span>
-              </div>
-              <div class="guide-category-meta">
-                <span class="guide-category-badge">${faqItems.length}</span>
-                <span class="guide-category-chevron">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </div>
-            </summary>
-            <div class="guide-category-content">
-              <div class="guide-cards-list">
-        `;
-        faqItems.forEach((faq) => {
-          let linkHtml = '';
-          if (faq.link && faq.link.trim() !== '') {
-            let href = faq.link.trim();
-            if (!href.startsWith('http')) href = 'https://' + href;
-            linkHtml = `
-              <div style="margin-top: 10px;">
-                <a href="${href}" target="_blank" rel="noopener noreferrer" class="guide-action-btn" style="display: inline-flex; width: auto; padding: 6px 14px; font-size: 0.8rem;">
-                  <span>More Info</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              </div>
-            `;
-          }
-
-          html += `
-            <details class="guide-faq-item fade-up">
-              <summary class="guide-faq-question">
-                <span dir="auto">${escapeHtml(faq.name)}</span>
-                <span class="faq-chevron">▾</span>
-              </summary>
-              <div class="guide-faq-answer">
-                <p dir="auto">${escapeHtml(faq.description)}</p>
-                ${linkHtml}
-              </div>
-            </details>
-          `;
-        });
-        html += `
-              </div>
-            </div>
-          </details>
-        `;
-      }
-
+      });
       html += '</div>';
       container.innerHTML = html;
     }
+
+    // Exclusive accordion: only one category can be open at a time (Desktop & Mobile)
+    document.addEventListener('click', function(e) {
+      const summary = e.target.closest('.guide-category-summary');
+      if (!summary) return;
+      const acc = summary.closest('details.guide-category-accordion');
+      if (!acc) return;
+
+      if (!acc.open) {
+        const container = acc.closest('#guide-content-area') || acc.parentElement;
+        if (container) {
+          container.querySelectorAll('details.guide-category-accordion[open]').forEach(other => {
+            if (other !== acc) {
+              other.removeAttribute('open');
+            }
+          });
+        }
+      }
+    });
+
+    document.addEventListener('toggle', function(e) {
+      const acc = e.target;
+      if (!acc || !acc.classList || !acc.classList.contains('guide-category-accordion')) return;
+      if (acc.open) {
+        const container = acc.closest('#guide-content-area') || acc.parentElement;
+        if (container) {
+          container.querySelectorAll('details.guide-category-accordion[open]').forEach(other => {
+            if (other !== acc) {
+              other.removeAttribute('open');
+            }
+          });
+        }
+      }
+    }, true);
     /* ========================================================= */
     /* ARTISTS UI LOGIC                                          */
     /* ========================================================= */
@@ -4610,7 +4603,7 @@ function handleAdminResetCache() {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('swr_') || key.startsWith('lastSeenUpdatesHash_'))) {
+      if (key && (key.startsWith('swr_') || key.startsWith('lastSeenUpdatesHash_') || key.startsWith('imsf_'))) {
         keysToRemove.push(key);
       }
     }
