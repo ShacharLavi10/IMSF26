@@ -2965,7 +2965,14 @@ function renderAdminDashboard() {
   const hHotel = headers.indexOf("התקבל טופס אירוח?");
   const hFlight = headers.indexOf("התקבל טופס טיסות?");
   const hPassport = headers.indexOf("יש תמונת דרכון?");
-  const hRole = headers.indexOf("תפקיד");
+  let hRole = headers.indexOf("תפקיד");
+  if (hRole === -1) hRole = headers.indexOf("role");
+  let hEmail = headers.indexOf("מייל אורח");
+  if (hEmail === -1) hEmail = headers.indexOf("email");
+  let hFirstName = headers.indexOf("שם פרטי");
+  if (hFirstName === -1) hFirstName = headers.indexOf("first name");
+  let hLastName = headers.indexOf("שם משפחה");
+  if (hLastName === -1) hLastName = headers.indexOf("last name");
   
   let totalGuests = 0;
   let missingHotel = 0;
@@ -2974,10 +2981,18 @@ function renderAdminDashboard() {
   
   for (let i = 1; i < guests.length; i++) {
     const row = guests[i];
-    if (!row[headers.indexOf("שם פרטי")] && !row[headers.indexOf("שם משפחה")]) continue; // Skip empty
+    const fname = hFirstName !== -1 ? String(row[hFirstName] || "").trim() : "";
+    const lname = hLastName !== -1 ? String(row[hLastName] || "").trim() : "";
+    const email = hEmail !== -1 ? String(row[hEmail] || "").trim() : "";
+    const role = hRole !== -1 ? String(row[hRole] || "").trim() : "";
+
+    // Skip empty names
+    if (!fname && !lname) continue;
+    // Skip empty emails (only delegates with an email)
+    if (!email) continue;
     
     // Ignore admins
-    if (hRole !== -1 && String(row[hRole]).trim() === "הפקה חשיפה") continue;
+    if (role === "הפקה חשיפה") continue;
     
     totalGuests++;
     
@@ -3248,7 +3263,7 @@ function getResolvedGuestsNetworkingList() {
       const fname = fnIdx !== -1 ? String(row[fnIdx] || "").trim() : "";
       const lname = lnIdx !== -1 ? String(row[lnIdx] || "").trim() : "";
       const fullName = `${fname} ${lname}`.trim();
-      if (!fullName && !email) continue;
+      if (!fullName || !email) continue;
 
       if (prefMap.has(email)) {
         result.push(prefMap.get(email));
@@ -3973,10 +3988,16 @@ function filterAdminGuests(query) {
   
   const q = query.toLowerCase().trim();
   const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
-  const firstNameIdx = headers.indexOf("שם פרטי");
-  const lastNameIdx = headers.indexOf("שם משפחה");
-  const emailIdx = headers.indexOf("מייל אורח");
-  const companyIdx = headers.indexOf("שם חברה");
+  let firstNameIdx = headers.indexOf("שם פרטי");
+  if (firstNameIdx === -1) firstNameIdx = headers.indexOf("first name");
+  let lastNameIdx = headers.indexOf("שם משפחה");
+  if (lastNameIdx === -1) lastNameIdx = headers.indexOf("last name");
+  let emailIdx = headers.indexOf("מייל אורח");
+  if (emailIdx === -1) emailIdx = headers.indexOf("email");
+  let roleIdx = headers.indexOf("תפקיד");
+  if (roleIdx === -1) roleIdx = headers.indexOf("role");
+  let companyIdx = headers.indexOf("שם חברה");
+  if (companyIdx === -1) companyIdx = headers.indexOf("company");
   const hHotel = headers.indexOf("התקבל טופס אירוח?");
   
   let html = "";
@@ -3984,15 +4005,21 @@ function filterAdminGuests(query) {
   
   for (let i = 1; i < adminData.guests.length; i++) {
     const row = adminData.guests[i];
-    const fname = String(row[firstNameIdx] || "");
-    const lname = String(row[lastNameIdx] || "");
-    const email = String(row[emailIdx] || "");
-    const company = String(row[companyIdx] || "");
+    const fname = firstNameIdx !== -1 ? String(row[firstNameIdx] || "").trim() : "";
+    const lname = lastNameIdx !== -1 ? String(row[lastNameIdx] || "").trim() : "";
+    const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim() : "";
+    const role = roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "";
+    const company = companyIdx !== -1 ? String(row[companyIdx] || "").trim() : "";
+
+    // Same filter as the Guests tab (Directory):
+    // Must have a name, must have an email, and role must not be "הפקה חשיפה"
     if (!fname && !lname) continue;
+    if (!email) continue;
+    if (role === "הפקה חשיפה") continue;
     
-    const fullName = fname + " " + lname;
+    const fullName = (fname + " " + lname).trim();
     
-    if (fullName.toLowerCase().includes(q) || email.toLowerCase().includes(q) || company.toLowerCase().includes(q)) {
+    if (!q || fullName.toLowerCase().includes(q) || email.toLowerCase().includes(q) || company.toLowerCase().includes(q)) {
       
       const hasHotel = hHotel !== -1 && (row[hHotel] === true || String(row[hHotel]).toLowerCase() === 'true');
       const statusDot = hasHotel ? '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; margin-right:6px;" title="All Good"></span>' : '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b; margin-right:6px;" title="Missing Forms"></span>';
