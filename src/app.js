@@ -2486,7 +2486,7 @@ let currentGuestEmail = "";
 
     function fetchArtistsData() {
       const grid = document.getElementById('artists-grid');
-      const cacheKey = 'swr_artistsData_v3';
+      const cacheKey = 'swr_artistsData_v4';
       
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -2664,6 +2664,38 @@ let currentGuestEmail = "";
       if (genreElem) {
         genreElem.innerText = artist.genre || "";
         genreElem.style.display = artist.genre ? "block" : "none";
+      }
+
+      const contactElem = document.getElementById('sheet-artist-contact');
+      if (contactElem) {
+        const contactName = (artist.contactName || "").trim();
+        const rawEmail = (artist.contactEmail || "").trim();
+        contactElem.innerHTML = "";
+
+        const emails = rawEmail ? rawEmail.split(/[\r\n,;]+/).map(e => e.trim()).filter(Boolean) : [];
+
+        if (contactName || emails.length > 0) {
+          contactElem.appendChild(document.createTextNode("Contact: "));
+          if (contactName) {
+            contactElem.appendChild(document.createTextNode(contactName));
+            if (emails.length > 0) {
+              contactElem.appendChild(document.createTextNode(" - "));
+            }
+          }
+          emails.forEach((email, idx) => {
+            if (idx > 0) {
+              contactElem.appendChild(document.createTextNode(", "));
+            }
+            const link = document.createElement("a");
+            link.href = "mailto:" + email;
+            link.className = "sheet-contact-email";
+            link.textContent = email;
+            contactElem.appendChild(link);
+          });
+          contactElem.style.display = "block";
+        } else {
+          contactElem.style.display = "none";
+        }
       }
 
       document.getElementById('sheet-artist-bio').innerText = artist.bio;
@@ -4514,7 +4546,7 @@ function triggerBackgroundRefresh() {
       google.script.run
         .withSuccessHandler(function(res) {
           if (res && res.success && res.artists) {
-            localStorage.setItem('swr_artistsData_v3', JSON.stringify(res.artists));
+            localStorage.setItem('swr_artistsData_v4', JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
             initArtistsUI();
           }

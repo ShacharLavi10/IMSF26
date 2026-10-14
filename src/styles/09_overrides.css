@@ -439,6 +439,23 @@ img {
   font-size: 0.85rem;
   font-weight: 600;
 }
+.sheet-contact {
+  display: none;
+  margin-top: 5px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #cbd5e1;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.sheet-contact-email {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.sheet-contact-email:hover {
+  opacity: 0.8;
+}
 
 .sheet-section {
   margin-bottom: 16px;
@@ -471,6 +488,9 @@ body.light-mode .sheet-title-row {
 }
 body.light-mode .sheet-genre {
   color: #d97706;
+}
+body.light-mode .sheet-contact {
+  color: #1e293b;
 }
 body.light-mode .sheet-section {
   background: #f8fafc;

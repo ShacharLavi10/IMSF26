@@ -4,7 +4,7 @@ function getArtistsData(forceRefresh) {
     if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'global_artists_data_' + ssId;
+    const cacheKey = 'global_artists_data_v2_' + ssId;
     
     if (!forceRefresh) {
       const cached = cache.get(cacheKey);
@@ -14,8 +14,9 @@ function getArtistsData(forceRefresh) {
     }
     
     const ss = SpreadsheetApp.openById(ssId);
-    const sheet = (CONFIG.ARTISTS_SHEET_NAME && ss.getSheetByName(CONFIG.ARTISTS_SHEET_NAME)) || 
+    const sheet = ss.getSheetByName("בשיקוף! - מידע אומנים") || 
                   ss.getSheetByName("שיקוף! - מידע אומנים") || 
+                  (CONFIG.ARTISTS_SHEET_NAME && ss.getSheetByName(CONFIG.ARTISTS_SHEET_NAME)) || 
                   ss.getSheetByName("מידע אומנים") || 
                   ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
@@ -34,6 +35,14 @@ function getArtistsData(forceRefresh) {
     const idxYoutube1 = headers.indexOf("קישור YouTube 1");
     const idxYoutube2 = headers.indexOf("קישור YouTube 2");
     const idxGenre = headers.findIndex(h => h === "ז'אנר" || h === "ז׳אנר" || h.includes("ז'אנר") || h.includes("ז׳אנר") || h.toLowerCase() === "genre");
+    let idxContactName = headers.indexOf("איש/אשת קשר באנגלית");
+    if (idxContactName < 0) {
+      idxContactName = headers.findIndex(h => h.includes("איש/אשת קשר באנגלית") || (h.toLowerCase().includes("contact") && !h.toLowerCase().includes("email")));
+    }
+    if (idxContactName < 0) {
+      idxContactName = headers.findIndex(h => h.includes("איש/אשת קשר") || h.includes("איש קשר"));
+    }
+    const idxContactEmail = headers.findIndex(h => h === "דוא״ל" || h === "דוא\"ל" || h === "דוא'ל" || h.includes("דוא") || h.toLowerCase() === "email" || h.toLowerCase().includes("email"));
     
     const artists = [];
     
@@ -54,6 +63,8 @@ function getArtistsData(forceRefresh) {
         id: "artist_" + i,
         name: name,
         genre: idxGenre >= 0 ? String(row[idxGenre]).trim() : "",
+        contactName: idxContactName >= 0 ? String(row[idxContactName]).trim() : "",
+        contactEmail: idxContactEmail >= 0 ? String(row[idxContactEmail]).trim() : "",
         image: imageUrl,
         bio: idxBioEn >= 0 ? String(row[idxBioEn]).trim() : "",
         members: idxMembersEn >= 0 ? String(row[idxMembersEn]).trim() : "",
