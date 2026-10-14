@@ -86,11 +86,10 @@ let currentGuestEmail = "";
         if (t === 'guide' && tabName === 'guide') {
           const isPending = document.getElementById('guide-pending-container') && document.getElementById('guide-pending-container').style.display === 'block';
           if (!isPending) {
-            if (!guideDataCache) {
-              fetchGuideData();
-            } else {
+            if (guideDataCache) {
               renderGuideCityContent(currentGuideCity);
             }
+            fetchGuideData();
           }
         }
         if (t === 'artists' && tabName === 'artists') {
@@ -468,8 +467,18 @@ let currentGuestEmail = "";
         if (guidePills) guidePills.style.display = "flex";
         if (guideContainer) guideContainer.style.display = "block";
         if (guidePending) guidePending.style.display = "none";
-        if (response.guideData) {
-          initGuide(response.guideData);
+        
+        let validGuideData = response.guideData;
+        if (validGuideData && validGuideData.items) {
+          const links = validGuideData.items.filter(it => it.link);
+          const hasLabels = links.some(it => typeof it.linkLabel !== 'undefined');
+          if (links.length > 0 && !hasLabels) {
+            validGuideData = null;
+          }
+        }
+
+        if (validGuideData) {
+          initGuide(validGuideData);
         } else {
           fetchGuideData();
         }
@@ -1859,15 +1868,28 @@ let currentGuestEmail = "";
       } else {
         const cached = localStorage.getItem('imsf_guide_cache');
         if (cached) {
-          try { guideDataCache = JSON.parse(cached); } catch(e) {}
+          try {
+            const parsed = JSON.parse(cached);
+            const items = parsed && parsed.items ? parsed.items : [];
+            const itemsWithLinks = items.filter(it => it.link);
+            const hasLabels = itemsWithLinks.some(it => typeof it.linkLabel !== 'undefined');
+            if (itemsWithLinks.length > 0 && !hasLabels) {
+              localStorage.removeItem('imsf_guide_cache');
+              guideDataCache = null;
+            } else {
+              guideDataCache = parsed;
+            }
+          } catch(e) {}
         }
       }
-      renderGuideCityContent(currentGuideCity);
+      if (guideDataCache) {
+        renderGuideCityContent(currentGuideCity);
+      }
     }
 
     function fetchGuideData() {
       const loader = document.getElementById('guide-loader');
-      if (loader) loader.style.display = 'flex';
+      if (!guideDataCache && loader) loader.style.display = 'flex';
       
       google.script.run
         .withSuccessHandler(function(res) {
@@ -1940,6 +1962,9 @@ let currentGuestEmail = "";
                 url = found;
                 label = rest;
               }
+            } else if (!url.includes('.') && !url.includes('/')) {
+              label = url;
+              url = '';
             }
           }
         }
