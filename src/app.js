@@ -1543,6 +1543,22 @@ let currentGuestEmail = "";
     /* ================= LIVE UPDATES ================= */
     let updatesPollingInterval = null;
     let knownUpdateCount = 0;
+    let cachedUpdatesList = [];
+    let hasPromptedUnreadModal = false;
+
+    function getDismissedUpdates() {
+      if (!currentGuestEmail) return [];
+      try {
+        return JSON.parse(localStorage.getItem('dismissedUpdates_' + currentGuestEmail) || '[]');
+      } catch(e) { return []; }
+    }
+
+    function getReadUpdates() {
+      if (!currentGuestEmail) return [];
+      try {
+        return JSON.parse(localStorage.getItem('readUpdates_' + currentGuestEmail) || '[]');
+      } catch(e) { return []; }
+    }
 
     function toggleUpdatesPanel(isHashChange) {
       const panel = document.getElementById("updates-panel");
@@ -1553,13 +1569,15 @@ let currentGuestEmail = "";
         panel.style.left = "0px";
         overlay.style.display = "block";
         setTimeout(() => overlay.style.opacity = "1", 10);
-        document.getElementById("notification-badge").style.display = "none";
-        document.getElementById("notification-bell-container").classList.remove("has-new");
         
-        // Mark as read
-        if (window.currentUpdatesHash) {
-          localStorage.setItem('lastSeenUpdatesHash_' + currentGuestEmail, window.currentUpdatesHash);
-        }
+        // Hide badge and pulse
+        const badge = document.getElementById("notification-badge");
+        if (badge) badge.style.display = "none";
+        const bell = document.getElementById("notification-bell-container");
+        if (bell) bell.classList.remove("has-new");
+        
+        // Mark all active updates as read
+        markAllUpdatesAsRead();
         
         window.location.hash = "updates";
       } else {
@@ -1571,6 +1589,62 @@ let currentGuestEmail = "";
           history.back();
         }
       }
+    }
+
+    function markAllUpdatesAsRead() {
+      if (!currentGuestEmail || !cachedUpdatesList.length) return;
+      const readSet = new Set(getReadUpdates());
+      cachedUpdatesList.forEach(u => {
+        if (u.id) readSet.add(u.id);
+      });
+      localStorage.setItem('readUpdates_' + currentGuestEmail, JSON.stringify(Array.from(readSet)));
+      
+      // Also hide unread badge on bell
+      const badge = document.getElementById("notification-badge");
+      if (badge) badge.style.display = "none";
+      const bell = document.getElementById("notification-bell-container");
+      if (bell) bell.classList.remove("has-new");
+    }
+
+    function openNewMessagePanel() {
+      closeNewMessageModal();
+      toggleUpdatesPanel();
+    }
+
+    function closeNewMessageModal() {
+      const overlay = document.getElementById("new-message-modal-overlay");
+      if (overlay) overlay.style.display = "none";
+      if (currentGuestEmail) {
+        sessionStorage.setItem('dismissedPopupForSession_' + currentGuestEmail, 'true');
+      }
+    }
+
+    function checkAndShowUnreadModal(unreadUpdates) {
+      if (!unreadUpdates || unreadUpdates.length === 0) return;
+      if (!currentGuestEmail) return;
+      
+      // Don't show if user already dismissed the popup in this browser session
+      if (sessionStorage.getItem('dismissedPopupForSession_' + currentGuestEmail) === 'true') {
+        return;
+      }
+      
+      const overlay = document.getElementById("new-message-modal-overlay");
+      if (!overlay) return;
+      
+      const titleEl = document.getElementById("new-message-modal-title");
+      const textEl = document.getElementById("new-message-modal-text");
+      
+      const hasPersonal = unreadUpdates.some(u => u.type === 'personal');
+      if (hasPersonal) {
+        if (titleEl) titleEl.innerText = "You Have a Personal Message";
+        if (textEl) textEl.innerText = "The festival team sent you a personal update. Tap READ to view it in your notifications.";
+      } else {
+        if (titleEl) titleEl.innerText = "You Have a New Message";
+        if (textEl) textEl.innerText = "A new festival announcement has arrived. Tap READ to view it in your notifications.";
+      }
+      
+      overlay.style.display = "flex";
+      hasPromptedUnreadModal = true;
     }
 
     function startLiveUpdatesPolling() {
@@ -1590,34 +1664,77 @@ let currentGuestEmail = "";
         .getLiveUpdates(localStorage.getItem('guestSessionToken'));
     }
 
-    function renderUpdates(updates) {
-      document.getElementById("notification-bell-container").style.display = "flex";
-      const body = document.getElementById("updates-body");
-      
-      const currentHash = JSON.stringify(updates);
-      window.currentUpdatesHash = currentHash;
-      const storedHash = localStorage.getItem('lastSeenUpdatesHash_' + currentGuestEmail);
-      
-      if (updates.length > 0 && currentHash !== storedHash) {
-        document.getElementById("notification-badge").style.display = "inline-block";
-        document.getElementById("notification-bell-container").classList.add("has-new");
+    function dismissUpdate(updateId) {
+      if (!currentGuestEmail || !updateId) return;
+      const dismissed = getDismissedUpdates();
+      if (!dismissed.includes(updateId)) {
+        dismissed.push(updateId);
+        localStorage.setItem('dismissedUpdates_' + currentGuestEmail, JSON.stringify(dismissed));
       }
       
-      if (updates.length === 0) {
-        body.innerHTML = `<p class="empty-state" style="text-align: center; margin-top: 40px;">No new updates at this time.</p>`;
+      // Re-filter cached updates and re-render
+      renderUpdates(cachedUpdatesList, true);
+    }
+
+    function renderUpdates(updates, isDismissAction) {
+      const bellContainer = document.getElementById("notification-bell-container");
+      if (bellContainer) bellContainer.style.display = "flex";
+      const body = document.getElementById("updates-body");
+      if (!body) return;
+      
+      cachedUpdatesList = updates || [];
+      
+      // Filter out dismissed
+      const dismissedIds = getDismissedUpdates();
+      const activeUpdates = (updates || []).map(u => {
+        if (!u.id) {
+          u.id = u.type + '_' + (u.rowIndex || (u.message || '').slice(0, 25).replace(/\s+/g, '_'));
+        }
+        return u;
+      }).filter(u => !dismissedIds.includes(u.id));
+      
+      // Check unread
+      const readIds = getReadUpdates();
+      const unreadUpdates = activeUpdates.filter(u => !readIds.includes(u.id));
+      
+      const badge = document.getElementById("notification-badge");
+      if (unreadUpdates.length > 0) {
+        if (badge) badge.style.display = "inline-block";
+        if (bellContainer) bellContainer.classList.add("has-new");
+        if (!isDismissAction) {
+          checkAndShowUnreadModal(unreadUpdates);
+        }
+      } else {
+        if (badge) badge.style.display = "none";
+        if (bellContainer) bellContainer.classList.remove("has-new");
+      }
+      
+      if (activeUpdates.length === 0) {
+        body.innerHTML = `<p class="empty-state" style="text-align: center; margin-top: 40px; color: var(--foreground-muted);">No new updates at this time.</p>`;
         return;
       }
       
       let html = "";
-      updates.forEach(u => {
+      activeUpdates.forEach(u => {
         const isPersonal = u.type === 'personal';
+        const isUnread = !readIds.includes(u.id);
+        const safeId = String(u.id).replace(/'/g, "\\'");
+        
         html += `
-          <div class="update-msg ${isPersonal ? 'personal' : ''}">
+          <div class="update-msg ${isPersonal ? 'personal' : ''}" id="update-msg-${safeId}">
             <div class="update-msg-header">
-              ${isPersonal 
-                ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> Private Message' 
-                : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg> Announcement'}
-              <span class="update-msg-time">${u.timestampStr}</span>
+              <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                ${isPersonal 
+                  ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> <span>Private Message</span>' 
+                  : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg> <span>Announcement</span>'}
+                ${isUnread ? '<span class="update-msg-new-badge">NEW</span>' : ''}
+              </div>
+              <span class="update-msg-time">${u.timestampStr || ''}</span>
+              <button class="update-msg-dismiss-btn" title="Remove notification" onclick="dismissUpdate('${safeId}')" aria-label="Dismiss">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
             </div>
             <div class="update-msg-text">${u.message}</div>
           </div>
@@ -1625,6 +1742,10 @@ let currentGuestEmail = "";
       });
       body.innerHTML = html;
     }
+
+    window.openNewMessagePanel = openNewMessagePanel;
+    window.closeNewMessageModal = closeNewMessageModal;
+    window.dismissUpdate = dismissUpdate;
 
     /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
@@ -3081,37 +3202,67 @@ function renderAdminDashboard() {
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-            <!-- Alert Center -->
-            <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1.5px solid var(--border);">
-              <h4 style="margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                Live Alert Center
+          <!-- Alert Center (Full-Width 2-Column Responsive Card) -->
+          <div style="background: var(--surface); padding: 18px; border-radius: 12px; border: 1.5px solid var(--border); margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <h4 style="margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; color: var(--foreground);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Live Alert Center (Announcements for All Delegates)
               </h4>
-              <p style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px;">Send a push notification to all delegates. (Will appear in their updates bell).</p>
-              <textarea id="admin-alert-msg" placeholder="Type your announcement here..." style="width: 100%; height: 75px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); margin-bottom: 10px; resize: none; font-family: inherit; box-sizing: border-box;"></textarea>
-              <button class="primary" style="width: 100%; justify-content: center;" onclick="sendAdminAlert()">Send Global Alert</button>
             </div>
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin: 0 0 14px 0;">Post and manage announcements shown in all delegates' notification panels.</p>
             
-            <!-- Logistics -->
-            <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1.5px solid var(--border);">
-              <h4 style="margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                Logistics Summary
-              </h4>
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
-                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Tel Aviv Hotel</span>
-                  <span style="font-weight: 600; font-size: 0.9rem;">${hotelTlvCount} Nights</span>
+            <div class="admin-msg-split-grid">
+              <!-- Left: Compose & Send / Update -->
+              <div style="display: flex; flex-direction: column;">
+                <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--foreground-muted);">
+                  <span id="admin-alert-mode-label">Compose Global Announcement</span>
+                </label>
+                <textarea id="admin-alert-msg" placeholder="Type announcement for all delegates..." style="width: 100%; height: 90px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); margin-bottom: 10px; resize: vertical; font-family: inherit; box-sizing: border-box;"></textarea>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <button id="admin-alert-submit-btn" class="primary" style="padding: 7px 16px; font-size: 0.85rem; border-radius: 6px; width: auto;" onclick="submitAdminAlert()">
+                    Send Global Alert
+                  </button>
+                  <button id="admin-alert-cancel-btn" class="secondary" style="padding: 7px 12px; font-size: 0.85rem; border-radius: 6px; width: auto; display: none;" onclick="cancelEditAdminAlert()">
+                    Cancel
+                  </button>
+                  <div id="admin-alert-status" style="font-size: 0.85rem; display: none;"></div>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
-                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Jerusalem Hotel</span>
-                  <span style="font-weight: 600; font-size: 0.9rem;">${hotelJlmCount} Nights</span>
+              </div>
+
+              <!-- Right: Active Announcements List -->
+              <div style="display: flex; flex-direction: column; background: var(--background); border: 1px dashed var(--border); border-radius: 8px; padding: 12px; max-height: 250px; overflow-y: auto;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="font-size: 0.8rem; font-weight: 600; color: var(--foreground-muted);">Active Broadcast Announcements</span>
+                  <span id="admin-announcements-count" style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--surface); color: var(--foreground-muted); border: 1px solid var(--border);">
+                    ${(adminData && adminData.announcements && adminData.announcements.length) ? adminData.announcements.length + ' Active' : '0 Active'}
+                  </span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
-                  <span style="color: var(--foreground-muted); font-size: 0.9rem;">Flights Handled</span>
-                  <span style="font-weight: 600; font-size: 0.9rem;">${flightArrivals} Delegates</span>
+                <div id="admin-announcements-list">
+                  <p style="text-align: center; color: var(--foreground-muted); font-size: 0.85rem; margin: 20px 0;">Loading announcements...</p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logistics Summary -->
+          <div style="background: var(--surface); padding: 16px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 10px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              Logistics Summary
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                <span style="color: var(--foreground-muted); font-size: 0.9rem;">Tel Aviv Hotel</span>
+                <span style="font-weight: 600; font-size: 0.9rem;">${hotelTlvCount} Nights</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                <span style="color: var(--foreground-muted); font-size: 0.9rem;">Jerusalem Hotel</span>
+                <span style="font-weight: 600; font-size: 0.9rem;">${hotelJlmCount} Nights</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                <span style="color: var(--foreground-muted); font-size: 0.9rem;">Flights Handled</span>
+                <span style="font-weight: 600; font-size: 0.9rem;">${flightArrivals} Delegates</span>
               </div>
             </div>
           </div>
@@ -3198,6 +3349,7 @@ function renderAdminDashboard() {
   `;
   
   container.innerHTML = html;
+  renderAdminAnnouncementsList(adminData.announcements || []);
   filterAdminGuests("");
   loadAdminNetworkingData(false);
 }
@@ -4438,12 +4590,55 @@ function viewAdminGuestDetails(rowIndex) {
       ${tagsHtml}
     </div>
 
-    <!-- Personal Message -->
-    <div style="background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
-      <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--foreground-muted); letter-spacing: 0.5px;">Personal Portal Message</h4>
-      <textarea id="admin-personal-msg" rows="2" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--background); color:var(--foreground); font-family:inherit; resize:vertical; margin-bottom:8px;" placeholder="Message shown to guest...">${personalMsg}</textarea>
-      <button class="primary" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; width:auto;" onclick="savePersonalMessage('${email}')">Save Message</button>
-      <div id="admin-msg-status" style="font-size:0.8rem; margin-top:4px; display:none;"></div>
+    <!-- Personal Message (2-Column Split) -->
+    <div style="background: var(--surface); padding: 14px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 15px;">
+      <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--foreground); letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        Personal Portal Message
+      </h4>
+      <div class="admin-msg-split-grid">
+        <!-- Left: Compose & Send -->
+        <div style="display: flex; flex-direction: column;">
+          <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--foreground-muted);">Compose Personal Message</label>
+          <textarea id="admin-personal-msg" rows="3" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--background); color:var(--foreground); font-family:inherit; resize:vertical; margin-bottom:8px; box-sizing: border-box;" placeholder="Type personal message for guest..."></textarea>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button id="admin-save-msg-btn" class="primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 6px; width:auto;" onclick="savePersonalMessage('${email}')">
+              ${personalMsg ? 'Update Message' : 'Send Message'}
+            </button>
+            <button id="admin-cancel-edit-msg-btn" class="secondary" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; width:auto; display: none;" onclick="cancelEditPersonalMessage()">
+              Cancel
+            </button>
+            <div id="admin-msg-status" style="font-size:0.8rem; display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Right: Active in Guest Portal -->
+        <div style="display: flex; flex-direction: column; background: var(--background); border: 1px dashed var(--border); border-radius: 8px; padding: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--foreground-muted);">Currently Active for Guest</span>
+            <span id="admin-personal-status-pill" style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; ${personalMsg ? 'background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: var(--surface); color: var(--foreground-muted); border: 1px solid var(--border);'}">
+              ${personalMsg ? 'ACTIVE' : 'NO MESSAGE'}
+            </span>
+          </div>
+          <div id="admin-active-personal-preview" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 60px;">
+            ${personalMsg ? `
+              <div id="admin-current-msg-text" style="font-size: 0.88rem; color: var(--foreground); white-space: pre-wrap; word-break: break-word; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px solid var(--border); line-height: 1.4;">${escapeHtmlAdmin(personalMsg)}</div>
+              <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
+                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; display: flex; align-items: center; gap: 4px;" onclick="loadPersonalMessageForEdit()">
+                  ✏️ Edit
+                </button>
+                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; color: #ef4444; border-color: rgba(239, 68, 68, 0.4); display: flex; align-items: center; gap: 4px;" onclick="deletePersonalMessage('${email}')">
+                  🗑️ Delete
+                </button>
+              </div>
+            ` : `
+              <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--foreground-muted); font-size: 0.85rem; text-align: center; padding: 14px 0;">
+                No active personal message.
+              </div>
+            `}
+          </div>
+        </div>
+      </div>
     </div>
     
     <!-- Flights & Hotels -->
@@ -4501,44 +4696,323 @@ function viewAdminGuestDetails(rowIndex) {
   window.location.hash = "adminsheet";
 }
 
-window.savePersonalMessage = function(guestEmail) {
-  const msg = document.getElementById('admin-personal-msg').value;
+window.loadPersonalMessageForEdit = function() {
+  const currentMsgEl = document.getElementById('admin-current-msg-text');
+  const msgInput = document.getElementById('admin-personal-msg');
+  const saveBtn = document.getElementById('admin-save-msg-btn');
+  const cancelBtn = document.getElementById('admin-cancel-edit-msg-btn');
+  
+  if (currentMsgEl && msgInput) {
+    msgInput.value = currentMsgEl.innerText;
+    msgInput.focus();
+    if (saveBtn) saveBtn.innerText = 'Update Message';
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+  }
+};
+
+window.cancelEditPersonalMessage = function() {
+  const msgInput = document.getElementById('admin-personal-msg');
+  const saveBtn = document.getElementById('admin-save-msg-btn');
+  const cancelBtn = document.getElementById('admin-cancel-edit-msg-btn');
+  
+  if (msgInput) msgInput.value = '';
+  if (saveBtn) saveBtn.innerText = 'Send Message';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+};
+
+window.deletePersonalMessage = function(guestEmail) {
+  if (!confirm("Are you sure you want to delete this personal message? The guest will no longer see it.")) return;
+  savePersonalMessage(guestEmail, "");
+};
+
+window.savePersonalMessage = function(guestEmail, explicitMsg) {
+  const msgInput = document.getElementById('admin-personal-msg');
+  const msg = (explicitMsg !== undefined) ? explicitMsg : (msgInput ? msgInput.value.trim() : '');
   const statusDiv = document.getElementById('admin-msg-status');
-  statusDiv.style.display = 'block';
-  statusDiv.style.color = 'var(--foreground-muted)';
-  statusDiv.innerText = 'Saving...';
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.color = 'var(--foreground-muted)';
+    statusDiv.innerText = 'Saving...';
+  }
   
   google.script.run
     .withSuccessHandler(res => {
       if (res.success) {
-        statusDiv.style.color = '#10b981';
-        statusDiv.innerText = 'Message saved!';
+        if (statusDiv) {
+          statusDiv.style.color = '#10b981';
+          statusDiv.innerText = msg ? 'Message saved!' : 'Message deleted!';
+        }
         
         // Update local adminData cache
-        const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
-        const emailIdx = headers.indexOf("מייל אורח");
-        const msgIdx = headers.indexOf("הודעה אישית בפורטל");
-        if (emailIdx !== -1 && msgIdx !== -1) {
-          for (let i = 1; i < adminData.guests.length; i++) {
-            if (String(adminData.guests[i][emailIdx]).trim().toLowerCase() === guestEmail.toLowerCase()) {
-              adminData.guests[i][msgIdx] = msg;
-              break;
+        if (adminData && adminData.guests && adminData.guests.length > 1) {
+          const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
+          const emailIdx = headers.indexOf("מייל אורח");
+          const msgIdx = headers.indexOf("הודעה אישית בפורטל");
+          if (emailIdx !== -1 && msgIdx !== -1) {
+            for (let i = 1; i < adminData.guests.length; i++) {
+              if (String(adminData.guests[i][emailIdx]).trim().toLowerCase() === guestEmail.toLowerCase()) {
+                adminData.guests[i][msgIdx] = msg;
+                break;
+              }
             }
           }
         }
+
+        // Update Right Column preview immediately
+        const previewDiv = document.getElementById('admin-active-personal-preview');
+        const pill = document.getElementById('admin-personal-status-pill');
+        const saveBtn = document.getElementById('admin-save-msg-btn');
+        const cancelBtn = document.getElementById('admin-cancel-edit-msg-btn');
+
+        if (msgInput) msgInput.value = '';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        if (saveBtn) saveBtn.innerText = msg ? 'Update Message' : 'Send Message';
+
+        if (pill) {
+          pill.innerText = msg ? 'ACTIVE' : 'NO MESSAGE';
+          pill.style.background = msg ? '#d1fae5' : 'var(--surface)';
+          pill.style.color = msg ? '#065f46' : 'var(--foreground-muted)';
+          pill.style.border = msg ? '1px solid #a7f3d0' : '1px solid var(--border)';
+        }
+
+        if (previewDiv) {
+          if (msg) {
+            previewDiv.innerHTML = `
+              <div id="admin-current-msg-text" style="font-size: 0.88rem; color: var(--foreground); white-space: pre-wrap; word-break: break-word; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px solid var(--border); line-height: 1.4;">${escapeHtmlAdmin(msg)}</div>
+              <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
+                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; display: flex; align-items: center; gap: 4px;" onclick="loadPersonalMessageForEdit()">
+                  ✏️ Edit
+                </button>
+                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; color: #ef4444; border-color: rgba(239, 68, 68, 0.4); display: flex; align-items: center; gap: 4px;" onclick="deletePersonalMessage('${guestEmail}')">
+                  🗑️ Delete
+                </button>
+              </div>
+            `;
+          } else {
+            previewDiv.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--foreground-muted); font-size: 0.85rem; text-align: center; padding: 14px 0;">
+                No active personal message.
+              </div>
+            `;
+          }
+        }
       } else {
+        if (statusDiv) {
+          statusDiv.style.color = '#ef4444';
+          statusDiv.innerText = 'Error: ' + res.message;
+        }
+      }
+      setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 3000);
+    })
+    .withFailureHandler(err => {
+      if (statusDiv) {
+        statusDiv.style.color = '#ef4444';
+        statusDiv.innerText = 'Error: ' + err;
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+      }
+    })
+    .updatePersonalMessage(localStorage.getItem('guestSessionToken'), guestEmail, msg);
+};
+
+window.editingAdminAlertRow = null;
+
+window.loadAdminAnnouncements = function() {
+  const token = localStorage.getItem('guestSessionToken');
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res && res.success && res.announcements) {
+        if (!adminData) adminData = {};
+        adminData.announcements = res.announcements;
+        renderAdminAnnouncementsList(res.announcements);
+      }
+    })
+    .getAdminAnnouncements(token);
+};
+
+window.renderAdminAnnouncementsList = function(announcements) {
+  const container = document.getElementById('admin-announcements-list');
+  const countBadge = document.getElementById('admin-announcements-count');
+  if (!container) return;
+  
+  if (!announcements && (!adminData || !adminData.announcements)) {
+    loadAdminAnnouncements();
+    return;
+  }
+  
+  const list = announcements || (adminData && adminData.announcements) || [];
+  if (countBadge) {
+    countBadge.innerText = `${list.length} Active`;
+    countBadge.style.background = list.length ? 'rgba(239, 68, 68, 0.1)' : 'var(--surface)';
+    countBadge.style.color = list.length ? '#ef4444' : 'var(--foreground-muted)';
+  }
+  
+  if (list.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--foreground-muted); font-size: 0.85rem; margin: 20px 0;">No active broadcast announcements.</p>`;
+    return;
+  }
+  
+  let html = "";
+  list.forEach(a => {
+    const encoded = encodeURIComponent(a.message);
+    html += `
+      <div class="admin-announcement-card" id="announcement-card-${a.row}">
+        <div class="admin-announcement-header">
+          <span>📢 Alert (Row ${a.row})</span>
+          <div class="admin-announcement-actions">
+            <button class="secondary" style="padding: 3px 8px; font-size: 0.75rem; border-radius: 4px; height: auto;" onclick="editAdminAlert(${a.row}, '${encoded}')">
+              ✏️ Edit
+            </button>
+            <button class="secondary" style="padding: 3px 8px; font-size: 0.75rem; border-radius: 4px; height: auto; color: #ef4444; border-color: rgba(239,68,68,0.4);" onclick="deleteAdminAlert(${a.row})">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+        <div class="admin-announcement-body">${escapeHtmlAdmin(a.message)}</div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+};
+
+window.editAdminAlert = function(row, encodedMsg) {
+  const msg = decodeURIComponent(encodedMsg);
+  const msgInput = document.getElementById('admin-alert-msg');
+  const labelEl = document.getElementById('admin-alert-mode-label');
+  const submitBtn = document.getElementById('admin-alert-submit-btn');
+  const cancelBtn = document.getElementById('admin-alert-cancel-btn');
+  
+  window.editingAdminAlertRow = row;
+  if (msgInput) {
+    msgInput.value = msg;
+    msgInput.focus();
+    msgInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (labelEl) labelEl.innerText = `Edit Announcement (Row ${row})`;
+  if (submitBtn) submitBtn.innerText = 'Update Announcement';
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+};
+
+window.cancelEditAdminAlert = function() {
+  const msgInput = document.getElementById('admin-alert-msg');
+  const labelEl = document.getElementById('admin-alert-mode-label');
+  const submitBtn = document.getElementById('admin-alert-submit-btn');
+  const cancelBtn = document.getElementById('admin-alert-cancel-btn');
+  
+  window.editingAdminAlertRow = null;
+  if (msgInput) msgInput.value = '';
+  if (labelEl) labelEl.innerText = 'Compose Global Announcement';
+  if (submitBtn) submitBtn.innerText = 'Send Global Alert';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+};
+
+window.submitAdminAlert = function() {
+  const msgInput = document.getElementById('admin-alert-msg');
+  const statusDiv = document.getElementById('admin-alert-status');
+  const msg = msgInput ? msgInput.value.trim() : '';
+  if (!msg) {
+    alert('Please type an announcement first.');
+    return;
+  }
+  
+  const token = localStorage.getItem('guestSessionToken');
+  const isEditing = window.editingAdminAlertRow !== null;
+  
+  const confirmText = isEditing 
+    ? 'Are you sure you want to update this announcement for ALL delegates?' 
+    : 'Are you sure you want to broadcast this alert to ALL delegates?';
+    
+  if (!confirm(confirmText)) return;
+  
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.color = 'var(--foreground-muted)';
+    statusDiv.innerText = 'Sending...';
+  }
+  
+  const onSuccess = (res) => {
+    if (res.success) {
+      if (statusDiv) {
+        statusDiv.style.color = '#10b981';
+        statusDiv.innerText = isEditing ? 'Announcement updated!' : 'Announcement sent!';
+      }
+      if (res.announcements) {
+        adminData.announcements = res.announcements;
+        renderAdminAnnouncementsList(res.announcements);
+      }
+      cancelEditAdminAlert();
+    } else {
+      if (statusDiv) {
         statusDiv.style.color = '#ef4444';
         statusDiv.innerText = 'Error: ' + res.message;
       }
-      setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
-    })
-    .withFailureHandler(err => {
+    }
+    setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 3000);
+  };
+  
+  const onFailure = (err) => {
+    if (statusDiv) {
       statusDiv.style.color = '#ef4444';
       statusDiv.innerText = 'Error: ' + err;
       setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    }
+  };
+  
+  if (isEditing) {
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure)
+      .updateAdminAlert(token, window.editingAdminAlertRow, msg);
+  } else {
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure)
+      .sendAdminAlert(token, msg);
+  }
+};
+
+window.sendAdminAlert = window.submitAdminAlert;
+
+window.deleteAdminAlert = function(row) {
+  if (!confirm('Are you sure you want to delete this broadcast announcement? It will be removed for all delegates.')) return;
+  const statusDiv = document.getElementById('admin-alert-status');
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.color = 'var(--foreground-muted)';
+    statusDiv.innerText = 'Deleting...';
+  }
+  
+  const token = localStorage.getItem('guestSessionToken');
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.success) {
+        if (statusDiv) {
+          statusDiv.style.color = '#10b981';
+          statusDiv.innerText = 'Announcement deleted!';
+        }
+        if (res.announcements) {
+          adminData.announcements = res.announcements;
+          renderAdminAnnouncementsList(res.announcements);
+        }
+        if (window.editingAdminAlertRow === row) {
+          cancelEditAdminAlert();
+        }
+      } else {
+        if (statusDiv) {
+          statusDiv.style.color = '#ef4444';
+          statusDiv.innerText = 'Error: ' + res.message;
+        }
+      }
+      setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 3000);
     })
-    .updatePersonalMessage(localStorage.getItem('guestSessionToken'), guestEmail, msg);
-}
+    .withFailureHandler(err => {
+      if (statusDiv) {
+        statusDiv.style.color = '#ef4444';
+        statusDiv.innerText = 'Error: ' + err;
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+      }
+    })
+    .deleteAdminAlert(token, row);
+};
 
 window.loadAdminDashboard = loadAdminDashboard;
 window.filterAdminGuests = filterAdminGuests;
@@ -4551,17 +5025,6 @@ window.closeNetworkingDetailSheet = closeNetworkingDetailSheet;
 window.filterAdminNetworking = filterAdminNetworking;
 window.loadAdminNetworkingData = loadAdminNetworkingData;
 window.triggerFullLeadsSync = triggerFullLeadsSync;
-
-
-window.sendAdminAlert = function() {
-  const msg = document.getElementById('admin-alert-msg').value.trim();
-  if (!msg) { alert('Please type a message first.'); return; }
-  
-  if (confirm('Are you sure you want to send this alert to ALL delegates?')) {
-    alert('Backend endpoint for sending global alerts will be connected soon!\n\nMessage: ' + msg);
-    document.getElementById('admin-alert-msg').value = '';
-  }
-};
 
 
 window.impersonateGuest = function(targetEmail) {
