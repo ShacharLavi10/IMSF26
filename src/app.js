@@ -2561,14 +2561,20 @@ let currentGuestEmail = "";
       let html = '';
       artists.forEach(artist => {
         const isFav = !!favs[artist.id];
+        const favButtonHtml = showFavsOnly
+          ? `<span class="fav-btn-inline active" style="pointer-events: none;" aria-label="Favorite">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </span>`
+          : `<button class="fav-btn-inline ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </button>`;
+
         html += `
           <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
             <div class="artist-card-overlay">
               <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 2px;">
                 <div class="artist-card-name" style="margin-bottom: 0;">${artist.name}</div>
-                <button class="fav-btn-inline ${isFav ? 'active' : ''}" onclick="toggleCardFav(event, '${artist.id}')" aria-label="Toggle favorite">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                </button>
+                ${favButtonHtml}
               </div>
               <div class="artist-card-genre">${artist.genre}</div>
             </div>
@@ -2583,6 +2589,11 @@ let currentGuestEmail = "";
     }
 
     function toggleCardFav(event, artistId) {
+      if (showFavsOnly) {
+        if (event) event.stopPropagation();
+        openArtistSheet(artistId);
+        return;
+      }
       if (event) {
         event.stopPropagation();
         if (event.preventDefault) event.preventDefault();
@@ -2597,19 +2608,15 @@ let currentGuestEmail = "";
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
 
-      if (showFavsOnly) {
-        filterArtists();
-      } else {
-        const btn = (event && event.currentTarget) || (event && event.target && event.target.closest('.fav-btn-inline'));
-        if (btn) {
-          if (willBeFav) {
-            btn.classList.add('active');
-          } else {
-            btn.classList.remove('active');
-          }
+      const btn = (event && event.currentTarget) || (event && event.target && event.target.closest('.fav-btn-inline'));
+      if (btn) {
+        if (willBeFav) {
+          btn.classList.add('active');
         } else {
-          filterArtists();
+          btn.classList.remove('active');
         }
+      } else {
+        filterArtists();
       }
 
       // Handle Export Briefcase visibility
