@@ -2583,16 +2583,39 @@ let currentGuestEmail = "";
     }
 
     function toggleCardFav(event, artistId) {
-      event.stopPropagation(); // prevent opening sheet
+      if (event) {
+        event.stopPropagation();
+        if (event.preventDefault) event.preventDefault();
+      }
       const favs = getFavorites();
-      if (favs[artistId]) {
-        delete favs[artistId];
-      } else {
+      const willBeFav = !favs[artistId];
+      if (willBeFav) {
         favs[artistId] = true;
+      } else {
+        delete favs[artistId];
       }
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
-      filterArtists(); // Re-render grid
+
+      if (showFavsOnly) {
+        filterArtists();
+      } else {
+        const btn = (event && event.currentTarget) || (event && event.target && event.target.closest('.fav-btn-inline'));
+        if (btn) {
+          if (willBeFav) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        } else {
+          filterArtists();
+        }
+      }
+
+      // Handle Export Briefcase visibility
+      const hasFavs = Object.keys(favs).length > 0;
+      const exportContainer = document.getElementById('export-briefcase-container');
+      if (exportContainer) exportContainer.style.display = hasFavs ? 'block' : 'none';
     }
 
     function filterArtists() {
@@ -2885,6 +2908,7 @@ window.toggleFavFilter = toggleFavFilter;
 window.exportBriefcase = exportBriefcase;
 window.closeArtistSheet = closeArtistSheet;
 window.toggleSheetFav = toggleSheetFav;
+window.toggleCardFav = toggleCardFav;
 window.savePrivateNote = savePrivateNote;
 window.toggleIntentTag = toggleIntentTag;
 window.closeGuestSheet = closeGuestSheet;
