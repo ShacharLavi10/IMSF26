@@ -158,7 +158,7 @@
 
 1. **פיתוח בלעדי:** שינוי קוד רק בתיקיית `IMSF 26 VERCEL`.
 2. **הטמעה אוטומטית ל-Sandbox:**
-   * **חובה מוחלטת:** לאחר כל שינוי, יש לדחוף את הקוד מייד לענף `sandbox` ב-GitHub (`git add .`, `git commit`, `git push origin sandbox`). פעולה זו פורסת את האתר המדומה ב-Vercel.
+   * **חובה מוחלטת:** לאחר כל שינוי, יש לדחוף את הקוד מייד לענף `sandbox` ב-GitHub (`git add .`, `git commit`, `git push origin sandbox`) וכן לפרוס ישירות באמצעות `npx vercel deploy --prod --yes` כדי להבטיח עדכון מיידי של הדומיין `https://imsf26sandbox.vercel.app` ללא עיכובים או חסימות Preview.
    * **Backend:** שימוש ב-`clasp push` אם שונה קוד Apps Script ב-Sandbox.
 3. **QA מול שחר:** שחר יבדוק את הלינק של ה-Sandbox.
 4. **שחרור לסביבת אמת (Production):** רק לאחר אישור!
