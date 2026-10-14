@@ -40,3 +40,25 @@
    * **תיבת חיפוש וסינון לידים:** `#admin-networking-search` (חיפוש לפי אמן, ז'אנר, מדינה, בוקר או הערה).
    * **רשימת כרטיסי לידים:** `#admin-networking-list`.
    * **כפתור סנכרון וחישוב מחדש:** `#admin-sync-leads-btn` ("⚡ Run Full Sync" - מפעיל `triggerFullLeadsSync()`).
+
+7. **📅 רכיבי לשונית לו"ז הפסטיבל (Itinerary / Schedule Components)**
+   * **לשונית לו"ז בניווט הראשי:** `#tab-schedule` (כפתור הטאב בראש הפורטל), `#schedule-card` (מעטפת הקארד הראשית).
+   * **סרגל ניווט שבועי (Calendar Week Strip):** `#schedule-days-nav` (קונטיינר אופקי מלא ללא גלילה אופקית).
+   * **כפתור יום שבועי (Day Pill):** `.schedule-pill` (לחיץ, מקבל קלאס `.active`), מורכב מ:
+     * `.day-weekday`: שם היום המקוצר באנגלית (`TUE`, `WED`, `THU`...).
+     * `.day-num`: מספר היום בחודש בגופן בולט (`17`, `18`, `19`...).
+   * **מיכל אירועי היום:** `#schedule-container`.
+   * **רשימת האירועים היומית:** `.schedule-events-list` (מבנה Flex אנכי קומפקטי עם רווח מותאם של 7-8px).
+   * **כרטיסיית אירוע (Event Card):** `.schedule-event-inline` (מבנה שורה עדין, רקע לבן, פס סלמון שמאלי).
+   * **תגית שעה (Time Badge):** `.event-time` (גלולת זמן אלגנטית), מורכבת מ:
+     * `.time-part`: שעת התחלה / שעת סיום (למשל `17:30`).
+     * `.time-dash`: מקף מפריד קומפקטי (`-`).
+   * **פרטי האירוע (Event Details):** `.schedule-event-details` (מיכל הכותרת והתוכן).
+   * **שורת כותרת ותגיות:** `.schedule-title-row`.
+   * **כותרת האירוע:** `.event-title` (גופן Oswald נקי).
+   * **תגית קטגוריה:** `.schedule-cat-badge` (נושאת מאפיין `data-category` ואייקון אמוג'י סמנטי).
+   * **כפתור קישור למיקום:** `.schedule-loc-link` (קישור חיצוני ישיר למפה עם אייקון Map Pin).
+   * **תיאור האירוע:** `.event-desc` (הנחיות, פירוט גרין רום וזמנים באנגלית).
+   * **מיכל המתנה (לפני אישור לו"ז):** `#schedule-pending-container` (מוצג כשהלו"ז טרם אושר לאורח).
+   * **אנימציית טעינה:** `#schedule-loader-container`.
+

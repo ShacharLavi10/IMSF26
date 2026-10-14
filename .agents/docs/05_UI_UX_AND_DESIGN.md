@@ -54,5 +54,28 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - Dense, scannable cards displaying artist name, genre, like count (❤️), and dynamic status pills:
     - Tour Match pills (`🟢 Hot: [Countries]`, `🟡 Local Interest: [Country]`, `⚪ No leads yet`).
     - Booking delegates list and private feedback comments with clear author badges.
+- **Festival Itinerary & Schedule View (`#tab-schedule`, `#schedule-days-nav`, `.schedule-event-inline`)**:
+  - **Zero-Scroll Week Calendar Strip (`#schedule-days-nav`)**:
+    - Full-width segmented day switcher (`flex: 1 1 0; min-width: 0;`).
+    - Eliminates horizontal scrollbar completely on mobile screens.
+    - Each button contains stacked elements: weekday label (`.day-weekday`, e.g. `TUE`, `0.68rem uppercase`) and day number (`.day-num`, `1.15rem Oswald`).
+    - Active day pill receives vibrant Salmon Pink background (`var(--accent)`), `#0f172a` text, and soft glow (`box-shadow: 0 2px 8px rgba(241, 169, 160, 0.35)`).
+    - Inactive day pills remain clean and subtle (`#ffffff` with `1px solid #e2e8f0` in light mode; dark glass in dark mode).
+  - **Delicate Card Framing (`.schedule-event-inline`)**:
+    - Modeled after the elegant Artist Bottom Sheet section (`.sheet-section`).
+    - Replaces heavy black block-shadows with a clean, delicate `1px solid #e2e8f0` border and pure white background (`#ffffff` in light mode).
+    - Features a subtle left accent stripe (`border-left: 3.5px solid var(--accent)`) for brand character and visual anchoring.
+  - **Refined Time Badge (`.event-time`)**:
+    - Compact vertical pill displaying start and optional end times (`.time-part`, `.time-dash`).
+    - Light mode: Gentle warm salmon tint (`rgba(241, 169, 160, 0.13)`) with terracotta typography (`#c25244`) and subtle border (`rgba(241, 169, 160, 0.35)`). Avoids heavy black contrast blocks.
+    - Dark mode: Dark glass with `var(--accent)` highlight.
+  - **Harmonious Category Badges (`.schedule-cat-badge`)**:
+    - Semantic emoji badges with soft pastel colors (`🎸 Concerts`, `🚌 Shuttle`, `🍽️ Food & Drinks`, `🌴 Free Time`, `🧭 Tour`, `🤝 Networking`, `🎉 Party`, `ℹ️ Logistics`).
+  - **Direct Location Action Buttons (`.schedule-loc-link`)**:
+    - Compact pill button with map pin SVG icon opening the venue's direct link or Google Maps query.
+  - **Mobile Density & Compactness**:
+    - Horizontal row layout strictly preserved on mobile screens (`flex-direction: row !important`), card padding `8px 10px`, gap `9px`.
+    - Compact event height (~50-65px) enables an entire day's schedule (e.g. 4 events on Nov 17) to fit in a single smartphone viewport without vertical scrolling.
+
 
 
