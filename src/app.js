@@ -2988,11 +2988,12 @@ function renderAdminDashboard() {
 
     // Skip empty names
     if (!fname && !lname) continue;
-    // Skip empty emails (only delegates with an email)
-    if (!email) continue;
+    // Skip empty or invalid emails (must contain @)
+    if (!email || !email.includes("@")) continue;
     
     // Ignore admins
-    if (role === "הפקה חשיפה") continue;
+    const cleanRole = role.replace(/\s+/g, ' ').trim();
+    if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה")) continue;
     
     totalGuests++;
     
@@ -3258,12 +3259,14 @@ function getResolvedGuestsNetworkingList() {
 
     for (let i = 1; i < adminData.guests.length; i++) {
       const row = adminData.guests[i];
-      if (roleIdx !== -1 && String(row[roleIdx]).trim() === "הפקה חשיפה") continue; // skip admin
+      const rawRole = roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "";
+      const cleanRole = rawRole.replace(/\s+/g, ' ').trim();
+      if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה")) continue; // skip admin
       const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim().toLowerCase() : "";
       const fname = fnIdx !== -1 ? String(row[fnIdx] || "").trim() : "";
       const lname = lnIdx !== -1 ? String(row[lnIdx] || "").trim() : "";
       const fullName = `${fname} ${lname}`.trim();
-      if (!fullName || !email) continue;
+      if (!fullName || !email || !email.includes("@")) continue;
 
       if (prefMap.has(email)) {
         result.push(prefMap.get(email));
@@ -3274,7 +3277,7 @@ function getResolvedGuestsNetworkingList() {
           name: fullName || email,
           country: countryIdx !== -1 ? String(row[countryIdx] || "").trim() : "",
           company: compIdx !== -1 ? String(row[compIdx] || "").trim() : "",
-          role: roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "",
+          role: cleanRole,
           status: "🔴 טרם סימן אומנים",
           favs: "",
           booking: "",
@@ -3287,8 +3290,14 @@ function getResolvedGuestsNetworkingList() {
     }
   }
 
-  // Include any remaining guests from prefMap
-  prefMap.forEach(g => result.push(g));
+  // Include any remaining guests from prefMap (ensure valid email and not admin)
+  prefMap.forEach(g => {
+    const gRole = String(g.role || "").replace(/\s+/g, ' ').trim();
+    const gEmail = String(g.email || "").trim();
+    if (gEmail && gEmail.includes("@") && gRole !== "הפקה חשיפה" && !gRole.includes("הפקה חשיפה")) {
+      result.push(g);
+    }
+  });
 
   return result;
 }
@@ -3989,15 +3998,15 @@ function filterAdminGuests(query) {
   const q = query.toLowerCase().trim();
   const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
   let firstNameIdx = headers.indexOf("שם פרטי");
-  if (firstNameIdx === -1) firstNameIdx = headers.indexOf("first name");
+  if (firstNameIdx === -1) firstNameIdx = headers.findIndex(h => h.includes("שם פרטי") || h.includes("first name"));
   let lastNameIdx = headers.indexOf("שם משפחה");
-  if (lastNameIdx === -1) lastNameIdx = headers.indexOf("last name");
+  if (lastNameIdx === -1) lastNameIdx = headers.findIndex(h => h.includes("שם משפחה") || h.includes("last name"));
   let emailIdx = headers.indexOf("מייל אורח");
-  if (emailIdx === -1) emailIdx = headers.indexOf("email");
+  if (emailIdx === -1) emailIdx = headers.findIndex(h => h.includes("מייל") || h.includes("email"));
   let roleIdx = headers.indexOf("תפקיד");
-  if (roleIdx === -1) roleIdx = headers.indexOf("role");
+  if (roleIdx === -1) roleIdx = headers.findIndex(h => h.includes("תפקיד") || h.includes("role"));
   let companyIdx = headers.indexOf("שם חברה");
-  if (companyIdx === -1) companyIdx = headers.indexOf("company");
+  if (companyIdx === -1) companyIdx = headers.findIndex(h => h.includes("שם חברה") || h.includes("company"));
   const hHotel = headers.indexOf("התקבל טופס אירוח?");
   
   let html = "";
@@ -4008,14 +4017,15 @@ function filterAdminGuests(query) {
     const fname = firstNameIdx !== -1 ? String(row[firstNameIdx] || "").trim() : "";
     const lname = lastNameIdx !== -1 ? String(row[lastNameIdx] || "").trim() : "";
     const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim() : "";
-    const role = roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "";
+    const rawRole = roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "";
+    const cleanRole = rawRole.replace(/\s+/g, ' ').trim();
     const company = companyIdx !== -1 ? String(row[companyIdx] || "").trim() : "";
 
     // Same filter as the Guests tab (Directory):
-    // Must have a name, must have an email, and role must not be "הפקה חשיפה"
+    // Must have a name, must have a valid email with '@', and role must not be or contain "הפקה חשיפה"
     if (!fname && !lname) continue;
-    if (!email) continue;
-    if (role === "הפקה חשיפה") continue;
+    if (!email || !email.includes("@")) continue;
+    if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה")) continue;
     
     const fullName = (fname + " " + lname).trim();
     
