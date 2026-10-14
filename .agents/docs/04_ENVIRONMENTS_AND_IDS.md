@@ -4,7 +4,12 @@
 
 ## 🟡 סביבת ניסוי (Sandbox) - סביבת הפיתוח השוטפת!
 
-* **Vercel Frontend (GitHub `sandbox` branch):** `https://imsf26sandbox-git-sandbox-imsf-26.vercel.app/` או `https://imsf26sandbox.vercel.app/`
+* **Vercel Frontend (GitHub `sandbox` branch):** `https://imsf26sandbox.vercel.app/`
+* **תהליך פריסה וסנכרון (אוטומטי ומחייב):**
+  בכל שינוי קוד (Frontend), יש לבצע אוטומטית:
+  1. `git push origin sandbox`
+  2. `cmd.exe /c "npx --yes vercel deploy --prod --yes"`
+  *(חובה: הדומיין `imsf26sandbox.vercel.app` מוגדר כ-Production Alias בפרויקט Vercel, ולכן פקודה זו נדרשת כדי שהמשתמש יראה את השינויים מיידית ללא צורך בהתחברות SSO).*
 * **Apps Script Web App:** `AKfycbzK3tyvdqCU1UDLvYqC-6IvH2zFoLsOvEGGwXslGQQK0f7cuYgCb0U4MbISSuldV3RM`
 * **Script ID:** `1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW`
 * **Google Sheet המרכזי לטסטים:** `1Er377KhxxmpnagJY_7t0q4K3wfNxS4dKYWxAPHOmYNE`

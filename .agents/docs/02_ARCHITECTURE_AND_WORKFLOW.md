@@ -371,5 +371,29 @@ The portal contains an internal Production Dashboard hidden from regular guests.
 * ❤️ `Favorites` ➔ עמודה G (שמות) + עמודה K (כמות מספרית) ➔ עמודה H בלידים (סך לייקים).
 * ✍️ `Private Notes` ➔ עמודה L באורחים ➔ עמודה I בלידים (בפורמט: `[שם אורח (מדינה)]: הערה`).
 
+---
 
+## 🚀 4. נוהל פריסה ובדיקות (Deployment & Sandbox Workflow)
 
+### א. פריסת Frontend לסביבת Sandbox (אוטומטי ומיידי):
+בכל שינוי קוד (HTML, CSS, JS):
+1. **דחיפת Git ל-sandbox:**
+   ```bash
+   git add .
+   git commit -m "Your descriptive commit message"
+   git push origin sandbox
+   ```
+2. **פריסה ישירה ומיידית ל-Vercel Sandbox:**
+   ```bash
+   cmd.exe /c "npx --yes vercel deploy --prod --yes"
+   ```
+   * **מדוע פקודה זו חיונית וקבועה?**
+     פרויקט `imsf26sandbox` ב-Vercel מקשר את הדומיין הראשי `https://imsf26sandbox.vercel.app` כ-Production Environment. אם רק דוחפים ל-GitHub, Vercel יוצר Preview Deployment שאינו מעדכן את הדומיין הראשי ודורש התחברות Vercel SSO. הפקודה `vercel deploy --prod --yes` מעדכנת את הדומיין הציבורי בתוך שניות בודדות ללא תלות.
+
+### ב. פריסת צד שרת (Backend Apps Script):
+בכל שינוי בקובצי Google Apps Script (`.gs`):
+```bash
+npx.cmd clasp push -f
+npx.cmd clasp deploy -i <DEPLOYMENT_ID> -d "Update description"
+```
+* **חובה:** תמיד לבצע `clasp deploy` לאחר `clasp push` כדי שה-Web App ישתמש בגרסה החדשה של הקוד ולא בגרסה ישנה השמורה בהפצה.
