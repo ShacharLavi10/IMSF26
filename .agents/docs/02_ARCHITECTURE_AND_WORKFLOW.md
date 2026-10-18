@@ -158,7 +158,7 @@
 
 1. **פיתוח בלעדי:** שינוי קוד רק בתיקיית `IMSF 26 VERCEL`.
 2. **הטמעה אוטומטית ל-Sandbox:**
-   * **חובה מוחלטת:** לאחר כל שינוי, יש לדחוף את הקוד מייד לענף `sandbox` ב-GitHub (`git add .`, `git commit`, `git push origin sandbox`). פעולה זו פורסת את האתר המדומה ב-Vercel.
+   * **חובה מוחלטת:** לאחר כל שינוי, יש לדחוף את הקוד מייד לענף `sandbox` ב-GitHub (`git add .`, `git commit`, `git push origin sandbox`) וכן לפרוס ישירות באמצעות `npx vercel deploy --prod --yes` כדי להבטיח עדכון מיידי של הדומיין `https://imsf26sandbox.vercel.app` ללא עיכובים או חסימות Preview.
    * **Backend:** שימוש ב-`clasp push` אם שונה קוד Apps Script ב-Sandbox.
 3. **QA מול שחר:** שחר יבדוק את הלינק של ה-Sandbox.
 4. **שחרור לסביבת אמת (Production):** רק לאחר אישור!
@@ -194,26 +194,38 @@ The portal contains an internal Production Dashboard hidden from regular guests.
 1. **Live Analytics (Overview):**
    - Automatically calculates total non-admin delegates.
    - Computes missing critical forms in real-time by inspecting the relevant checkbox columns in the Master Sheet (Hotel form, Flight form, Passport photo).
-2. **Alert Center (Push Notifications):**
-   - Allows admins to broadcast global messages to all delegates.
-   - Operates by appending the message to the `מידע כללי` (General Info) sheet under the `הודעה לכולם` column, which instantly reflects in the Live Updates bell of all users.
+2. **Alert Center & Personal Messages (Messaging & Notifications Suite):**
+   - **Global Announcements (Broadcast):**
+     - Admins can broadcast announcements to all delegates via `sendAdminAlert()`.
+     - Appends new announcements to `מידע כללי` under column `הודעה לכולם` without overwriting prior announcements.
+     - Supports full editing (`updateAdminAlert()`) and individual deletion (`deleteAdminAlert()`) by row index.
+     - Shown in the admin dashboard in a 2-column split grid (`.admin-msg-split-grid`) with an active list of all announcements and active count badge.
+   - **Personal Guest Messages:**
+     - Stored in sheet `אורחים` under column `הודעה אישית בפורטל` as a structured JSON array (`[{"id":"m_...","text":"...","timestamp":...,"timestampStr":"..."}]`).
+     - Backwards-compatible with legacy plain text strings via `parsePersonalMessages()`.
+     - Supports appending multiple personal messages per guest (`addPersonalMessage()`), editing specific messages (`updatePersonalMessageItem()`), and individual deletion (`deletePersonalMessageItem()`).
+     - Admin Guest Modal displays active messages on the right side of the split grid with individual ✏️ Edit and 🗑️ Delete buttons.
+   - **Live Updates & Unread Modal in Guest Portal:**
+     - **Unread Popup Modal (`#new-message-modal-overlay`):** Greets the guest upon entrance if any new unread messages exist, with animated ringing bell and a direct "READ" button that opens the notifications panel and marks all active updates as read in `localStorage`.
+     - **Safe Notification Cards (`.update-msg`):** Cards have `cursor: default` and no card-wide click handlers, preventing accidental dismissals while reading or scrolling on mobile.
+     - **Explicit Delete Button (`.update-msg-delete-btn`):** Located in the card footer (`.update-msg-footer`), featuring a red trash icon and the clear label "Delete" with `event.stopPropagation()` to dismiss notifications permanently.
 3. **Logistics Summary:**
    - Aggregates and displays total booked hotel nights for Tel Aviv vs Jerusalem directly from the hotel sheets.
    - Summarizes total processed flight arrivals.
 4. **Guest Management & Search:**
    - Real-time search across names, emails, and companies.
    - Status indicators (Green/Orange) summarizing form completion.
-   - Clicking a guest opens the **Admin Modal** containing their full contact details, missing forms breakdown, a direct WhatsApp chat button, and the Impersonation feature.
+   - Clicking a guest opens the **Admin Modal** containing their full contact details, missing forms breakdown, a direct WhatsApp chat button, personal messages management, and the Impersonation feature.
 5. **View As (Impersonation):**
    - Admins can temporarily view the portal strictly as a specific guest.
    - It generates a cryptographic temporary token for the target user via `impersonateGuest()` in Apps Script, saves the admin's original token, and reloads the portal.
    - A floating red banner remains active to allow instantly reverting to Admin mode.
 
 **Technical Flow:**
-- **Frontend (`src/app.js`):** All admin logic (`renderAdminDashboard`, `filterAdminGuests`, `viewAdminGuestDetails`, `sendAdminAlert`, `impersonateGuest`) is strictly encapsulated and dynamically injected into `#admin-card` to ensure rapid loading and visual separation.
+- **Frontend (`src/app.js`):** All admin logic (`renderAdminDashboard`, `filterAdminGuests`, `viewAdminGuestDetails`, `submitAdminAlert`, `deleteAdminAlert`, `savePersonalMessage`, `deletePersonalMessageItem`, `impersonateGuest`) is strictly encapsulated and dynamically injected into `#admin-card` to ensure rapid loading and visual separation.
 - **Backend (`src/PortalBackend.gs`):** 
-  - `getAdminDashboardData`: A unified endpoint fetching Master Sheet, Hotels, and Flights data for local processing to avoid multiple round-trips.
-  - Role verification is strictly enforced server-side before executing any admin mutations (`sendAdminAlert`, `impersonateGuest`).
+  - `getAdminDashboardData`: A unified endpoint fetching Master Sheet, Hotels, Flights, and Announcements data for local processing to avoid multiple round-trips.
+  - Role verification is strictly enforced server-side before executing any admin mutations (`sendAdminAlert`, `updateAdminAlert`, `deleteAdminAlert`, `addPersonalMessage`, `updatePersonalMessageItem`, `deletePersonalMessageItem`, `impersonateGuest`).
 
 ---
 
@@ -371,5 +383,29 @@ The portal contains an internal Production Dashboard hidden from regular guests.
 * ❤️ `Favorites` ➔ עמודה G (שמות) + עמודה K (כמות מספרית) ➔ עמודה H בלידים (סך לייקים).
 * ✍️ `Private Notes` ➔ עמודה L באורחים ➔ עמודה I בלידים (בפורמט: `[שם אורח (מדינה)]: הערה`).
 
+---
 
+## 🚀 4. נוהל פריסה ובדיקות (Deployment & Sandbox Workflow)
 
+### א. פריסת Frontend לסביבת Sandbox (אוטומטי ומיידי):
+בכל שינוי קוד (HTML, CSS, JS):
+1. **דחיפת Git ל-sandbox:**
+   ```bash
+   git add .
+   git commit -m "Your descriptive commit message"
+   git push origin sandbox
+   ```
+2. **פריסה ישירה ומיידית ל-Vercel Sandbox:**
+   ```bash
+   cmd.exe /c "npx --yes vercel deploy --prod --yes"
+   ```
+   * **מדוע פקודה זו חיונית וקבועה?**
+     פרויקט `imsf26sandbox` ב-Vercel מקשר את הדומיין הראשי `https://imsf26sandbox.vercel.app` כ-Production Environment. אם רק דוחפים ל-GitHub, Vercel יוצר Preview Deployment שאינו מעדכן את הדומיין הראשי ודורש התחברות Vercel SSO. הפקודה `vercel deploy --prod --yes` מעדכנת את הדומיין הציבורי בתוך שניות בודדות ללא תלות.
+
+### ב. פריסת צד שרת (Backend Apps Script):
+בכל שינוי בקובצי Google Apps Script (`.gs`):
+```bash
+npx.cmd clasp push -f
+npx.cmd clasp deploy -i <DEPLOYMENT_ID> -d "Update description"
+```
+* **חובה:** תמיד לבצע `clasp deploy` לאחר `clasp push` כדי שה-Web App ישתמש בגרסה החדשה של הקוד ולא בגרסה ישנה השמורה בהפצה.

@@ -1033,23 +1033,24 @@ function getLiveUpdates(sessionToken) {
         if (emailIdx !== -1 && msgIdx !== -1) {
           for (let i = headerRowIdx + 1; i < data.length; i++) {
             if (String(data[i][emailIdx]).trim().toLowerCase() === cleanEmail) {
-              let personalMsg = String(data[i][msgIdx] || "").trim();
-              if (personalMsg) {
-                const parts = personalMsg.split(',');
-                parts.forEach((part, pIdx) => {
-                  let trimmed = part.trim();
-                  if (trimmed) {
-                    try {
-                      trimmed = LanguageApp.translate(trimmed, '', 'en');
-                    } catch(e) {}
-                    
-                    updates.push({
-                      type: 'personal',
-                      message: trimmed,
-                      timestamp: new Date().getTime() + pIdx,
-                      timestampStr: "Just now"
-                    });
-                  }
+              let rawPersonal = String(data[i][msgIdx] || "").trim();
+              if (rawPersonal) {
+                const msgs = parsePersonalMessages(rawPersonal);
+                msgs.forEach((pm, pIdx) => {
+                  let translated = pm.text;
+                  try {
+                    translated = LanguageApp.translate(pm.text, '', 'en');
+                  } catch(e) {}
+                  
+                  updates.push({
+                    id: 'personal_' + cleanEmail + '_' + (pm.id || ('m' + pIdx)),
+                    messageId: pm.id || ('m' + pIdx),
+                    type: 'personal',
+                    message: translated,
+                    rawMessage: pm.text,
+                    timestamp: pm.timestamp || (new Date().getTime() - (msgs.length - pIdx)),
+                    timestampStr: pm.timestampStr || "Private Message"
+                  });
                 });
               }
               break;
@@ -1071,21 +1072,25 @@ function getLiveUpdates(sessionToken) {
           for (let i = 1; i < data.length; i++) {
             let msg = String(data[i][msgIdx] || "").trim();
             if (msg) {
-              const parts = msg.split(',');
-              parts.forEach((part, pIdx) => {
-                let trimmed = part.trim();
-                  if (trimmed) {
-                    try {
-                      trimmed = LanguageApp.translate(trimmed, '', 'en');
-                    } catch(e) {}
-                    
-                    updates.push({
-                    type: 'global',
-                    message: trimmed,
-                    timestamp: new Date().getTime() - (data.length - i) - (pIdx * 0.1),
-                    timestampStr: "Announcement"
-                  });
-                }
+              let translated = msg;
+              try {
+                translated = LanguageApp.translate(msg, '', 'en');
+              } catch(e) {}
+              
+              let hash = 0;
+              for (let c = 0; c < msg.length; c++) {
+                hash = ((hash << 5) - hash) + msg.charCodeAt(c);
+                hash |= 0;
+              }
+              
+              updates.push({
+                id: 'global_' + (i + 1) + '_' + Math.abs(hash),
+                rowIndex: i + 1,
+                type: 'global',
+                message: translated,
+                rawMessage: msg,
+                timestamp: new Date().getTime() - (data.length - i),
+                timestampStr: "Announcement"
               });
             }
           }
@@ -1093,8 +1098,8 @@ function getLiveUpdates(sessionToken) {
       }
     }
     
-    // Sort updates (personal first, then global by order)
-    const globalUpdates = updates.filter(u => u.type === 'global').reverse(); // Newest first
+    // Sort updates (personal first, then global newest first)
+    const globalUpdates = updates.filter(u => u.type === 'global').reverse();
     const personalUpdates = updates.filter(u => u.type === 'personal');
     
     return { success: true, updates: [...personalUpdates, ...globalUpdates] };
@@ -1187,7 +1192,8 @@ function getAdminDashboardData(sessionToken) {
       flights: getSheetData(CONFIG.FLIGHTS_SHEET),
       flightsUpdates: getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME),
       hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
-      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET)
+      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
+      announcements: getAdminAnnouncementsList(ss)
     };
   } catch (err) {
     console.error("Error in getAdminDashboardData:", err);
@@ -1196,23 +1202,145 @@ function getAdminDashboardData(sessionToken) {
 }
 
 /**
- * Update personal message for a guest (Admin Only)
+ * Check if a user has admin role (הפקה חשיפה)
  */
-function updatePersonalMessage(sessionToken, guestEmail, message) {
+function checkIsAdminUser(ss, userEmail) {
+  try {
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return false;
+    const data = masterSheet.getDataRange().getValues();
+    let headerRowIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
+        headerRowIdx = r;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return false;
+    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
+    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+    const roleIdx = headers.indexOf("תפקיד");
+    if (emailIdx === -1 || roleIdx === -1) return false;
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      if (String(data[i][emailIdx]).trim().toLowerCase() === String(userEmail).trim().toLowerCase()) {
+        return String(data[i][roleIdx]).trim() === "הפקה חשיפה";
+      }
+    }
+    return false;
+  } catch(e) {
+    return false;
+  }
+}
+
+/**
+ * Helper: Read all announcements from 'מידע כללי' sheet
+ */
+function getAdminAnnouncementsList(ss) {
+  try {
+    const infoSheet = ss.getSheetByName('מידע כללי');
+    if (!infoSheet) return [];
+    const data = infoSheet.getDataRange().getValues();
+    if (data.length < 2) return [];
+    const headers = data[0].map(h => String(h).trim());
+    const msgIdx = headers.indexOf('הודעה לכולם');
+    if (msgIdx === -1) return [];
+    
+    const announcements = [];
+    for (let i = 1; i < data.length; i++) {
+      const msg = String(data[i][msgIdx] || "").trim();
+      if (msg) {
+        announcements.push({
+          row: i + 1,
+          message: msg
+        });
+      }
+    }
+    return announcements;
+  } catch(e) {
+    console.error("Error in getAdminAnnouncementsList:", e);
+    return [];
+  }
+}
+
+/**
+ * Fetch all announcements for admin
+ */
+function getAdminAnnouncements(sessionToken) {
   try {
     const sessionRes = validateSession(sessionToken);
     if (!sessionRes.success) return sessionRes;
-    
-    const cleanAdminEmail = sessionRes.email;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
-    if (!masterSheet) return { success: false, message: 'Master sheet not found.' };
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admin only." };
+    }
+    return { success: true, announcements: getAdminAnnouncementsList(ss) };
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * Helper to parse multiple personal messages from cell value
+ */
+function parsePersonalMessages(cellValue) {
+  if (!cellValue) return [];
+  const str = String(cellValue).trim();
+  if (!str) return [];
+  
+  if (str.startsWith('[') && str.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(str);
+      if (Array.isArray(parsed)) {
+        return parsed.map((m, idx) => {
+          if (typeof m === 'string') {
+            return { id: 'm_' + idx, text: m, timestamp: Date.now(), timestampStr: 'Personal Message' };
+          }
+          return {
+            id: m.id || ('m_' + idx),
+            text: m.text || m.message || '',
+            timestamp: m.timestamp || Date.now(),
+            timestampStr: m.timestampStr || 'Personal Message'
+          };
+        }).filter(m => m.text && m.text.trim());
+      }
+    } catch(e) {}
+  }
+  
+  if (str.includes('\n---\n')) {
+    return str.split('\n---\n').map((part, idx) => ({
+      id: 'm_' + idx,
+      text: part.trim(),
+      timestamp: Date.now(),
+      timestampStr: 'Personal Message'
+    })).filter(m => m.text);
+  }
+  
+  return [{
+    id: 'm_1',
+    text: str,
+    timestamp: Date.now(),
+    timestampStr: 'Personal Message'
+  }];
+}
+
+/**
+ * Fetch all personal messages for a guest (Admin Only)
+ */
+function getPersonalMessages(sessionToken, guestEmail) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admins only." };
+    }
     
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: "Master sheet not found." };
     const data = masterSheet.getDataRange().getValues();
+    
     let headerRowIdx = -1;
     let emailIdx = -1;
-    let headers = [];
-    
     for (let r = 0; r < Math.min(10, data.length); r++) {
       const rowStrings = data[r].map(c => String(c).trim().toLowerCase());
       let idx = rowStrings.indexOf(CONFIG.EMAIL_COL.toLowerCase());
@@ -1220,40 +1348,241 @@ function updatePersonalMessage(sessionToken, guestEmail, message) {
       if (idx !== -1) {
         headerRowIdx = r;
         emailIdx = idx;
-        headers = rowStrings;
         break;
       }
     }
-    
-    if (headerRowIdx === -1) return { success: false, message: 'Header not found.' };
-    const roleIdx = headers.indexOf("תפקיד");
+    if (headerRowIdx === -1) return { success: false, message: "Header not found." };
+    const headers = data[headerRowIdx].map(c => String(c).trim().toLowerCase());
     const msgIdx = headers.indexOf("הודעה אישית בפורטל");
-    
-    if (msgIdx === -1) return { success: false, message: 'Column "הודעה אישית בפורטל" not found.' };
-    
-    let isAdmin = false;
-    let guestRow = -1;
+    if (msgIdx === -1) return { success: false, message: 'Column not found.' };
     
     for (let i = headerRowIdx + 1; i < data.length; i++) {
-      const email = String(data[i][emailIdx] || "").trim().toLowerCase();
-      if (email === cleanAdminEmail) {
-        if (roleIdx !== -1 && String(data[i][roleIdx]).trim() === "הפקה חשיפה") {
-          isAdmin = true;
-        }
-      }
-      if (email === String(guestEmail).trim().toLowerCase()) {
-        guestRow = i + 1; // 1-indexed for SpreadsheetApp
+      if (String(data[i][emailIdx] || "").trim().toLowerCase() === String(guestEmail).trim().toLowerCase()) {
+        const raw = String(data[i][msgIdx] || "").trim();
+        return { success: true, messages: parsePersonalMessages(raw), rawValue: raw };
       }
     }
-    
-    if (!isAdmin) return { success: false, message: 'Unauthorized. Admins only.' };
-    if (guestRow === -1) return { success: false, message: 'Guest not found.' };
-    
-    masterSheet.getRange(guestRow, msgIdx + 1).setValue(message);
-    return { success: true, message: 'Message updated successfully.' };
+    return { success: false, message: "Guest not found." };
   } catch (err) {
-    return { success: false, message: 'Server Error: ' + err.toString() };
+    return { success: false, message: err.toString() };
   }
+}
+
+/**
+ * Add a new personal message to a guest (Admin Only) - doesn't overwrite existing
+ */
+function addPersonalMessage(sessionToken, guestEmail, messageText) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admins only." };
+    }
+    
+    const cleanText = String(messageText || "").trim();
+    if (!cleanText) return { success: false, message: "Message text cannot be empty." };
+    
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: "Master sheet not found." };
+    const data = masterSheet.getDataRange().getValues();
+    
+    let headerRowIdx = -1;
+    let emailIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStrings = data[r].map(c => String(c).trim().toLowerCase());
+      let idx = rowStrings.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+      if (idx === -1) idx = rowStrings.findIndex(col => col.includes("מייל") || col.includes("email"));
+      if (idx !== -1) {
+        headerRowIdx = r;
+        emailIdx = idx;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: "Header not found." };
+    const headers = data[headerRowIdx].map(c => String(c).trim().toLowerCase());
+    const msgIdx = headers.indexOf("הודעה אישית בפורטל");
+    if (msgIdx === -1) return { success: false, message: 'Column not found.' };
+    
+    let guestRow = -1;
+    let existingRaw = "";
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      if (String(data[i][emailIdx] || "").trim().toLowerCase() === String(guestEmail).trim().toLowerCase()) {
+        guestRow = i + 1;
+        existingRaw = String(data[i][msgIdx] || "").trim();
+        break;
+      }
+    }
+    if (guestRow === -1) return { success: false, message: "Guest not found." };
+    
+    const messages = parsePersonalMessages(existingRaw);
+    const tz = ss.getSpreadsheetTimeZone() || "Asia/Jerusalem";
+    const newId = 'm_' + new Date().getTime();
+    const dateStr = Utilities.formatDate(new Date(), tz, "MMM dd, HH:mm");
+    
+    messages.push({
+      id: newId,
+      text: cleanText,
+      timestamp: new Date().getTime(),
+      timestampStr: dateStr
+    });
+    
+    const newRaw = JSON.stringify(messages);
+    masterSheet.getRange(guestRow, msgIdx + 1).setValue(newRaw);
+    return { success: true, message: "Personal message added.", messages: messages, rawValue: newRaw };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Update an existing personal message item by ID (Admin Only)
+ */
+function updatePersonalMessageItem(sessionToken, guestEmail, messageId, newText) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admins only." };
+    }
+    
+    const cleanText = String(newText || "").trim();
+    if (!cleanText) return { success: false, message: "Message text cannot be empty." };
+    
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: "Master sheet not found." };
+    const data = masterSheet.getDataRange().getValues();
+    
+    let headerRowIdx = -1;
+    let emailIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStrings = data[r].map(c => String(c).trim().toLowerCase());
+      let idx = rowStrings.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+      if (idx === -1) idx = rowStrings.findIndex(col => col.includes("מייל") || col.includes("email"));
+      if (idx !== -1) {
+        headerRowIdx = r;
+        emailIdx = idx;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: "Header not found." };
+    const headers = data[headerRowIdx].map(c => String(c).trim().toLowerCase());
+    const msgIdx = headers.indexOf("הודעה אישית בפורטל");
+    if (msgIdx === -1) return { success: false, message: 'Column not found.' };
+    
+    let guestRow = -1;
+    let existingRaw = "";
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      if (String(data[i][emailIdx] || "").trim().toLowerCase() === String(guestEmail).trim().toLowerCase()) {
+        guestRow = i + 1;
+        existingRaw = String(data[i][msgIdx] || "").trim();
+        break;
+      }
+    }
+    if (guestRow === -1) return { success: false, message: "Guest not found." };
+    
+    const messages = parsePersonalMessages(existingRaw);
+    let found = false;
+    messages.forEach(m => {
+      if (m.id === messageId) {
+        m.text = cleanText;
+        m.timestamp = new Date().getTime();
+        found = true;
+      }
+    });
+    if (!found) return { success: false, message: "Message item not found." };
+    
+    const newRaw = JSON.stringify(messages);
+    masterSheet.getRange(guestRow, msgIdx + 1).setValue(newRaw);
+    return { success: true, message: "Personal message updated.", messages: messages, rawValue: newRaw };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Delete a specific personal message item by ID (Admin Only)
+ */
+function deletePersonalMessageItem(sessionToken, guestEmail, messageId) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admins only." };
+    }
+    
+    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+    if (!masterSheet) return { success: false, message: "Master sheet not found." };
+    const data = masterSheet.getDataRange().getValues();
+    
+    let headerRowIdx = -1;
+    let emailIdx = -1;
+    for (let r = 0; r < Math.min(10, data.length); r++) {
+      const rowStrings = data[r].map(c => String(c).trim().toLowerCase());
+      let idx = rowStrings.indexOf(CONFIG.EMAIL_COL.toLowerCase());
+      if (idx === -1) idx = rowStrings.findIndex(col => col.includes("מייל") || col.includes("email"));
+      if (idx !== -1) {
+        headerRowIdx = r;
+        emailIdx = idx;
+        break;
+      }
+    }
+    if (headerRowIdx === -1) return { success: false, message: "Header not found." };
+    const headers = data[headerRowIdx].map(c => String(c).trim().toLowerCase());
+    const msgIdx = headers.indexOf("הודעה אישית בפורטל");
+    if (msgIdx === -1) return { success: false, message: 'Column not found.' };
+    
+    let guestRow = -1;
+    let existingRaw = "";
+    for (let i = headerRowIdx + 1; i < data.length; i++) {
+      if (String(data[i][emailIdx] || "").trim().toLowerCase() === String(guestEmail).trim().toLowerCase()) {
+        guestRow = i + 1;
+        existingRaw = String(data[i][msgIdx] || "").trim();
+        break;
+      }
+    }
+    if (guestRow === -1) return { success: false, message: "Guest not found." };
+    
+    const messages = parsePersonalMessages(existingRaw);
+    const remaining = messages.filter(m => m.id !== messageId);
+    const newRaw = remaining.length > 0 ? JSON.stringify(remaining) : "";
+    
+    masterSheet.getRange(guestRow, msgIdx + 1).setValue(newRaw);
+    return { success: true, message: "Personal message deleted.", messages: remaining, rawValue: newRaw };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Update personal message for a guest (Admin Only) - clears or appends
+ */
+function updatePersonalMessage(sessionToken, guestEmail, message) {
+  if (!message || !String(message).trim()) {
+    try {
+      const sessionRes = validateSession(sessionToken);
+      if (!sessionRes.success) return sessionRes;
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      if (!checkIsAdminUser(ss, sessionRes.email)) return { success: false, message: "Unauthorized. Admins only." };
+      const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
+      const data = masterSheet.getDataRange().getValues();
+      let headerRowIdx = -1, emailIdx = -1;
+      for (let r = 0; r < Math.min(10, data.length); r++) {
+        let idx = data[r].map(c => String(c).trim().toLowerCase()).indexOf(CONFIG.EMAIL_COL.toLowerCase());
+        if (idx !== -1) { headerRowIdx = r; emailIdx = idx; break; }
+      }
+      const msgIdx = data[headerRowIdx].map(c => String(c).trim().toLowerCase()).indexOf("הודעה אישית בפורטל");
+      for (let i = headerRowIdx + 1; i < data.length; i++) {
+        if (String(data[i][emailIdx]).trim().toLowerCase() === String(guestEmail).trim().toLowerCase()) {
+          masterSheet.getRange(i + 1, msgIdx + 1).setValue("");
+          return { success: true, message: "Messages cleared.", messages: [], rawValue: "" };
+        }
+      }
+    } catch(e) { return { success: false, message: e.toString() }; }
+  }
+  return addPersonalMessage(sessionToken, guestEmail, message);
 }
 
 /**
@@ -1265,57 +1594,94 @@ function sendAdminAlert(sessionToken, message) {
     if (!sessionRes.success) return sessionRes;
     
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // 1. Verify Admin
-    const guestsSheet = ss.getSheetByName(CONFIG.MASTER_SHEET);
-    const data = guestsSheet.getDataRange().getValues();
-    
-    let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(10, data.length); r++) {
-      if (data[r].some(cell => String(cell).trim().toLowerCase() === CONFIG.EMAIL_COL.toLowerCase())) {
-        headerRowIdx = r;
-        break;
-      }
-    }
-    if (headerRowIdx === -1) return { success: false, message: "Headers not found" };
-    
-    const headers = data[headerRowIdx].map(h => String(h).trim().toLowerCase());
-    const emailIdx = headers.indexOf(CONFIG.EMAIL_COL.toLowerCase());
-    const roleIdx = headers.indexOf("תפקיד");
-    
-    let isAdmin = false;
-    for (let i = headerRowIdx + 1; i < data.length; i++) {
-      if (String(data[i][emailIdx]).trim().toLowerCase() === sessionRes.email) {
-        if (roleIdx !== -1 && String(data[i][roleIdx]).trim() === "הפקה חשיפה") {
-          isAdmin = true;
-        }
-        break;
-      }
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admin only." };
     }
     
-    if (!isAdmin) return { success: false, message: "Unauthorized. Admin only." };
+    const cleanMsg = String(message || "").trim();
+    if (!cleanMsg) return { success: false, message: "Message cannot be empty." };
     
-    // 2. Add message to 'מידע כללי' -> 'הודעה לכולם'
     const infoSheet = ss.getSheetByName('מידע כללי');
     if (!infoSheet) return { success: false, message: "'מידע כללי' sheet missing." };
     
     const infoData = infoSheet.getDataRange().getValues();
     const infoHeaders = infoData[0].map(h => String(h).trim());
     const msgIdx = infoHeaders.indexOf('הודעה לכולם');
-    if (msgIdx === -1) return { success: false, message: "Column not found." };
+    if (msgIdx === -1) return { success: false, message: "Column 'הודעה לכולם' not found." };
     
     let targetRow = infoData.length + 1;
     for (let i = 1; i < infoData.length; i++) {
-      if (!String(infoData[i][msgIdx]).trim()) {
+      if (!String(infoData[i][msgIdx] || "").trim()) {
         targetRow = i + 1;
         break;
       }
     }
     
-    infoSheet.getRange(targetRow, msgIdx + 1).setValue(message);
+    infoSheet.getRange(targetRow, msgIdx + 1).setValue(cleanMsg);
+    return { success: true, row: targetRow, announcements: getAdminAnnouncementsList(ss) };
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * Update a global alert by row index (Admin Only)
+ */
+function updateAdminAlert(sessionToken, row, message) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
     
-    return { success: true };
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admin only." };
+    }
     
+    const cleanMsg = String(message || "").trim();
+    if (!cleanMsg) return { success: false, message: "Message cannot be empty." };
+    
+    const infoSheet = ss.getSheetByName('מידע כללי');
+    if (!infoSheet) return { success: false, message: "'מידע כללי' sheet missing." };
+    
+    const infoHeaders = infoSheet.getRange(1, 1, 1, infoSheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+    const msgIdx = infoHeaders.indexOf('הודעה לכולם');
+    if (msgIdx === -1) return { success: false, message: "Column 'הודעה לכולם' not found." };
+    
+    const targetRow = parseInt(row, 10);
+    if (!targetRow || targetRow < 2) return { success: false, message: "Invalid row number." };
+    
+    infoSheet.getRange(targetRow, msgIdx + 1).setValue(cleanMsg);
+    return { success: true, row: targetRow, announcements: getAdminAnnouncementsList(ss) };
+  } catch(e) {
+    return { success: false, message: e.toString() };
+  }
+}
+
+/**
+ * Delete a global alert by row index (Admin Only)
+ */
+function deleteAdminAlert(sessionToken, row) {
+  try {
+    const sessionRes = validateSession(sessionToken);
+    if (!sessionRes.success) return sessionRes;
+    
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!checkIsAdminUser(ss, sessionRes.email)) {
+      return { success: false, message: "Unauthorized. Admin only." };
+    }
+    
+    const infoSheet = ss.getSheetByName('מידע כללי');
+    if (!infoSheet) return { success: false, message: "'מידע כללי' sheet missing." };
+    
+    const infoHeaders = infoSheet.getRange(1, 1, 1, infoSheet.getLastColumn()).getValues()[0].map(h => String(h).trim());
+    const msgIdx = infoHeaders.indexOf('הודעה לכולם');
+    if (msgIdx === -1) return { success: false, message: "Column 'הודעה לכולם' not found." };
+    
+    const targetRow = parseInt(row, 10);
+    if (!targetRow || targetRow < 2) return { success: false, message: "Invalid row number." };
+    
+    infoSheet.getRange(targetRow, msgIdx + 1).setValue("");
+    return { success: true, row: targetRow, announcements: getAdminAnnouncementsList(ss) };
   } catch(e) {
     return { success: false, message: e.toString() };
   }

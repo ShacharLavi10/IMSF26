@@ -669,6 +669,25 @@
     </div>
   </div>
 
+  <!-- NEW MESSAGE POPUP MODAL -->
+  <div id="new-message-modal-overlay" class="modal-overlay" style="display: none;">
+    <div class="modal-container fade-up" style="max-width: 420px; border-top: 4px solid var(--accent, #e78b7b);">
+      <div class="modal-content">
+        <div class="new-message-modal-bell" style="font-size: 38px; margin-bottom: 12px;">
+          🔔
+        </div>
+        <h3 id="new-message-modal-title" style="margin-bottom: 10px; font-size: 1.4rem;">You Have a New Message</h3>
+        <p id="new-message-modal-text" style="color: var(--foreground-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 22px;">
+          The production team has posted an update for you.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button class="primary" onclick="openNewMessagePanel()" style="min-width: 130px; font-weight: 700; letter-spacing: 0.5px;">READ</button>
+          <button class="secondary" onclick="closeNewMessageModal()" style="min-width: 100px;">Later</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="/main.js"></script>
   <script type="module" src="/src/app.js"></script>
 

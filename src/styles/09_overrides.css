@@ -2648,6 +2648,178 @@ body.light-mode .admin-section-accordion[open] > .admin-section-summary .admin-s
   }
 }
 
+/* ========================================================
+   MESSAGING & NOTIFICATIONS SUITE (Personal & Global)
+   ======================================================== */
+
+/* 2-Column Responsive Grid for Admin Modals and Alerts */
+.admin-msg-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .admin-msg-split-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* Update Message New Badge in Notifications Panel */
+.update-msg-new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  margin-left: 6px;
+  animation: pulseNewBadge 1.5s infinite;
+}
+
+@keyframes pulseNewBadge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+  100% { transform: scale(1); }
+}
+
+/* Update Message Card and Delete Button */
+.update-msg {
+  cursor: default !important;
+  user-select: text;
+}
+
+.update-msg-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+body.light-mode .update-msg-footer {
+  border-top-color: rgba(0, 0, 0, 0.1);
+}
+
+.update-msg-delete-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.update-msg-delete-btn:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+}
+
+/* Dismiss / Delete Button inside Guest Update Card (legacy) */
+.update-msg-dismiss-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--foreground-muted);
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.update-msg-dismiss-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+
+/* Admin Personal Message Card */
+.admin-personal-msg-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.admin-personal-msg-card:hover {
+  border-color: var(--accent);
+}
+
+/* New Message Modal Bell Pulse */
+.new-message-modal-bell {
+  display: inline-block;
+  animation: modalBellRing 2s infinite ease-in-out;
+}
+
+@keyframes modalBellRing {
+  0% { transform: rotate(0); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-14deg); }
+  30% { transform: rotate(10deg); }
+  40% { transform: rotate(-10deg); }
+  50% { transform: rotate(0); }
+  100% { transform: rotate(0); }
+}
+
+/* Active Announcements List Cards in Admin Alert Center */
+.admin-announcement-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.admin-announcement-card:hover {
+  border-color: var(--accent);
+}
+
+.admin-announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  color: var(--foreground-muted);
+}
+
+.admin-announcement-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-announcement-body {
+  font-size: 0.85rem;
+  color: var(--foreground);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+
 
 
 
