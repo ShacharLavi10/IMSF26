@@ -550,16 +550,21 @@ body.light-mode .sheet-intent-subtitle {
 }
 
 .sheet-intent-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 8px;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
   margin-bottom: 12px;
 }
 
 .sheet-intent-card-btn {
   width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   min-height: 52px !important;
-  padding: 8px 10px !important;
+  padding: 8px 8px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
@@ -570,9 +575,10 @@ body.light-mode .sheet-intent-subtitle {
   border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
   cursor: pointer;
   transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   outline: none;
   user-select: none;
+  overflow: hidden !important;
 }
 
 .intent-card-header {
@@ -580,26 +586,30 @@ body.light-mode .sheet-intent-subtitle {
   align-items: center;
   gap: 5px;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .intent-card-icon {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   line-height: 1;
   flex-shrink: 0;
 }
 
 .intent-card-title {
-  font-size: 0.82rem;
+  font-size: 0.79rem;
   font-weight: 700;
   color: var(--foreground);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .intent-card-desc {
-  font-size: 0.69rem;
+  font-size: 0.67rem;
   color: var(--foreground-muted);
   line-height: 1.2;
   margin-top: 3px;
@@ -608,6 +618,7 @@ body.light-mode .sheet-intent-subtitle {
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
+  min-width: 0;
   font-weight: 400;
 }
 
@@ -659,6 +670,22 @@ body.light-mode .sheet-intent-card-btn.active .intent-card-title {
 body.light-mode .sheet-intent-card-btn.active .intent-card-desc {
   color: #1e293b !important;
   font-weight: 600;
+}
+
+@media (max-width: 420px) {
+  .sheet-intent-grid {
+    gap: 6px;
+  }
+  .sheet-intent-card-btn {
+    padding: 7px 6px !important;
+    min-height: 48px !important;
+  }
+  .intent-card-title {
+    font-size: 0.76rem;
+  }
+  .intent-card-desc {
+    font-size: 0.64rem;
+  }
 }
 .sheet-save-status {
   font-size: 0.75rem;
