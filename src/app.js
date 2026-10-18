@@ -1730,13 +1730,16 @@ let currentGuestEmail = "";
                 ${isUnread ? '<span class="update-msg-new-badge">NEW</span>' : ''}
               </div>
               <span class="update-msg-time">${u.timestampStr || ''}</span>
-              <button class="update-msg-dismiss-btn" title="Remove notification" onclick="dismissUpdate('${safeId}')" aria-label="Dismiss">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
             </div>
             <div class="update-msg-text">${u.message}</div>
+            <div class="update-msg-footer">
+              <button class="update-msg-delete-btn" type="button" onclick="event.stopPropagation(); dismissUpdate('${safeId}')" title="Delete notification">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                <span>Delete</span>
+              </button>
+            </div>
           </div>
         `;
       });
@@ -3349,7 +3352,11 @@ function renderAdminDashboard() {
   `;
   
   container.innerHTML = html;
-  renderAdminAnnouncementsList(adminData.announcements || []);
+  if (adminData && adminData.announcements && adminData.announcements.length > 0) {
+    renderAdminAnnouncementsList(adminData.announcements);
+  } else {
+    loadAdminAnnouncements();
+  }
   filterAdminGuests("");
   loadAdminNetworkingData(false);
 }
@@ -4211,6 +4218,10 @@ function closeAdminModal(isHashChange) {
   document.getElementById('admin-modal-overlay').classList.remove('active');
   document.body.style.overflow = '';
   
+  if (typeof cancelEditPersonalMessage === 'function') {
+    cancelEditPersonalMessage();
+  }
+
   if (isHashChange !== true && window.location.hash === "#adminsheet") {
     history.back();
   }
@@ -4234,6 +4245,8 @@ function viewAdminGuestDetails(rowIndex) {
   const role = val("תפקיד");
   const country = val("מדינה");
   const personalMsg = val("הודעה אישית בפורטל");
+  const parsedMsgs = parseClientPersonalMessages(personalMsg);
+  const escapeEmail = String(email).replace(/'/g, "\\'");
   const prodNotes = val("הערות");
   
   const hasHotel = val("התקבל טופס אירוח?") === true || String(val("התקבל טופס אירוח?")).toLowerCase() === 'true';
@@ -4594,16 +4607,16 @@ function viewAdminGuestDetails(rowIndex) {
     <div style="background: var(--surface); padding: 14px; border-radius: 10px; border: 1.5px solid var(--border); margin-bottom: 15px;">
       <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--foreground); letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-        Personal Portal Message
+        Personal Portal Messages
       </h4>
       <div class="admin-msg-split-grid">
-        <!-- Left: Compose & Send -->
+        <!-- Left: Compose & Send / Update -->
         <div style="display: flex; flex-direction: column;">
-          <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--foreground-muted);">Compose Personal Message</label>
+          <label id="admin-personal-msg-label" style="font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--foreground-muted);">Compose Personal Message</label>
           <textarea id="admin-personal-msg" rows="3" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--background); color:var(--foreground); font-family:inherit; resize:vertical; margin-bottom:8px; box-sizing: border-box;" placeholder="Type personal message for guest..."></textarea>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button id="admin-save-msg-btn" class="primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 6px; width:auto;" onclick="savePersonalMessage('${email}')">
-              ${personalMsg ? 'Update Message' : 'Send Message'}
+            <button id="admin-save-msg-btn" class="primary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 6px; width:auto;" onclick="savePersonalMessage('${escapeEmail}')">
+              Send Message
             </button>
             <button id="admin-cancel-edit-msg-btn" class="secondary" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; width:auto; display: none;" onclick="cancelEditPersonalMessage()">
               Cancel
@@ -4613,30 +4626,14 @@ function viewAdminGuestDetails(rowIndex) {
         </div>
 
         <!-- Right: Active in Guest Portal -->
-        <div style="display: flex; flex-direction: column; background: var(--background); border: 1px dashed var(--border); border-radius: 8px; padding: 10px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 0.8rem; font-weight: 600; color: var(--foreground-muted);">Currently Active for Guest</span>
-            <span id="admin-personal-status-pill" style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; ${personalMsg ? 'background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: var(--surface); color: var(--foreground-muted); border: 1px solid var(--border);'}">
-              ${personalMsg ? 'ACTIVE' : 'NO MESSAGE'}
+        <div style="display: flex; flex-direction: column; background: var(--background); border: 1px dashed var(--border); border-radius: 8px; padding: 10px; max-height: 250px; overflow-y: auto;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; position: sticky; top: 0; background: var(--background); z-index: 1; padding-bottom: 4px;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--foreground-muted);">Active Messages for Guest</span>
+            <span id="admin-personal-status-pill" style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; ${parsedMsgs.length ? 'background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;' : 'background: var(--surface); color: var(--foreground-muted); border: 1px solid var(--border);'}">
+              ${parsedMsgs.length ? parsedMsgs.length + ' Active' : 'NO MESSAGES'}
             </span>
           </div>
-          <div id="admin-active-personal-preview" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 60px;">
-            ${personalMsg ? `
-              <div id="admin-current-msg-text" style="font-size: 0.88rem; color: var(--foreground); white-space: pre-wrap; word-break: break-word; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px solid var(--border); line-height: 1.4;">${escapeHtmlAdmin(personalMsg)}</div>
-              <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
-                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; display: flex; align-items: center; gap: 4px;" onclick="loadPersonalMessageForEdit()">
-                  ✏️ Edit
-                </button>
-                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; color: #ef4444; border-color: rgba(239, 68, 68, 0.4); display: flex; align-items: center; gap: 4px;" onclick="deletePersonalMessage('${email}')">
-                  🗑️ Delete
-                </button>
-              </div>
-            ` : `
-              <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--foreground-muted); font-size: 0.85rem; text-align: center; padding: 14px 0;">
-                No active personal message.
-              </div>
-            `}
-          </div>
+          <div id="admin-active-personal-preview" style="flex: 1; display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
       </div>
     </div>
@@ -4693,41 +4690,151 @@ function viewAdminGuestDetails(rowIndex) {
   document.getElementById('admin-bottom-sheet').classList.add('active');
   document.body.style.overflow = 'hidden';
   
+  renderAdminGuestPersonalMessages(email, parsedMsgs);
+  
+  const guestToken = localStorage.getItem('guestSessionToken');
+  if (guestToken) {
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res && res.success && res.messages) {
+          renderAdminGuestPersonalMessages(email, res.messages);
+        }
+      })
+      .getPersonalMessages(guestToken, email);
+  }
+  
   window.location.hash = "adminsheet";
 }
 
-window.loadPersonalMessageForEdit = function() {
-  const currentMsgEl = document.getElementById('admin-current-msg-text');
+function parseClientPersonalMessages(cellValue) {
+  if (!cellValue) return [];
+  const str = String(cellValue).trim();
+  if (!str) return [];
+  
+  if (str.startsWith('[') && str.endsWith(']')) {
+    try {
+      const arr = JSON.parse(str);
+      if (Array.isArray(arr)) {
+        return arr.map((item, idx) => {
+          if (typeof item === 'string') {
+            return { id: 'm_' + (idx + 1), text: item, timestampStr: 'Personal Message' };
+          }
+          return {
+            id: item.id || ('m_' + (idx + 1)),
+            text: item.text || item.message || '',
+            timestamp: item.timestamp || 0,
+            timestampStr: item.timestampStr || 'Personal Message'
+          };
+        }).filter(item => item.text && item.text.trim());
+      }
+    } catch(e) {}
+  }
+  
+  const lines = str.split(/\n\s*---\s*\n|\n\n+/).map(s => s.trim()).filter(Boolean);
+  return lines.map((line, idx) => ({
+    id: 'm_' + (idx + 1),
+    text: line,
+    timestamp: 0,
+    timestampStr: 'Personal Message'
+  }));
+}
+
+window.parseClientPersonalMessages = parseClientPersonalMessages;
+
+window.renderAdminGuestPersonalMessages = function(guestEmail, messages) {
+  const previewDiv = document.getElementById('admin-active-personal-preview');
+  const pill = document.getElementById('admin-personal-status-pill');
+  if (!previewDiv) return;
+  
+  const msgs = messages || [];
+  if (pill) {
+    pill.innerText = msgs.length ? `${msgs.length} Active` : 'NO MESSAGES';
+    pill.style.background = msgs.length ? '#d1fae5' : 'var(--surface)';
+    pill.style.color = msgs.length ? '#065f46' : 'var(--foreground-muted)';
+    pill.style.border = msgs.length ? '1px solid #a7f3d0' : '1px solid var(--border)';
+  }
+  
+  if (msgs.length === 0) {
+    previewDiv.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--foreground-muted); font-size: 0.85rem; text-align: center; padding: 20px 0;">
+        No active personal messages for this guest.
+      </div>
+    `;
+    return;
+  }
+  
+  const escapeEmail = String(guestEmail).replace(/'/g, "\\'");
+  let html = "";
+  msgs.forEach(m => {
+    const encoded = encodeURIComponent(m.text);
+    const safeId = String(m.id).replace(/'/g, "\\'");
+    html += `
+      <div class="admin-personal-msg-card" id="admin-personal-card-${safeId}">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 0.72rem; color: var(--foreground-muted); font-weight: 500;">
+            ${escapeHtmlAdmin(m.timestampStr || 'Personal Message')}
+          </span>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="secondary" style="padding: 2px 7px; font-size: 0.75rem; border-radius: 4px; height: auto;" onclick="loadPersonalMessageItemForEdit('${escapeEmail}', '${safeId}', '${encoded}')">
+              ✏️ Edit
+            </button>
+            <button type="button" class="secondary" style="padding: 2px 7px; font-size: 0.75rem; border-radius: 4px; height: auto; color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="deletePersonalMessageItem('${escapeEmail}', '${safeId}')">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+        <div style="font-size: 0.86rem; color: var(--foreground); white-space: pre-wrap; word-break: break-word; line-height: 1.4;">${escapeHtmlAdmin(m.text)}</div>
+      </div>
+    `;
+  });
+  previewDiv.innerHTML = html;
+};
+
+window.editingPersonalMessageGuestEmail = null;
+window.editingPersonalMessageId = null;
+
+window.loadPersonalMessageItemForEdit = function(guestEmail, messageId, encodedText) {
+  const text = decodeURIComponent(encodedText || '');
   const msgInput = document.getElementById('admin-personal-msg');
+  const labelEl = document.getElementById('admin-personal-msg-label');
   const saveBtn = document.getElementById('admin-save-msg-btn');
   const cancelBtn = document.getElementById('admin-cancel-edit-msg-btn');
   
-  if (currentMsgEl && msgInput) {
-    msgInput.value = currentMsgEl.innerText;
+  window.editingPersonalMessageGuestEmail = guestEmail;
+  window.editingPersonalMessageId = messageId;
+  
+  if (msgInput) {
+    msgInput.value = text;
     msgInput.focus();
-    if (saveBtn) saveBtn.innerText = 'Update Message';
-    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    msgInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+  if (labelEl) labelEl.innerText = 'Edit Personal Message';
+  if (saveBtn) saveBtn.innerText = 'Update Message';
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
 };
 
 window.cancelEditPersonalMessage = function() {
+  window.editingPersonalMessageGuestEmail = null;
+  window.editingPersonalMessageId = null;
   const msgInput = document.getElementById('admin-personal-msg');
+  const labelEl = document.getElementById('admin-personal-msg-label');
   const saveBtn = document.getElementById('admin-save-msg-btn');
   const cancelBtn = document.getElementById('admin-cancel-edit-msg-btn');
   
   if (msgInput) msgInput.value = '';
+  if (labelEl) labelEl.innerText = 'Compose Personal Message';
   if (saveBtn) saveBtn.innerText = 'Send Message';
   if (cancelBtn) cancelBtn.style.display = 'none';
-};
-
-window.deletePersonalMessage = function(guestEmail) {
-  if (!confirm("Are you sure you want to delete this personal message? The guest will no longer see it.")) return;
-  savePersonalMessage(guestEmail, "");
 };
 
 window.savePersonalMessage = function(guestEmail, explicitMsg) {
   const msgInput = document.getElementById('admin-personal-msg');
   const msg = (explicitMsg !== undefined) ? explicitMsg : (msgInput ? msgInput.value.trim() : '');
+  if (!msg) {
+    alert('Please enter a message first.');
+    return;
+  }
+  
   const statusDiv = document.getElementById('admin-msg-status');
   if (statusDiv) {
     statusDiv.style.display = 'block';
@@ -4735,12 +4842,84 @@ window.savePersonalMessage = function(guestEmail, explicitMsg) {
     statusDiv.innerText = 'Saving...';
   }
   
+  const token = localStorage.getItem('guestSessionToken');
+  const isEditing = window.editingPersonalMessageId !== null;
+  const editId = window.editingPersonalMessageId;
+  
+  const onSuccess = (res) => {
+    if (res && res.success) {
+      if (statusDiv) {
+        statusDiv.style.color = '#10b981';
+        statusDiv.innerText = isEditing ? 'Message updated!' : 'Message sent!';
+      }
+      
+      // Update local adminData cache
+      if (adminData && adminData.guests && adminData.guests.length > 1) {
+        const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
+        const emailIdx = headers.indexOf("מייל אורח");
+        const msgIdx = headers.indexOf("הודעה אישית בפורטל");
+        if (emailIdx !== -1 && msgIdx !== -1) {
+          for (let i = 1; i < adminData.guests.length; i++) {
+            if (String(adminData.guests[i][emailIdx]).trim().toLowerCase() === guestEmail.toLowerCase()) {
+              adminData.guests[i][msgIdx] = res.rawValue !== undefined ? res.rawValue : JSON.stringify(res.messages);
+              break;
+            }
+          }
+        }
+      }
+      try {
+        localStorage.setItem('swr_adminData', JSON.stringify(adminData));
+      } catch(e) {}
+      
+      cancelEditPersonalMessage();
+      renderAdminGuestPersonalMessages(guestEmail, res.messages || []);
+    } else {
+      if (statusDiv) {
+        statusDiv.style.color = '#ef4444';
+        statusDiv.innerText = 'Error: ' + (res ? res.message : 'Unknown error');
+      }
+    }
+    setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 3000);
+  };
+  
+  const onFailure = (err) => {
+    if (statusDiv) {
+      statusDiv.style.color = '#ef4444';
+      statusDiv.innerText = 'Error: ' + err;
+      setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 3000);
+    }
+  };
+  
+  if (isEditing) {
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure)
+      .updatePersonalMessageItem(token, guestEmail, editId, msg);
+  } else {
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure)
+      .addPersonalMessage(token, guestEmail, msg);
+  }
+};
+
+window.deletePersonalMessageItem = function(guestEmail, messageId) {
+  if (!confirm("Are you sure you want to delete this personal message? The guest will no longer see it.")) return;
+  
+  const statusDiv = document.getElementById('admin-msg-status');
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.color = 'var(--foreground-muted)';
+    statusDiv.innerText = 'Deleting...';
+  }
+  
+  const token = localStorage.getItem('guestSessionToken');
   google.script.run
     .withSuccessHandler(res => {
-      if (res.success) {
+      if (res && res.success) {
         if (statusDiv) {
           statusDiv.style.color = '#10b981';
-          statusDiv.innerText = msg ? 'Message saved!' : 'Message deleted!';
+          statusDiv.innerText = 'Message deleted!';
         }
         
         // Update local adminData cache
@@ -4751,55 +4930,24 @@ window.savePersonalMessage = function(guestEmail, explicitMsg) {
           if (emailIdx !== -1 && msgIdx !== -1) {
             for (let i = 1; i < adminData.guests.length; i++) {
               if (String(adminData.guests[i][emailIdx]).trim().toLowerCase() === guestEmail.toLowerCase()) {
-                adminData.guests[i][msgIdx] = msg;
+                adminData.guests[i][msgIdx] = res.rawValue !== undefined ? res.rawValue : JSON.stringify(res.messages);
                 break;
               }
             }
           }
         }
-
-        // Update Right Column preview immediately
-        const previewDiv = document.getElementById('admin-active-personal-preview');
-        const pill = document.getElementById('admin-personal-status-pill');
-        const saveBtn = document.getElementById('admin-save-msg-btn');
-        const cancelBtn = document.getElementById('admin-cancel-edit-msg-btn');
-
-        if (msgInput) msgInput.value = '';
-        if (cancelBtn) cancelBtn.style.display = 'none';
-        if (saveBtn) saveBtn.innerText = msg ? 'Update Message' : 'Send Message';
-
-        if (pill) {
-          pill.innerText = msg ? 'ACTIVE' : 'NO MESSAGE';
-          pill.style.background = msg ? '#d1fae5' : 'var(--surface)';
-          pill.style.color = msg ? '#065f46' : 'var(--foreground-muted)';
-          pill.style.border = msg ? '1px solid #a7f3d0' : '1px solid var(--border)';
+        try {
+          localStorage.setItem('swr_adminData', JSON.stringify(adminData));
+        } catch(e) {}
+        
+        if (window.editingPersonalMessageId === messageId) {
+          cancelEditPersonalMessage();
         }
-
-        if (previewDiv) {
-          if (msg) {
-            previewDiv.innerHTML = `
-              <div id="admin-current-msg-text" style="font-size: 0.88rem; color: var(--foreground); white-space: pre-wrap; word-break: break-word; background: var(--surface); padding: 10px; border-radius: 6px; border: 1px solid var(--border); line-height: 1.4;">${escapeHtmlAdmin(msg)}</div>
-              <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
-                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; display: flex; align-items: center; gap: 4px;" onclick="loadPersonalMessageForEdit()">
-                  ✏️ Edit
-                </button>
-                <button class="secondary" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; height: auto; color: #ef4444; border-color: rgba(239, 68, 68, 0.4); display: flex; align-items: center; gap: 4px;" onclick="deletePersonalMessage('${guestEmail}')">
-                  🗑️ Delete
-                </button>
-              </div>
-            `;
-          } else {
-            previewDiv.innerHTML = `
-              <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--foreground-muted); font-size: 0.85rem; text-align: center; padding: 14px 0;">
-                No active personal message.
-              </div>
-            `;
-          }
-        }
+        renderAdminGuestPersonalMessages(guestEmail, res.messages || []);
       } else {
         if (statusDiv) {
           statusDiv.style.color = '#ef4444';
-          statusDiv.innerText = 'Error: ' + res.message;
+          statusDiv.innerText = 'Error: ' + (res ? res.message : 'Unknown error');
         }
       }
       setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 3000);
@@ -4808,10 +4956,16 @@ window.savePersonalMessage = function(guestEmail, explicitMsg) {
       if (statusDiv) {
         statusDiv.style.color = '#ef4444';
         statusDiv.innerText = 'Error: ' + err;
-        setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+        setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 3000);
       }
     })
-    .updatePersonalMessage(localStorage.getItem('guestSessionToken'), guestEmail, msg);
+    .deletePersonalMessageItem(token, guestEmail, messageId);
+};
+
+// Backwards compatibility aliases
+window.loadPersonalMessageForEdit = window.loadPersonalMessageItemForEdit;
+window.deletePersonalMessage = function(guestEmail) {
+  window.deletePersonalMessageItem(guestEmail, 'm_1');
 };
 
 window.editingAdminAlertRow = null;
