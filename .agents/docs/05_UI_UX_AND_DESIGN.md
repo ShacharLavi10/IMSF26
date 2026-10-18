@@ -46,9 +46,14 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - Direct right-aligned "Open in Maps" button with map icon.
 - **Unified Accommodations Spec Card (`.hotel-spec-card`)**:
   - Modern spec card for Arthur Hotel & Cinema Hotel with row-based key-value details, external map button, and high-contrast Neo-Brutalist borders.
-- **Artist Intent Tag Pills (`.sheet-intent-tags`, `.sheet-intent-tag-btn`)**:
-  - Horizontal wrap pill buttons for quick delegate feedback inside the Artist Bottom Sheet (`🎯 Booking`, `🤝 Connect`, `📰 Press`, `✍️ General Note`).
-  - Tactile Neo-Brutalist styling with active state highlighting (bold border, accent background, and subtle translate press-down).
+- **Artist Intent 2x2 Grid Cards (`.sheet-intent-grid`, `.sheet-intent-card-btn`)**:
+  - Compact 2x2 grid tiles for delegate collaboration interest inside the Artist Bottom Sheet:
+    - `🎯 Live Booking` (*Shows, tours & festivals*)
+    - `🤝 Deals & Industry` (*Labels, publishing & sync*)
+    - `📰 Press & Media` (*Interviews & PR coverage*)
+    - `🔍 Talent Scouting` (*General interest & scouting*)
+  - Tactile Neo-Brutalist styling with active state highlighting (bold 2px black border, Salmon Pink accent background, and subtle translate press-down).
+  - Clear micro-copy subtitle and generous touch targets without vertical clutter on mobile screens.
   - Clean real-time save indicator (`#sheet-save-status`) positioned inline without layout jumping.
 - **Admin Networking Leads Cards (`#admin-networking-list`)**:
   - Dense, scannable cards displaying artist name, genre, like count (❤️), and dynamic status pills:

@@ -538,49 +538,127 @@ body.light-mode #sheet-guest-phone {
   color: #0284c7;
 }
 
-/* Intent Tags & Save Status */
-.sheet-intent-tags {
-  display: flex;
-  flex-wrap: wrap;
+/* Intent Subtitle & 2x2 Grid Cards */
+.sheet-intent-subtitle {
+  font-size: 0.75rem;
+  color: var(--foreground-muted);
+  margin: 0 0 10px 0;
+  line-height: 1.35;
+}
+body.light-mode .sheet-intent-subtitle {
+  color: #64748b;
+}
+
+.sheet-intent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-bottom: 12px;
 }
-.sheet-intent-tag-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1.5px solid var(--border-default);
-  color: var(--foreground-subtle);
+
+.sheet-intent-card-btn {
+  width: 100% !important;
+  min-height: 52px !important;
+  padding: 8px 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  text-align: left !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  min-height: 34px;
+  transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-sizing: border-box;
+  outline: none;
+  user-select: none;
 }
-.sheet-intent-tag-btn:hover {
-  border-color: var(--accent);
+
+.intent-card-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.intent-card-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.intent-card-title {
+  font-size: 0.82rem;
+  font-weight: 700;
   color: var(--foreground);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.sheet-intent-tag-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #000;
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.6);
+
+.intent-card-desc {
+  font-size: 0.69rem;
+  color: var(--foreground-muted);
+  line-height: 1.2;
+  margin-top: 3px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  font-weight: 400;
+}
+
+/* Hover State */
+.sheet-intent-card-btn:hover {
+  border-color: var(--accent) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Active State (Neo-Brutalist pop) */
+.sheet-intent-card-btn.active {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.7) !important;
   transform: translate(-1px, -1px);
 }
-body.light-mode .sheet-intent-tag-btn {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #334155;
+.sheet-intent-card-btn.active .intent-card-title {
+  color: #000000 !important;
 }
-body.light-mode .sheet-intent-tag-btn.active {
-  background: var(--accent);
-  border-color: #000;
-  color: #000;
-  box-shadow: 2px 2px 0px rgba(0,0,0,1);
+.sheet-intent-card-btn.active .intent-card-desc {
+  color: rgba(0, 0, 0, 0.75) !important;
+  font-weight: 500;
+}
+
+/* Light Mode Overrides */
+body.light-mode .sheet-intent-card-btn {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+body.light-mode .sheet-intent-card-btn .intent-card-title {
+  color: #0f172a !important;
+}
+body.light-mode .sheet-intent-card-btn .intent-card-desc {
+  color: #64748b !important;
+}
+body.light-mode .sheet-intent-card-btn:hover {
+  border-color: #94a3b8 !important;
+  background: #f8fafc !important;
+}
+body.light-mode .sheet-intent-card-btn.active {
+  background: var(--accent) !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1) !important;
+}
+body.light-mode .sheet-intent-card-btn.active .intent-card-title {
+  color: #000000 !important;
+}
+body.light-mode .sheet-intent-card-btn.active .intent-card-desc {
+  color: #1e293b !important;
+  font-weight: 600;
 }
 .sheet-save-status {
   font-size: 0.75rem;
