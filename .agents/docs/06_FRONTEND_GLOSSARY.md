@@ -76,4 +76,21 @@
     * **חלק תוכן מרכזי:** `.guide-item-main` (שם המקום `.guide-item-name`, תגית `.guide-item-tag`, תיאור `.guide-item-desc`, כתובת ומפה `.guide-item-address`).
     * **כפתור פעולה חכם:** `.guide-map-btn` (דינמי: מציג מלל היפרלינק מותאם אישית או `Maps`, עם אייקון תואם ומגבלת רוחב למניעת שבירה).
 
+11. **🔔 מערכת התראות, הודעות אישיות והודעות כלליות (Messaging & Notifications Suite):**
+    * **מודאל הודעות חדשות (Unread Popup Modal):** `#new-message-modal-overlay` (קופץ בכניסה לאורח כשיש הודעה חדשה שלא נפתחה), `#new-message-modal-title`, `#new-message-modal-text`, `.new-message-modal-bell` (אייקון פעמון מונפש), כפתור קריאה ישירה (פותח את תיבת ההתראות ומסמן כנקרא) וכפתור "Later".
+    * **פעמון התראות עליון:** `#notification-bell-container`, `#notification-badge` (תגית אדומה `NEW` מונפשת כשיש עדכון חדש).
+    * **פאנל התראות אורח (Live Updates Drawer):** `#updates-panel`, `#updates-overlay`, `#updates-body` (רשימת העדכונים הפעילים).
+    * **כרטיסיית הודעה לאורח (Update Message Card):** `.update-msg` (כולל וריאנט `.personal` להודעה אישית, עם `cursor: default` וחסינות מלחיצות מקריות), `.update-msg-header`, `.update-msg-time`, `.update-msg-new-badge`.
+    * **כפתור מחיקת התראה (Explicit Delete Button):** `.update-msg-footer`, `.update-msg-delete-btn` (כפתור אדום בולט עם אייקון פח והמלל `Delete` להסרת ההתראה).
+    * **גריד ניהול הודעות מפוצל (Admin 2-Column Split Grid):** `.admin-msg-split-grid` (צד שמאל כתיבה/עריכה, צד ימין רשימת הודעות פעילות).
+    * **ניהול הודעות אישיות בחלונית אורח (Admin Guest Sheet):**
+      - `#admin-personal-msg`, `#admin-personal-msg-label`, `#admin-save-msg-btn`, `#admin-cancel-edit-msg-btn`, `#admin-msg-status`.
+      - `#admin-personal-status-pill` (מונה הודעות פעילות `X Active` או `NO MESSAGES`).
+      - `#admin-active-personal-preview`, `.admin-personal-msg-card` (כרטיסיות הודעה אישית פעילה עם כפתורי ✏️ Edit ו-🗑️ Delete).
+    * **מרכז התראות כלליות בדשבורד הפקה (Live Alert Center):**
+      - `#admin-alert-msg`, `#admin-alert-mode-label`, `#admin-alert-submit-btn`, `#admin-alert-cancel-btn`, `#admin-alert-status`.
+      - `#admin-announcements-count` (מונה הודעות כלליות פעילות).
+      - `#admin-announcements-list`, `.admin-announcement-card`, `.admin-announcement-header`, `.admin-announcement-actions`, `.admin-announcement-body`.
+
+
 
