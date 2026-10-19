@@ -3565,7 +3565,8 @@ function renderAdminNetworkingKPIs() {
                           (!g.notes || !g.notes.trim()) &&
                           (!g.booking || !g.booking.trim()) &&
                           (!g.connect || !g.connect.trim()) &&
-                          (!g.press || !g.press.trim()));
+                          (!g.press || !g.press.trim()) &&
+                          (!g.general || !g.general.trim()));
       return !isInactive;
     });
     const activeCount = activeGuests.length;
@@ -3580,7 +3581,8 @@ function renderAdminNetworkingKPIs() {
         const notesCount = hasNotes ? g.notes.split('\n').filter(Boolean).length : 0;
         const tagsCount = ((g.booking && g.booking.trim()) ? 1 : 0) +
                           ((g.connect && g.connect.trim()) ? 1 : 0) +
-                          ((g.press && g.press.trim()) ? 1 : 0);
+                          ((g.press && g.press.trim()) ? 1 : 0) +
+                          ((g.general && g.general.trim()) ? 1 : 0);
         const score = (likes * 2) + (notesCount * 3) + tagsCount;
         return { ...g, likes, notesCount, score };
       })
@@ -3733,7 +3735,8 @@ function renderAdminNetworkingCubes(query = "") {
                           (!g.notes || !g.notes.trim()) &&
                           (!g.booking || !g.booking.trim()) &&
                           (!g.connect || !g.connect.trim()) &&
-                          (!g.press || !g.press.trim()));
+                          (!g.press || !g.press.trim()) &&
+                          (!g.general || !g.general.trim()));
       const inactiveClass = isInactive ? ' inactive-guest' : '';
       html += `
         <div class="networking-cube${inactiveClass}" onclick="openNetworkingDetail('guest', ${idx})" title="${escapeHtmlAdmin(g.name)}${isInactive ? ' (Inactive)' : ''}">
@@ -3769,6 +3772,7 @@ function openNetworkingDetail(type, target) {
     const hasBooking = artist.bookingLeads && artist.bookingLeads.trim().length > 0;
     const hasConnect = artist.connectLeads && artist.connectLeads.trim().length > 0;
     const hasPress = artist.pressLeads && artist.pressLeads.trim().length > 0;
+    const hasGeneral = artist.generalLeads && artist.generalLeads.trim().length > 0;
     const hasNotes = artist.notes && artist.notes.trim().length > 0;
 
     content.innerHTML = `
@@ -3826,6 +3830,15 @@ function openNetworkingDetail(type, target) {
         </div>
       ` : ''}
 
+      ${hasGeneral ? `
+        <div class="networking-section-box" style="border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.08);">
+          <div style="font-weight: 700; color: #f59e0b; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🔍</span> Talent Scouting & General
+          </div>
+          <div style="white-space: pre-line; color: var(--foreground); font-size: 0.9rem; line-height: 1.4;">${escapeHtmlAdmin(artist.generalLeads)}</div>
+        </div>
+      ` : ''}
+
       ${hasNotes ? `
         <div class="networking-section-box">
           <div style="font-weight: 700; color: var(--foreground-muted); margin-bottom: 6px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
@@ -3835,7 +3848,7 @@ function openNetworkingDetail(type, target) {
         </div>
       ` : ''}
 
-      ${!hasBooking && !hasConnect && !hasPress && !hasNotes && !artist.countries ? `
+      ${!hasBooking && !hasConnect && !hasPress && !hasGeneral && !hasNotes && !artist.countries ? `
         <div style="text-align: center; padding: 25px; color: var(--foreground-muted); font-size: 0.9rem;">
           No leads, booking requests, or notes recorded for this artist yet.
         </div>
@@ -3862,6 +3875,7 @@ function openNetworkingDetail(type, target) {
     const hasBooking = guest.booking && guest.booking.trim().length > 0;
     const hasConnect = guest.connect && guest.connect.trim().length > 0;
     const hasPress = guest.press && guest.press.trim().length > 0;
+    const hasGeneral = guest.general && guest.general.trim().length > 0;
     const hasNotes = guest.notes && guest.notes.trim().length > 0;
     const isActive = guest.totalLikes > 0 || hasFavs;
 
@@ -3933,6 +3947,15 @@ function openNetworkingDetail(type, target) {
         </div>
       ` : ''}
 
+      ${hasGeneral ? `
+        <div class="networking-section-box" style="border-left: 4px solid #f59e0b; background: rgba(245, 158, 11, 0.08);">
+          <div style="font-weight: 700; color: #f59e0b; margin-bottom: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+            <span>🔍</span> Talent Scouting & General
+          </div>
+          <div style="font-weight: 600; font-size: 0.9rem; color: var(--foreground);">${escapeHtmlAdmin(guest.general)}</div>
+        </div>
+      ` : ''}
+
       ${hasNotes ? `
         <div class="networking-section-box">
           <div style="font-weight: 700; color: var(--foreground-muted); margin-bottom: 6px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
@@ -3942,7 +3965,7 @@ function openNetworkingDetail(type, target) {
         </div>
       ` : ''}
 
-      ${!hasFavs && !hasBooking && !hasConnect && !hasPress && !hasNotes ? `
+      ${!hasFavs && !hasBooking && !hasConnect && !hasPress && !hasGeneral && !hasNotes ? `
         <div style="text-align: center; padding: 25px; color: var(--foreground-muted); font-size: 0.9rem;">
           This guest has not submitted any artist preferences or notes yet.
         </div>

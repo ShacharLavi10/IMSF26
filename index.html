@@ -528,23 +528,50 @@
 
       <!-- PRIVATE NOTES & INTENT -->
       <div class="sheet-section private-notes-section">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
           <h4 class="section-title" style="margin-bottom: 0;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 4px; vertical-align: text-bottom;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-            Private Notes & Intent
+            Private Notes & Collaboration
           </h4>
           <span id="sheet-save-status" class="sheet-save-status"></span>
         </div>
+        <p class="sheet-intent-subtitle">(Optional) Select any collaboration area that interests you:</p>
         
-        <!-- INTENT TAGS -->
-        <div class="sheet-intent-tags" id="sheet-intent-tags">
-          <button type="button" class="sheet-intent-tag-btn" data-tag="Booking" onclick="toggleIntentTag('Booking')">🎯 Booking</button>
-          <button type="button" class="sheet-intent-tag-btn" data-tag="Connect" onclick="toggleIntentTag('Connect')">🤝 Connect</button>
-          <button type="button" class="sheet-intent-tag-btn" data-tag="Press" onclick="toggleIntentTag('Press')">📰 Press</button>
-          <button type="button" class="sheet-intent-tag-btn" data-tag="General" onclick="toggleIntentTag('General')">✍️ General</button>
+        <!-- INTENT 2x2 GRID -->
+        <div class="sheet-intent-grid" id="sheet-intent-tags">
+          <button type="button" class="sheet-intent-card-btn sheet-intent-tag-btn" data-tag="Booking" onclick="toggleIntentTag('Booking')">
+            <div class="intent-card-header">
+              <span class="intent-card-icon">🎯</span>
+              <span class="intent-card-title">Live Booking</span>
+            </div>
+            <span class="intent-card-desc">Shows, tours & festivals</span>
+          </button>
+          <button type="button" class="sheet-intent-card-btn sheet-intent-tag-btn" data-tag="Connect" onclick="toggleIntentTag('Connect')">
+            <div class="intent-card-header">
+              <span class="intent-card-icon">🤝</span>
+              <span class="intent-card-title">Deals & Industry</span>
+            </div>
+            <span class="intent-card-desc">Labels, publishing & sync</span>
+          </button>
+          <button type="button" class="sheet-intent-card-btn sheet-intent-tag-btn" data-tag="Press" onclick="toggleIntentTag('Press')">
+            <div class="intent-card-header">
+              <span class="intent-card-icon">📰</span>
+              <span class="intent-card-title">Press & Media</span>
+            </div>
+            <span class="intent-card-desc">Interviews & PR coverage</span>
+          </button>
+          <button type="button" class="sheet-intent-card-btn sheet-intent-tag-btn" data-tag="General" onclick="toggleIntentTag('General')">
+            <div class="intent-card-header">
+              <span class="intent-card-icon">🔍</span>
+              <span class="intent-card-title">Talent Scouting</span>
+            </div>
+            <span class="intent-card-desc">General interest & scouting</span>
+          </button>
         </div>
 
-        <textarea id="sheet-private-note" placeholder="Write your private thoughts here... (Saved automatically)" oninput="savePrivateNote()"></textarea>
+        <div style="margin-top: 10px;">
+          <textarea id="sheet-private-note" placeholder="Write personal notes, ideas, or reminders... (Private & auto-saved)" oninput="savePrivateNote()"></textarea>
+        </div>
       </div>
     </div>
   </div>
