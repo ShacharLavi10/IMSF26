@@ -410,9 +410,17 @@
         <div id="artists-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.5s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              Festival Artists
-            </h3>
+            <!-- ARTISTS SUB-NAVIGATION (Segmented Switcher) -->
+            <div class="artists-subnav-container" role="tablist">
+              <button type="button" id="subtab-artists-directory" class="artists-subnav-btn active" onclick="switchArtistsSubTab('directory')" role="tab" aria-selected="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span>Artists Lineup</span>
+              </button>
+              <button type="button" id="subtab-artists-timetable" class="artists-subnav-btn" onclick="switchArtistsSubTab('timetable')" role="tab" aria-selected="false">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Shows Timetable</span>
+              </button>
+            </div>
             
             <!-- LIVE SCHEDULE BANNER (Happening Now) -->
             <div id="artists-live-banner" class="live-banner" style="display: none;">
@@ -422,45 +430,77 @@
               </div>
             </div>
 
-            <div id="artists-container">
-              <!-- ARTISTS FILTERS -->
-              <div class="directory-filters" style="margin-bottom: 16px;">
-                <div class="search-wrap">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input type="text" id="artist-search" placeholder="Search artists..." oninput="filterArtists()">
-                  <button class="clear-search-btn" id="clear-artist-search-btn" onclick="clearArtistSearch()" aria-label="Clear search">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <!-- VIEW 1: ARTISTS DIRECTORY / GRID -->
+            <div id="artists-directory-view">
+              <div id="artists-container">
+                <!-- ARTISTS FILTERS -->
+                <div class="directory-filters" style="margin-bottom: 16px;">
+                  <div class="search-wrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
+                    <input type="text" id="artist-search" placeholder="Search artists..." oninput="filterArtists()">
+                    <button class="clear-search-btn" id="clear-artist-search-btn" onclick="clearArtistSearch()" aria-label="Clear search">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="filter-selects" style="display: flex; gap: 8px;">
+                    <select id="artist-genre-filter" onchange="filterArtists()" style="flex: 1;">
+                      <option value="All">All Genres</option>
+                      <!-- Genres populated dynamically -->
+                    </select>
+                    <button id="artist-fav-filter-btn" class="fav-filter-btn" onclick="toggleFavFilter()" aria-label="Show Favorites" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: auto; padding: 4px 12px; gap: 4px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      <span style="font-size: 0.65rem; font-weight: 600; line-height: 1;">My Favorites</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- EXPORT BRIEFCASE BUTTON (Shown when favorites exist/active) -->
+                <div id="export-briefcase-container" style="display: none; text-align: center; margin-bottom: 16px;">
+                  <button class="primary button-download-small" onclick="exportBriefcase()" style="width: auto; margin: 0 auto;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Export My Briefcase
                   </button>
                 </div>
-                <div class="filter-selects" style="display: flex; gap: 8px;">
-                  <select id="artist-genre-filter" onchange="filterArtists()" style="flex: 1;">
-                    <option value="All">All Genres</option>
-                    <!-- Genres populated dynamically -->
-                  </select>
-                  <button id="artist-fav-filter-btn" class="fav-filter-btn" onclick="toggleFavFilter()" aria-label="Show Favorites" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: auto; padding: 4px 12px; gap: 4px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                    <span style="font-size: 0.65rem; font-weight: 600; line-height: 1;">My Favorites</span>
-                  </button>
+
+                <!-- ARTISTS GRID -->
+                <div class="artists-grid" id="artists-grid">
+                  <!-- Artist cards injected here -->
                 </div>
               </div>
+            </div>
 
-              <!-- EXPORT BRIEFCASE BUTTON (Shown when favorites exist/active) -->
-              <div id="export-briefcase-container" style="display: none; text-align: center; margin-bottom: 16px;">
-                <button class="primary button-download-small" onclick="exportBriefcase()" style="width: auto; margin: 0 auto;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                  Export My Briefcase
+            <!-- VIEW 2: FESTIVAL TIMETABLE VIEW -->
+            <div id="artists-timetable-view" style="display: none;">
+              <!-- DAYS NAVIGATION (Zero Scroll Calendar Strip) -->
+              <div id="timetable-days-nav" class="timetable-days-nav">
+                <!-- Day Pills injected dynamically (Tue 17 - Sun 22) -->
+              </div>
+
+              <!-- VENUE & DAY BANNER -->
+              <div id="timetable-venue-banner" class="timetable-venue-banner">
+                <!-- Injected: Venue name, location, door times -->
+              </div>
+
+              <!-- CONTROLS ROW: STAGE CHIPS & MY SHOWS (❤️) -->
+              <div class="timetable-controls-row">
+                <div id="timetable-stage-chips" class="timetable-stage-chips">
+                  <!-- Stage chips injected: All Stages, Stage 1, Stage 2... -->
+                </div>
+                <button type="button" id="timetable-fav-filter-btn" class="timetable-fav-btn" onclick="toggleTimetableFavFilter()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                  <span>My Shows (<span id="timetable-fav-count">0</span>)</span>
                 </button>
               </div>
 
-              <!-- ARTISTS GRID -->
-              <div class="artists-grid" id="artists-grid">
-                <!-- Artist cards injected here -->
+              <!-- SHOWS LIST CONTAINER -->
+              <div id="timetable-shows-container" class="timetable-shows-container">
+                <!-- Showtime cards injected dynamically -->
               </div>
             </div>
             
