@@ -3072,130 +3072,148 @@ body.light-mode .timetable-day-pill.active .day-num {
   color: #0f172a !important;
 }
 
-/* Venue & Day Header Banner - Slim & Modern */
+/* Venue & Day Header Banner - Slim 1-line strip */
 .timetable-venue-banner {
-  background: rgba(241, 169, 160, 0.08);
-  border: 1px solid rgba(241, 169, 160, 0.25);
-  border-radius: 8px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  margin-bottom: 6px;
 }
 
-.timetable-venue-title {
-  font-family: 'Oswald', sans-serif;
-  font-size: 0.95rem;
+.timetable-venue-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--foreground-muted);
+}
+
+.venue-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.venue-name {
   font-weight: 700;
   color: var(--foreground);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
 }
 
-.timetable-city-badge {
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
+.venue-doors-pill {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--foreground-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
   padding: 1px 6px;
   border-radius: 4px;
-  background: var(--accent);
-  color: #0f172a;
-  border: 1px solid #000;
-  box-shadow: 1px 1px 0 #000;
+  border: 1px solid var(--border-color);
 }
 
-.timetable-doors-note {
-  font-size: 0.72rem;
-  color: var(--foreground-muted);
-  font-weight: 500;
+body.light-mode .venue-doors-pill {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
 }
 
-/* Controls: Stage Chips & My Shows Toggle */
-.timetable-controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.timetable-stage-chips {
+/* Stage Mini-Cubes Strip (Tight horizontal row of cubes side by side) */
+.timetable-stage-strip {
   display: flex;
   gap: 5px;
-  flex-wrap: wrap;
-  align-items: center;
+  overflow-x: auto;
+  padding: 1px 1px 6px 1px;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-.timetable-stage-chip {
-  padding: 3px 9px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  border-radius: 20px;
-  border: 1.5px solid var(--border-color);
+.timetable-stage-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.stage-cube {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
   color: var(--foreground-muted);
+  border: 1.5px solid var(--border-color);
+  font-size: 0.73rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.12s ease;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
-.timetable-stage-chip:hover {
+.stage-cube:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--foreground);
 }
 
-.timetable-stage-chip.active {
-  background: var(--accent);
-  color: #0f172a;
-  border-color: var(--accent);
-  font-weight: 700;
-}
-
-body.light-mode .timetable-stage-chip {
-  background: #ffffff;
-  border-color: #e2e8f0;
-}
-
-body.light-mode .timetable-stage-chip.active {
-  background: var(--accent);
-  color: #0f172a;
-}
-
-/* My Shows (Favorites) Button */
-.timetable-fav-btn {
-  padding: 3px 10px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  border-radius: 20px;
-  border: 1.5px solid #000;
-  background: var(--card-bg, #11233a);
-  color: var(--foreground);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
+.stage-cube.active {
+  background: var(--accent) !important;
+  color: #0f172a !important;
+  border-color: #000 !important;
   box-shadow: 1.5px 1.5px 0 #000;
-  transition: all 0.12s ease;
 }
 
-body.light-mode .timetable-fav-btn {
-  background: #ffffff;
+.stage-cube .stage-cube-badge {
+  font-size: 0.63rem;
+  padding: 0px 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font-weight: 700;
 }
 
-.timetable-fav-btn:hover {
-  background: rgba(241, 169, 160, 0.15);
+.stage-cube.active .stage-cube-badge {
+  background: #0f172a;
+  color: var(--accent);
 }
 
-.timetable-fav-btn.active {
+.stage-cube-fav.active {
   background: #ff4757 !important;
   color: #ffffff !important;
   border-color: #000 !important;
-  box-shadow: 0px 0px 0 #000 !important;
-  transform: translate(1px, 1px);
+  box-shadow: 1.5px 1.5px 0 #000;
+}
+
+.stage-cube-fav.active .stage-cube-badge {
+  background: #ffffff;
+  color: #ff4757;
+}
+
+body.light-mode .stage-cube {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+body.light-mode .stage-cube.active {
+  background: var(--accent) !important;
+  color: #0f172a !important;
+  border-color: #000 !important;
+}
+
+body.light-mode .stage-cube .stage-cube-badge {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+body.light-mode .stage-cube.active .stage-cube-badge {
+  background: #0f172a;
+  color: #fff;
 }
 
 /* Shows List - Ultra-Compact Chronological Rows */
@@ -3212,12 +3230,12 @@ body.light-mode .timetable-fav-btn {
   border: 1px solid var(--border-color);
   border-left: 3.5px solid var(--accent);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 7px 10px;
   gap: 10px;
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
-  min-height: 44px;
+  min-height: 46px;
 }
 
 body.light-mode .timetable-show-card {
@@ -3286,14 +3304,14 @@ body.light-mode .timetable-show-card.is-favorite {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 2px;
 }
 
-.timetable-row-main {
+.timetable-artist-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: nowrap;
-  overflow: hidden;
+  width: 100%;
 }
 
 .timetable-artist-avatar {
@@ -3306,37 +3324,25 @@ body.light-mode .timetable-show-card.is-favorite {
   background: #2a2a2a;
 }
 
-.timetable-artist-name {
-  font-family: 'Oswald', sans-serif;
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: var(--foreground);
-  line-height: 1.15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.timetable-stage-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--border-color);
-  color: var(--accent-bright, #f59e0b);
-  white-space: nowrap;
+.timetable-avatar-fallback {
+  font-size: 1rem;
+  line-height: 1;
   flex-shrink: 0;
 }
 
-body.light-mode .timetable-stage-badge {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #b45309;
+.timetable-artist-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.2;
+  white-space: normal; /* NEVER CUT OFF! */
+  word-break: break-word;
+  flex: 1;
 }
 
 .timetable-fav-mini-badge {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   line-height: 1;
   flex-shrink: 0;
   animation: miniHeartPulse 1.8s infinite ease-in-out;
@@ -3348,17 +3354,45 @@ body.light-mode .timetable-stage-badge {
   100% { transform: scale(1); }
 }
 
-.timetable-row-sub {
+.timetable-sub-details {
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-top: 2px;
-  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+.timetable-stage-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--accent-bright, #f59e0b);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+body.light-mode .timetable-stage-badge {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.timetable-format-tag {
+  font-size: 0.63rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(241, 169, 160, 0.12);
+  border: 1px solid rgba(241, 169, 160, 0.3);
+  color: var(--accent);
+  white-space: nowrap;
 }
 
 .timetable-genre-tag {
-  font-size: 0.64rem;
-  padding: 1px 6px;
+  font-size: 0.63rem;
+  padding: 1px 5px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.05);
   color: var(--foreground-muted);

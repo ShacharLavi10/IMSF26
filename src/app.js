@@ -3572,13 +3572,16 @@ let currentGuestEmail = "";
       const banner = document.getElementById('timetable-venue-banner');
       if (!banner) return;
       const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
+      const doorInfo = dayObj.meta ? dayObj.meta.split('|')[0].trim() : '';
       banner.innerHTML = `
-        <div class="timetable-venue-title">
-          <span>📍</span>
-          <span>${dayObj.venue}</span>
-          <span class="timetable-city-badge">${dayObj.city}</span>
+        <div class="timetable-venue-strip">
+          <div class="venue-strip-left">
+            <span class="venue-pin">📍</span>
+            <span class="venue-name">${escapeHtml(dayObj.venue)}</span>
+            <span class="timetable-city-badge">${escapeHtml(dayObj.city)}</span>
+          </div>
+          ${doorInfo ? `<div class="venue-doors-pill">${escapeHtml(doorInfo)}</div>` : ''}
         </div>
-        <div class="timetable-doors-note">${dayObj.meta}</div>
       `;
     }
 
@@ -3586,31 +3589,57 @@ let currentGuestEmail = "";
       const container = document.getElementById('timetable-stage-chips');
       if (!container) return;
       const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
+      const favs = getFavorites();
+      
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      const dayFavCount = dayShows.filter(s => {
+        const matched = findMatchedArtist(s.artistName, s.aliases);
+        return matched ? !!favs[matched.id] : false;
+      }).length;
+
       let html = '';
-      dayObj.stages.forEach(stg => {
-        const isActive = (currentSelectedStage === stg);
-        const label = (stg === 'All') ? 'All Stages' : stg;
+      
+      // 1. "All Stages" Cube
+      const isAllActive = (!timetableFavsOnly && (currentSelectedStage === 'All' || !currentSelectedStage));
+      html += `
+        <button type="button" class="stage-cube ${isAllActive ? 'active' : ''}" onclick="selectTimetableStage('All')">
+          <span class="stage-cube-name">All Stages</span>
+          <span class="stage-cube-badge">${dayShows.length}</span>
+        </button>
+      `;
+
+      // 2. Specific Stages Cubes
+      dayObj.stages.filter(stg => stg !== 'All').forEach(stg => {
+        const isStgActive = (!timetableFavsOnly && currentSelectedStage === stg);
+        const stageCount = dayShows.filter(s => s.stage === stg).length;
         html += `
-          <button type="button" class="timetable-stage-chip ${isActive ? 'active' : ''}" onclick="selectTimetableStage('${stg.replace(/'/g, "\\'")}')">
-            ${label}
+          <button type="button" class="stage-cube ${isStgActive ? 'active' : ''}" onclick="selectTimetableStage('${stg.replace(/'/g, "\\'")}')">
+            <span class="stage-cube-name">${escapeHtml(stg)}</span>
+            <span class="stage-cube-badge">${stageCount}</span>
           </button>
         `;
       });
+
+      // 3. "My Shows" Favorite Filter Cube
+      html += `
+        <button type="button" class="stage-cube stage-cube-fav ${timetableFavsOnly ? 'active' : ''}" onclick="toggleTimetableFavFilter()">
+          <span class="stage-cube-name">❤️ My Shows</span>
+          <span class="stage-cube-badge">${dayFavCount}</span>
+        </button>
+      `;
+
       container.innerHTML = html;
     }
 
     function updateTimetableFavCount() {
-      const favBadge = document.getElementById('timetable-fav-count');
-      if (!favBadge) return;
-      const favs = getFavorites();
-      const favCount = Object.keys(favs).length;
-      favBadge.innerText = favCount;
+      renderTimetableStageChips();
     }
     window.updateTimetableFavCount = updateTimetableFavCount;
 
     function selectTimetableDate(dateStr) {
       currentSelectedTimetableDate = dateStr;
       currentSelectedStage = 'All';
+      timetableFavsOnly = false;
       renderTimetableDaysNav();
       renderTimetableVenueBanner();
       renderTimetableStageChips();
@@ -3619,6 +3648,7 @@ let currentGuestEmail = "";
     window.selectTimetableDate = selectTimetableDate;
 
     function selectTimetableStage(stageName) {
+      timetableFavsOnly = false;
       currentSelectedStage = stageName;
       renderTimetableStageChips();
       renderTimetableShows();
@@ -3627,10 +3657,7 @@ let currentGuestEmail = "";
 
     function toggleTimetableFavFilter() {
       timetableFavsOnly = !timetableFavsOnly;
-      const btn = document.getElementById('timetable-fav-filter-btn');
-      if (btn) {
-        btn.classList.toggle('active', timetableFavsOnly);
-      }
+      renderTimetableStageChips();
       renderTimetableShows();
     }
     window.toggleTimetableFavFilter = toggleTimetableFavFilter;
@@ -3642,7 +3669,7 @@ let currentGuestEmail = "";
       const favs = getFavorites();
       let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
       
-      if (currentSelectedStage && currentSelectedStage !== 'All') {
+      if (!timetableFavsOnly && currentSelectedStage && currentSelectedStage !== 'All') {
         dayShows = dayShows.filter(s => s.stage === currentSelectedStage);
       }
       
@@ -3688,12 +3715,13 @@ let currentGuestEmail = "";
         const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
-          : (s.isGeneralEvent ? `<span style="font-size: 1.05rem; line-height: 1;">🎧</span>` : `<span style="font-size: 1.05rem; line-height: 1;">🎸</span>`);
+          : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`);
         
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
-        const formatTag = s.format ? `<span class="timetable-genre-tag" style="color: var(--accent);">${escapeHtml(s.format)}</span>` : '';
+        const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
         const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
-        
+        const displayName = artist ? artist.name : s.artistName;
+
         html += `
           <div class="${cardClass}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
             <div class="timetable-time-box">
@@ -3701,18 +3729,16 @@ let currentGuestEmail = "";
               ${s.endTime ? `<span class="end-time">${escapeHtml(s.endTime)}</span>` : ''}
             </div>
             <div class="timetable-show-body">
-              <div class="timetable-row-main">
+              <div class="timetable-artist-header">
                 ${avatarHtml}
-                <span class="timetable-artist-name">${escapeHtml(artist ? artist.name : s.artistName)}</span>
-                <span class="timetable-stage-badge">📍 ${escapeHtml(s.stage)}</span>
+                <span class="timetable-artist-name">${escapeHtml(displayName)}</span>
                 ${favMiniBadge}
               </div>
-              ${(formatTag || genreTag) ? `
-                <div class="timetable-row-sub">
-                  ${formatTag}
-                  ${genreTag}
-                </div>
-              ` : ''}
+              <div class="timetable-sub-details">
+                <span class="timetable-stage-badge">📍 ${escapeHtml(s.stage)}</span>
+                ${formatTag}
+                ${genreTag}
+              </div>
             </div>
             ${artist ? `
               <div class="timetable-open-arrow">
