@@ -3688,33 +3688,35 @@ let currentGuestEmail = "";
         const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
-          : (s.isGeneralEvent ? `<span style="font-size: 1.25rem;">🎵</span>` : `<span style="font-size: 1.25rem;">🎸</span>`);
+          : (s.isGeneralEvent ? `<span style="font-size: 1.05rem; line-height: 1;">🎧</span>` : `<span style="font-size: 1.05rem; line-height: 1;">🎸</span>`);
         
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-genre-tag" style="color: var(--accent);">${escapeHtml(s.format)}</span>` : '';
-        const favBadgeHtml = isFav ? `<span class="timetable-fav-badge">❤️ In Your Favorites</span>` : '';
+        const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
         
         html += `
           <div class="${cardClass}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
             <div class="timetable-time-box">
               <span class="start-time">${escapeHtml(s.startTime)}</span>
-              <span class="end-time">${escapeHtml(s.endTime || '')}</span>
+              ${s.endTime ? `<span class="end-time">${escapeHtml(s.endTime)}</span>` : ''}
             </div>
             <div class="timetable-show-body">
-              <div class="timetable-stage-line">
-                <span>📍 ${escapeHtml(s.stage)}</span>
-                ${favBadgeHtml}
-              </div>
-              <div class="timetable-artist-line">
+              <div class="timetable-row-main">
                 ${avatarHtml}
                 <span class="timetable-artist-name">${escapeHtml(artist ? artist.name : s.artistName)}</span>
-                ${genreTag}
-                ${formatTag}
+                <span class="timetable-stage-badge">📍 ${escapeHtml(s.stage)}</span>
+                ${favMiniBadge}
               </div>
+              ${(formatTag || genreTag) ? `
+                <div class="timetable-row-sub">
+                  ${formatTag}
+                  ${genreTag}
+                </div>
+              ` : ''}
             </div>
             ${artist ? `
               <div class="timetable-open-arrow">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
               </div>
             ` : ''}
           </div>
