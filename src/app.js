@@ -3156,440 +3156,949 @@ let currentGuestEmail = "";
       }
     ];
 
-    const FESTIVAL_SHOWS_SCHEDULE = [
-      // DAY 1: TUE 17.11 (Jerusalem - Yellow Submarine & Parking Lot)
+    const DEFAULT_FESTIVAL_SHOWS_SCHEDULE = [
       {
-        id: 'show_1_1',
-        date: '2026-11-17',
-        stage: 'Submarine Hall',
-        startTime: '18:00',
-        endTime: '19:30',
-        artistName: 'Guest Reception (קבלת פנים אורחים)',
-        format: 'Deck / Reception',
-        isGeneralEvent: true
+            "id": "show_1_1",
+            "date": "2026-11-17",
+            "stage": "Submarine Hall",
+            "startTime": "18:00",
+            "endTime": "19:30",
+            "artistName": "Guest Reception (קבלת פנים אורחים)",
+            "format": "Deck / Reception",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_1_2',
-        date: '2026-11-17',
-        stage: 'Submarine Hall',
-        startTime: '19:45',
-        endTime: '20:10',
-        artistName: 'Daniel Zamir & Zohar Fresco',
-        aliases: ['דניאל זמיר וזהר פרסקו', 'דניאל זמיר', 'Daniel Zamir'],
-        format: 'Seated Show'
+            "id": "show_1_2",
+            "date": "2026-11-17",
+            "stage": "Submarine Hall",
+            "startTime": "19:15",
+            "endTime": "19:45",
+            "artistName": "Doors Opening (פתיחת דלתות)",
+            "format": "Hall Doors",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_1_3',
-        date: '2026-11-17',
-        stage: 'Submarine Hall',
-        startTime: '20:20',
-        endTime: '20:45',
-        artistName: 'Yonathan Avishai Ensemble',
-        aliases: ['יונתן אבישי אנסמבל', 'יונתן אבישי', 'Yonathan Avishai'],
-        format: 'Seated Show'
+            "id": "show_1_3",
+            "date": "2026-11-17",
+            "stage": "Submarine Hall",
+            "startTime": "19:45",
+            "endTime": "20:10",
+            "artistName": "Daniel Zamir & Zohar Fresco",
+            "aliases": [
+                  "דניאל זמיר וזהר פרסקו",
+                  "דניאל זמיר",
+                  "Daniel Zamir"
+            ],
+            "format": "Seated Show"
       },
       {
-        id: 'show_1_4',
-        date: '2026-11-17',
-        stage: 'Parking Lot',
-        startTime: '20:00',
-        endTime: '21:00',
-        artistName: 'Doors Opening & DJ Set',
-        format: 'Lower Space Opening',
-        isGeneralEvent: true
+            "id": "show_1_4",
+            "date": "2026-11-17",
+            "stage": "Submarine Hall",
+            "startTime": "20:20",
+            "endTime": "20:45",
+            "artistName": "Yonathan Avishai Ensemble",
+            "aliases": [
+                  "יונתן אבישי אנסמבל",
+                  "יונתן אבישי",
+                  "Yonathan Avishai"
+            ],
+            "format": "Seated Show"
       },
       {
-        id: 'show_1_5',
-        date: '2026-11-17',
-        stage: 'Parking Lot',
-        startTime: '21:00',
-        endTime: '21:30',
-        artistName: 'The Kadosh Brothers',
-        aliases: ['האחים קדוש', 'Kadosh Brothers'],
-        format: 'Standing Show'
+            "id": "show_1_5",
+            "date": "2026-11-17",
+            "stage": "Parking Lot",
+            "startTime": "20:00",
+            "endTime": "21:00",
+            "artistName": "Doors Opening & DJ Set",
+            "format": "Parking Lot Stage",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_1_6',
-        date: '2026-11-17',
-        stage: 'Parking Lot',
-        startTime: '21:45',
-        endTime: '22:15',
-        artistName: 'Mark Eliyahu',
-        aliases: ['מארק אליהו'],
-        format: 'Standing Show'
+            "id": "show_1_6",
+            "date": "2026-11-17",
+            "stage": "Parking Lot",
+            "startTime": "21:00",
+            "endTime": "21:30",
+            "artistName": "The Kadosh Brothers",
+            "aliases": [
+                  "האחים קדוש",
+                  "Kadosh Brothers"
+            ],
+            "format": "Standing Show"
       },
       {
-        id: 'show_1_7',
-        date: '2026-11-17',
-        stage: 'Parking Lot',
-        startTime: '22:30',
-        endTime: '23:00',
-        artistName: 'Shaman Shaman Ensemble',
-        aliases: ['שאמאן שאמאן', 'Shaman Shaman'],
-        format: 'Standing Show'
+            "id": "show_1_7",
+            "date": "2026-11-17",
+            "stage": "Parking Lot",
+            "startTime": "21:45",
+            "endTime": "22:15",
+            "artistName": "Mark Eliyahu",
+            "aliases": [
+                  "מארק אליהו"
+            ],
+            "format": "Standing Show"
       },
       {
-        id: 'show_1_8',
-        date: '2026-11-17',
-        stage: 'Aftershow',
-        startTime: '23:10',
-        endTime: '23:40',
-        artistName: 'KADMON',
-        aliases: ['קדמון'],
-        format: 'Aftershow Party / Free Entry'
-      },
-
-      // DAY 2: WED 18.11 (Jerusalem - Tower of David & Submarine)
-      {
-        id: 'show_2_1',
-        date: '2026-11-18',
-        stage: 'Tower of David',
-        startTime: '13:00',
-        endTime: '13:25',
-        artistName: 'Amitai Aricha & The D-ONE Project',
-        aliases: ['אמיתי אריכא ופרויקט ה-D-ONE', 'אמיתי אריכא', 'Amitai Aricha'],
-        format: 'Museum Courtyard'
+            "id": "show_1_8",
+            "date": "2026-11-17",
+            "stage": "Parking Lot",
+            "startTime": "22:30",
+            "endTime": "23:00",
+            "artistName": "Shaman Shaman Ensemble",
+            "aliases": [
+                  "שאמאן שאמאן",
+                  "Shaman Shaman"
+            ],
+            "format": "Standing Show"
       },
       {
-        id: 'show_2_2',
-        date: '2026-11-18',
-        stage: 'Tower of David',
-        startTime: '13:40',
-        endTime: '14:05',
-        artistName: 'Keren Ilan',
-        aliases: ['קרן אילן'],
-        format: 'Museum Courtyard'
+            "id": "show_1_9",
+            "date": "2026-11-17",
+            "stage": "Aftershow",
+            "startTime": "23:00",
+            "endTime": "23:10",
+            "artistName": "Aftershow Doors",
+            "format": "Yellow Submarine Club",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_2_3',
-        date: '2026-11-18',
-        stage: 'Tower of David',
-        startTime: '14:20',
-        endTime: '14:45',
-        artistName: 'Yael Deckelbaum',
-        aliases: ['יעל דקלבאום'],
-        format: 'Museum Courtyard'
+            "id": "show_1_10",
+            "date": "2026-11-17",
+            "stage": "Aftershow",
+            "startTime": "23:10",
+            "endTime": "23:40",
+            "artistName": "KADMON",
+            "aliases": [
+                  "קדמון"
+            ],
+            "format": "Aftershow Party / Free Entry"
       },
       {
-        id: 'show_2_4',
-        date: '2026-11-18',
-        stage: 'Submarine Hall',
-        startTime: '20:20',
-        endTime: '20:45',
-        artistName: 'Yonatan Sagiv',
-        aliases: ['יונתן סגיב'],
-        format: 'Seated Show'
+            "id": "show_2_1",
+            "date": "2026-11-18",
+            "stage": "Tower of David",
+            "startTime": "12:30",
+            "endTime": "13:00",
+            "artistName": "Doors Opening",
+            "format": "Museum Courtyard",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_2_5',
-        date: '2026-11-18',
-        stage: 'Submarine Hall',
-        startTime: '20:55',
-        endTime: '21:20',
-        artistName: 'Alon Near Trio',
-        aliases: ['אלון ניר', 'שלישיית אלון ניר'],
-        format: 'Seated Show'
+            "id": "show_2_2",
+            "date": "2026-11-18",
+            "stage": "Tower of David",
+            "startTime": "13:00",
+            "endTime": "13:25",
+            "artistName": "Amitai Aricha @ The D-ONE Project",
+            "aliases": [
+                  "אמיתי אריכא ופרויקט ה-D-ONE",
+                  "אמיתי אריכא",
+                  "Amitai Aricha & The D-ONE Project"
+            ],
+            "format": "Museum Courtyard"
       },
       {
-        id: 'show_2_6',
-        date: '2026-11-18',
-        stage: 'Submarine Hall',
-        startTime: '21:30',
-        endTime: '21:55',
-        artistName: 'The Israel Jazz Orchestra',
-        aliases: ['תזמורת הג\'אז הישראלית', 'תזמורת הגאז הישראלית'],
-        format: 'Standing Show'
+            "id": "show_2_3",
+            "date": "2026-11-18",
+            "stage": "Tower of David",
+            "startTime": "13:40",
+            "endTime": "14:05",
+            "artistName": "Keren Ilan",
+            "aliases": [
+                  "קרן אילן"
+            ],
+            "format": "Museum Courtyard"
       },
       {
-        id: 'show_2_7',
-        date: '2026-11-18',
-        stage: 'Submarine Hall',
-        startTime: '22:15',
-        endTime: '22:40',
-        artistName: 'Masok',
-        aliases: ['מסוק'],
-        format: 'Standing Show'
+            "id": "show_2_4",
+            "date": "2026-11-18",
+            "stage": "Tower of David",
+            "startTime": "14:20",
+            "endTime": "14:45",
+            "artistName": "Yael Deckelbaum",
+            "aliases": [
+                  "יעל דקלבאום"
+            ],
+            "format": "Museum Courtyard"
       },
       {
-        id: 'show_2_8',
-        date: '2026-11-18',
-        stage: 'Submarine Hall',
-        startTime: '22:50',
-        endTime: '23:15',
-        artistName: 'The Dazaevs',
-        aliases: ['הדזאבות', 'Dazaevs'],
-        format: 'Standing Show'
+            "id": "show_2_5",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "19:30",
+            "endTime": "20:20",
+            "artistName": "Doors Opening",
+            "format": "Evening Showcase",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_2_9',
-        date: '2026-11-18',
-        stage: 'Submarine Hall',
-        startTime: '23:25',
-        endTime: '00:00',
-        artistName: 'BEĀTFÖØT',
-        aliases: ['ביטפוט', 'BEATFOOT'],
-        format: 'Late Night Set'
-      },
-
-      // DAY 3: THU 19.11 (Jerusalem - Museum of Tolerance)
-      {
-        id: 'show_3_1',
-        date: '2026-11-19',
-        stage: 'Grand Hall 2',
-        startTime: '19:30',
-        endTime: '20:00',
-        artistName: 'Portman-T',
-        aliases: ['פורטמן טי', 'Portman T'],
-        format: 'Hall Stage'
+            "id": "show_2_6",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "20:20",
+            "endTime": "20:45",
+            "artistName": "Yonatan Tagger",
+            "aliases": [
+                  "יונתן טג'ר",
+                  "יונתן תג'ר",
+                  "Yonatan Tagger"
+            ],
+            "format": "Seated Show"
       },
       {
-        id: 'show_3_2',
-        date: '2026-11-19',
-        stage: 'B2 Main Stage',
-        startTime: '19:45',
-        endTime: '20:15',
-        artistName: 'Itamar Doari',
-        aliases: ['איתמר דוארי'],
-        format: 'B2 Central'
+            "id": "show_2_7",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "20:55",
+            "endTime": "21:20",
+            "artistName": "Alon Near Trio",
+            "aliases": [
+                  "אלון ניר",
+                  "שלישיית אלון ניר"
+            ],
+            "format": "Seated Show"
       },
       {
-        id: 'show_3_3',
-        date: '2026-11-19',
-        stage: 'Grand Hall 1',
-        startTime: '20:00',
-        endTime: '20:30',
-        artistName: 'Shen',
-        aliases: ['שן'],
-        format: 'Grand Hall'
+            "id": "show_2_8",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "21:30",
+            "endTime": "21:55",
+            "artistName": "The Israel Jazz Orchestra",
+            "aliases": [
+                  "תזמורת הג'אז הישראלית",
+                  "תזמורת הגאז הישראלית"
+            ],
+            "format": "Standing Show"
       },
       {
-        id: 'show_3_4',
-        date: '2026-11-19',
-        stage: 'B2 Main Stage',
-        startTime: '21:15',
-        endTime: '21:45',
-        artistName: 'SHIRAN & BAKAL',
-        aliases: ['שירן ובקל', 'SHIRAN&BAKAL'],
-        format: 'B2 Central'
+            "id": "show_2_9",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "21:55",
+            "endTime": "22:15",
+            "artistName": "Intermission (הפסקה 20 דק)",
+            "format": "Break",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_3_5',
-        date: '2026-11-19',
-        stage: 'Grand Hall 2',
-        startTime: '21:30',
-        endTime: '22:00',
-        artistName: 'MAGI',
-        aliases: ['מאגי'],
-        format: 'Hall Stage'
+            "id": "show_2_10",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "22:15",
+            "endTime": "22:40",
+            "artistName": "Masok",
+            "aliases": [
+                  "מסוק"
+            ],
+            "format": "Standing Show"
       },
       {
-        id: 'show_3_6',
-        date: '2026-11-19',
-        stage: 'Grand Hall 1',
-        startTime: '22:00',
-        endTime: '22:30',
-        artistName: 'The Pretty Please',
-        aliases: ['דה פריטי פליז'],
-        format: 'Grand Hall'
+            "id": "show_2_11",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "22:50",
+            "endTime": "23:15",
+            "artistName": "HAZE'EVOT",
+            "aliases": [
+                  "הזאבות",
+                  "הדזאבות",
+                  "Haze'evot"
+            ],
+            "format": "Standing Show"
       },
       {
-        id: 'show_3_7',
-        date: '2026-11-19',
-        stage: 'B2 Main Stage',
-        startTime: '22:15',
-        endTime: '22:45',
-        artistName: 'Boogie Balagan',
-        aliases: ['בוגי בלגן'],
-        format: 'B2 Central'
-      },
-
-      // DAY 4: FRI 20.11 (Tel Aviv - Teder)
-      {
-        id: 'show_4_1',
-        date: '2026-11-20',
-        stage: 'Main Plaza',
-        startTime: '18:00',
-        endTime: '18:45',
-        artistName: 'Shay Hazan - DAWA',
-        aliases: ['שי חזן', 'Shay Hazan'],
-        format: 'Main Courtyard'
+            "id": "show_2_12",
+            "date": "2026-11-18",
+            "stage": "Submarine Hall",
+            "startTime": "23:25",
+            "endTime": "00:00",
+            "artistName": "BĘÃTFÓØT",
+            "aliases": [
+                  "BĘÃTFÓØT",
+                  "BEATFOOT",
+                  "BEĀTFÖØT",
+                  "ביטפוט"
+            ],
+            "format": "Late Night Set"
       },
       {
-        id: 'show_4_2',
-        date: '2026-11-20',
-        stage: 'Kissa',
-        startTime: '18:30',
-        endTime: '19:15',
-        artistName: 'Tamar Shawki',
-        aliases: ['תמר שאוקי'],
-        format: 'Kissa Stage'
+            "id": "show_3_1",
+            "date": "2026-11-19",
+            "stage": "Museum of Tolerance",
+            "startTime": "18:30",
+            "endTime": "19:00",
+            "artistName": "Doors Opening (פתיחת דלתות)",
+            "format": "Museum Complex",
+            "isGeneralEvent": true
       },
       {
-        id: 'show_4_3',
-        date: '2026-11-20',
-        stage: 'Matmon',
-        startTime: '20:30',
-        endTime: '21:15',
-        artistName: 'Eyal Netzer & Strings',
-        aliases: ['אייל נצר', 'Eyal Netzer'],
-        format: 'Matmon Room'
+            "id": "show_3_2",
+            "date": "2026-11-19",
+            "stage": "Plaza",
+            "startTime": "19:00",
+            "endTime": "19:30",
+            "artistName": "Itamar Doari",
+            "aliases": [
+                  "איתמר דוארי"
+            ],
+            "format": "Plaza Stage"
       },
       {
-        id: 'show_4_4',
-        date: '2026-11-20',
-        stage: 'Matmon',
-        startTime: '21:30',
-        endTime: '22:15',
-        artistName: 'Floating Sheep',
-        aliases: ['פלוטינג שיפ'],
-        format: 'Matmon Room'
+            "id": "show_3_3",
+            "date": "2026-11-19",
+            "stage": "Grand Hall 2",
+            "startTime": "19:30",
+            "endTime": "20:00",
+            "artistName": "Portman-T",
+            "aliases": [
+                  "פורטמן טי",
+                  "Portman T"
+            ],
+            "format": "Hall Stage"
       },
       {
-        id: 'show_4_5',
-        date: '2026-11-20',
-        stage: 'Juanita',
-        startTime: '22:00',
-        endTime: '22:30',
-        artistName: 'SHALOSH',
-        aliases: ['שלוש'],
-        format: 'Juanita Club'
+            "id": "show_3_4",
+            "date": "2026-11-19",
+            "stage": "B2 Main Stage",
+            "startTime": "19:45",
+            "endTime": "20:15",
+            "artistName": "Deswa",
+            "aliases": [
+                  "דסווה",
+                  "Deswa"
+            ],
+            "format": "B2 Central"
       },
       {
-        id: 'show_4_6',
-        date: '2026-11-20',
-        stage: 'Kissa',
-        startTime: '22:30',
-        endTime: '23:15',
-        artistName: 'Ariel Bart Trio',
-        aliases: ['שלישיית אריאל ברט', 'אריאל ברט', 'Ariel Bart'],
-        format: 'Kissa Stage'
+            "id": "show_3_5",
+            "date": "2026-11-19",
+            "stage": "Grand Hall 1",
+            "startTime": "20:00",
+            "endTime": "20:30",
+            "artistName": "SHEN",
+            "aliases": [
+                  "שן",
+                  "Shen"
+            ],
+            "format": "Grand Hall"
       },
       {
-        id: 'show_4_7',
-        date: '2026-11-20',
-        stage: 'Matmon',
-        startTime: '23:00',
-        endTime: '23:45',
-        artistName: 'Sandia',
-        aliases: ['סנדיה'],
-        format: 'Matmon Room'
-      },
-
-      // DAY 5: SAT 21.11 (Tel Aviv - Radical)
-      {
-        id: 'show_5_1',
-        date: '2026-11-21',
-        stage: 'Main Hall',
-        startTime: '15:00',
-        endTime: '15:25',
-        artistName: 'Meitarai',
-        aliases: ['מיתרי'],
-        format: 'Grand Hall'
+            "id": "show_3_6",
+            "date": "2026-11-19",
+            "stage": "Auditorium 400",
+            "startTime": "20:15",
+            "endTime": "20:45",
+            "artistName": "The Addis Ken Project",
+            "aliases": [
+                  "פרויקט אדיס קן",
+                  "אדיס קן"
+            ],
+            "format": "Auditorium"
       },
       {
-        id: 'show_5_2',
-        date: '2026-11-21',
-        stage: 'Sculpture Yard',
-        startTime: '15:45',
-        endTime: '16:10',
-        artistName: 'AVIRAM',
-        aliases: ['אבירם'],
-        format: 'Open Air Garden'
+            "id": "show_3_7",
+            "date": "2026-11-19",
+            "stage": "Prayer Room",
+            "startTime": "20:30",
+            "endTime": "21:00",
+            "artistName": "GRAPE",
+            "aliases": [
+                  "גרייפ",
+                  "חדר תפילה"
+            ],
+            "format": "Prayer Room Acoustic"
       },
       {
-        id: 'show_5_3',
-        date: '2026-11-21',
-        stage: 'Club',
-        startTime: '16:15',
-        endTime: '16:40',
-        artistName: 'The Minister',
-        aliases: ['דה מיניסטר'],
-        format: 'Club Stage'
+            "id": "show_3_8",
+            "date": "2026-11-19",
+            "stage": "Plaza",
+            "startTime": "21:00",
+            "endTime": "21:30",
+            "artistName": "Joseph E-Shine",
+            "aliases": [
+                  "ג'וזף אי שיין",
+                  "Joseph E Shine"
+            ],
+            "format": "Plaza Stage"
       },
       {
-        id: 'show_5_4',
-        date: '2026-11-21',
-        stage: 'Main Hall',
-        startTime: '17:00',
-        endTime: '17:25',
-        artistName: 'Maya Belsitzman & Matan Ephrat',
-        aliases: ['מאיה בלזיצמן ומתן אפרת', 'מאיה בלזיצמן', 'Maya Belsitzman'],
-        format: 'Grand Hall'
+            "id": "show_3_9",
+            "date": "2026-11-19",
+            "stage": "B2 Main Stage",
+            "startTime": "21:15",
+            "endTime": "21:45",
+            "artistName": "SHIRAN&BAKAL",
+            "aliases": [
+                  "שירן ובקל",
+                  "SHIRAN & BAKAL"
+            ],
+            "format": "B2 Central"
       },
       {
-        id: 'show_5_5',
-        date: '2026-11-21',
-        stage: 'Sculpture Yard',
-        startTime: '17:30',
-        endTime: '17:55',
-        artistName: 'Shir Shani',
-        aliases: ['שיר שני'],
-        format: 'Open Air Garden'
+            "id": "show_3_10",
+            "date": "2026-11-19",
+            "stage": "Grand Hall 2",
+            "startTime": "21:30",
+            "endTime": "22:00",
+            "artistName": "Boogie Balagan",
+            "aliases": [
+                  "בוגי בלגן"
+            ],
+            "format": "Hall Stage"
       },
       {
-        id: 'show_5_6',
-        date: '2026-11-21',
-        stage: 'Club',
-        startTime: '18:10',
-        endTime: '18:35',
-        artistName: 'Allan Tune',
-        aliases: ['אלן טיון'],
-        format: 'Club Stage'
+            "id": "show_3_11",
+            "date": "2026-11-19",
+            "stage": "Auditorium 400",
+            "startTime": "21:45",
+            "endTime": "22:15",
+            "artistName": "Nigun Quartet",
+            "aliases": [
+                  "רביעיית ניגון"
+            ],
+            "format": "Auditorium"
       },
       {
-        id: 'show_5_7',
-        date: '2026-11-21',
-        stage: 'Fish Market',
-        startTime: '15:30',
-        endTime: '18:00',
-        artistName: 'Music Industry Panels & Talks (שוק דגים)',
-        format: 'Lectures & Discussions',
-        isGeneralEvent: true
-      },
-
-      // DAY 6: SUN 22.11 (Jaffa - Container House)
-      {
-        id: 'show_6_1',
-        date: '2026-11-22',
-        stage: 'Networking Area',
-        startTime: '14:00',
-        endTime: '16:00',
-        artistName: 'International Networking Event (אירוע נטוורקינג)',
-        format: 'Delegates & Artists Matching',
-        isGeneralEvent: true
+            "id": "show_3_12",
+            "date": "2026-11-19",
+            "stage": "Grand Hall 1",
+            "startTime": "22:00",
+            "endTime": "22:30",
+            "artistName": "The Pretty Please",
+            "aliases": [
+                  "דה פריטי פליז"
+            ],
+            "format": "Grand Hall"
       },
       {
-        id: 'show_6_2',
-        date: '2026-11-22',
-        stage: 'Main Stage',
-        startTime: '16:00',
-        endTime: '18:30',
-        artistName: 'Closing Shows & DJ Sets (אירוע נעילה)',
-        format: 'Festival Grand Finale',
-        isGeneralEvent: true
+            "id": "show_3_13",
+            "date": "2026-11-19",
+            "stage": "B2 Main Stage",
+            "startTime": "22:15",
+            "endTime": "22:45",
+            "artistName": "MAGI",
+            "aliases": [
+                  "מאגי"
+            ],
+            "format": "B2 Central"
+      },
+      {
+            "id": "show_3_14",
+            "date": "2026-11-19",
+            "stage": "Plaza",
+            "startTime": "22:20",
+            "endTime": "22:50",
+            "artistName": "BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)",
+            "aliases": [
+                  "BILTEEZ",
+                  "בילטיז",
+                  "אסתר רדא דניאל זמיר ומיכאל מיטל",
+                  "BILTEEZ (אסתר רדא, דניאל זמיר ומיכאל מיטל)"
+            ],
+            "format": "Plaza Headline"
+      },
+      {
+            "id": "show_3_15",
+            "date": "2026-11-19",
+            "stage": "Prayer Room",
+            "startTime": "22:45",
+            "endTime": "23:15",
+            "artistName": "Ice Hokku",
+            "aliases": [
+                  "אייס הוקו"
+            ],
+            "format": "Prayer Room Acoustic"
+      },
+      {
+            "id": "show_3_16",
+            "date": "2026-11-19",
+            "stage": "Grand Hall Full",
+            "startTime": "23:15",
+            "endTime": "23:45",
+            "artistName": "ALAL",
+            "aliases": [
+                  "עלעל",
+                  "אלל"
+            ],
+            "format": "Grand Hall Full"
+      },
+      {
+            "id": "show_4_1",
+            "date": "2026-11-20",
+            "stage": "Main Plaza",
+            "startTime": "18:00",
+            "endTime": "18:45",
+            "artistName": "Shay Hazan - DAWA",
+            "aliases": [
+                  "שי חזן",
+                  "Shay Hazan",
+                  "DAWA"
+            ],
+            "format": "Main Courtyard"
+      },
+      {
+            "id": "show_4_2",
+            "date": "2026-11-20",
+            "stage": "Kissa",
+            "startTime": "18:30",
+            "endTime": "19:15",
+            "artistName": "Tamar Shawki",
+            "aliases": [
+                  "תמר שאוקי"
+            ],
+            "format": "Intimate Listening Room"
+      },
+      {
+            "id": "show_4_3",
+            "date": "2026-11-20",
+            "stage": "Matmon",
+            "startTime": "20:30",
+            "endTime": "21:15",
+            "artistName": "Eyal Netzer & Strings",
+            "aliases": [
+                  "אייל נצר",
+                  "Eyal Netzer"
+            ],
+            "format": "Matmon Space"
+      },
+      {
+            "id": "show_4_4",
+            "date": "2026-11-20",
+            "stage": "Matmon",
+            "startTime": "21:30",
+            "endTime": "22:15",
+            "artistName": "Floating Sheep",
+            "aliases": [
+                  "פלואוטינג שיפ",
+                  "כבשים מרחפות"
+            ],
+            "format": "Matmon Space"
+      },
+      {
+            "id": "show_4_5",
+            "date": "2026-11-20",
+            "stage": "Juanita",
+            "startTime": "22:00",
+            "endTime": "22:45",
+            "artistName": "SHALOSH",
+            "aliases": [
+                  "שלוש"
+            ],
+            "format": "Juanita Stage"
+      },
+      {
+            "id": "show_4_6",
+            "date": "2026-11-20",
+            "stage": "Kissa",
+            "startTime": "22:30",
+            "endTime": "23:15",
+            "artistName": "Ariel Bart Trio",
+            "aliases": [
+                  "שלישיית אריאל ברט",
+                  "אריאל ברט"
+            ],
+            "format": "Intimate Listening Room"
+      },
+      {
+            "id": "show_4_7",
+            "date": "2026-11-20",
+            "stage": "Matmon",
+            "startTime": "23:00",
+            "endTime": "23:45",
+            "artistName": "Sandia",
+            "aliases": [
+                  "סנדיה"
+            ],
+            "format": "Matmon Space"
+      },
+      {
+            "id": "show_5_1",
+            "date": "2026-11-21",
+            "stage": "The Radical",
+            "startTime": "14:00",
+            "endTime": "14:30",
+            "artistName": "Doors Opening & Fish Market Sessions",
+            "format": "Complex Doors",
+            "isGeneralEvent": true
+      },
+      {
+            "id": "show_5_2",
+            "date": "2026-11-21",
+            "stage": "Grand Hall",
+            "startTime": "14:30",
+            "endTime": "14:55",
+            "artistName": "Meitarai",
+            "aliases": [
+                  "מיתריי",
+                  "Meitarai"
+            ],
+            "format": "Grand Hall"
+      },
+      {
+            "id": "show_5_3",
+            "date": "2026-11-21",
+            "stage": "The Club",
+            "startTime": "15:15",
+            "endTime": "15:40",
+            "artistName": "The Minister",
+            "aliases": [
+                  "דה מיניסטר",
+                  "The Minister"
+            ],
+            "format": "Club Stage"
+      },
+      {
+            "id": "show_5_4",
+            "date": "2026-11-21",
+            "stage": "Sculpture Yard",
+            "startTime": "15:45",
+            "endTime": "16:10",
+            "artistName": "AVIRAM",
+            "aliases": [
+                  "אבירם"
+            ],
+            "format": "Outdoor Yard"
+      },
+      {
+            "id": "show_5_5",
+            "date": "2026-11-21",
+            "stage": "The Club",
+            "startTime": "16:30",
+            "endTime": "16:55",
+            "artistName": "Tamir Grinberg",
+            "aliases": [
+                  "תמיר גרינברג"
+            ],
+            "format": "Club Stage"
+      },
+      {
+            "id": "show_5_6",
+            "date": "2026-11-21",
+            "stage": "Grand Hall",
+            "startTime": "17:00",
+            "endTime": "17:25",
+            "artistName": "Maya Belsitzman & Matan Ephrat",
+            "aliases": [
+                  "מאיה בלזיצמן ומתן אפרת",
+                  "מאיה בלזיצמן"
+            ],
+            "format": "Grand Hall"
+      },
+      {
+            "id": "show_5_7",
+            "date": "2026-11-21",
+            "stage": "The Club",
+            "startTime": "17:30",
+            "endTime": "17:55",
+            "artistName": "Shir Shani",
+            "aliases": [
+                  "שיר שני"
+            ],
+            "format": "Club Stage"
+      },
+      {
+            "id": "show_5_8",
+            "date": "2026-11-21",
+            "stage": "Sculpture Yard",
+            "startTime": "18:05",
+            "endTime": "18:30",
+            "artistName": "Allan Tune",
+            "aliases": [
+                  "אלן טיון"
+            ],
+            "format": "Outdoor Yard"
+      },
+      {
+            "id": "show_5_9",
+            "date": "2026-11-21",
+            "stage": "Hameretz 2",
+            "startTime": "20:30",
+            "endTime": "21:30",
+            "artistName": "Doors Opening & DJ Set",
+            "format": "Hameretz 2 Club",
+            "isGeneralEvent": true
+      },
+      {
+            "id": "show_5_10",
+            "date": "2026-11-21",
+            "stage": "Hameretz 2",
+            "startTime": "21:30",
+            "endTime": "22:00",
+            "artistName": "YUZ",
+            "aliases": [
+                  "יוז"
+            ],
+            "format": "Hameretz 2 Stage"
+      },
+      {
+            "id": "show_5_11",
+            "date": "2026-11-21",
+            "stage": "Hameretz 2",
+            "startTime": "22:15",
+            "endTime": "22:45",
+            "artistName": "TAPASH",
+            "aliases": [
+                  "טאפש"
+            ],
+            "format": "Hameretz 2 Stage"
+      },
+      {
+            "id": "show_5_12",
+            "date": "2026-11-21",
+            "stage": "Hameretz 2",
+            "startTime": "23:00",
+            "endTime": "23:30",
+            "artistName": "Closing Showcase Set & DJ",
+            "format": "Hameretz 2 Stage",
+            "isGeneralEvent": true
+      },
+      {
+            "id": "show_6_1",
+            "date": "2026-11-22",
+            "stage": "Beit HaMecholot",
+            "startTime": "12:30",
+            "endTime": "14:00",
+            "artistName": "Artists Arrival & Booth Setup",
+            "format": "Jaffa Port Container House",
+            "isGeneralEvent": true
+      },
+      {
+            "id": "show_6_2",
+            "date": "2026-11-22",
+            "stage": "Networking Area",
+            "startTime": "14:00",
+            "endTime": "16:00",
+            "artistName": "Official Delegation Networking Event",
+            "format": "Networking Trade Fair",
+            "isGeneralEvent": true
+      },
+      {
+            "id": "show_6_3",
+            "date": "2026-11-22",
+            "stage": "Main Stage",
+            "startTime": "16:00",
+            "endTime": "18:00",
+            "artistName": "Closing Festival Showcase: FeelBeat Ensemble & DJ Sets",
+            "format": "Closing Showcase & Party",
+            "isGeneralEvent": true
       }
-    ];
+];
+
+    function normalizeArtistString(str) {
+      if (!str) return '';
+      return String(str)
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[ę]/g, 'e').replace(/[ãáàâä]/g, 'a').replace(/[óòôö]/g, 'o').replace(/[øö]/g, 'o')
+        .replace(/['"״׳`]/g, '')
+        .replace(/[\-–—@&(),.\n\r]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    const ARTIST_NAME_ALIASES_DICT = {
+      'דניאל זמיר וזהר פרסקו': 'Daniel Zamir & Zohar Fresco',
+      'יונתן אבישי אנסמבל': 'Yonathan Avishai Ensemble',
+      'האחים קדוש': 'The Kadosh Brothers',
+      'מארק אליהו': 'Mark Eliyahu',
+      'קדמון': 'KADMON',
+      'אמיתי אריכא ופרויקט ה-d-one': 'Amitai Aricha @ The D-ONE Project',
+      'אמיתי אריכא': 'Amitai Aricha @ The D-ONE Project',
+      'קרן אילן': 'Keren Ilan',
+      'יעל דקלבאום': 'Yael Deckelbaum',
+      'יונתן טגר': 'Yonatan Tagger',
+      'יונתן תגר': 'Yonatan Tagger',
+      'שלישיית אלון ניר': 'Alon Near Trio',
+      'אלון ניר': 'Alon Near Trio',
+      'תזמורת הגאז הישראלית': 'The Israel Jazz Orchestra',
+      'הזאבות': "HAZE'EVOT",
+      'הדזאבות': "HAZE'EVOT",
+      'ביטפוט': 'BĘÃTFÓØT',
+      'beatfoot': 'BĘÃTFÓØT',
+      'שן': 'SHEN',
+      'שירן ובקל': 'SHIRAN&BAKAL',
+      'מאגי': 'MAGI',
+      'דה פריטי פליז': 'The Pretty Please',
+      'בוגי בלגן': 'Boogie Balagan',
+      'פורטמן טי': 'Portman-T',
+      'שי חזן': 'Shay Hazan - DAWA',
+      'dawa': 'Shay Hazan - DAWA',
+      'שלוש': 'SHALOSH',
+      'תמר שאוקי': 'Tamar Shawki',
+      'שלישיית אריאל ברט': 'Ariel Bart Trio',
+      'אריאל ברט': 'Ariel Bart Trio',
+      'איל נצר': 'Eyal Netzer & Strings',
+      'אייל נצר': 'Eyal Netzer & Strings',
+      'סנדיה': 'Sandia',
+      'כבשים מרחפות': 'Floating Sheep',
+      'מיתריי': 'Meitarai',
+      'מאיה בלזיצמן ומתן אפרת': 'Maya Belsitzman & Matan Ephrat',
+      'מאיה בלזיצמן': 'Maya Belsitzman & Matan Ephrat',
+      'תמיר גרינברג': 'Tamir Grinberg',
+      'שיר שני': 'Shir Shani',
+      'אבירם': 'AVIRAM',
+      'אלן טיון': 'Allan Tune',
+      'יוז': 'YUZ',
+      'טאפש': 'TAPASH',
+      'אדיס קן': 'The Addis Ken Project',
+      'פרויקט אדיס קן': 'The Addis Ken Project',
+      'רביעיית ניגון': 'Nigun Quartet',
+      'איתמר דוארי': 'Itamar Doari',
+      'דסווה': 'Deswa',
+      'deswa': 'Deswa',
+      "ג'וזף אי שיין": 'Joseph E-Shine',
+      'joseph e shine': 'Joseph E-Shine',
+      'בילטיז': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
+      'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)'
+    };
 
     function findMatchedArtist(artistName, aliases) {
-      if (!globalArtistsData || globalArtistsData.length === 0) return null;
-      const normalize = s => String(s || '').toLowerCase().replace(/['"״׳\-_&]+/g, ' ').replace(/\s+/g, ' ').trim();
-      const nameNorm = normalize(artistName);
-      const aliasNorms = (aliases || []).map(normalize);
-      
-      // 1. Direct name match
-      let matched = globalArtistsData.find(a => normalize(a.name) === nameNorm);
-      if (matched) return matched;
-      
-      // 2. Alias match
-      for (const query of [nameNorm, ...aliasNorms]) {
-        if (!query) continue;
-        matched = globalArtistsData.find(a => {
-          const aName = normalize(a.name);
-          return aName === query || aName.includes(query) || query.includes(aName);
-        });
-        if (matched) return matched;
+      if (!artistName) return null;
+      const queries = [artistName, ...(aliases || [])];
+
+      // 1. Check known alias dictionary
+      for (const q of queries) {
+        const normQ = normalizeArtistString(q);
+        if (ARTIST_NAME_ALIASES_DICT[normQ]) {
+          const targetName = normalizeArtistString(ARTIST_NAME_ALIASES_DICT[normQ]);
+          if (globalArtistsData && globalArtistsData.length > 0) {
+            const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
+            if (match) return match;
+          }
+        }
+        for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+          if (normQ.includes(key) || key.includes(normQ)) {
+            const targetName = normalizeArtistString(val);
+            if (globalArtistsData && globalArtistsData.length > 0) {
+              const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
+              if (match) return match;
+            }
+          }
+        }
       }
+
+      // 2. Direct normalized match or substring match
+      if (globalArtistsData && globalArtistsData.length > 0) {
+        const cleanQueries = queries.map(q => normalizeArtistString(q));
+        for (const a of globalArtistsData) {
+          const normA = normalizeArtistString(a.name);
+          for (const q of cleanQueries) {
+            if (!q) continue;
+            if (normA === q) return a;
+            if (q.length >= 4 && (normA.includes(q) || q.includes(normA))) {
+              return a;
+            }
+          }
+        }
+      }
+
       return null;
+    }
+
+    function shouldKeepTimetableItem(show) {
+      if (!show || !show.artistName) return false;
+      const raw = String(show.artistName).trim();
+      const lower = raw.toLowerCase();
+
+      // 1. If it matches an artist from globalArtistsData or our alias dictionary, KEEP!
+      if (findMatchedArtist(raw, show.aliases)) return true;
+
+      const normRaw = normalizeArtistString(raw);
+      if (ARTIST_NAME_ALIASES_DICT[normRaw]) return true;
+      for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+        if (normRaw === normalizeArtistString(val) || normRaw.includes(key) || key.includes(normRaw)) {
+          return true;
+        }
+      }
+
+      // 2. Reject pure question marks or symbols: '?', '???', '?', etc.
+      if (/^[\s?؟!\-–—.,/\\|]+$/.test(raw)) return false;
+
+      // 3. Reject notes, random stages, afterparties, or place comments
+      if (
+        raw.includes('מסתובבים') ||
+        raw.includes('אפטרים') ||
+        raw.includes('מזקקה') ||
+        raw.includes('נוקטורנו') ||
+        raw.includes('Besarabia') ||
+        raw.includes('פרגמון') ||
+        raw.includes('ש"ח') ||
+        raw.includes('כרטיס משולב') ||
+        raw.includes('כניסה חופשית') ||
+        raw.includes('מופע ראשון') ||
+        raw.includes('כחלק מפסטיבל') ||
+        raw.includes('לדחות מופע') ||
+        raw === "דיג'ייס" ||
+        raw === 'נועם הלפר' || raw === 'רמזי' || raw === 'מור' || raw === 'אליענה'
+      ) {
+        return false;
+      }
+
+      // 4. Allowed non-artist items according to user request:
+      // - Doors opening: "דלתות", "פתיחת דלתות", "Doors"
+      if (raw.includes('דלתות') || lower.includes('doors')) return true;
+
+      // - DJ set: "DJ", "DJ?", "דיג'יי", "דיגיי", "תקלוט"
+      if (
+        raw.includes('DJ') || lower.includes('dj') ||
+        raw.includes("דיג'יי") || raw.includes('דיגיי') || raw.includes('תקלוט')
+      ) {
+        return true;
+      }
+
+      // - Official reception / networking events: "קבלת פנים", "נטוורקינג", "אירוע נעילה", "הפסקה", "Closing"
+      if (
+        raw.includes('קבלת פנים') ||
+        raw.includes('נטוורקינג') ||
+        raw.includes('שוק דגים') ||
+        raw.includes('אירוע נעילה') ||
+        raw.includes('הפסקה') ||
+        raw.includes('Trade Fair') ||
+        lower.includes('networking') ||
+        lower.includes('closing')
+      ) {
+        return true;
+      }
+
+      // Everything else without an artist match is discarded
+      return false;
+    }
+
+    let FESTIVAL_SHOWS_SCHEDULE = (function() {
+      try {
+        const cached = localStorage.getItem('imsf_timetable_schedule_cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.filter(shouldKeepTimetableItem);
+          }
+        }
+      } catch (e) {}
+      return DEFAULT_FESTIVAL_SHOWS_SCHEDULE.filter(shouldKeepTimetableItem);
+    })();
+
+    function fetchDynamicTimetableSchedule(forceRefresh) {
+      if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.success && Array.isArray(res.schedule) && res.schedule.length > 0) {
+            FESTIVAL_SHOWS_SCHEDULE = res.schedule.filter(shouldKeepTimetableItem);
+            try {
+              localStorage.setItem('imsf_timetable_schedule_cache', JSON.stringify(FESTIVAL_SHOWS_SCHEDULE));
+            } catch (e) {}
+            if (typeof renderTimetableMasterSwitcher === 'function') renderTimetableMasterSwitcher();
+            if (typeof renderTimetableStageSelector === 'function') renderTimetableStageSelector();
+            if (typeof renderTimetableShows === 'function') renderTimetableShows();
+            if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.warn('Could not load dynamic timetable schedule from Google Sheets:', err);
+        })
+        .getFestivalTimetableSchedule(forceRefresh || false);
     }
 
     function switchArtistsSubTab(subTabName) {
@@ -3626,6 +4135,7 @@ let currentGuestEmail = "";
       renderTimetableMasterSwitcher();
       renderTimetableStageSelector();
       renderTimetableShows();
+      fetchDynamicTimetableSchedule();
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
 
@@ -3667,7 +4177,7 @@ let currentGuestEmail = "";
       if (!switcher) return;
 
       const favs = getFavorites();
-      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       const dayFavCount = dayShows.filter(s => {
         const matched = findMatchedArtist(s.artistName, s.aliases);
         return matched ? !!favs[matched.id] : false;
@@ -3711,7 +4221,7 @@ let currentGuestEmail = "";
 
       if (currentTimetableMode === 'schedule') {
         const favs = getFavorites();
-        const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+        const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
         const dayFavCount = dayShows.filter(s => {
           const matched = findMatchedArtist(s.artistName, s.aliases);
           return matched ? !!favs[matched.id] : false;
@@ -3732,13 +4242,16 @@ let currentGuestEmail = "";
         return;
       }
 
-      // 'all' mode: Show stage dropdown
+      // 'all' mode: Show stage dropdown with dynamically combined stages
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
-      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      const configuredStages = (dayObj.stages || []).filter(stg => stg !== 'All');
+      const actualStages = [...new Set(dayShows.map(s => s.stage).filter(stg => stg && stg !== 'All'))];
+      const allDayStages = [...new Set([...configuredStages, ...actualStages])];
 
       let optionsHtml = `<option value="All" ${(!currentSelectedStage || currentSelectedStage === 'All') ? 'selected' : ''}>All Stages (${dayShows.length} shows)</option>`;
       
-      dayObj.stages.filter(stg => stg !== 'All').forEach(stg => {
+      allDayStages.forEach(stg => {
         const stageCount = dayShows.filter(s => s.stage === stg).length;
         const isSelected = (currentSelectedStage === stg) ? 'selected' : '';
         optionsHtml += `<option value="${escapeHtml(stg)}" ${isSelected}>${escapeHtml(stg)} (${stageCount} shows)</option>`;
@@ -3827,7 +4340,7 @@ let currentGuestEmail = "";
       if (!container) return;
       
       const favs = getFavorites();
-      let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       
       if (currentTimetableMode === 'all' && currentSelectedStage && currentSelectedStage !== 'All') {
         dayShows = dayShows.filter(s => s.stage === currentSelectedStage);
@@ -3875,12 +4388,12 @@ let currentGuestEmail = "";
         const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
-          : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`);
+          : ((s.artistName.includes('דלתות') || s.artistName.toLowerCase().includes('doors')) ? `<span class="timetable-avatar-fallback">🚪</span>` : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`));
         
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
         const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
-        const displayName = artist ? artist.name : s.artistName;
+        const displayName = artist ? artist.name : (s.artistName === 'דלתות' ? 'Doors (דלתות)' : s.artistName);
 
         html += `
           <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
