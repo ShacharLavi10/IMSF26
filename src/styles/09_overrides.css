@@ -3487,18 +3487,53 @@ body.light-mode .timetable-schedule-subline strong {
   color: #e11d48;
 }
 
-/* Highlight pulse animation when jumping from artist sheet to show */
+/* Highlight pulse animation when jumping from artist sheet to show - Super Bold & Visible */
 @keyframes showHighlightPulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 169, 160, 0.9); }
-  25% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(241, 169, 160, 0); }
-  50% { transform: scale(1.01); box-shadow: 0 0 0 6px rgba(241, 169, 160, 0.5); }
-  100% { transform: scale(1); box-shadow: none; }
+  0% {
+    transform: scale(1.035);
+    box-shadow: 0 0 0 3px var(--accent), 0 0 35px rgba(241, 169, 160, 0.95), 0 6px 20px rgba(0, 0, 0, 0.5);
+    background-color: rgba(241, 169, 160, 0.38) !important;
+    border-color: #ffffff !important;
+  }
+  15% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 9px rgba(241, 169, 160, 0.4), 0 0 45px rgba(241, 169, 160, 0.95);
+    background-color: rgba(241, 169, 160, 0.32) !important;
+  }
+  35% {
+    transform: scale(1.018);
+    box-shadow: 0 0 0 3px var(--accent), 0 0 25px rgba(241, 169, 160, 0.7);
+    background-color: rgba(241, 169, 160, 0.24) !important;
+  }
+  55% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 7px rgba(241, 169, 160, 0.5), 0 0 35px rgba(241, 169, 160, 0.85);
+    background-color: rgba(241, 169, 160, 0.28) !important;
+  }
+  75% {
+    transform: scale(1.01);
+    box-shadow: 0 0 0 3px var(--accent), 0 0 18px rgba(241, 169, 160, 0.5);
+    background-color: rgba(241, 169, 160, 0.16) !important;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+    background-color: transparent;
+  }
 }
 
 .timetable-show-card.highlight-pulse {
-  animation: showHighlightPulse 2s ease-out;
-  border-color: var(--accent) !important;
-  border-left-width: 6px !important;
+  animation: showHighlightPulse 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  border: 2px solid var(--accent) !important;
+  border-left: 8px solid var(--accent) !important;
+  z-index: 25;
+  position: relative;
+}
+
+body.light-mode .timetable-show-card.highlight-pulse {
+  border-color: #d9534f !important;
+  border-left-color: #d9534f !important;
+  box-shadow: 0 0 0 3px #d9534f, 0 0 30px rgba(217, 83, 79, 0.6) !important;
 }
 
 /* Shows List - Ultra-Compact Chronological Rows */

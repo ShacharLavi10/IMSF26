@@ -2913,7 +2913,7 @@ let currentGuestEmail = "";
             const timeStr = `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}`;
 
             showtimesHtml += `
-              <div class="sheet-showtime-row clickable" onclick="jumpToTimetableShow('${s.date}', '${s.id}')" title="Tap to view in Festival Timetable">
+              <div class="sheet-showtime-row clickable" onclick="jumpToTimetableShow('${s.date}', '${s.id}', '${artist.id}')" title="Tap to view in Festival Timetable">
                 <div class="sheet-showtime-accent-bar"></div>
                 <div class="sheet-showtime-info">
                   <div class="sheet-showtime-top">
@@ -2990,7 +2990,9 @@ let currentGuestEmail = "";
       document.body.style.overflow = 'hidden'; // prevent bg scrolling
       
       // Setting hash creates a reliable history entry on all mobile browsers
-      window.location.hash = "sheet";
+      if (!isFromHash) {
+        window.location.hash = "artist-" + artistId;
+      }
     }
 
     function closeArtistSheet(isHashChange) {
@@ -3003,30 +3005,70 @@ let currentGuestEmail = "";
       filterArtists();
       
       // If we closed it manually via the X or overlay, we must clean up the hash
-      if (isHashChange !== true && window.location.hash === "#sheet") {
+      if (isHashChange !== true && (window.location.hash === "#sheet" || window.location.hash.startsWith("#artist-"))) {
         history.back();
       }
     }
 
     window.addEventListener('hashchange', function() {
-      // If the hash is no longer #sheet, but the artist sheet is open, close it.
-      if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+      const currentHash = window.location.hash;
+
+      // 1. Returning to an artist sheet (#artist-*)
+      if (currentHash.startsWith('#artist-')) {
+        const targetArtistId = currentHash.replace('#artist-', '');
+        if (typeof switchCategoryTab === 'function') {
+          switchCategoryTab('artists');
+        }
+        if (typeof switchArtistsSubTab === 'function') {
+          switchArtistsSubTab('directory');
+        }
+        if (currentOpenArtistId !== targetArtistId || !document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+          openArtistSheet(targetArtistId, true);
+        }
+        return;
+      }
+
+      // 2. Returning to Timetable Show (#timetable-*)
+      if (currentHash.startsWith('#timetable-')) {
+        const targetShowId = currentHash.replace('#timetable-', '');
+        if (document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+          closeArtistSheet(true);
+        }
+        if (typeof switchCategoryTab === 'function') {
+          switchCategoryTab('artists');
+        }
+        if (typeof switchArtistsSubTab === 'function') {
+          switchArtistsSubTab('timetable');
+        }
+        const showCard = document.getElementById(`timetable-card-${targetShowId}`);
+        if (showCard) {
+          showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showCard.classList.remove('highlight-pulse');
+          void showCard.offsetWidth;
+          showCard.classList.add('highlight-pulse');
+          setTimeout(() => showCard.classList.remove('highlight-pulse'), 4000);
+        }
+        return;
+      }
+
+      // 3. If the hash is no longer #sheet or #artist-*, but the artist sheet is open, close it.
+      if (currentHash !== "#sheet" && !currentHash.startsWith("#artist-") && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
         closeArtistSheet(true);
       }
       // If the hash is no longer #guestsheet, but the guest sheet is open, close it.
-      if (window.location.hash !== "#guestsheet" && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
+      if (currentHash !== "#guestsheet" && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
         closeGuestSheet(true);
       }
       // If the hash is no longer #updates, but the updates panel is open, close it.
-      if (window.location.hash !== "#updates" && document.getElementById('updates-panel').style.left === "0px") {
+      if (currentHash !== "#updates" && document.getElementById('updates-panel').style.left === "0px") {
         toggleUpdatesPanel(true);
       }
       // If the hash is no longer #adminsheet, but the admin sheet is open, close it.
-      if (window.location.hash !== "#adminsheet" && document.getElementById('admin-bottom-sheet') && document.getElementById('admin-bottom-sheet').classList.contains('active')) {
+      if (currentHash !== "#adminsheet" && document.getElementById('admin-bottom-sheet') && document.getElementById('admin-bottom-sheet').classList.contains('active')) {
         closeAdminModal(true);
       }
       // If the hash is no longer #networkingsheet, but the networking sheet is open, close it.
-      if (window.location.hash !== "#networkingsheet" && document.getElementById('networking-bottom-sheet') && document.getElementById('networking-bottom-sheet').classList.contains('active')) {
+      if (currentHash !== "#networkingsheet" && document.getElementById('networking-bottom-sheet') && document.getElementById('networking-bottom-sheet').classList.contains('active')) {
         if (typeof closeNetworkingDetailSheet === 'function') {
           closeNetworkingDetailSheet(true);
         }
@@ -3757,21 +3799,37 @@ let currentGuestEmail = "";
     }
     window.selectTimetableStage = selectTimetableStage;
 
-    function jumpToTimetableShow(dateStr, showId) {
-      closeArtistSheet();
+    function jumpToTimetableShow(dateStr, showId, artistId) {
+      // 1. Visually close the artist bottom sheet WITHOUT popping history
+      flushFeedbackAutoSave();
+      document.getElementById('artist-sheet-overlay').classList.remove('active');
+      document.getElementById('artist-bottom-sheet').classList.remove('active');
+      document.body.style.overflow = '';
+      currentOpenArtistId = null;
+      filterArtists();
+
+      // 2. Set new hash for timetable show to create a forward history entry
+      // This ensures the browser history stack has: [... Lineup] -> [Artist Sheet] -> [Timetable Show]
+      // When the user taps Back on their phone, it will return to [Artist Sheet]!
+      window.location.hash = `timetable-${showId}`;
+
+      // 3. Switch to Timetable subtab and select the date
       switchArtistsSubTab('timetable');
       currentTimetableMode = 'all';
       currentSelectedStage = 'All';
       selectTimetableDate(dateStr);
       
+      // 4. Smooth scroll and super-bold highlight pulse
       setTimeout(() => {
         const showCard = document.getElementById(`timetable-card-${showId}`);
         if (showCard) {
           showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showCard.classList.remove('highlight-pulse');
+          void showCard.offsetWidth; // force reflow to restart animation
           showCard.classList.add('highlight-pulse');
-          setTimeout(() => showCard.classList.remove('highlight-pulse'), 2500);
+          setTimeout(() => showCard.classList.remove('highlight-pulse'), 4000);
         }
-      }, 250);
+      }, 300);
     }
     window.jumpToTimetableShow = jumpToTimetableShow;
 
