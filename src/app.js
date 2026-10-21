@@ -2912,7 +2912,7 @@ let currentGuestEmail = "";
             const timeStr = `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}`;
 
             showtimesHtml += `
-              <div class="sheet-showtime-row">
+              <div class="sheet-showtime-row clickable" onclick="jumpToTimetableShow('${s.date}', '${s.id}')" title="Tap to view in Festival Timetable">
                 <div class="sheet-showtime-accent-bar"></div>
                 <div class="sheet-showtime-info">
                   <div class="sheet-showtime-top">
@@ -2922,6 +2922,7 @@ let currentGuestEmail = "";
                   <div class="sheet-showtime-bottom">
                     <span class="sheet-showtime-venue">📍 ${escapeHtml(locationStr)}</span>
                     <span class="sheet-showtime-stage">Stage: <strong>${escapeHtml(s.stage)}</strong></span>
+                    <span class="sheet-showtime-jump-cta">View in Timetable →</span>
                   </div>
                 </div>
               </div>
@@ -3644,42 +3645,30 @@ let currentGuestEmail = "";
         return matched ? !!favs[matched.id] : false;
       }).length;
 
-      const isAllActive = (!timetableFavsOnly && (currentSelectedStage === 'All' || !currentSelectedStage));
-      const specificStages = dayObj.stages.filter(stg => stg !== 'All');
+      let optionsHtml = `<option value="All" ${(!currentSelectedStage || currentSelectedStage === 'All') ? 'selected' : ''}>📍 All Stages (${dayShows.length} shows)</option>`;
+      
+      dayObj.stages.filter(stg => stg !== 'All').forEach(stg => {
+        const stageCount = dayShows.filter(s => s.stage === stg).length;
+        const isSelected = (currentSelectedStage === stg) ? 'selected' : '';
+        optionsHtml += `<option value="${escapeHtml(stg)}" ${isSelected}>📍 ${escapeHtml(stg)} (${stageCount} shows)</option>`;
+      });
 
-      let html = `
-        <div class="timetable-top-filters">
-          <button type="button" class="stage-grid-btn stage-grid-all ${isAllActive ? 'active' : ''}" onclick="selectTimetableStage('All')">
-            <span class="stage-grid-name">⚡ All Stages</span>
-            <span class="stage-grid-badge">${dayShows.length}</span>
-          </button>
-          <button type="button" class="stage-grid-btn stage-grid-fav ${timetableFavsOnly ? 'active' : ''}" onclick="toggleTimetableFavFilter()">
-            <span class="stage-grid-name">❤️ My Shows</span>
-            <span class="stage-grid-badge">${dayFavCount}</span>
-          </button>
+      container.innerHTML = `
+        <div class="timetable-stage-picker">
+          <div class="stage-select-box">
+            <select id="timetable-stage-select" class="timetable-stage-select" onchange="selectTimetableStage(this.value)">
+              ${optionsHtml}
+            </select>
+            <span class="stage-select-arrow">▾</span>
+          </div>
         </div>
+
+        <button type="button" id="timetable-fav-filter-btn" class="timetable-fav-toggle-btn ${timetableFavsOnly ? 'active' : ''}" onclick="toggleTimetableFavFilter()" title="Filter by your favorited shows">
+          <span class="fav-toggle-heart">❤️</span>
+          <span class="fav-toggle-text">My Shows</span>
+          <span class="fav-toggle-count">${dayFavCount}</span>
+        </button>
       `;
-
-      if (specificStages.length > 0) {
-        html += `<div class="timetable-stages-grid">`;
-        specificStages.forEach((stg, index) => {
-          const isStgActive = (!timetableFavsOnly && currentSelectedStage === stg);
-          const stageCount = dayShows.filter(s => s.stage === stg).length;
-          // If odd number of stages and this is the last one, span 2 columns
-          const isLastOdd = (specificStages.length % 2 !== 0 && index === specificStages.length - 1);
-          const spanClass = isLastOdd ? 'span-two-cols' : '';
-          
-          html += `
-            <button type="button" class="stage-grid-btn ${spanClass} ${isStgActive ? 'active' : ''}" onclick="selectTimetableStage('${stg.replace(/'/g, "\\'")}')">
-              <span class="stage-grid-name">📍 ${escapeHtml(stg)}</span>
-              <span class="stage-grid-badge">${stageCount}</span>
-            </button>
-          `;
-        });
-        html += `</div>`;
-      }
-
-      container.innerHTML = html;
     }
 
     function updateTimetableFavCount() {
@@ -3699,19 +3688,34 @@ let currentGuestEmail = "";
     window.selectTimetableDate = selectTimetableDate;
 
     function selectTimetableStage(stageName) {
-      timetableFavsOnly = false;
       currentSelectedStage = stageName;
-      renderTimetableStageChips();
       renderTimetableShows();
     }
     window.selectTimetableStage = selectTimetableStage;
 
     function toggleTimetableFavFilter() {
       timetableFavsOnly = !timetableFavsOnly;
-      renderTimetableStageChips();
+      const btn = document.getElementById('timetable-fav-filter-btn');
+      if (btn) btn.classList.toggle('active', timetableFavsOnly);
       renderTimetableShows();
     }
     window.toggleTimetableFavFilter = toggleTimetableFavFilter;
+
+    function jumpToTimetableShow(dateStr, showId) {
+      closeArtistSheet();
+      switchArtistsSubTab('timetable');
+      selectTimetableDate(dateStr);
+      
+      setTimeout(() => {
+        const showCard = document.getElementById(`timetable-card-${showId}`);
+        if (showCard) {
+          showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showCard.classList.add('highlight-pulse');
+          setTimeout(() => showCard.classList.remove('highlight-pulse'), 2500);
+        }
+      }, 250);
+    }
+    window.jumpToTimetableShow = jumpToTimetableShow;
 
     function renderTimetableShows() {
       const container = document.getElementById('timetable-shows-container');
@@ -3774,7 +3778,7 @@ let currentGuestEmail = "";
         const displayName = artist ? artist.name : s.artistName;
 
         html += `
-          <div class="${cardClass}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
+          <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
             <div class="timetable-time-box">
               <span class="start-time">${escapeHtml(s.startTime)}</span>
               ${s.endTime ? `<span class="end-time">${escapeHtml(s.endTime)}</span>` : ''}
