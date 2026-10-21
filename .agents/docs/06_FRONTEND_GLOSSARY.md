@@ -92,5 +92,24 @@
       - `#admin-announcements-count` (מונה הודעות כלליות פעילות).
       - `#admin-announcements-list`, `.admin-announcement-card`, `.admin-announcement-header`, `.admin-announcement-actions`, `.admin-announcement-body`.
 
+12. **🎸 רכיבי לו"ז הופעות ובמות (Shows Timetable & Lineup Schedule Components):**
+    * **סרגל ניווט תת-לשוניות בליינאפ:** `.artists-subnav`, `#subtab-artists-directory` ("Artists Lineup"), `#subtab-artists-timetable` ("Shows Timetable").
+    * **מעטפת תצוגת הלו"ז:** `#artists-timetable-view`.
+    * **סרגל ימי הופעות (Zero-Scroll Days Strip):** `#timetable-days-nav`, `.timetable-day-pill` (כולל `.day-weekday`, `.day-num`, ומצב `.active`).
+    * **באנר לוקיישן וזמני פתיחה:** `#timetable-venue-banner`.
+    * **מתג אב דו-מצבי (Master Switcher):** `#timetable-master-switcher`, `.timetable-master-tabs`, `.master-tab-btn` (מתג 50/50: `[data-mode="all"]` ללו"ז המלא עם מונה הופעות, ו-`[data-mode="favorites"]` ללו"ז מועדפים אישי עם מונה מועדפים).
+    * **בורר במות קומפקטי בשורה אחת:** `#timetable-stage-filter-wrapper`, `.timetable-stage-picker.full-width`, `.timetable-stage-select` (מוצג במצב "Full Timetable", מאפשר פילטור לפי במה עם מונה הופעות לכל במה).
+    * **מיכל רשימת ההופעות:** `#timetable-shows-container`, `.timetable-shows-list`.
+    * **כרטיסיית הופעה בודדת (Concert Card):** `.timetable-show-card` (תצוגת שורה קומפקטית ואלגנטית עם תמונת אמן עגולה/אייקון, פס צבע צדדי, ורקע ניאו-ברוטליסטי נקי).
+    * **מרכיבי כרטיסיית הופעה:**
+      - תגית שעה: `.timetable-time-badge`, `.timetable-time-range` (שעת התחלה וסיום).
+      - תמונת אמן / אינדיקטור: `.timetable-avatar-col`, `.timetable-artist-img`.
+      - גוף המופע: `.timetable-show-main`, שם אמן `.timetable-artist-name`, תגית ז'אנר `.timetable-genre-tag`, תגית פורמט במה `.timetable-stage-badge`, תגית מיקום `.timetable-location-badge`.
+      - כפתור מועדפים ישיר מהלו"ז: `.timetable-fav-btn`.
+    * **קישור קפיצה מתוך חלונית אמן:** `.sheet-showtime-row.clickable`, `.sheet-showtime-link` (בלחיצה מפעיל `jumpToTimetableShow(date, showId, artistId)`).
+    * **אנימציית הדגשה עזה בקפיצה (Super-Bold Multi-Wave Pulse):** `.timetable-show-card.highlight-pulse`.
+    * **סנכרון חיווי היסטוריית חץ אחורה בדפדפן ובמובייל:** שימוש ב-`#sheet` לפתיחת חלונית אמן וב-`#timetable` לקפיצה ללו"ז, ומעקב אחר `lastOpenedArtistId` לחזרה מושלמת ומדויקת לחלונית האמן בלחיצה על Back.
+
+
 
 
