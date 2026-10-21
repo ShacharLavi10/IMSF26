@@ -460,6 +460,92 @@ img {
   opacity: 0.8;
 }
 
+/* Artist Showtime Box in Bottom Sheet */
+.sheet-showtime {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.sheet-showtime-row {
+  display: flex;
+  align-items: stretch;
+  background: rgba(241, 169, 160, 0.08);
+  border: 1px solid rgba(241, 169, 160, 0.25);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.sheet-showtime-accent-bar {
+  width: 3.5px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.sheet-showtime-info {
+  flex: 1;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sheet-showtime-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sheet-showtime-datetime {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.sheet-showtime-datetime strong {
+  color: var(--foreground);
+}
+
+.sheet-showtime-format {
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--foreground-muted);
+  font-weight: 600;
+}
+
+.sheet-showtime-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  color: var(--foreground-muted);
+}
+
+.sheet-showtime-venue {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sheet-showtime-stage {
+  color: var(--accent-bright, #f59e0b);
+}
+
+.sheet-showtime-stage strong {
+  color: var(--accent-bright, #f59e0b);
+}
+
 .sheet-section {
   margin-bottom: 16px;
   padding: 14px 16px;
@@ -494,6 +580,30 @@ body.light-mode .sheet-genre {
 }
 body.light-mode .sheet-contact {
   color: #1e293b;
+}
+body.light-mode .sheet-showtime-row {
+  background: rgba(241, 169, 160, 0.12);
+  border-color: rgba(241, 169, 160, 0.35);
+}
+body.light-mode .sheet-showtime-datetime {
+  color: #c0392b;
+}
+body.light-mode .sheet-showtime-datetime strong {
+  color: #0f172a;
+}
+body.light-mode .sheet-showtime-stage {
+  color: #b45309;
+}
+body.light-mode .sheet-showtime-stage strong {
+  color: #b45309;
+}
+body.light-mode .sheet-showtime-bottom {
+  color: #475569;
+}
+body.light-mode .sheet-showtime-format {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
 }
 body.light-mode .sheet-section {
   background: #f8fafc;
@@ -3123,95 +3233,111 @@ body.light-mode .venue-doors-pill {
   border-color: #e2e8f0;
 }
 
-/* Stage Mini-Cubes Strip (Tight horizontal row of cubes side by side) */
-.timetable-stage-strip {
+/* Stage Matrix - Structured 2-Row / 2-Column Grid (Zero Horizontal Scroll) */
+.timetable-stage-matrix {
   display: flex;
+  flex-direction: column;
   gap: 5px;
-  overflow-x: auto;
-  padding: 1px 1px 6px 1px;
   margin-bottom: 8px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
 }
 
-.timetable-stage-strip::-webkit-scrollbar {
-  display: none;
-}
-
-.stage-cube {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
+.timetable-top-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 5px;
-  padding: 4px 8px;
+}
+
+.timetable-stages-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+.stage-grid-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 9px;
+  min-height: 30px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
   color: var(--foreground-muted);
   border: 1.5px solid var(--border-color);
-  font-size: 0.73rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.12s ease;
-  white-space: nowrap;
-  line-height: 1.2;
+  text-align: left;
 }
 
-.stage-cube:hover {
+.stage-grid-btn.span-two-cols {
+  grid-column: span 2;
+}
+
+.stage-grid-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--foreground);
 }
 
-.stage-cube.active {
+.stage-grid-btn.active {
   background: var(--accent) !important;
   color: #0f172a !important;
   border-color: #000 !important;
   box-shadow: 1.5px 1.5px 0 #000;
 }
 
-.stage-cube .stage-cube-badge {
-  font-size: 0.63rem;
-  padding: 0px 5px;
+.stage-grid-btn .stage-grid-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.stage-grid-btn .stage-grid-badge {
+  font-size: 0.65rem;
+  padding: 1px 5px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
   color: inherit;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
-.stage-cube.active .stage-cube-badge {
+.stage-grid-btn.active .stage-grid-badge {
   background: #0f172a;
   color: var(--accent);
 }
 
-.stage-cube-fav.active {
+.stage-grid-fav.active {
   background: #ff4757 !important;
   color: #ffffff !important;
   border-color: #000 !important;
   box-shadow: 1.5px 1.5px 0 #000;
 }
 
-.stage-cube-fav.active .stage-cube-badge {
+.stage-grid-fav.active .stage-grid-badge {
   background: #ffffff;
   color: #ff4757;
 }
 
-body.light-mode .stage-cube {
+body.light-mode .stage-grid-btn {
   background: #ffffff;
   border-color: #cbd5e1;
   color: #475569;
 }
 
-body.light-mode .stage-cube.active {
+body.light-mode .stage-grid-btn.active {
   background: var(--accent) !important;
   color: #0f172a !important;
   border-color: #000 !important;
 }
 
-body.light-mode .stage-cube .stage-cube-badge {
+body.light-mode .stage-grid-btn .stage-grid-badge {
   background: #e2e8f0;
   color: #334155;
 }
 
-body.light-mode .stage-cube.active .stage-cube-badge {
+body.light-mode .stage-grid-btn.active .stage-grid-badge {
   background: #0f172a;
   color: #fff;
 }

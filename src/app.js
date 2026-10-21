@@ -2888,6 +2888,53 @@ let currentGuestEmail = "";
         }
       }
 
+      // Showtime & Stage info in Bottom Sheet
+      const showtimeElem = document.getElementById('sheet-artist-showtime');
+      if (showtimeElem) {
+        const artistShows = (typeof FESTIVAL_SHOWS_SCHEDULE !== 'undefined')
+          ? FESTIVAL_SHOWS_SCHEDULE.filter(s => {
+              const matched = findMatchedArtist(s.artistName, s.aliases);
+              return matched && (matched.id === artist.id || matched.name === artist.name);
+            })
+          : [];
+
+        if (artistShows.length > 0) {
+          let showtimesHtml = '';
+          artistShows.forEach(s => {
+            const dayObj = (typeof FESTIVAL_TIMETABLE_DAYS !== 'undefined')
+              ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === s.date)
+              : null;
+            
+            const dayLabel = dayObj ? `${dayObj.dayOfWeek} ${dayObj.dayNum}.11` : s.date;
+            const venueLabel = dayObj ? dayObj.venue : '';
+            const cityLabel = dayObj ? dayObj.city : '';
+            const locationStr = venueLabel ? `${venueLabel}${cityLabel ? ' (' + cityLabel + ')' : ''}` : '';
+            const timeStr = `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}`;
+
+            showtimesHtml += `
+              <div class="sheet-showtime-row">
+                <div class="sheet-showtime-accent-bar"></div>
+                <div class="sheet-showtime-info">
+                  <div class="sheet-showtime-top">
+                    <span class="sheet-showtime-datetime">📅 ${escapeHtml(dayLabel)} • <strong>${escapeHtml(timeStr)}</strong></span>
+                    ${s.format ? `<span class="sheet-showtime-format">${escapeHtml(s.format)}</span>` : ''}
+                  </div>
+                  <div class="sheet-showtime-bottom">
+                    <span class="sheet-showtime-venue">📍 ${escapeHtml(locationStr)}</span>
+                    <span class="sheet-showtime-stage">Stage: <strong>${escapeHtml(s.stage)}</strong></span>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          showtimeElem.innerHTML = showtimesHtml;
+          showtimeElem.style.display = 'flex';
+        } else {
+          showtimeElem.innerHTML = '';
+          showtimeElem.style.display = 'none';
+        }
+      }
+
       document.getElementById('sheet-artist-bio').innerText = artist.bio;
       document.getElementById('sheet-artist-members').innerText = artist.members;
       
@@ -3597,36 +3644,40 @@ let currentGuestEmail = "";
         return matched ? !!favs[matched.id] : false;
       }).length;
 
-      let html = '';
-      
-      // 1. "All Stages" Cube
       const isAllActive = (!timetableFavsOnly && (currentSelectedStage === 'All' || !currentSelectedStage));
-      html += `
-        <button type="button" class="stage-cube ${isAllActive ? 'active' : ''}" onclick="selectTimetableStage('All')">
-          <span class="stage-cube-name">All Stages</span>
-          <span class="stage-cube-badge">${dayShows.length}</span>
-        </button>
-      `;
+      const specificStages = dayObj.stages.filter(stg => stg !== 'All');
 
-      // 2. Specific Stages Cubes
-      dayObj.stages.filter(stg => stg !== 'All').forEach(stg => {
-        const isStgActive = (!timetableFavsOnly && currentSelectedStage === stg);
-        const stageCount = dayShows.filter(s => s.stage === stg).length;
-        html += `
-          <button type="button" class="stage-cube ${isStgActive ? 'active' : ''}" onclick="selectTimetableStage('${stg.replace(/'/g, "\\'")}')">
-            <span class="stage-cube-name">${escapeHtml(stg)}</span>
-            <span class="stage-cube-badge">${stageCount}</span>
+      let html = `
+        <div class="timetable-top-filters">
+          <button type="button" class="stage-grid-btn stage-grid-all ${isAllActive ? 'active' : ''}" onclick="selectTimetableStage('All')">
+            <span class="stage-grid-name">⚡ All Stages</span>
+            <span class="stage-grid-badge">${dayShows.length}</span>
           </button>
-        `;
-      });
-
-      // 3. "My Shows" Favorite Filter Cube
-      html += `
-        <button type="button" class="stage-cube stage-cube-fav ${timetableFavsOnly ? 'active' : ''}" onclick="toggleTimetableFavFilter()">
-          <span class="stage-cube-name">❤️ My Shows</span>
-          <span class="stage-cube-badge">${dayFavCount}</span>
-        </button>
+          <button type="button" class="stage-grid-btn stage-grid-fav ${timetableFavsOnly ? 'active' : ''}" onclick="toggleTimetableFavFilter()">
+            <span class="stage-grid-name">❤️ My Shows</span>
+            <span class="stage-grid-badge">${dayFavCount}</span>
+          </button>
+        </div>
       `;
+
+      if (specificStages.length > 0) {
+        html += `<div class="timetable-stages-grid">`;
+        specificStages.forEach((stg, index) => {
+          const isStgActive = (!timetableFavsOnly && currentSelectedStage === stg);
+          const stageCount = dayShows.filter(s => s.stage === stg).length;
+          // If odd number of stages and this is the last one, span 2 columns
+          const isLastOdd = (specificStages.length % 2 !== 0 && index === specificStages.length - 1);
+          const spanClass = isLastOdd ? 'span-two-cols' : '';
+          
+          html += `
+            <button type="button" class="stage-grid-btn ${spanClass} ${isStgActive ? 'active' : ''}" onclick="selectTimetableStage('${stg.replace(/'/g, "\\'")}')">
+              <span class="stage-grid-name">📍 ${escapeHtml(stg)}</span>
+              <span class="stage-grid-badge">${stageCount}</span>
+            </button>
+          `;
+        });
+        html += `</div>`;
+      }
 
       container.innerHTML = html;
     }
