@@ -3258,30 +3258,110 @@ body.light-mode .venue-doors-pill {
   border-color: #e2e8f0;
 }
 
-/* Control Bar: Stage Dropdown & My Shows Toggle */
-.timetable-control-bar {
+/* Master Switcher: Full Timetable vs My Schedule */
+.timetable-master-switcher {
+  margin-bottom: 8px;
+}
+
+.timetable-master-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.master-tab-btn {
+  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--foreground-muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.master-tab-btn:hover {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.master-tab-btn.active {
+  background: var(--card-bg, #162a45);
+  color: var(--foreground);
+  border-color: var(--border-color);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.master-tab-btn.master-tab-fav.active {
+  background: #ff4757 !important;
+  color: #ffffff !important;
+  border-color: #000 !important;
+  box-shadow: 0 2px 6px rgba(255, 71, 87, 0.35) !important;
+}
+
+.master-tab-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.master-tab-label {
+  white-space: nowrap;
+}
+
+.master-tab-count {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.master-tab-btn.active .master-tab-count {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.master-tab-fav.active .master-tab-count {
+  background: #ffffff !important;
+  color: #ff4757 !important;
+}
+
+.master-tab-fav:not(.active) .master-tab-count.has-favs {
+  background: rgba(255, 71, 87, 0.25);
+  color: #ff6b81;
+}
+
+/* Stage Selector & Filter Bar */
+.timetable-stage-filter-wrapper {
   margin-bottom: 10px;
 }
 
-.timetable-stage-picker {
-  flex: 1;
-  min-width: 0;
+.timetable-stage-picker.full-width {
   display: flex;
   align-items: center;
-  gap: 6px;
+  width: 100%;
   background: rgba(255, 255, 255, 0.04);
   border: 1.5px solid var(--border-color);
   border-radius: 8px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   position: relative;
   transition: all 0.15s ease;
 }
 
-.timetable-stage-picker:hover {
+.timetable-stage-picker.full-width:hover {
   background: rgba(255, 255, 255, 0.07);
   border-color: var(--accent);
 }
@@ -3292,6 +3372,12 @@ body.light-mode .venue-doors-pill {
   display: flex;
   align-items: center;
   position: relative;
+}
+
+.stage-select-icon {
+  font-size: 0.82rem;
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .timetable-stage-select {
@@ -3305,7 +3391,7 @@ body.light-mode .venue-doors-pill {
   font-family: inherit;
   font-size: 0.82rem;
   font-weight: 700;
-  padding-right: 18px;
+  padding-right: 20px;
   cursor: pointer;
   outline: none;
   text-overflow: ellipsis;
@@ -3328,61 +3414,56 @@ body.light-mode .venue-doors-pill {
   font-weight: bold;
 }
 
-/* My Shows Pill Button */
-.timetable-fav-toggle-btn {
-  flex-shrink: 0;
-  display: inline-flex;
+/* My Schedule subline indicator */
+.timetable-schedule-subline {
+  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1.5px solid #000;
-  background: var(--card-bg, #11233a);
-  color: var(--foreground);
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 1.5px 1.5px 0 #000;
-  transition: all 0.12s ease;
+  padding: 5px 10px;
+  font-size: 0.76rem;
+  color: var(--foreground-muted);
+  background: rgba(255, 71, 87, 0.08);
+  border-radius: 6px;
+  border: 1px dashed rgba(255, 71, 87, 0.3);
 }
 
-.timetable-fav-toggle-btn:hover {
-  background: rgba(241, 169, 160, 0.15);
+.schedule-subline-dot {
+  color: #ff4757;
+  font-size: 0.65rem;
 }
 
-.timetable-fav-toggle-btn.active {
-  background: #ff4757 !important;
-  color: #ffffff !important;
-  border-color: #000 !important;
-  box-shadow: 0px 0px 0 #000 !important;
-  transform: translate(1px, 1px);
-}
-
-.fav-toggle-heart {
-  font-size: 0.85rem;
-  line-height: 1;
-}
-
-.timetable-fav-toggle-btn.active .fav-toggle-heart {
-  animation: miniHeartPulse 1.2s infinite ease-in-out;
-}
-
-.fav-toggle-count {
-  font-size: 0.68rem;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.15);
-  color: inherit;
-  font-weight: 700;
-}
-
-.timetable-fav-toggle-btn.active .fav-toggle-count {
-  background: #ffffff;
+.timetable-schedule-subline strong {
   color: #ff4757;
 }
 
 /* Light mode adjustments */
-body.light-mode .timetable-stage-picker {
+body.light-mode .timetable-master-tabs {
+  background: #f1f5f9;
+  border-color: #000;
+}
+
+body.light-mode .master-tab-btn {
+  color: #64748b;
+}
+
+body.light-mode .master-tab-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.light-mode .master-tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+body.light-mode .master-tab-btn.master-tab-fav.active {
+  background: #ff4757 !important;
+  color: #ffffff !important;
+  border-color: #000 !important;
+}
+
+body.light-mode .timetable-stage-picker.full-width {
   background: #ffffff;
   border-color: #cbd5e1;
 }
@@ -3396,9 +3477,14 @@ body.light-mode .timetable-stage-select option {
   color: #0f172a;
 }
 
-body.light-mode .timetable-fav-toggle-btn {
-  background: #ffffff;
-  border-color: #000;
+body.light-mode .timetable-schedule-subline {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #9f1239;
+}
+
+body.light-mode .timetable-schedule-subline strong {
+  color: #e11d48;
 }
 
 /* Highlight pulse animation when jumping from artist sheet to show */

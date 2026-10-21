@@ -2774,6 +2774,7 @@ let currentGuestEmail = "";
       }
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
+      if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
 
       const btn = (event && event.currentTarget) || (event && event.target && event.target.closest('.fav-btn-inline'));
       if (btn) {
@@ -3049,6 +3050,7 @@ let currentGuestEmail = "";
       }
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
+      if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
     }
 
     function savePrivateNote() {
@@ -3068,6 +3070,7 @@ let currentGuestEmail = "";
     let currentArtistsSubTab = 'directory'; // 'directory' | 'timetable'
     let currentSelectedTimetableDate = '2026-11-17';
     let currentSelectedStage = 'All';
+    let currentTimetableMode = 'all'; // 'all' | 'schedule'
     let timetableFavsOnly = false;
 
     const FESTIVAL_TIMETABLE_DAYS = [
@@ -3594,8 +3597,8 @@ let currentGuestEmail = "";
     function initFestivalTimetableUI() {
       renderTimetableDaysNav();
       renderTimetableVenueBanner();
-      renderTimetableStageChips();
-      updateTimetableFavCount();
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
       renderTimetableShows();
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
@@ -3633,56 +3636,117 @@ let currentGuestEmail = "";
       `;
     }
 
-    function renderTimetableStageChips() {
-      const container = document.getElementById('timetable-stage-chips');
-      if (!container) return;
-      const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
+    function renderTimetableMasterSwitcher() {
+      const switcher = document.getElementById('timetable-master-switcher');
+      if (!switcher) return;
+
       const favs = getFavorites();
-      
       const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
       const dayFavCount = dayShows.filter(s => {
         const matched = findMatchedArtist(s.artistName, s.aliases);
         return matched ? !!favs[matched.id] : false;
       }).length;
 
-      let optionsHtml = `<option value="All" ${(!currentSelectedStage || currentSelectedStage === 'All') ? 'selected' : ''}>📍 All Stages (${dayShows.length} shows)</option>`;
+      const isAll = (currentTimetableMode === 'all');
+      const isSched = (currentTimetableMode === 'schedule');
+
+      switcher.innerHTML = `
+        <div class="timetable-master-tabs">
+          <button type="button" 
+                  class="master-tab-btn ${isAll ? 'active' : ''}" 
+                  onclick="setTimetableMode('all')">
+            <span class="master-tab-icon">⚡</span>
+            <span class="master-tab-label">Full Timetable</span>
+            <span class="master-tab-count">${dayShows.length}</span>
+          </button>
+          <button type="button" 
+                  class="master-tab-btn master-tab-fav ${isSched ? 'active' : ''}" 
+                  onclick="setTimetableMode('schedule')">
+            <span class="master-tab-icon">❤️</span>
+            <span class="master-tab-label">My Schedule</span>
+            <span class="master-tab-count ${dayFavCount > 0 ? 'has-favs' : ''}">${dayFavCount}</span>
+          </button>
+        </div>
+      `;
+    }
+    window.renderTimetableMasterSwitcher = renderTimetableMasterSwitcher;
+
+    function setTimetableMode(mode) {
+      currentTimetableMode = mode;
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
+      renderTimetableShows();
+    }
+    window.setTimetableMode = setTimetableMode;
+
+    function renderTimetableStageSelector() {
+      const container = document.getElementById('timetable-stage-filter-wrapper');
+      if (!container) return;
+
+      if (currentTimetableMode === 'schedule') {
+        const favs = getFavorites();
+        const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+        const dayFavCount = dayShows.filter(s => {
+          const matched = findMatchedArtist(s.artistName, s.aliases);
+          return matched ? !!favs[matched.id] : false;
+        }).length;
+
+        if (dayFavCount > 0) {
+          container.innerHTML = `
+            <div class="timetable-schedule-subline">
+              <span class="schedule-subline-dot">●</span>
+              <span>Showing <strong>${dayFavCount}</strong> favorited performance${dayFavCount === 1 ? '' : 's'} on this day</span>
+            </div>
+          `;
+          container.style.display = 'block';
+        } else {
+          container.innerHTML = '';
+          container.style.display = 'none';
+        }
+        return;
+      }
+
+      // 'all' mode: Show stage dropdown
+      const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+
+      let optionsHtml = `<option value="All" ${(!currentSelectedStage || currentSelectedStage === 'All') ? 'selected' : ''}>All Stages (${dayShows.length} shows)</option>`;
       
       dayObj.stages.filter(stg => stg !== 'All').forEach(stg => {
         const stageCount = dayShows.filter(s => s.stage === stg).length;
         const isSelected = (currentSelectedStage === stg) ? 'selected' : '';
-        optionsHtml += `<option value="${escapeHtml(stg)}" ${isSelected}>📍 ${escapeHtml(stg)} (${stageCount} shows)</option>`;
+        optionsHtml += `<option value="${escapeHtml(stg)}" ${isSelected}>${escapeHtml(stg)} (${stageCount} shows)</option>`;
       });
 
       container.innerHTML = `
-        <div class="timetable-stage-picker">
+        <div class="timetable-stage-picker full-width">
           <div class="stage-select-box">
+            <span class="stage-select-icon">📍</span>
             <select id="timetable-stage-select" class="timetable-stage-select" onchange="selectTimetableStage(this.value)">
               ${optionsHtml}
             </select>
             <span class="stage-select-arrow">▾</span>
           </div>
         </div>
-
-        <button type="button" id="timetable-fav-filter-btn" class="timetable-fav-toggle-btn ${timetableFavsOnly ? 'active' : ''}" onclick="toggleTimetableFavFilter()" title="Filter by your favorited shows">
-          <span class="fav-toggle-heart">❤️</span>
-          <span class="fav-toggle-text">My Shows</span>
-          <span class="fav-toggle-count">${dayFavCount}</span>
-        </button>
       `;
+      container.style.display = 'block';
     }
+    window.renderTimetableStageSelector = renderTimetableStageSelector;
 
     function updateTimetableFavCount() {
-      renderTimetableStageChips();
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
+      renderTimetableShows();
     }
     window.updateTimetableFavCount = updateTimetableFavCount;
 
     function selectTimetableDate(dateStr) {
       currentSelectedTimetableDate = dateStr;
       currentSelectedStage = 'All';
-      timetableFavsOnly = false;
       renderTimetableDaysNav();
       renderTimetableVenueBanner();
-      renderTimetableStageChips();
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
       renderTimetableShows();
     }
     window.selectTimetableDate = selectTimetableDate;
@@ -3693,17 +3757,11 @@ let currentGuestEmail = "";
     }
     window.selectTimetableStage = selectTimetableStage;
 
-    function toggleTimetableFavFilter() {
-      timetableFavsOnly = !timetableFavsOnly;
-      const btn = document.getElementById('timetable-fav-filter-btn');
-      if (btn) btn.classList.toggle('active', timetableFavsOnly);
-      renderTimetableShows();
-    }
-    window.toggleTimetableFavFilter = toggleTimetableFavFilter;
-
     function jumpToTimetableShow(dateStr, showId) {
       closeArtistSheet();
       switchArtistsSubTab('timetable');
+      currentTimetableMode = 'all';
+      currentSelectedStage = 'All';
       selectTimetableDate(dateStr);
       
       setTimeout(() => {
@@ -3724,7 +3782,7 @@ let currentGuestEmail = "";
       const favs = getFavorites();
       let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
       
-      if (!timetableFavsOnly && currentSelectedStage && currentSelectedStage !== 'All') {
+      if (currentTimetableMode === 'all' && currentSelectedStage && currentSelectedStage !== 'All') {
         dayShows = dayShows.filter(s => s.stage === currentSelectedStage);
       }
       
@@ -3736,12 +3794,12 @@ let currentGuestEmail = "";
       });
       
       let finalShows = enrichedShows;
-      if (timetableFavsOnly) {
+      if (currentTimetableMode === 'schedule') {
         finalShows = enrichedShows.filter(s => s.isFav);
       }
       
       if (finalShows.length === 0) {
-        if (timetableFavsOnly) {
+        if (currentTimetableMode === 'schedule') {
           container.innerHTML = `
             <div class="empty-category-card" style="padding: 2.5rem 1rem;">
               <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3749,7 +3807,7 @@ let currentGuestEmail = "";
               </svg>
               <div class="empty-category-title">No Favorite Shows on this Day</div>
               <div class="empty-category-desc">You haven't favorited any artists performing on this date yet. Check out the full lineup or choose another day!</div>
-              <button type="button" class="secondary" onclick="toggleTimetableFavFilter()" style="margin-top: 12px; width: auto; font-size: 0.85rem;">Show All Performances</button>
+              <button type="button" class="secondary" onclick="setTimetableMode('all')" style="margin-top: 12px; width: auto; font-size: 0.85rem;">View Full Timetable</button>
             </div>
           `;
         } else {
