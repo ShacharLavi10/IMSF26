@@ -100,5 +100,26 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - Direct heart button on artist cards in the main grid allows one-tap toggling without opening the details modal.
   - In the "Favorites Only" filtered view, heart toggling on the card is disabled to prevent accidental list collapse; unfavoriting requires confirming within the artist modal.
 
+- **Shows Timetable & Jump Navigation UX (`#artists-timetable-view`, `.timetable-master-tabs`, `.timetable-show-card`)**:
+  - **Zero-Scroll Week Strip (`#timetable-days-nav`, `.timetable-day-pill`)**:
+    - Full-width segmented day switcher with stacked weekday (`.day-weekday`) and date number (`.day-num`).
+    - Eliminates unwanted horizontal scrollbars on mobile viewports.
+  - **Master Switcher (`.timetable-master-tabs`, `.master-tab-btn`)**:
+    - Tactile Neo-Brutalist segmented control split 50/50:
+      - `[ ⚡ Full Timetable (${count}) ]`: Shows all concerts across stages.
+      - `[ ❤️ My Schedule (${favCount}) ]`: Displays only the delegate's favorited performances for the selected date. Features active coral-red background (`#ff4757`), contrasting counter pill, and a welcoming empty-state card if zero favorites exist on that date.
+  - **Single-Line Stage Selector (`.timetable-stage-picker.full-width`, `.timetable-stage-select`)**:
+    - Replaced cluttered multi-row pill buttons with an elegant full-width single-line dropdown selector in `Full Timetable` mode.
+    - Displays total shows per stage dynamically.
+  - **Interactive Jump from Artist Sheet (`.sheet-showtime-row.clickable`, `jumpToTimetableShow`)**:
+    - Tapping the showtime section inside the artist modal transitions to the Timetable tab, selects the show date, smoothly scrolls to center the concert card, and fires the **Super-Bold Multi-Wave Pulse** animation.
+  - **Super-Bold Multi-Wave Pulse (`.timetable-show-card.highlight-pulse`)**:
+    - 3.5s multi-stage pulse with scale (`1.04`), high-contrast glowing aura (`box-shadow: 0 0 35px rgba(241, 169, 160, 0.95)`), 8px accent border stripe, and warm background glow ensuring delegates spot the show card instantly on mobile screens.
+  - **Mobile Back Button History Preservation (`#sheet` vs `#timetable`)**:
+    - Opening an artist modal sets `window.location.hash = "sheet"`.
+    - Tapping "View in Timetable" sets `window.location.hash = "timetable"` without popping history, establishing a forward history entry.
+    - Tapping the physical/browser **Back button** from the Timetable returns the delegate directly to the Artists Lineup tab and automatically re-opens the artist modal for `lastOpenedArtistId`.
+    - Tapping Back again closes the modal and stays on the Lineup grid (matching the behavior of the Guest popup sheet).
+
 
 

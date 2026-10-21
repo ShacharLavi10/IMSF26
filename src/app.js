@@ -96,6 +96,12 @@ let currentGuestEmail = "";
           if (typeof fetchGuestArtistFeedback === 'function') {
             fetchGuestArtistFeedback();
           }
+          if (typeof updateTimetableFavCount === 'function') {
+            updateTimetableFavCount();
+          }
+          if (typeof currentArtistsSubTab !== 'undefined' && currentArtistsSubTab === 'timetable' && typeof renderTimetableShows === 'function') {
+            renderTimetableShows();
+          }
         }
       });
     }
@@ -2328,6 +2334,8 @@ let currentGuestEmail = "";
     let globalArtistsData = [];
     let showFavsOnly = false;
     let currentOpenArtistId = null;
+    let lastOpenedArtistId = null;
+    let artistOpenedFromSubTab = 'directory';
 
     // Load favorites from local storage
     function getFavorites() {
@@ -2338,6 +2346,12 @@ let currentGuestEmail = "";
     }
     function saveFavorites(favs) {
       localStorage.setItem('artist_favs_' + currentGuestEmail, JSON.stringify(favs));
+      if (typeof updateTimetableFavCount === 'function') {
+        updateTimetableFavCount();
+      }
+      if (typeof currentArtistsSubTab !== 'undefined' && currentArtistsSubTab === 'timetable' && typeof renderTimetableShows === 'function') {
+        renderTimetableShows();
+      }
     }
 
     // Load notes from local storage
@@ -2696,6 +2710,12 @@ let currentGuestEmail = "";
       if (liveBanner) liveBanner.style.display = 'none';
 
       filterArtists();
+      if (typeof updateTimetableFavCount === 'function') {
+        updateTimetableFavCount();
+      }
+      if (typeof currentArtistsSubTab !== 'undefined' && currentArtistsSubTab === 'timetable' && typeof renderTimetableShows === 'function') {
+        renderTimetableShows();
+      }
     }
 
     function renderArtistsGrid(artists) {
@@ -2756,6 +2776,7 @@ let currentGuestEmail = "";
       }
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
+      if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
 
       const btn = (event && event.currentTarget) || (event && event.target && event.target.closest('.fav-btn-inline'));
       if (btn) {
@@ -2821,7 +2842,12 @@ let currentGuestEmail = "";
     }
 
     // Bottom Sheet
-    function openArtistSheet(artistId) {
+    function openArtistSheet(artistId, isFromHash) {
+      if (!artistId) return;
+      lastOpenedArtistId = artistId;
+      if (typeof currentArtistsSubTab !== 'undefined') {
+        artistOpenedFromSubTab = currentArtistsSubTab;
+      }
       currentOpenArtistId = artistId;
       const artist = globalArtistsData.find(a => a.id === artistId);
       if (!artist) return;
@@ -2867,6 +2893,54 @@ let currentGuestEmail = "";
           contactElem.style.display = "block";
         } else {
           contactElem.style.display = "none";
+        }
+      }
+
+      // Showtime & Stage info in Bottom Sheet
+      const showtimeElem = document.getElementById('sheet-artist-showtime');
+      if (showtimeElem) {
+        const artistShows = (typeof FESTIVAL_SHOWS_SCHEDULE !== 'undefined')
+          ? FESTIVAL_SHOWS_SCHEDULE.filter(s => {
+              const matched = findMatchedArtist(s.artistName, s.aliases);
+              return matched && (matched.id === artist.id || matched.name === artist.name);
+            })
+          : [];
+
+        if (artistShows.length > 0) {
+          let showtimesHtml = '';
+          artistShows.forEach(s => {
+            const dayObj = (typeof FESTIVAL_TIMETABLE_DAYS !== 'undefined')
+              ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === s.date)
+              : null;
+            
+            const dayLabel = dayObj ? `${dayObj.dayOfWeek} ${dayObj.dayNum}.11` : s.date;
+            const venueLabel = dayObj ? dayObj.venue : '';
+            const cityLabel = dayObj ? dayObj.city : '';
+            const locationStr = venueLabel ? `${venueLabel}${cityLabel ? ' (' + cityLabel + ')' : ''}` : '';
+            const timeStr = `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}`;
+
+            showtimesHtml += `
+              <div class="sheet-showtime-row clickable" onclick="jumpToTimetableShow('${s.date}', '${s.id}', '${artist.id}')" title="Tap to view in Festival Timetable">
+                <div class="sheet-showtime-accent-bar"></div>
+                <div class="sheet-showtime-info">
+                  <div class="sheet-showtime-top">
+                    <span class="sheet-showtime-datetime">📅 ${escapeHtml(dayLabel)} • <strong>${escapeHtml(timeStr)}</strong></span>
+                    ${s.format ? `<span class="sheet-showtime-format">${escapeHtml(s.format)}</span>` : ''}
+                  </div>
+                  <div class="sheet-showtime-bottom">
+                    <span class="sheet-showtime-venue">📍 ${escapeHtml(locationStr)}</span>
+                    <span class="sheet-showtime-stage">Stage: <strong>${escapeHtml(s.stage)}</strong></span>
+                    <span class="sheet-showtime-jump-cta">View in Timetable →</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          showtimeElem.innerHTML = showtimesHtml;
+          showtimeElem.style.display = 'flex';
+        } else {
+          showtimeElem.innerHTML = '';
+          showtimeElem.style.display = 'none';
         }
       }
 
@@ -2923,7 +2997,9 @@ let currentGuestEmail = "";
       document.body.style.overflow = 'hidden'; // prevent bg scrolling
       
       // Setting hash creates a reliable history entry on all mobile browsers
-      window.location.hash = "sheet";
+      if (!isFromHash && window.location.hash !== "#sheet") {
+        window.location.hash = "sheet";
+      }
     }
 
     function closeArtistSheet(isHashChange) {
@@ -2936,13 +3012,29 @@ let currentGuestEmail = "";
       filterArtists();
       
       // If we closed it manually via the X or overlay, we must clean up the hash
-      if (isHashChange !== true && window.location.hash === "#sheet") {
+      if (isHashChange !== true && (window.location.hash === "#sheet" || window.location.hash === "#timetable")) {
         history.back();
       }
     }
 
     window.addEventListener('hashchange', function() {
-      // If the hash is no longer #sheet, but the artist sheet is open, close it.
+      // 1. If returning to #sheet (e.g. Back button pressed from #timetable)
+      if (window.location.hash === "#sheet") {
+        if (!document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+          if (lastOpenedArtistId) {
+            if (typeof switchCategoryTab === 'function') {
+              switchCategoryTab('artists');
+            }
+            if (typeof switchArtistsSubTab === 'function') {
+              switchArtistsSubTab(artistOpenedFromSubTab || 'directory');
+            }
+            openArtistSheet(lastOpenedArtistId, true);
+          }
+        }
+        return;
+      }
+
+      // 2. If the hash is no longer #sheet, but the artist sheet is open, close it.
       if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
         closeArtistSheet(true);
       }
@@ -2966,6 +3058,7 @@ let currentGuestEmail = "";
       }
     });
 
+
     function toggleSheetFav(event) {
       if (!currentOpenArtistId) return;
       event.stopPropagation();
@@ -2983,6 +3076,7 @@ let currentGuestEmail = "";
       }
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
+      if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
     }
 
     function savePrivateNote() {
@@ -2995,6 +3089,829 @@ let currentGuestEmail = "";
     function exportBriefcase() {
       alert("This will generate and download a PDF summarizing your liked artists and private notes!");
     }
+
+    /* ==========================================================================
+       FESTIVAL TIMETABLE CONTROLLER & DATA ENGINE
+       ========================================================================== */
+    let currentArtistsSubTab = 'directory'; // 'directory' | 'timetable'
+    let currentSelectedTimetableDate = '2026-11-17';
+    let currentSelectedStage = 'All';
+    let currentTimetableMode = 'all'; // 'all' | 'schedule'
+    let timetableFavsOnly = false;
+
+    const FESTIVAL_TIMETABLE_DAYS = [
+      {
+        date: '2026-11-17',
+        dayOfWeek: 'Tue',
+        dayNum: '17',
+        city: 'Jerusalem',
+        venue: 'Yellow Submarine & Car Parking Space',
+        meta: 'Doors 19:15 | Submarine Hall & Lower Parking Lot | Aftershow 23:10',
+        stages: ['All', 'Submarine Hall', 'Parking Lot', 'Aftershow']
+      },
+      {
+        date: '2026-11-18',
+        dayOfWeek: 'Wed',
+        dayNum: '18',
+        city: 'Jerusalem',
+        venue: 'Tower of David Museum & Yellow Submarine',
+        meta: 'Afternoon at Museum (Doors 12:30) | Evening at Submarine (Doors 19:30)',
+        stages: ['All', 'Tower of David', 'Submarine Hall']
+      },
+      {
+        date: '2026-11-19',
+        dayOfWeek: 'Thu',
+        dayNum: '19',
+        city: 'Jerusalem',
+        venue: 'Museum of Tolerance',
+        meta: 'Doors 18:30 | B2 Main Stage, Grand Hall 1 & Grand Hall 2',
+        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2']
+      },
+      {
+        date: '2026-11-20',
+        dayOfWeek: 'Fri',
+        dayNum: '20',
+        city: 'Tel Aviv',
+        venue: 'Teder (Tel Aviv Jazz Festival)',
+        meta: 'From 18:00 | 4 Simultaneous Stages: Main Plaza, Kissa, Juanita, Matmon',
+        stages: ['All', 'Main Plaza', 'Kissa', 'Juanita', 'Matmon']
+      },
+      {
+        date: '2026-11-21',
+        dayOfWeek: 'Sat',
+        dayNum: '21',
+        city: 'Tel Aviv',
+        venue: 'Radical Complex',
+        meta: 'Doors 14:00 | Main Hall, Club, Sculpture Yard, Fish Market',
+        stages: ['All', 'Main Hall', 'Club', 'Sculpture Yard', 'Fish Market']
+      },
+      {
+        date: '2026-11-22',
+        dayOfWeek: 'Sun',
+        dayNum: '22',
+        city: 'Jaffa / Tel Aviv',
+        venue: 'Container House, Jaffa Port',
+        meta: 'Official Networking (14:00-16:00) | Live Shows, DJ Sets & Closing Event',
+        stages: ['All', 'Main Stage', 'Networking Area']
+      }
+    ];
+
+    const FESTIVAL_SHOWS_SCHEDULE = [
+      // DAY 1: TUE 17.11 (Jerusalem - Yellow Submarine & Parking Lot)
+      {
+        id: 'show_1_1',
+        date: '2026-11-17',
+        stage: 'Submarine Hall',
+        startTime: '18:00',
+        endTime: '19:30',
+        artistName: 'Guest Reception (קבלת פנים אורחים)',
+        format: 'Deck / Reception',
+        isGeneralEvent: true
+      },
+      {
+        id: 'show_1_2',
+        date: '2026-11-17',
+        stage: 'Submarine Hall',
+        startTime: '19:45',
+        endTime: '20:10',
+        artistName: 'Daniel Zamir & Zohar Fresco',
+        aliases: ['דניאל זמיר וזהר פרסקו', 'דניאל זמיר', 'Daniel Zamir'],
+        format: 'Seated Show'
+      },
+      {
+        id: 'show_1_3',
+        date: '2026-11-17',
+        stage: 'Submarine Hall',
+        startTime: '20:20',
+        endTime: '20:45',
+        artistName: 'Yonathan Avishai Ensemble',
+        aliases: ['יונתן אבישי אנסמבל', 'יונתן אבישי', 'Yonathan Avishai'],
+        format: 'Seated Show'
+      },
+      {
+        id: 'show_1_4',
+        date: '2026-11-17',
+        stage: 'Parking Lot',
+        startTime: '20:00',
+        endTime: '21:00',
+        artistName: 'Doors Opening & DJ Set',
+        format: 'Lower Space Opening',
+        isGeneralEvent: true
+      },
+      {
+        id: 'show_1_5',
+        date: '2026-11-17',
+        stage: 'Parking Lot',
+        startTime: '21:00',
+        endTime: '21:30',
+        artistName: 'The Kadosh Brothers',
+        aliases: ['האחים קדוש', 'Kadosh Brothers'],
+        format: 'Standing Show'
+      },
+      {
+        id: 'show_1_6',
+        date: '2026-11-17',
+        stage: 'Parking Lot',
+        startTime: '21:45',
+        endTime: '22:15',
+        artistName: 'Mark Eliyahu',
+        aliases: ['מארק אליהו'],
+        format: 'Standing Show'
+      },
+      {
+        id: 'show_1_7',
+        date: '2026-11-17',
+        stage: 'Parking Lot',
+        startTime: '22:30',
+        endTime: '23:00',
+        artistName: 'Shaman Shaman Ensemble',
+        aliases: ['שאמאן שאמאן', 'Shaman Shaman'],
+        format: 'Standing Show'
+      },
+      {
+        id: 'show_1_8',
+        date: '2026-11-17',
+        stage: 'Aftershow',
+        startTime: '23:10',
+        endTime: '23:40',
+        artistName: 'KADMON',
+        aliases: ['קדמון'],
+        format: 'Aftershow Party / Free Entry'
+      },
+
+      // DAY 2: WED 18.11 (Jerusalem - Tower of David & Submarine)
+      {
+        id: 'show_2_1',
+        date: '2026-11-18',
+        stage: 'Tower of David',
+        startTime: '13:00',
+        endTime: '13:25',
+        artistName: 'Amitai Aricha & The D-ONE Project',
+        aliases: ['אמיתי אריכא ופרויקט ה-D-ONE', 'אמיתי אריכא', 'Amitai Aricha'],
+        format: 'Museum Courtyard'
+      },
+      {
+        id: 'show_2_2',
+        date: '2026-11-18',
+        stage: 'Tower of David',
+        startTime: '13:40',
+        endTime: '14:05',
+        artistName: 'Keren Ilan',
+        aliases: ['קרן אילן'],
+        format: 'Museum Courtyard'
+      },
+      {
+        id: 'show_2_3',
+        date: '2026-11-18',
+        stage: 'Tower of David',
+        startTime: '14:20',
+        endTime: '14:45',
+        artistName: 'Yael Deckelbaum',
+        aliases: ['יעל דקלבאום'],
+        format: 'Museum Courtyard'
+      },
+      {
+        id: 'show_2_4',
+        date: '2026-11-18',
+        stage: 'Submarine Hall',
+        startTime: '20:20',
+        endTime: '20:45',
+        artistName: 'Yonatan Sagiv',
+        aliases: ['יונתן סגיב'],
+        format: 'Seated Show'
+      },
+      {
+        id: 'show_2_5',
+        date: '2026-11-18',
+        stage: 'Submarine Hall',
+        startTime: '20:55',
+        endTime: '21:20',
+        artistName: 'Alon Near Trio',
+        aliases: ['אלון ניר', 'שלישיית אלון ניר'],
+        format: 'Seated Show'
+      },
+      {
+        id: 'show_2_6',
+        date: '2026-11-18',
+        stage: 'Submarine Hall',
+        startTime: '21:30',
+        endTime: '21:55',
+        artistName: 'The Israel Jazz Orchestra',
+        aliases: ['תזמורת הג\'אז הישראלית', 'תזמורת הגאז הישראלית'],
+        format: 'Standing Show'
+      },
+      {
+        id: 'show_2_7',
+        date: '2026-11-18',
+        stage: 'Submarine Hall',
+        startTime: '22:15',
+        endTime: '22:40',
+        artistName: 'Masok',
+        aliases: ['מסוק'],
+        format: 'Standing Show'
+      },
+      {
+        id: 'show_2_8',
+        date: '2026-11-18',
+        stage: 'Submarine Hall',
+        startTime: '22:50',
+        endTime: '23:15',
+        artistName: 'The Dazaevs',
+        aliases: ['הדזאבות', 'Dazaevs'],
+        format: 'Standing Show'
+      },
+      {
+        id: 'show_2_9',
+        date: '2026-11-18',
+        stage: 'Submarine Hall',
+        startTime: '23:25',
+        endTime: '00:00',
+        artistName: 'BEĀTFÖØT',
+        aliases: ['ביטפוט', 'BEATFOOT'],
+        format: 'Late Night Set'
+      },
+
+      // DAY 3: THU 19.11 (Jerusalem - Museum of Tolerance)
+      {
+        id: 'show_3_1',
+        date: '2026-11-19',
+        stage: 'Grand Hall 2',
+        startTime: '19:30',
+        endTime: '20:00',
+        artistName: 'Portman-T',
+        aliases: ['פורטמן טי', 'Portman T'],
+        format: 'Hall Stage'
+      },
+      {
+        id: 'show_3_2',
+        date: '2026-11-19',
+        stage: 'B2 Main Stage',
+        startTime: '19:45',
+        endTime: '20:15',
+        artistName: 'Itamar Doari',
+        aliases: ['איתמר דוארי'],
+        format: 'B2 Central'
+      },
+      {
+        id: 'show_3_3',
+        date: '2026-11-19',
+        stage: 'Grand Hall 1',
+        startTime: '20:00',
+        endTime: '20:30',
+        artistName: 'Shen',
+        aliases: ['שן'],
+        format: 'Grand Hall'
+      },
+      {
+        id: 'show_3_4',
+        date: '2026-11-19',
+        stage: 'B2 Main Stage',
+        startTime: '21:15',
+        endTime: '21:45',
+        artistName: 'SHIRAN & BAKAL',
+        aliases: ['שירן ובקל', 'SHIRAN&BAKAL'],
+        format: 'B2 Central'
+      },
+      {
+        id: 'show_3_5',
+        date: '2026-11-19',
+        stage: 'Grand Hall 2',
+        startTime: '21:30',
+        endTime: '22:00',
+        artistName: 'MAGI',
+        aliases: ['מאגי'],
+        format: 'Hall Stage'
+      },
+      {
+        id: 'show_3_6',
+        date: '2026-11-19',
+        stage: 'Grand Hall 1',
+        startTime: '22:00',
+        endTime: '22:30',
+        artistName: 'The Pretty Please',
+        aliases: ['דה פריטי פליז'],
+        format: 'Grand Hall'
+      },
+      {
+        id: 'show_3_7',
+        date: '2026-11-19',
+        stage: 'B2 Main Stage',
+        startTime: '22:15',
+        endTime: '22:45',
+        artistName: 'Boogie Balagan',
+        aliases: ['בוגי בלגן'],
+        format: 'B2 Central'
+      },
+
+      // DAY 4: FRI 20.11 (Tel Aviv - Teder)
+      {
+        id: 'show_4_1',
+        date: '2026-11-20',
+        stage: 'Main Plaza',
+        startTime: '18:00',
+        endTime: '18:45',
+        artistName: 'Shay Hazan - DAWA',
+        aliases: ['שי חזן', 'Shay Hazan'],
+        format: 'Main Courtyard'
+      },
+      {
+        id: 'show_4_2',
+        date: '2026-11-20',
+        stage: 'Kissa',
+        startTime: '18:30',
+        endTime: '19:15',
+        artistName: 'Tamar Shawki',
+        aliases: ['תמר שאוקי'],
+        format: 'Kissa Stage'
+      },
+      {
+        id: 'show_4_3',
+        date: '2026-11-20',
+        stage: 'Matmon',
+        startTime: '20:30',
+        endTime: '21:15',
+        artistName: 'Eyal Netzer & Strings',
+        aliases: ['אייל נצר', 'Eyal Netzer'],
+        format: 'Matmon Room'
+      },
+      {
+        id: 'show_4_4',
+        date: '2026-11-20',
+        stage: 'Matmon',
+        startTime: '21:30',
+        endTime: '22:15',
+        artistName: 'Floating Sheep',
+        aliases: ['פלוטינג שיפ'],
+        format: 'Matmon Room'
+      },
+      {
+        id: 'show_4_5',
+        date: '2026-11-20',
+        stage: 'Juanita',
+        startTime: '22:00',
+        endTime: '22:30',
+        artistName: 'SHALOSH',
+        aliases: ['שלוש'],
+        format: 'Juanita Club'
+      },
+      {
+        id: 'show_4_6',
+        date: '2026-11-20',
+        stage: 'Kissa',
+        startTime: '22:30',
+        endTime: '23:15',
+        artistName: 'Ariel Bart Trio',
+        aliases: ['שלישיית אריאל ברט', 'אריאל ברט', 'Ariel Bart'],
+        format: 'Kissa Stage'
+      },
+      {
+        id: 'show_4_7',
+        date: '2026-11-20',
+        stage: 'Matmon',
+        startTime: '23:00',
+        endTime: '23:45',
+        artistName: 'Sandia',
+        aliases: ['סנדיה'],
+        format: 'Matmon Room'
+      },
+
+      // DAY 5: SAT 21.11 (Tel Aviv - Radical)
+      {
+        id: 'show_5_1',
+        date: '2026-11-21',
+        stage: 'Main Hall',
+        startTime: '15:00',
+        endTime: '15:25',
+        artistName: 'Meitarai',
+        aliases: ['מיתרי'],
+        format: 'Grand Hall'
+      },
+      {
+        id: 'show_5_2',
+        date: '2026-11-21',
+        stage: 'Sculpture Yard',
+        startTime: '15:45',
+        endTime: '16:10',
+        artistName: 'AVIRAM',
+        aliases: ['אבירם'],
+        format: 'Open Air Garden'
+      },
+      {
+        id: 'show_5_3',
+        date: '2026-11-21',
+        stage: 'Club',
+        startTime: '16:15',
+        endTime: '16:40',
+        artistName: 'The Minister',
+        aliases: ['דה מיניסטר'],
+        format: 'Club Stage'
+      },
+      {
+        id: 'show_5_4',
+        date: '2026-11-21',
+        stage: 'Main Hall',
+        startTime: '17:00',
+        endTime: '17:25',
+        artistName: 'Maya Belsitzman & Matan Ephrat',
+        aliases: ['מאיה בלזיצמן ומתן אפרת', 'מאיה בלזיצמן', 'Maya Belsitzman'],
+        format: 'Grand Hall'
+      },
+      {
+        id: 'show_5_5',
+        date: '2026-11-21',
+        stage: 'Sculpture Yard',
+        startTime: '17:30',
+        endTime: '17:55',
+        artistName: 'Shir Shani',
+        aliases: ['שיר שני'],
+        format: 'Open Air Garden'
+      },
+      {
+        id: 'show_5_6',
+        date: '2026-11-21',
+        stage: 'Club',
+        startTime: '18:10',
+        endTime: '18:35',
+        artistName: 'Allan Tune',
+        aliases: ['אלן טיון'],
+        format: 'Club Stage'
+      },
+      {
+        id: 'show_5_7',
+        date: '2026-11-21',
+        stage: 'Fish Market',
+        startTime: '15:30',
+        endTime: '18:00',
+        artistName: 'Music Industry Panels & Talks (שוק דגים)',
+        format: 'Lectures & Discussions',
+        isGeneralEvent: true
+      },
+
+      // DAY 6: SUN 22.11 (Jaffa - Container House)
+      {
+        id: 'show_6_1',
+        date: '2026-11-22',
+        stage: 'Networking Area',
+        startTime: '14:00',
+        endTime: '16:00',
+        artistName: 'International Networking Event (אירוע נטוורקינג)',
+        format: 'Delegates & Artists Matching',
+        isGeneralEvent: true
+      },
+      {
+        id: 'show_6_2',
+        date: '2026-11-22',
+        stage: 'Main Stage',
+        startTime: '16:00',
+        endTime: '18:30',
+        artistName: 'Closing Shows & DJ Sets (אירוע נעילה)',
+        format: 'Festival Grand Finale',
+        isGeneralEvent: true
+      }
+    ];
+
+    function findMatchedArtist(artistName, aliases) {
+      if (!globalArtistsData || globalArtistsData.length === 0) return null;
+      const normalize = s => String(s || '').toLowerCase().replace(/['"״׳\-_&]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const nameNorm = normalize(artistName);
+      const aliasNorms = (aliases || []).map(normalize);
+      
+      // 1. Direct name match
+      let matched = globalArtistsData.find(a => normalize(a.name) === nameNorm);
+      if (matched) return matched;
+      
+      // 2. Alias match
+      for (const query of [nameNorm, ...aliasNorms]) {
+        if (!query) continue;
+        matched = globalArtistsData.find(a => {
+          const aName = normalize(a.name);
+          return aName === query || aName.includes(query) || query.includes(aName);
+        });
+        if (matched) return matched;
+      }
+      return null;
+    }
+
+    function switchArtistsSubTab(subTabName) {
+      currentArtistsSubTab = subTabName;
+      const dirBtn = document.getElementById('subtab-artists-directory');
+      const ttBtn = document.getElementById('subtab-artists-timetable');
+      const dirView = document.getElementById('artists-directory-view');
+      const ttView = document.getElementById('artists-timetable-view');
+      
+      if (dirBtn && ttBtn && dirView && ttView) {
+        if (subTabName === 'directory') {
+          dirBtn.classList.add('active');
+          dirBtn.setAttribute('aria-selected', 'true');
+          ttBtn.classList.remove('active');
+          ttBtn.setAttribute('aria-selected', 'false');
+          dirView.style.display = 'block';
+          ttView.style.display = 'none';
+        } else {
+          dirBtn.classList.remove('active');
+          dirBtn.setAttribute('aria-selected', 'false');
+          ttBtn.classList.add('active');
+          ttBtn.setAttribute('aria-selected', 'true');
+          dirView.style.display = 'none';
+          ttView.style.display = 'block';
+          initFestivalTimetableUI();
+        }
+      }
+    }
+    window.switchArtistsSubTab = switchArtistsSubTab;
+
+    function initFestivalTimetableUI() {
+      renderTimetableDaysNav();
+      renderTimetableVenueBanner();
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
+      renderTimetableShows();
+    }
+    window.initFestivalTimetableUI = initFestivalTimetableUI;
+
+    function renderTimetableDaysNav() {
+      const nav = document.getElementById('timetable-days-nav');
+      if (!nav) return;
+      let html = '';
+      FESTIVAL_TIMETABLE_DAYS.forEach(day => {
+        const isActive = (day.date === currentSelectedTimetableDate);
+        html += `
+          <button type="button" class="timetable-day-pill ${isActive ? 'active' : ''}" onclick="selectTimetableDate('${day.date}')" title="${day.venue}">
+            <span class="day-weekday">${day.dayOfWeek}</span>
+            <span class="day-num">${day.dayNum}</span>
+          </button>
+        `;
+      });
+      nav.innerHTML = html;
+    }
+
+    function renderTimetableVenueBanner() {
+      const banner = document.getElementById('timetable-venue-banner');
+      if (!banner) return;
+      const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
+      const doorInfo = dayObj.meta ? dayObj.meta.split('|')[0].trim() : '';
+      banner.innerHTML = `
+        <div class="timetable-venue-strip">
+          <div class="venue-strip-left">
+            <span class="venue-pin">📍</span>
+            <span class="venue-name">${escapeHtml(dayObj.venue)}</span>
+            <span class="timetable-city-badge">${escapeHtml(dayObj.city)}</span>
+          </div>
+          ${doorInfo ? `<div class="venue-doors-pill">${escapeHtml(doorInfo)}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderTimetableMasterSwitcher() {
+      const switcher = document.getElementById('timetable-master-switcher');
+      if (!switcher) return;
+
+      const favs = getFavorites();
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      const dayFavCount = dayShows.filter(s => {
+        const matched = findMatchedArtist(s.artistName, s.aliases);
+        return matched ? !!favs[matched.id] : false;
+      }).length;
+
+      const isAll = (currentTimetableMode === 'all');
+      const isSched = (currentTimetableMode === 'schedule');
+
+      switcher.innerHTML = `
+        <div class="timetable-master-tabs">
+          <button type="button" 
+                  class="master-tab-btn ${isAll ? 'active' : ''}" 
+                  onclick="setTimetableMode('all')">
+            <span class="master-tab-icon">⚡</span>
+            <span class="master-tab-label">Full Timetable</span>
+            <span class="master-tab-count">${dayShows.length}</span>
+          </button>
+          <button type="button" 
+                  class="master-tab-btn master-tab-fav ${isSched ? 'active' : ''}" 
+                  onclick="setTimetableMode('schedule')">
+            <span class="master-tab-icon">❤️</span>
+            <span class="master-tab-label">My Schedule</span>
+            <span class="master-tab-count ${dayFavCount > 0 ? 'has-favs' : ''}">${dayFavCount}</span>
+          </button>
+        </div>
+      `;
+    }
+    window.renderTimetableMasterSwitcher = renderTimetableMasterSwitcher;
+
+    function setTimetableMode(mode) {
+      currentTimetableMode = mode;
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
+      renderTimetableShows();
+    }
+    window.setTimetableMode = setTimetableMode;
+
+    function renderTimetableStageSelector() {
+      const container = document.getElementById('timetable-stage-filter-wrapper');
+      if (!container) return;
+
+      if (currentTimetableMode === 'schedule') {
+        const favs = getFavorites();
+        const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+        const dayFavCount = dayShows.filter(s => {
+          const matched = findMatchedArtist(s.artistName, s.aliases);
+          return matched ? !!favs[matched.id] : false;
+        }).length;
+
+        if (dayFavCount > 0) {
+          container.innerHTML = `
+            <div class="timetable-schedule-subline">
+              <span class="schedule-subline-dot">●</span>
+              <span>Showing <strong>${dayFavCount}</strong> favorited performance${dayFavCount === 1 ? '' : 's'} on this day</span>
+            </div>
+          `;
+          container.style.display = 'block';
+        } else {
+          container.innerHTML = '';
+          container.style.display = 'none';
+        }
+        return;
+      }
+
+      // 'all' mode: Show stage dropdown
+      const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+
+      let optionsHtml = `<option value="All" ${(!currentSelectedStage || currentSelectedStage === 'All') ? 'selected' : ''}>All Stages (${dayShows.length} shows)</option>`;
+      
+      dayObj.stages.filter(stg => stg !== 'All').forEach(stg => {
+        const stageCount = dayShows.filter(s => s.stage === stg).length;
+        const isSelected = (currentSelectedStage === stg) ? 'selected' : '';
+        optionsHtml += `<option value="${escapeHtml(stg)}" ${isSelected}>${escapeHtml(stg)} (${stageCount} shows)</option>`;
+      });
+
+      container.innerHTML = `
+        <div class="timetable-stage-picker full-width">
+          <div class="stage-select-box">
+            <span class="stage-select-icon">📍</span>
+            <select id="timetable-stage-select" class="timetable-stage-select" onchange="selectTimetableStage(this.value)">
+              ${optionsHtml}
+            </select>
+            <span class="stage-select-arrow">▾</span>
+          </div>
+        </div>
+      `;
+      container.style.display = 'block';
+    }
+    window.renderTimetableStageSelector = renderTimetableStageSelector;
+
+    function updateTimetableFavCount() {
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
+      renderTimetableShows();
+    }
+    window.updateTimetableFavCount = updateTimetableFavCount;
+
+    function selectTimetableDate(dateStr) {
+      currentSelectedTimetableDate = dateStr;
+      currentSelectedStage = 'All';
+      renderTimetableDaysNav();
+      renderTimetableVenueBanner();
+      renderTimetableMasterSwitcher();
+      renderTimetableStageSelector();
+      renderTimetableShows();
+    }
+    window.selectTimetableDate = selectTimetableDate;
+
+    function selectTimetableStage(stageName) {
+      currentSelectedStage = stageName;
+      renderTimetableShows();
+    }
+    window.selectTimetableStage = selectTimetableStage;
+
+    function jumpToTimetableShow(dateStr, showId, artistId) {
+      if (artistId) {
+        lastOpenedArtistId = artistId;
+      } else if (currentOpenArtistId) {
+        lastOpenedArtistId = currentOpenArtistId;
+      }
+
+      // 1. Visually close the artist bottom sheet WITHOUT popping history
+      flushFeedbackAutoSave();
+      document.getElementById('artist-sheet-overlay').classList.remove('active');
+      document.getElementById('artist-bottom-sheet').classList.remove('active');
+      document.body.style.overflow = '';
+      currentOpenArtistId = null;
+      filterArtists();
+
+      // 2. Set new hash for timetable show to create a forward history entry AFTER #sheet
+      // When the user taps Back on their phone, it will return to #sheet!
+      window.location.hash = "timetable";
+
+      // 3. Switch to Timetable subtab and select the date
+      switchArtistsSubTab('timetable');
+      currentTimetableMode = 'all';
+      currentSelectedStage = 'All';
+      selectTimetableDate(dateStr);
+      
+      // 4. Smooth scroll and super-bold highlight pulse
+      setTimeout(() => {
+        const showCard = document.getElementById(`timetable-card-${showId}`);
+        if (showCard) {
+          showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showCard.classList.remove('highlight-pulse');
+          void showCard.offsetWidth; // force reflow to restart animation
+          showCard.classList.add('highlight-pulse');
+          setTimeout(() => showCard.classList.remove('highlight-pulse'), 4000);
+        }
+      }, 300);
+    }
+    window.jumpToTimetableShow = jumpToTimetableShow;
+
+    function renderTimetableShows() {
+      const container = document.getElementById('timetable-shows-container');
+      if (!container) return;
+      
+      const favs = getFavorites();
+      let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      
+      if (currentTimetableMode === 'all' && currentSelectedStage && currentSelectedStage !== 'All') {
+        dayShows = dayShows.filter(s => s.stage === currentSelectedStage);
+      }
+      
+      // Match with globalArtistsData
+      const enrichedShows = dayShows.map(show => {
+        const matched = findMatchedArtist(show.artistName, show.aliases);
+        const isFav = matched ? !!favs[matched.id] : false;
+        return { ...show, matchedArtist: matched, isFav: isFav };
+      });
+      
+      let finalShows = enrichedShows;
+      if (currentTimetableMode === 'schedule') {
+        finalShows = enrichedShows.filter(s => s.isFav);
+      }
+      
+      if (finalShows.length === 0) {
+        if (currentTimetableMode === 'schedule') {
+          container.innerHTML = `
+            <div class="empty-category-card" style="padding: 2.5rem 1rem;">
+              <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              <div class="empty-category-title">No Favorite Shows on this Day</div>
+              <div class="empty-category-desc">You haven't favorited any artists performing on this date yet. Check out the full lineup or choose another day!</div>
+              <button type="button" class="secondary" onclick="setTimetableMode('all')" style="margin-top: 12px; width: auto; font-size: 0.85rem;">View Full Timetable</button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="empty-category-card" style="padding: 2.5rem 1rem;">
+              <div class="empty-category-title">No Shows Scheduled for this Stage</div>
+            </div>
+          `;
+        }
+        return;
+      }
+      
+      let html = '';
+      finalShows.forEach(s => {
+        const artist = s.matchedArtist;
+        const isFav = s.isFav;
+        const clickAttr = artist ? `onclick="openArtistSheet('${artist.id}')"` : '';
+        const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''}`;
+        const avatarHtml = (artist && artist.image) 
+          ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
+          : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`);
+        
+        const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
+        const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
+        const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
+        const displayName = artist ? artist.name : s.artistName;
+
+        html += `
+          <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
+            <div class="timetable-time-box">
+              <span class="start-time">${escapeHtml(s.startTime)}</span>
+              ${s.endTime ? `<span class="end-time">${escapeHtml(s.endTime)}</span>` : ''}
+            </div>
+            <div class="timetable-show-body">
+              <div class="timetable-artist-header">
+                ${avatarHtml}
+                <span class="timetable-artist-name">${escapeHtml(displayName)}</span>
+                ${favMiniBadge}
+              </div>
+              <div class="timetable-sub-details">
+                <span class="timetable-stage-badge">📍 ${escapeHtml(s.stage)}</span>
+                ${formatTag}
+                ${genreTag}
+              </div>
+            </div>
+            ${artist ? `
+              <div class="timetable-open-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+    window.renderTimetableShows = renderTimetableShows;
 
     // FULLSCREEN IMAGE VIEWER LOGIC
     function openImageViewerFromBg(event, el) {
