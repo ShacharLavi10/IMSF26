@@ -3887,17 +3887,6 @@ let currentGuestEmail = "";
       }
 ];
 
-    let FESTIVAL_SHOWS_SCHEDULE = (function() {
-      try {
-        const cached = localStorage.getItem('imsf_timetable_schedule_cache');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (e) {}
-      return DEFAULT_FESTIVAL_SHOWS_SCHEDULE;
-    })();
-
     function normalizeArtistString(str) {
       if (!str) return '';
       return String(str)
@@ -3967,9 +3956,7 @@ let currentGuestEmail = "";
     };
 
     function findMatchedArtist(artistName, aliases) {
-      if (!globalArtistsData || globalArtistsData.length === 0) return null;
       if (!artistName) return null;
-
       const queries = [artistName, ...(aliases || [])];
 
       // 1. Check known alias dictionary
@@ -3977,27 +3964,33 @@ let currentGuestEmail = "";
         const normQ = normalizeArtistString(q);
         if (ARTIST_NAME_ALIASES_DICT[normQ]) {
           const targetName = normalizeArtistString(ARTIST_NAME_ALIASES_DICT[normQ]);
-          const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
-          if (match) return match;
+          if (globalArtistsData && globalArtistsData.length > 0) {
+            const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
+            if (match) return match;
+          }
         }
         for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
           if (normQ.includes(key) || key.includes(normQ)) {
             const targetName = normalizeArtistString(val);
-            const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
-            if (match) return match;
+            if (globalArtistsData && globalArtistsData.length > 0) {
+              const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
+              if (match) return match;
+            }
           }
         }
       }
 
       // 2. Direct normalized match or substring match
-      const cleanQueries = queries.map(q => normalizeArtistString(q));
-      for (const a of globalArtistsData) {
-        const normA = normalizeArtistString(a.name);
-        for (const q of cleanQueries) {
-          if (!q) continue;
-          if (normA === q) return a;
-          if (q.length >= 4 && (normA.includes(q) || q.includes(normA))) {
-            return a;
+      if (globalArtistsData && globalArtistsData.length > 0) {
+        const cleanQueries = queries.map(q => normalizeArtistString(q));
+        for (const a of globalArtistsData) {
+          const normA = normalizeArtistString(a.name);
+          for (const q of cleanQueries) {
+            if (!q) continue;
+            if (normA === q) return a;
+            if (q.length >= 4 && (normA.includes(q) || q.includes(normA))) {
+              return a;
+            }
           }
         }
       }
@@ -4005,14 +3998,96 @@ let currentGuestEmail = "";
       return null;
     }
 
+    function shouldKeepTimetableItem(show) {
+      if (!show || !show.artistName) return false;
+      const raw = String(show.artistName).trim();
+      const lower = raw.toLowerCase();
+
+      // 1. If it matches an artist from globalArtistsData or our alias dictionary, KEEP!
+      if (findMatchedArtist(raw, show.aliases)) return true;
+
+      const normRaw = normalizeArtistString(raw);
+      if (ARTIST_NAME_ALIASES_DICT[normRaw]) return true;
+      for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+        if (normRaw === normalizeArtistString(val) || normRaw.includes(key) || key.includes(normRaw)) {
+          return true;
+        }
+      }
+
+      // 2. Reject pure question marks or symbols: '?', '???', '?', etc.
+      if (/^[\s?؟!\-–—.,/\\|]+$/.test(raw)) return false;
+
+      // 3. Reject notes, random stages, afterparties, or place comments
+      if (
+        raw.includes('מסתובבים') ||
+        raw.includes('אפטרים') ||
+        raw.includes('מזקקה') ||
+        raw.includes('נוקטורנו') ||
+        raw.includes('Besarabia') ||
+        raw.includes('פרגמון') ||
+        raw.includes('ש"ח') ||
+        raw.includes('כרטיס משולב') ||
+        raw.includes('כניסה חופשית') ||
+        raw.includes('מופע ראשון') ||
+        raw.includes('כחלק מפסטיבל') ||
+        raw.includes('לדחות מופע') ||
+        raw === "דיג'ייס" ||
+        raw === 'נועם הלפר' || raw === 'רמזי' || raw === 'מור' || raw === 'אליענה'
+      ) {
+        return false;
+      }
+
+      // 4. Allowed non-artist items according to user request:
+      // - Doors opening: "דלתות", "פתיחת דלתות", "Doors"
+      if (raw.includes('דלתות') || lower.includes('doors')) return true;
+
+      // - DJ set: "DJ", "DJ?", "דיג'יי", "דיגיי", "תקלוט"
+      if (
+        raw.includes('DJ') || lower.includes('dj') ||
+        raw.includes("דיג'יי") || raw.includes('דיגיי') || raw.includes('תקלוט')
+      ) {
+        return true;
+      }
+
+      // - Official reception / networking events: "קבלת פנים", "נטוורקינג", "אירוע נעילה", "הפסקה", "Closing"
+      if (
+        raw.includes('קבלת פנים') ||
+        raw.includes('נטוורקינג') ||
+        raw.includes('שוק דגים') ||
+        raw.includes('אירוע נעילה') ||
+        raw.includes('הפסקה') ||
+        raw.includes('Trade Fair') ||
+        lower.includes('networking') ||
+        lower.includes('closing')
+      ) {
+        return true;
+      }
+
+      // Everything else without an artist match is discarded
+      return false;
+    }
+
+    let FESTIVAL_SHOWS_SCHEDULE = (function() {
+      try {
+        const cached = localStorage.getItem('imsf_timetable_schedule_cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.filter(shouldKeepTimetableItem);
+          }
+        }
+      } catch (e) {}
+      return DEFAULT_FESTIVAL_SHOWS_SCHEDULE.filter(shouldKeepTimetableItem);
+    })();
+
     function fetchDynamicTimetableSchedule(forceRefresh) {
       if (typeof google === 'undefined' || !google.script || !google.script.run) return;
       google.script.run
         .withSuccessHandler(function(res) {
           if (res && res.success && Array.isArray(res.schedule) && res.schedule.length > 0) {
-            FESTIVAL_SHOWS_SCHEDULE = res.schedule;
+            FESTIVAL_SHOWS_SCHEDULE = res.schedule.filter(shouldKeepTimetableItem);
             try {
-              localStorage.setItem('imsf_timetable_schedule_cache', JSON.stringify(res.schedule));
+              localStorage.setItem('imsf_timetable_schedule_cache', JSON.stringify(FESTIVAL_SHOWS_SCHEDULE));
             } catch (e) {}
             if (typeof renderTimetableMasterSwitcher === 'function') renderTimetableMasterSwitcher();
             if (typeof renderTimetableStageSelector === 'function') renderTimetableStageSelector();
@@ -4102,7 +4177,7 @@ let currentGuestEmail = "";
       if (!switcher) return;
 
       const favs = getFavorites();
-      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       const dayFavCount = dayShows.filter(s => {
         const matched = findMatchedArtist(s.artistName, s.aliases);
         return matched ? !!favs[matched.id] : false;
@@ -4146,7 +4221,7 @@ let currentGuestEmail = "";
 
       if (currentTimetableMode === 'schedule') {
         const favs = getFavorites();
-        const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+        const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
         const dayFavCount = dayShows.filter(s => {
           const matched = findMatchedArtist(s.artistName, s.aliases);
           return matched ? !!favs[matched.id] : false;
@@ -4168,7 +4243,7 @@ let currentGuestEmail = "";
       }
 
       // 'all' mode: Show stage dropdown with dynamically combined stages
-      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      const dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === currentSelectedTimetableDate) || FESTIVAL_TIMETABLE_DAYS[0];
       const configuredStages = (dayObj.stages || []).filter(stg => stg !== 'All');
       const actualStages = [...new Set(dayShows.map(s => s.stage).filter(stg => stg && stg !== 'All'))];
@@ -4265,7 +4340,7 @@ let currentGuestEmail = "";
       if (!container) return;
       
       const favs = getFavorites();
-      let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate);
+      let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       
       if (currentTimetableMode === 'all' && currentSelectedStage && currentSelectedStage !== 'All') {
         dayShows = dayShows.filter(s => s.stage === currentSelectedStage);
@@ -4313,12 +4388,12 @@ let currentGuestEmail = "";
         const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
-          : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`);
+          : ((s.artistName.includes('דלתות') || s.artistName.toLowerCase().includes('doors')) ? `<span class="timetable-avatar-fallback">🚪</span>` : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`));
         
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
         const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
-        const displayName = artist ? artist.name : s.artistName;
+        const displayName = artist ? artist.name : (s.artistName === 'דלתות' ? 'Doors (דלתות)' : s.artistName);
 
         html += `
           <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">

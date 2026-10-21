@@ -847,7 +847,7 @@ function getFestivalTimetableSchedule(forceRefresh) {
     if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v2_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v3_' + ssId;
     if (!forceRefresh) {
       const cached = cache.get(cacheKey);
       if (cached) {
@@ -865,7 +865,9 @@ function getFestivalTimetableSchedule(forceRefresh) {
     }
 
     const grid = lineupSheet.getDataRange().getDisplayValues();
-    const parsedSchedule = parseLineupGrid(grid);
+    const artistsRes = getArtistsData(false);
+    const artistsList = (artistsRes && artistsRes.success && Array.isArray(artistsRes.artists)) ? artistsRes.artists : [];
+    const parsedSchedule = parseLineupGrid(grid, artistsList);
 
     try {
       cache.put(cacheKey, JSON.stringify(parsedSchedule), 600); // 10 minutes cache
@@ -892,7 +894,184 @@ function parseLineupTime(str) {
   return { start: '', end: '' };
 }
 
-function parseLineupGrid(grid) {
+const ARTIST_NAME_ALIASES_DICT = {
+  'דניאל זמיר וזהר פרסקו': 'Daniel Zamir & Zohar Fresco',
+  'יונתן אבישי אנסמבל': 'Yonathan Avishai Ensemble',
+  'האחים קדוש': 'The Kadosh Brothers',
+  'מארק אליהו': 'Mark Eliyahu',
+  'קדמון': 'KADMON',
+  'אמיתי אריכא ופרויקט ה-d-one': 'Amitai Aricha @ The D-ONE Project',
+  'אמיתי אריכא': 'Amitai Aricha @ The D-ONE Project',
+  'קרן אילן': 'Keren Ilan',
+  'יעל דקלבאום': 'Yael Deckelbaum',
+  'יונתן טגר': 'Yonatan Tagger',
+  'יונתן תגר': 'Yonatan Tagger',
+  'שלישיית אלון ניר': 'Alon Near Trio',
+  'אלון ניר': 'Alon Near Trio',
+  'תזמורת הגאז הישראלית': 'The Israel Jazz Orchestra',
+  'הזאבות': "HAZE'EVOT",
+  'הדזאבות': "HAZE'EVOT",
+  'ביטפוט': 'BĘÃTFÓØT',
+  'beatfoot': 'BĘÃTFÓØT',
+  'שן': 'SHEN',
+  'שירן ובקל': 'SHIRAN&BAKAL',
+  'מאגי': 'MAGI',
+  'דה פריטי פליז': 'The Pretty Please',
+  'בוגי בלגן': 'Boogie Balagan',
+  'פורטמן טי': 'Portman-T',
+  'שי חזן': 'Shay Hazan - DAWA',
+  'dawa': 'Shay Hazan - DAWA',
+  'שלוש': 'SHALOSH',
+  'תמר שאוקי': 'Tamar Shawki',
+  'שלישיית אריאל ברט': 'Ariel Bart Trio',
+  'אריאל ברט': 'Ariel Bart Trio',
+  'איל נצר': 'Eyal Netzer & Strings',
+  'אייל נצר': 'Eyal Netzer & Strings',
+  'סנדיה': 'Sandia',
+  'כבשים מרחפות': 'Floating Sheep',
+  'מיתריי': 'Meitarai',
+  'מאיה בלזיצמן ומתן אפרת': 'Maya Belsitzman & Matan Ephrat',
+  'מאיה בלזיצמן': 'Maya Belsitzman & Matan Ephrat',
+  'תמיר גרינברג': 'Tamir Grinberg',
+  'שיר שני': 'Shir Shani',
+  'אבירם': 'AVIRAM',
+  'אלן טיון': 'Allan Tune',
+  'יוז': 'YUZ',
+  'טאפש': 'TAPASH',
+  'אדיס קן': 'The Addis Ken Project',
+  'פרויקט אדיס קן': 'The Addis Ken Project',
+  'רביעיית ניגון': 'Nigun Quartet',
+  'איתמר דוארי': 'Itamar Doari',
+  'דסווה': 'Deswa',
+  'deswa': 'Deswa',
+  "ג'וזף אי שיין": 'Joseph E-Shine',
+  'joseph e shine': 'Joseph E-Shine',
+  'בילטיז': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
+  'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)'
+};
+
+function normalizeArtistString(str) {
+  if (!str) return '';
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[ę]/g, 'e').replace(/[ãáàâä]/g, 'a').replace(/[óòôö]/g, 'o').replace(/[øö]/g, 'o')
+    .replace(/['"״׳`]/g, '')
+    .replace(/[\-–—@&(),.\n\r]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findMatchedArtistBackend(artistName, artistsList) {
+  if (!artistName) return null;
+  const queries = [artistName];
+
+  for (const q of queries) {
+    const normQ = normalizeArtistString(q);
+    if (ARTIST_NAME_ALIASES_DICT[normQ]) {
+      const targetName = normalizeArtistString(ARTIST_NAME_ALIASES_DICT[normQ]);
+      if (artistsList && artistsList.length > 0) {
+        const match = artistsList.find(a => normalizeArtistString(a.name) === targetName);
+        if (match) return match;
+      }
+    }
+    for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+      if (normQ.includes(key) || key.includes(normQ)) {
+        const targetName = normalizeArtistString(val);
+        if (artistsList && artistsList.length > 0) {
+          const match = artistsList.find(a => normalizeArtistString(a.name) === targetName);
+          if (match) return match;
+        }
+      }
+    }
+  }
+
+  if (artistsList && artistsList.length > 0) {
+    const cleanQueries = queries.map(q => normalizeArtistString(q));
+    for (const a of artistsList) {
+      const normA = normalizeArtistString(a.name);
+      for (const q of cleanQueries) {
+        if (!q) continue;
+        if (normA === q) return a;
+        if (q.length >= 4 && (normA.includes(q) || q.includes(normA))) {
+          return a;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function shouldKeepTimetableItem(show, artistsList) {
+  if (!show || !show.artistName) return false;
+  const raw = String(show.artistName).trim();
+  const lower = raw.toLowerCase();
+
+  // 1. If it matches an artist, always keep!
+  const matched = findMatchedArtistBackend(raw, artistsList);
+  if (matched) return true;
+
+  const normRaw = normalizeArtistString(raw);
+  if (ARTIST_NAME_ALIASES_DICT[normRaw]) return true;
+  for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+    if (normRaw === normalizeArtistString(val) || normRaw.includes(key) || key.includes(normRaw)) {
+      return true;
+    }
+  }
+
+  // 2. Reject pure question marks or symbols: '?', '???', '?', etc.
+  if (/^[\s?؟!\-–—.,/\\|]+$/.test(raw)) return false;
+
+  // 3. Reject notes, random stages, or place comments
+  if (
+    raw.includes('מסתובבים') ||
+    raw.includes('אפטרים') ||
+    raw.includes('מזקקה') ||
+    raw.includes('נוקטורנו') ||
+    raw.includes('Besarabia') ||
+    raw.includes('פרגמון') ||
+    raw.includes('ש"ח') ||
+    raw.includes('כרטיס משולב') ||
+    raw.includes('כניסה חופשית') ||
+    raw.includes('מופע ראשון') ||
+    raw.includes('כחלק מפסטיבל') ||
+    raw.includes('לדחות מופע') ||
+    raw === "דיג'ייס" ||
+    raw === 'נועם הלפר' || raw === 'רמזי' || raw === 'מור' || raw === 'אליענה'
+  ) {
+    return false;
+  }
+
+  // 4. Allowed non-artist items according to user request:
+  // - Doors opening: "דלתות", "פתיחת דלתות", "Doors"
+  if (raw.includes('דלתות') || lower.includes('doors')) return true;
+
+  // - DJ set: "DJ", "DJ?", "דיג'יי", "דיגיי", "תקלוט"
+  if (
+    raw.includes('DJ') || lower.includes('dj') ||
+    raw.includes("דיג'יי") || raw.includes('דיגיי') || raw.includes('תקלוט')
+  ) {
+    return true;
+  }
+
+  // - Official reception / networking events: "קבלת פנים", "נטוורקינג", "אירוע נעילה", "הפסקה", "Closing"
+  if (
+    raw.includes('קבלת פנים') ||
+    raw.includes('נטוורקינג') ||
+    raw.includes('שוק דגים') ||
+    raw.includes('אירוע נעילה') ||
+    raw.includes('הפסקה') ||
+    raw.includes('Trade Fair') ||
+    lower.includes('networking') ||
+    lower.includes('closing')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function parseLineupGrid(grid, artistsList) {
   if (!grid || grid.length < 5) return [];
 
   const dayConfigs = [
@@ -997,7 +1176,7 @@ function parseLineupGrid(grid) {
         isGeneral = true;
       }
 
-      allShows.push({
+      const candidateShow = {
         id: 'show_' + cfg.date + '_' + (showIndex++),
         date: cfg.date,
         stage: currentStage,
@@ -1005,7 +1184,14 @@ function parseLineupGrid(grid) {
         endTime: timeObj.end,
         artistName: cellArtist,
         isGeneralEvent: isGeneral
-      });
+      };
+
+      if (shouldKeepTimetableItem(candidateShow, artistsList)) {
+        if (candidateShow.artistName === 'דלתות') {
+          candidateShow.artistName = 'Doors (דלתות)';
+        }
+        allShows.push(candidateShow);
+      }
     }
   });
 
