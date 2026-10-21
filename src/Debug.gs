@@ -844,3 +844,45 @@ function populateProdSchedule() {
     return { success: false, error: err.toString(), stack: err.stack };
   }
 }
+
+function debugInspectArtistsSpreadsheet() {
+  const result = {
+    sandbox: null,
+    prod: null
+  };
+  
+  const sbId = "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo";
+  const prodId = "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+
+  function inspectSs(id) {
+    try {
+      const ss = SpreadsheetApp.openById(id);
+      const sheetNames = ss.getSheets().map(s => s.getName());
+      const lineupSheet = ss.getSheetByName("שיקוף! - מבנה ליינאפ") || 
+                          ss.getSheetByName("מבנה ליינאפ") ||
+                          ss.getSheets().find(s => s.getName().includes("ליינאפ") || s.getName().includes("מבנה"));
+      
+      let lineupData = null;
+      if (lineupSheet) {
+        lineupData = {
+          name: lineupSheet.getName(),
+          lastRow: lineupSheet.getLastRow(),
+          lastCol: lineupSheet.getLastColumn(),
+          values: lineupSheet.getDataRange().getDisplayValues()
+        };
+      }
+      return {
+        id: id,
+        sheets: sheetNames,
+        lineup: lineupData
+      };
+    } catch(e) {
+      return { id: id, error: e.toString() };
+    }
+  }
+
+  result.sandbox = inspectSs(sbId);
+  result.prod = inspectSs(prodId);
+  return result;
+}
+

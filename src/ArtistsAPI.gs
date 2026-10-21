@@ -838,4 +838,179 @@ function syncAllArtistsAndLeads() {
   }
 }
 
+/**
+ * Dynamic parser for the Shows Timetable directly from 'שיקוף! - מבנה ליינאפ'
+ */
+function getFestivalTimetableSchedule(forceRefresh) {
+  try {
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+
+    const cache = CacheService.getScriptCache();
+    const cacheKey = 'festival_timetable_schedule_v2_' + ssId;
+    if (!forceRefresh) {
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return { success: true, schedule: JSON.parse(cached) };
+      }
+    }
+
+    const ss = SpreadsheetApp.openById(ssId);
+    let lineupSheet = ss.getSheetByName("שיקוף! - מבנה ליינאפ") || 
+                      ss.getSheetByName("מבנה ליינאפ") ||
+                      ss.getSheets().find(s => s.getName().includes("ליינאפ") || s.getName().includes("מבנה"));
+
+    if (!lineupSheet) {
+      return { success: false, message: "Lineup sheet not found." };
+    }
+
+    const grid = lineupSheet.getDataRange().getDisplayValues();
+    const parsedSchedule = parseLineupGrid(grid);
+
+    try {
+      cache.put(cacheKey, JSON.stringify(parsedSchedule), 600); // 10 minutes cache
+    } catch(e) {}
+
+    return { success: true, schedule: parsedSchedule };
+  } catch(err) {
+    console.error("Error in getFestivalTimetableSchedule:", err);
+    return { success: false, message: "Error parsing timetable: " + err.toString() };
+  }
+}
+
+function parseLineupTime(str) {
+  if (!str) return { start: '', end: '' };
+  const s = String(str).trim();
+  const matchRange = s.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+  if (matchRange) {
+    return { start: matchRange[1].padStart(5, '0'), end: matchRange[2].padStart(5, '0') };
+  }
+  const matchSingle = s.match(/(\d{1,2}:\d{2})/);
+  if (matchSingle) {
+    return { start: matchSingle[1].padStart(5, '0'), end: '' };
+  }
+  return { start: '', end: '' };
+}
+
+function parseLineupGrid(grid) {
+  if (!grid || grid.length < 5) return [];
+
+  const dayConfigs = [
+    { date: '2026-11-17', colArtist: 0, colTime: 1, defaultVenue: 'צוללת צהובה & חניון רח\' הרכבים' },
+    { date: '2026-11-18', colArtist: 3, colTime: 4, defaultVenue: 'מוזיאון מגדל דוד & צוללת צהובה' },
+    { date: '2026-11-19', colArtist: 6, colTime: 7, defaultVenue: 'מוזיאון הסובלנות | ירושלים' },
+    { date: '2026-11-20', colArtist: 9, colTime: 10, defaultVenue: 'תדר | תל אביב' },
+    { date: '2026-11-21', colArtist: 12, colTime: 13, defaultVenue: 'רדיקל & המרץ 2 | תל אביב' },
+    { date: '2026-11-22', colArtist: 15, colTime: 15, defaultVenue: 'בית המכולות נמל יפו' }
+  ];
+
+  const allShows = [];
+  let showIndex = 1;
+
+  dayConfigs.forEach(cfg => {
+    let currentStage = 'Main Stage';
+    let currentVenue = cfg.defaultVenue;
+
+    for (let r = 3; r < grid.length; r++) {
+      const cellArtist = String(grid[r][cfg.colArtist] || '').trim();
+      const cellTime = String(grid[r][cfg.colTime] || '').trim();
+
+      if (!cellArtist && !cellTime) continue;
+
+      // Skip DJs list at bottom of Tuesday
+      if (cfg.date === '2026-11-17' && r >= 43) continue;
+
+      // Venue headers
+      if (cellArtist.includes('|') && (cellArtist.includes('ירושלים') || cellArtist.includes('תל-אביב') || cellArtist.includes('תל אביב') || cellArtist.includes('יפו'))) {
+        currentVenue = cellArtist;
+        if (cellArtist.includes('חניון')) currentStage = 'Parking Lot';
+        else if (cellArtist.includes('אפטר')) currentStage = 'Aftershow';
+        else if (cellArtist.includes('מגדל דוד')) currentStage = 'Tower of David';
+        else if (cellArtist.includes('צוללת')) currentStage = 'Submarine Hall';
+        else if (cellArtist.includes('המרץ')) currentStage = 'Hameretz 2';
+        continue;
+      }
+
+      // Prices / info notes
+      if (cellArtist.includes('ש"ח כניסה') || cellArtist.includes('כרטיס משולב') || cellArtist.includes('כניסה חופשית בהרשמה')) {
+        continue;
+      }
+
+      // Stage headers
+      const stageMap = {
+        'B2 - מרכזי': 'B2 Main Stage',
+        'B2 מרכזי': 'B2 Main Stage',
+        'גראנד הול 1': 'Grand Hall 1',
+        'גראנד הול 2': 'Grand Hall 2',
+        'גראנד הול מלא': 'Grand Hall Full',
+        'חדר תפילה': 'Prayer Room',
+        'אודיטוריום 400': 'Auditorium 400',
+        'פלאזה': 'Plaza',
+        'אמפי': 'Amphi',
+        'רחבה מרכזית': 'Main Plaza',
+        'חואניטה': 'Juanita',
+        'קיסה': 'Kissa',
+        'מטמון': 'Matmon',
+        'אולם גדול': 'Grand Hall',
+        'קלאב': 'The Club',
+        'חצר פסלים': 'Sculpture Yard',
+        'חצר קדמית': 'Front Yard',
+        'המרץ2': 'Hameretz 2',
+        'המרץ 2': 'Hameretz 2'
+      };
+
+      let isStageHeader = false;
+      for (const [sKey, sVal] of Object.entries(stageMap)) {
+        if (cellArtist.includes(sKey) && !parseLineupTime(cellTime).start && !cellArtist.includes('&') && !cellArtist.includes('–')) {
+          currentStage = sVal;
+          isStageHeader = true;
+          break;
+        }
+      }
+      if (isStageHeader) continue;
+
+      // Sunday text block
+      if (cfg.date === '2026-11-22') {
+        allShows.push({
+          id: 'show_' + cfg.date + '_' + (showIndex++),
+          date: cfg.date,
+          stage: 'Beit HaMecholot',
+          startTime: '14:00',
+          endTime: '18:00',
+          artistName: 'Official Delegation Networking & Closing Event',
+          format: 'Beit HaMecholot, Jaffa Port',
+          isGeneralEvent: true
+        });
+        break;
+      }
+
+      const timeObj = parseLineupTime(cellTime);
+      let isGeneral = false;
+      if (
+        cellArtist.includes('דלתות') ||
+        cellArtist.includes('קבלת פנים') ||
+        cellArtist.includes('הפסקה') ||
+        cellArtist.includes('מפגש - הרצאה') ||
+        cellArtist.includes('שוק דגים') ||
+        cellArtist === 'DJ' || cellArtist === 'DJ?' || cellArtist.startsWith('DJ ')
+      ) {
+        isGeneral = true;
+      }
+
+      allShows.push({
+        id: 'show_' + cfg.date + '_' + (showIndex++),
+        date: cfg.date,
+        stage: currentStage,
+        startTime: timeObj.start,
+        endTime: timeObj.end,
+        artistName: cellArtist,
+        isGeneralEvent: isGeneral
+      });
+    }
+  });
+
+  return allShows;
+}
+
+
 
