@@ -6993,6 +6993,15 @@ if (typeof navigator !== 'undefined' && navigator.onLine === false) {
 /* ================= PWA INSTALLATION HELPER ================= */
 let deferredInstallPrompt = null;
 
+function isMobileDevice() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+  const isIpadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  const isNarrowTouch = window.matchMedia && window.matchMedia('(max-width: 900px) and (pointer: coarse)').matches;
+  return isMobileUA || isIpadOS || isNarrowTouch;
+}
+
 function isPwaStandaloneMode() {
   return (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) ||
          (typeof navigator !== 'undefined' && navigator.standalone === true);
@@ -7008,8 +7017,9 @@ function hideAllPwaButtons() {
 }
 
 function initPwaInstallUX() {
-  if (isPwaStandaloneMode()) {
-    console.log('[PWA] App running in standalone mode');
+  // Only display on mobile phones/tablets
+  if (!isMobileDevice() || isPwaStandaloneMode()) {
+    console.log('[PWA] Desktop or standalone mode detected - hiding PWA prompts');
     hideAllPwaButtons();
     return;
   }
@@ -7020,7 +7030,7 @@ function initPwaInstallUX() {
     return;
   }
 
-  // Always show permanent action button if not in standalone and not installed
+  // Always show permanent action button on mobile if not in standalone and not installed
   const actionBtn = document.getElementById('pwa-action-install-btn');
   if (actionBtn) actionBtn.style.display = 'inline-flex';
 
@@ -7038,6 +7048,8 @@ function initPwaInstallUX() {
 }
 
 function checkAndPromptPwaInstall() {
+  // Mobile only check
+  if (!isMobileDevice()) return;
   if (isPwaStandaloneMode()) return;
   if (localStorage.getItem('imsf_pwa_installed') === 'true') return;
   if (sessionStorage.getItem('imsf_pwa_prompt_postponed') === 'true') return;

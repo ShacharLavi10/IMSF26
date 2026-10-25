@@ -555,3 +555,15 @@
     font-size: 0.82rem;
     flex-shrink: 0;
   }
+
+  /* DESKTOP DISPLAY GUARD: Hide PWA install button, banner, and popups on desktop (> 900px) */
+  @media (min-width: 901px) {
+    .pwa-action-install-btn,
+    .pwa-install-banner,
+    #pwa-action-install-btn,
+    #pwa-install-banner,
+    #pwa-prompt-modal-overlay,
+    #pwa-ios-modal-overlay {
+      display: none !important;
+    }
+  }
