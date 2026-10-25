@@ -2592,20 +2592,23 @@ let currentGuestEmail = "";
       const isOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
       if (!isOnline) return;
 
-      try {
+      console.log("[Offline Engine] Network reconnected. Pulling remote data to merge before syncing...");
+      // Always pull & merge latest server data first so laptop/other device changes are preserved!
+      fetchGuestArtistFeedback(function() {
+        console.log("[Offline Engine] Smart 2-way merge complete.");
         const pendingKey = 'imsf_pending_sync_' + currentGuestEmail;
-        const pendingRaw = localStorage.getItem(pendingKey);
-        if (pendingRaw) {
-          console.log("[Offline Sync] Reconnection detected. Syncing offline notes/favorites to Google Sheets...");
+        if (localStorage.getItem(pendingKey)) {
           syncArtistFeedbackToServer();
         }
-      } catch(e) {}
+      });
     }
 
-
-    // Fetch remote feedback on startup for cross-device persistence & trigger retroactive sync if needed
-    function fetchGuestArtistFeedback() {
-      if (!currentGuestEmail || !window.google || !google.script || !google.script.run) return;
+    // Fetch remote feedback on startup or reconnect for cross-device persistence & smart 2-way merge
+    function fetchGuestArtistFeedback(onCompleteCallback) {
+      if (!currentGuestEmail || !window.google || !google.script || !google.script.run) {
+        if (typeof onCompleteCallback === 'function') onCompleteCallback();
+        return;
+      }
       google.script.run
         .withSuccessHandler(function(res) {
           if (res && res.success && res.feedback) {
@@ -2614,37 +2617,52 @@ let currentGuestEmail = "";
             const serverFavs = fb.favorites || {};
             let needsServerPush = false;
 
-            // Merge favorites
-            const mergedFavs = Object.assign({}, serverFavs, localFavs);
+            // 1. Smart Merge Favorites (Union of favorites from both devices)
+            const allFavKeys = new Set([...Object.keys(serverFavs), ...Object.keys(localFavs)]);
+            const mergedFavs = {};
+            allFavKeys.forEach(k => {
+              if (localFavs[k] || serverFavs[k]) {
+                mergedFavs[k] = true;
+              }
+            });
             saveFavorites(mergedFavs);
-
-            // Check if local storage has any favorites not yet recorded on the server
-            const localFavKeys = Object.keys(localFavs).filter(k => !!localFavs[k]);
-            const serverFavKeys = Object.keys(serverFavs).filter(k => !!serverFavs[k]);
-            if (localFavKeys.some(k => !serverFavs[k])) {
+            if (Object.keys(mergedFavs).some(k => !serverFavs[k])) {
               needsServerPush = true;
             }
 
-            // Sync notes
+            // 2. Smart Merge Notes (Granular merge per artist so no notes are lost)
             if (fb.notes) {
               Object.keys(fb.notes).forEach(aId => {
-                if (!getPrivateNote(aId)) savePrivateNoteLocally(aId, fb.notes[aId]);
-              });
-            }
+                const serverNote = (fb.notes[aId] || "").trim();
+                const localNote = (getPrivateNote(aId) || "").trim();
 
-            // Sync tags
-            if (fb.tags) {
-              Object.keys(fb.tags).forEach(aId => {
-                if (!getArtistTags(aId) || getArtistTags(aId).length === 0) {
-                  saveArtistTagsLocally(aId, fb.tags[aId]);
+                if (!localNote && serverNote) {
+                  // Computer had a note, phone was empty: save computer's note locally
+                  savePrivateNoteLocally(aId, serverNote);
+                } else if (localNote && serverNote && localNote !== serverNote) {
+                  // Both devices wrote a note for this artist
+                  if (localNote.includes(serverNote)) {
+                    // Local note already contains the server note (user added more text on phone)
+                    needsServerPush = true;
+                  } else if (serverNote.includes(localNote)) {
+                    // Server note already contains the local note (user added more text on laptop)
+                    savePrivateNoteLocally(aId, serverNote);
+                  } else {
+                    // Two distinct notes written on separate devices: combine them cleanly without losing anything!
+                    const mergedNote = `${localNote}\n\n[From other device]: ${serverNote}`;
+                    savePrivateNoteLocally(aId, mergedNote);
+                    needsServerPush = true;
+                  }
+                } else if (localNote && !serverNote) {
+                  // Phone has a note written offline that server doesn't have yet
+                  needsServerPush = true;
                 }
               });
             }
 
-            // Check if local has notes or tags not on server
+            // Also check if local storage has any notes for artists not on the server at all
             try {
               const notePrefix = `artist_note_${currentGuestEmail}_`;
-              const tagPrefix = `artist_tags_${currentGuestEmail}_`;
               for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
                 if (k && k.startsWith(notePrefix)) {
@@ -2653,7 +2671,32 @@ let currentGuestEmail = "";
                   if (n && n.trim() && (!fb.notes || !fb.notes[aId])) {
                     needsServerPush = true;
                   }
-                } else if (k && k.startsWith(tagPrefix)) {
+                }
+              }
+            } catch(e) {}
+
+            // 3. Smart Merge Intent Tags (Union of tags from both devices)
+            if (fb.tags) {
+              Object.keys(fb.tags).forEach(aId => {
+                const serverTagList = Array.isArray(fb.tags[aId]) ? fb.tags[aId] : [];
+                const localTagList = getArtistTags(aId);
+                const mergedTags = Array.from(new Set([...serverTagList, ...localTagList]));
+
+                if (mergedTags.length !== localTagList.length || !mergedTags.every(t => localTagList.includes(t))) {
+                  saveArtistTagsLocally(aId, mergedTags);
+                }
+                if (mergedTags.length !== serverTagList.length || !mergedTags.every(t => serverTagList.includes(t))) {
+                  needsServerPush = true;
+                }
+              });
+            }
+
+            // Also check if local storage has tags for artists not on server
+            try {
+              const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith(tagPrefix)) {
                   const aId = k.replace(tagPrefix, '');
                   const t = localStorage.getItem(k);
                   if (t && (!fb.tags || !fb.tags[aId])) {
@@ -2663,19 +2706,51 @@ let currentGuestEmail = "";
               }
             } catch(e) {}
 
+            // If an artist sheet is currently open, refresh its display with the merged data
+            if (currentOpenArtistId) {
+              const noteInput = document.getElementById('sheet-private-note');
+              if (noteInput && document.activeElement !== noteInput) {
+                noteInput.value = getPrivateNote(currentOpenArtistId);
+              }
+              const currentTags = getArtistTags(currentOpenArtistId);
+              document.querySelectorAll('.sheet-intent-tag-btn').forEach(btn => {
+                const t = btn.getAttribute('data-tag');
+                if (currentTags.includes(t)) btn.classList.add('active');
+                else btn.classList.remove('active');
+              });
+              const favBtn = document.getElementById('sheet-fav-btn');
+              const isFav = !!mergedFavs[currentOpenArtistId];
+              if (favBtn) {
+                if (isFav) {
+                  favBtn.classList.add('active');
+                  const icon = document.getElementById('sheet-fav-icon');
+                  if (icon) icon.setAttribute('fill', 'currentColor');
+                } else {
+                  favBtn.classList.remove('active');
+                  const icon = document.getElementById('sheet-fav-icon');
+                  if (icon) icon.setAttribute('fill', 'none');
+                }
+              }
+            }
+
             filterArtists();
 
             // Retroactive Auto-Sync:
-            // If local storage has favorites or notes from earlier tests/sessions
-            // that aren't on the server yet, push them immediately to Google Sheets!
-            if (needsServerPush || (localFavKeys.length > 0 && serverFavKeys.length === 0)) {
-              console.log("[Retroactive Sync] Pushing unsaved local favorites/notes to Google Sheets for:", currentGuestEmail);
+            // If local storage has favorites, tags or notes that aren't on the server yet,
+            // push the merged multi-device dataset to Google Sheets!
+            if (needsServerPush) {
+              console.log("[Smart Merge Sync] Pushing merged multi-device dataset to Google Sheets for:", currentGuestEmail);
               syncArtistFeedbackToServer();
             }
+
+            if (typeof onCompleteCallback === 'function') onCompleteCallback();
+          } else {
+            if (typeof onCompleteCallback === 'function') onCompleteCallback();
           }
         })
         .withFailureHandler(function(err) {
           console.warn("Could not fetch remote artist feedback:", err);
+          if (typeof onCompleteCallback === 'function') onCompleteCallback();
         })
         .getGuestArtistFeedback(currentGuestEmail);
     }
