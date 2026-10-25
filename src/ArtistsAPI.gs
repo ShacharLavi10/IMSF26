@@ -847,8 +847,10 @@ function getFestivalTimetableSchedule(forceRefresh) {
     if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v3_' + ssId;
-    if (!forceRefresh) {
+    const cacheKey = 'festival_timetable_schedule_v6_' + ssId;
+    if (forceRefresh) {
+      try { cache.remove(cacheKey); } catch(e) {}
+    } else {
       const cached = cache.get(cacheKey);
       if (cached) {
         return { success: true, schedule: JSON.parse(cached) };
@@ -947,7 +949,27 @@ const ARTIST_NAME_ALIASES_DICT = {
   "ג'וזף אי שיין": 'Joseph E-Shine',
   'joseph e shine': 'Joseph E-Shine',
   'בילטיז': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
-  'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)'
+  'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
+  'עדן דרסו': 'Eden Derso',
+  'eden derso': 'Eden Derso',
+  'אנסמבל פיל ביית': 'FeelBeat Ensemble',
+  'אנסמבל פיל בית': 'FeelBeat Ensemble',
+  'פיל בית': 'FeelBeat Ensemble',
+  'פילבט': 'FeelBeat Ensemble',
+  'feelbeat': 'FeelBeat Ensemble',
+  'feelbeat ensemble': 'FeelBeat Ensemble',
+  'רם מלכה': 'DJ Ram Malca',
+  'dj ram malca': 'DJ Ram Malca',
+  'fortuna records': 'Fortuna Records',
+  'פורטונה רקורדס': 'Fortuna Records',
+  'פורטונה': 'Fortuna Records',
+  'שאמן שאמן': 'Shaman Shaman Ensemble',
+  'shaman shaman': 'Shaman Shaman Ensemble',
+  'שיווה ביווה': 'SHIWABIWA B2B ISC',
+  'shiwabiwa': 'SHIWABIWA B2B ISC',
+  'דיגיי עדי ברקת': 'DJ Adi Bareket',
+  'עדי ברקת': 'DJ Adi Bareket',
+  'dj adi bareket': 'DJ Adi Bareket'
 };
 
 function normalizeArtistString(str) {
@@ -1004,6 +1026,10 @@ function findMatchedArtistBackend(artistName, artistsList) {
 
 function shouldKeepTimetableItem(show, artistsList) {
   if (!show || !show.artistName) return false;
+  
+  // Strict rule: Timetable shows MUST have a valid start time!
+  if (!show.startTime) return false;
+
   const raw = String(show.artistName).trim();
   const lower = raw.toLowerCase();
 
@@ -1042,7 +1068,7 @@ function shouldKeepTimetableItem(show, artistsList) {
     return false;
   }
 
-  // 4. Allowed non-artist items according to user request:
+  // 4. Allowed general items with valid times:
   // - Doors opening: "דלתות", "פתיחת דלתות", "Doors"
   if (raw.includes('דלתות') || lower.includes('doors')) return true;
 
@@ -1054,15 +1080,18 @@ function shouldKeepTimetableItem(show, artistsList) {
     return true;
   }
 
-  // - Official reception / networking events: "קבלת פנים", "נטוורקינג", "אירוע נעילה", "הפסקה", "Closing"
+  // - Official reception / networking events / talks:
   if (
     raw.includes('קבלת פנים') ||
     raw.includes('נטוורקינג') ||
-    raw.includes('שוק דגים') ||
+    raw.includes('הרצאה') ||
+    raw.includes('מפגש') ||
+    raw.includes('מופע ראשון') ||
     raw.includes('אירוע נעילה') ||
     raw.includes('הפסקה') ||
     raw.includes('Trade Fair') ||
     lower.includes('networking') ||
+    lower.includes('reception') ||
     lower.includes('closing')
   ) {
     return true;
@@ -1080,8 +1109,36 @@ function parseLineupGrid(grid, artistsList) {
     { date: '2026-11-19', colArtist: 6, colTime: 7, defaultVenue: 'מוזיאון הסובלנות | ירושלים' },
     { date: '2026-11-20', colArtist: 9, colTime: 10, defaultVenue: 'תדר | תל אביב' },
     { date: '2026-11-21', colArtist: 12, colTime: 13, defaultVenue: 'רדיקל & המרץ 2 | תל אביב' },
-    { date: '2026-11-22', colArtist: 15, colTime: 15, defaultVenue: 'בית המכולות נמל יפו' }
+    { date: '2026-11-22', colArtist: 15, colTime: 16, defaultVenue: 'בית המכולות נמל יפו' }
   ];
+
+  const stageMap = {
+    'שוק דגים': 'Fish Market',
+    'B2 - מרכזי': 'B2 Main Stage',
+    'B2 מרכזי': 'B2 Main Stage',
+    'גראנד הול 1': 'Grand Hall 1',
+    'גראנד הול 2': 'Grand Hall 2',
+    'גראנד הול מלא': 'Grand Hall Full',
+    'חדר תפילה': 'Prayer Room',
+    'אודיטוריום 400': 'Auditorium 400',
+    'פלאזה': 'Plaza Stage',
+    'אמפי': 'Amphi',
+    'רחבה מרכזית': 'Main Plaza',
+    'חואניטה': 'Juanita',
+    'קיסה': 'Kissa',
+    'מטמון': 'Matmon',
+    'אולם גדול': 'Grand Hall',
+    'קלאב': 'The Club',
+    'חצר פסלים': 'Sculpture Yard',
+    'חצר קדמית': 'Front Yard',
+    'המרץ2': 'Hameretz 2',
+    'המרץ 2': 'Hameretz 2',
+    'חניון': 'Parking Lot',
+    'אפטר': 'Aftershow',
+    'מגדל דוד': 'Tower of David',
+    'צוללת': 'Submarine Hall',
+    'בית המכולות': 'Container House'
+  };
 
   const allShows = [];
   let showIndex = 1;
@@ -1091,8 +1148,15 @@ function parseLineupGrid(grid, artistsList) {
     let currentVenue = cfg.defaultVenue;
 
     for (let r = 3; r < grid.length; r++) {
-      const cellArtist = String(grid[r][cfg.colArtist] || '').trim();
-      const cellTime = String(grid[r][cfg.colTime] || '').trim();
+      const row = grid[r] || [];
+      const cellArtist = String(row[cfg.colArtist] || '').trim();
+      
+      // Determine time column safely
+      let timeColIdx = cfg.colTime;
+      if (timeColIdx >= row.length) {
+        timeColIdx = cfg.colArtist + 1;
+      }
+      let cellTime = (timeColIdx < row.length) ? String(row[timeColIdx] || '').trim() : '';
 
       if (!cellArtist && !cellTime) continue;
 
@@ -1107,37 +1171,16 @@ function parseLineupGrid(grid, artistsList) {
         else if (cellArtist.includes('מגדל דוד')) currentStage = 'Tower of David';
         else if (cellArtist.includes('צוללת')) currentStage = 'Submarine Hall';
         else if (cellArtist.includes('המרץ')) currentStage = 'Hameretz 2';
+        else if (cellArtist.includes('מכולות')) currentStage = 'Container House';
         continue;
       }
 
       // Prices / info notes
-      if (cellArtist.includes('ש"ח כניסה') || cellArtist.includes('כרטיס משולב') || cellArtist.includes('כניסה חופשית בהרשמה')) {
+      if (cellArtist.includes('ש"ח כניסה') || cellArtist.includes('כרטיס משולב') || cellArtist.includes('כניסה חופשית בהרשמה') || cellArtist.includes('כחלק מפסטיבל הג\'אז')) {
         continue;
       }
 
-      // Stage headers
-      const stageMap = {
-        'B2 - מרכזי': 'B2 Main Stage',
-        'B2 מרכזי': 'B2 Main Stage',
-        'גראנד הול 1': 'Grand Hall 1',
-        'גראנד הול 2': 'Grand Hall 2',
-        'גראנד הול מלא': 'Grand Hall Full',
-        'חדר תפילה': 'Prayer Room',
-        'אודיטוריום 400': 'Auditorium 400',
-        'פלאזה': 'Plaza',
-        'אמפי': 'Amphi',
-        'רחבה מרכזית': 'Main Plaza',
-        'חואניטה': 'Juanita',
-        'קיסה': 'Kissa',
-        'מטמון': 'Matmon',
-        'אולם גדול': 'Grand Hall',
-        'קלאב': 'The Club',
-        'חצר פסלים': 'Sculpture Yard',
-        'חצר קדמית': 'Front Yard',
-        'המרץ2': 'Hameretz 2',
-        'המרץ 2': 'Hameretz 2'
-      };
-
+      // Stage headers (e.g. שוק דגים, B2 מרכזי, אולם גדול, קלאב...)
       let isStageHeader = false;
       for (const [sKey, sVal] of Object.entries(stageMap)) {
         if (cellArtist.includes(sKey) && !parseLineupTime(cellTime).start && !cellArtist.includes('&') && !cellArtist.includes('–')) {
@@ -1148,30 +1191,41 @@ function parseLineupGrid(grid, artistsList) {
       }
       if (isStageHeader) continue;
 
-      // Sunday text block
-      if (cfg.date === '2026-11-22') {
+      // Sunday special text block on row 5: Delegation Networking
+      if (cfg.date === '2026-11-22' && cellArtist.includes('נטוורקינג:')) {
         allShows.push({
           id: 'show_' + cfg.date + '_' + (showIndex++),
           date: cfg.date,
-          stage: 'Beit HaMecholot',
+          stage: 'Container House',
           startTime: '14:00',
-          endTime: '18:00',
-          artistName: 'Official Delegation Networking & Closing Event',
+          endTime: '16:00',
+          artistName: 'Official Delegation Networking Event',
           format: 'Beit HaMecholot, Jaffa Port',
           isGeneralEvent: true
         });
-        break;
+        continue;
       }
 
       const timeObj = parseLineupTime(cellTime);
+      
+      // If no start time found in time column, check if time was accidentally inside cellArtist
+      if (!timeObj.start) {
+        const fallbackTime = parseLineupTime(cellArtist);
+        if (fallbackTime.start) {
+          timeObj.start = fallbackTime.start;
+          timeObj.end = fallbackTime.end;
+        }
+      }
+
       let isGeneral = false;
       if (
         cellArtist.includes('דלתות') ||
         cellArtist.includes('קבלת פנים') ||
         cellArtist.includes('הפסקה') ||
-        cellArtist.includes('מפגש - הרצאה') ||
-        cellArtist.includes('שוק דגים') ||
-        cellArtist === 'DJ' || cellArtist === 'DJ?' || cellArtist.startsWith('DJ ')
+        cellArtist.includes('מפגש') ||
+        cellArtist.includes('הרצאה') ||
+        cellArtist === 'DJ' || cellArtist === 'DJ?' || cellArtist.startsWith('DJ ') ||
+        cellArtist.includes('תקלוט')
       ) {
         isGeneral = true;
       }
@@ -1187,9 +1241,44 @@ function parseLineupGrid(grid, artistsList) {
       };
 
       if (shouldKeepTimetableItem(candidateShow, artistsList)) {
-        if (candidateShow.artistName === 'דלתות') {
-          candidateShow.artistName = 'Doors (דלתות)';
+        // Translate to clean English (NO HEBREW)
+        const matchedArtist = findMatchedArtistBackend(candidateShow.artistName, artistsList);
+        if (matchedArtist) {
+          candidateShow.artistName = matchedArtist.name;
+        } else {
+          const norm = normalizeArtistString(candidateShow.artistName);
+          if (ARTIST_NAME_ALIASES_DICT[norm]) {
+            candidateShow.artistName = ARTIST_NAME_ALIASES_DICT[norm];
+          } else {
+            const lowerName = candidateShow.artistName.toLowerCase();
+            if (candidateShow.artistName.includes('דלתות') || lowerName.includes('doors')) {
+              candidateShow.artistName = 'Doors Opening';
+              candidateShow.isGeneralEvent = true;
+            } else if (candidateShow.artistName.includes('קבלת פנים')) {
+              candidateShow.artistName = 'Welcome Reception';
+              candidateShow.isGeneralEvent = true;
+            } else if (candidateShow.artistName.includes('הפסקה')) {
+              candidateShow.artistName = 'Intermission';
+              candidateShow.isGeneralEvent = true;
+            } else if (candidateShow.artistName.includes('מפגש') || candidateShow.artistName.includes('הרצאה')) {
+              candidateShow.artistName = 'Panel & Talk Session';
+              candidateShow.isGeneralEvent = true;
+            } else if (candidateShow.artistName.includes('מופע ראשון')) {
+              candidateShow.artistName = 'Opening Showcase';
+              candidateShow.isGeneralEvent = true;
+            } else if (candidateShow.artistName.includes('אירוע נעילה')) {
+              candidateShow.artistName = 'Closing Event';
+              candidateShow.isGeneralEvent = true;
+            } else if (candidateShow.artistName.includes('נטוורקינג')) {
+              candidateShow.artistName = 'Official Delegation Networking Event';
+              candidateShow.isGeneralEvent = true;
+            } else if (candidateShow.artistName.includes('תקלוט') || candidateShow.artistName === 'DJ' || candidateShow.artistName === 'DJ?') {
+              candidateShow.artistName = 'DJ Set';
+              candidateShow.isGeneralEvent = true;
+            }
+          }
         }
+
         allShows.push(candidateShow);
       }
     }

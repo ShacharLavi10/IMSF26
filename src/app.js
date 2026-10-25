@@ -3068,8 +3068,55 @@ let currentGuestEmail = "";
         }
       }
 
-      document.getElementById('sheet-artist-bio').innerText = artist.bio;
-      document.getElementById('sheet-artist-members').innerText = artist.members;
+      // Empty state handling
+      const hasBio = !!(artist.bio && String(artist.bio).trim() !== "");
+      const hasMembers = !!(artist.members && String(artist.members).trim() !== "");
+      const hasLinks = !!(artist.socialLinks && artist.socialLinks.length > 0);
+
+      const emptyNoticeElem = document.getElementById('sheet-empty-notice');
+      const bioSection = document.getElementById('sheet-bio-section');
+      const membersSection = document.getElementById('sheet-members-section');
+      const linksSection = document.getElementById('sheet-links-section');
+
+      if (!hasBio && !hasMembers && !hasLinks) {
+        if (emptyNoticeElem) emptyNoticeElem.style.display = 'block';
+        if (bioSection) bioSection.style.display = 'none';
+        if (membersSection) membersSection.style.display = 'none';
+        if (linksSection) linksSection.style.display = 'none';
+      } else {
+        if (emptyNoticeElem) emptyNoticeElem.style.display = 'none';
+
+        if (bioSection) {
+          bioSection.style.display = hasBio ? 'block' : 'none';
+          const bioP = document.getElementById('sheet-artist-bio');
+          if (bioP) bioP.innerText = artist.bio || "";
+        }
+
+        if (membersSection) {
+          membersSection.style.display = hasMembers ? 'block' : 'none';
+          const memDiv = document.getElementById('sheet-artist-members');
+          if (memDiv) memDiv.innerText = artist.members || "";
+        }
+
+        if (linksSection) {
+          linksSection.style.display = hasLinks ? 'block' : 'none';
+          const linksContainer = document.getElementById('sheet-artist-links');
+          if (linksContainer) {
+            if (hasLinks) {
+              linksContainer.innerHTML = artist.socialLinks.flatMap(link => {
+                const urls = link.url.split(/\r?\n/).filter(u => u.trim() !== "");
+                return urls.map(u => {
+                  const urlStr = u.trim();
+                  const href = urlStr.startsWith('http') ? urlStr : 'https://' + urlStr;
+                  return `<a href="${href}" target="_blank" class="sheet-link-btn">${link.label}</a>`;
+                });
+              }).join('');
+            } else {
+              linksContainer.innerHTML = '';
+            }
+          }
+        }
+      }
       
       const favBtn = document.getElementById('sheet-fav-btn');
       if (isFav) {
@@ -3107,21 +3154,6 @@ let currentGuestEmail = "";
       const embedWrapper = document.getElementById('sheet-embed-wrapper');
       embedWrapper.innerHTML = '';
       mediaContainer.style.display = 'none';
-
-      // Links
-      const linksContainer = document.getElementById('sheet-artist-links');
-      if (artist.socialLinks && artist.socialLinks.length > 0) {
-        linksContainer.innerHTML = artist.socialLinks.flatMap(link => {
-          const urls = link.url.split(/\r?\n/).filter(u => u.trim() !== "");
-          return urls.map(u => {
-            const urlStr = u.trim();
-            const href = urlStr.startsWith('http') ? urlStr : 'https://' + urlStr;
-            return `<a href="${href}" target="_blank" class="sheet-link-btn">${link.label}</a>`;
-          });
-        }).join('');
-      } else {
-        linksContainer.innerHTML = '';
-      }
 
       // Show
       document.getElementById('artist-sheet-overlay').classList.add('active');
@@ -3305,7 +3337,7 @@ let currentGuestEmail = "";
             "stage": "Submarine Hall",
             "startTime": "19:15",
             "endTime": "19:45",
-            "artistName": "Doors Opening (פתיחת דלתות)",
+            "artistName": "Doors Opening",
             "format": "Hall Doors",
             "isGeneralEvent": true
       },
@@ -3511,7 +3543,7 @@ let currentGuestEmail = "";
             "stage": "Submarine Hall",
             "startTime": "21:55",
             "endTime": "22:15",
-            "artistName": "Intermission (הפסקה 20 דק)",
+            "artistName": "Intermission (20 min)",
             "format": "Break",
             "isGeneralEvent": true
       },
@@ -3562,7 +3594,7 @@ let currentGuestEmail = "";
             "stage": "Museum of Tolerance",
             "startTime": "18:30",
             "endTime": "19:00",
-            "artistName": "Doors Opening (פתיחת דלתות)",
+            "artistName": "Doors Opening",
             "format": "Museum Complex",
             "isGeneralEvent": true
       },
@@ -4084,7 +4116,27 @@ let currentGuestEmail = "";
       "ג'וזף אי שיין": 'Joseph E-Shine',
       'joseph e shine': 'Joseph E-Shine',
       'בילטיז': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
-      'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)'
+      'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
+      'עדן דרסו': 'Eden Derso',
+      'eden derso': 'Eden Derso',
+      'אנסמבל פיל ביית': 'FeelBeat Ensemble',
+      'אנסמבל פיל בית': 'FeelBeat Ensemble',
+      'פיל בית': 'FeelBeat Ensemble',
+      'פילבט': 'FeelBeat Ensemble',
+      'feelbeat': 'FeelBeat Ensemble',
+      'feelbeat ensemble': 'FeelBeat Ensemble',
+      'רם מלכה': 'DJ Ram Malca',
+      'dj ram malca': 'DJ Ram Malca',
+      'fortuna records': 'Fortuna Records',
+      'פורטונה רקורדס': 'Fortuna Records',
+      'פורטונה': 'Fortuna Records',
+      'שאמן שאמן': 'Shaman Shaman Ensemble',
+      'shaman shaman': 'Shaman Shaman Ensemble',
+      'שיווה ביווה': 'SHIWABIWA B2B ISC',
+      'shiwabiwa': 'SHIWABIWA B2B ISC',
+      'דיגיי עדי ברקת': 'DJ Adi Bareket',
+      'עדי ברקת': 'DJ Adi Bareket',
+      'dj adi bareket': 'DJ Adi Bareket'
     };
 
     function findMatchedArtist(artistName, aliases) {
@@ -4132,6 +4184,10 @@ let currentGuestEmail = "";
 
     function shouldKeepTimetableItem(show) {
       if (!show || !show.artistName) return false;
+      
+      // Strict rule: Timetable shows MUST have a valid start time!
+      if (!show.startTime) return false;
+
       const raw = String(show.artistName).trim();
       const lower = raw.toLowerCase();
 
@@ -4169,7 +4225,7 @@ let currentGuestEmail = "";
         return false;
       }
 
-      // 4. Allowed non-artist items according to user request:
+      // 4. Allowed general items with valid times:
       // - Doors opening: "דלתות", "פתיחת דלתות", "Doors"
       if (raw.includes('דלתות') || lower.includes('doors')) return true;
 
@@ -4181,15 +4237,18 @@ let currentGuestEmail = "";
         return true;
       }
 
-      // - Official reception / networking events: "קבלת פנים", "נטוורקינג", "אירוע נעילה", "הפסקה", "Closing"
+      // - Official reception / networking events / talks:
       if (
         raw.includes('קבלת פנים') ||
         raw.includes('נטוורקינג') ||
-        raw.includes('שוק דגים') ||
+        raw.includes('הרצאה') ||
+        raw.includes('מפגש') ||
+        raw.includes('מופע ראשון') ||
         raw.includes('אירוע נעילה') ||
         raw.includes('הפסקה') ||
         raw.includes('Trade Fair') ||
         lower.includes('networking') ||
+        lower.includes('reception') ||
         lower.includes('closing')
       ) {
         return true;
@@ -4525,7 +4584,11 @@ let currentGuestEmail = "";
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
         const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
-        const displayName = artist ? artist.name : (s.artistName === 'דלתות' ? 'Doors (דלתות)' : s.artistName);
+        let cleanName = s.artistName;
+        if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
+          cleanName = 'Doors Opening';
+        }
+        const displayName = artist ? artist.name : cleanName;
 
         html += `
           <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
