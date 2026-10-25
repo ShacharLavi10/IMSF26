@@ -7080,7 +7080,7 @@ function openPwaInstallFlow() {
     });
   } else {
     // Other browser / desktop fallback
-    alert('To add IMSF to your home screen, tap your browser menu (⋮ or Share) and select "Add to Home screen" or "Install App".');
+    alert('To add the Portal to your home screen, tap your browser menu (⋮ or Share) and select "Add to Home screen" or "Install App".');
     localStorage.setItem('imsf_pwa_installed', 'true');
     hideAllPwaButtons();
   }
