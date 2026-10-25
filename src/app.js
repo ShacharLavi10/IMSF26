@@ -2539,9 +2539,31 @@ let currentGuestEmail = "";
         tags: allTags
       };
 
+      const isOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
+
+      if (!isOnline) {
+        try {
+          localStorage.setItem('imsf_pending_sync_' + currentGuestEmail, JSON.stringify({
+            timestamp: Date.now(),
+            payload: payload
+          }));
+        } catch(e) {}
+        if (statusElem) {
+          statusElem.innerText = 'Saved on device (offline) • Will sync when connected';
+        }
+        return;
+      }
+
+      if (statusElem) {
+        statusElem.innerText = 'Saving...';
+      }
+
       if (window.google && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(function(res) {
+            try {
+              localStorage.removeItem('imsf_pending_sync_' + currentGuestEmail);
+            } catch(e) {}
             if (statusElem) {
               statusElem.innerText = 'Saved ✓';
               setTimeout(() => {
@@ -2550,12 +2572,36 @@ let currentGuestEmail = "";
             }
           })
           .withFailureHandler(function(err) {
-            console.warn("Auto-save error:", err);
-            if (statusElem) statusElem.innerText = '';
+            console.warn("Auto-save network error, queued for offline sync:", err);
+            try {
+              localStorage.setItem('imsf_pending_sync_' + currentGuestEmail, JSON.stringify({
+                timestamp: Date.now(),
+                payload: payload
+              }));
+            } catch(e) {}
+            if (statusElem) {
+              statusElem.innerText = 'Saved on device (offline) • Will sync when connected';
+            }
           })
           .saveGuestArtistFeedback(currentGuestEmail, payload);
       }
     }
+
+    function flushPendingArtistFeedback() {
+      if (!currentGuestEmail) return;
+      const isOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
+      if (!isOnline) return;
+
+      try {
+        const pendingKey = 'imsf_pending_sync_' + currentGuestEmail;
+        const pendingRaw = localStorage.getItem(pendingKey);
+        if (pendingRaw) {
+          console.log("[Offline Sync] Reconnection detected. Syncing offline notes/favorites to Google Sheets...");
+          syncArtistFeedbackToServer();
+        }
+      } catch(e) {}
+    }
+
 
     // Fetch remote feedback on startup for cross-device persistence & trigger retroactive sync if needed
     function fetchGuestArtistFeedback() {
@@ -2968,7 +3014,15 @@ let currentGuestEmail = "";
       });
 
       const statusElem = document.getElementById('sheet-save-status');
-      if (statusElem) statusElem.innerText = '';
+      if (statusElem) {
+        const isOffline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+        const hasPending = !!localStorage.getItem('imsf_pending_sync_' + currentGuestEmail);
+        if (isOffline || hasPending) {
+          statusElem.innerText = 'Saved on device (offline)';
+        } else {
+          statusElem.innerText = '';
+        }
+      }
 
       // Media Embed - Removed Spotify Embed
       const mediaContainer = document.getElementById('sheet-media-container');
@@ -6771,6 +6825,12 @@ function handleAdminResetCache() {
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
   } catch(e) {
     console.error("Error clearing localStorage:", e);
   }
@@ -6808,6 +6868,122 @@ function handleAdminResetCache() {
   }
 }
 
+/* ================= OFFLINE STATUS CONTROLLER ================= */
+let offlinePillTimeout = null;
+
+function updateOnlineOfflineStatus(isOnline, isInitial) {
+  const pill = document.getElementById('offline-status-pill');
+  const textElem = document.getElementById('offline-status-text');
+  if (!pill || !textElem) return;
+
+  if (offlinePillTimeout) {
+    clearTimeout(offlinePillTimeout);
+    offlinePillTimeout = null;
+  }
+
+  if (!isOnline) {
+    pill.classList.remove('online-restored');
+    textElem.innerText = 'Offline Mode • Notes & Timetable Ready';
+    pill.style.display = 'inline-flex';
+  } else {
+    if (!isInitial) {
+      pill.classList.add('online-restored');
+      textElem.innerText = '✓ Back Online • Synchronizing...';
+      pill.style.display = 'inline-flex';
+      
+      // Flush pending offline changes
+      flushPendingArtistFeedback();
+
+      offlinePillTimeout = setTimeout(() => {
+        pill.style.display = 'none';
+        pill.classList.remove('online-restored');
+      }, 3500);
+    } else {
+      pill.style.display = 'none';
+    }
+  }
+}
+
+window.addEventListener('online', () => updateOnlineOfflineStatus(true, false));
+window.addEventListener('offline', () => updateOnlineOfflineStatus(false, false));
+
+// Initial check on page load
+if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+  updateOnlineOfflineStatus(false, true);
+}
+
+/* ================= PWA INSTALLATION HELPER ================= */
+let deferredInstallPrompt = null;
+
+function initPwaInstallUX() {
+  const isStandalone = (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) ||
+                       (typeof navigator !== 'undefined' && navigator.standalone === true);
+  if (isStandalone) {
+    console.log('[PWA] App running in standalone mode');
+    return;
+  }
+
+  const isDismissed = localStorage.getItem('imsf_pwa_install_dismissed') === 'true';
+  const banner = document.getElementById('pwa-install-banner');
+
+  // Android / Chrome / Edge PWA install event
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (!isDismissed && banner) {
+      banner.style.display = 'flex';
+    }
+  });
+
+  // iOS detection
+  const isIos = (typeof navigator !== 'undefined') && /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  if (isIos && !isDismissed && banner) {
+    banner.style.display = 'flex';
+  }
+}
+
+function triggerPwaInstall() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult && choiceResult.outcome === 'accepted') {
+        console.log('[PWA] User accepted install prompt');
+        if (banner) banner.style.display = 'none';
+      }
+      deferredInstallPrompt = null;
+    });
+  } else {
+    const isIos = (typeof navigator !== 'undefined') && /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+    if (isIos) {
+      const iosModal = document.getElementById('pwa-ios-modal-overlay');
+      if (iosModal) iosModal.style.display = 'flex';
+    } else {
+      alert('To install the portal, tap your browser menu (⋮ or Share) and select "Add to Home screen" or "Install App".');
+    }
+  }
+}
+
+function dismissPwaBanner() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'none';
+  try {
+    localStorage.setItem('imsf_pwa_install_dismissed', 'true');
+  } catch(e) {}
+}
+
+function closePwaIosModal() {
+  const iosModal = document.getElementById('pwa-ios-modal-overlay');
+  if (iosModal) iosModal.style.display = 'none';
+}
+
+// Initialize PWA installation UX on DOM load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPwaInstallUX);
+} else {
+  initPwaInstallUX();
+}
+
 window.showToast = showToast;
 window.handleAdminResetCache = handleAdminResetCache;
 window.selectGuideCity = selectGuideCity;
@@ -6822,3 +6998,6 @@ window.renderAdminNetworkingKPIs = renderAdminNetworkingKPIs;
 window.selectScheduleDate = selectScheduleDate;
 window.renderScheduleTabs = renderScheduleTabs;
 window.renderScheduleForDate = renderScheduleForDate;
+window.triggerPwaInstall = triggerPwaInstall;
+window.dismissPwaBanner = dismissPwaBanner;
+window.closePwaIosModal = closePwaIosModal;

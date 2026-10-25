@@ -1,0 +1,23 @@
+{
+  "name": "IMSF 2026 Showcase Festival",
+  "short_name": "IMSF 2026",
+  "description": "International Music Showcase Festival 2026 Delegation Portal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1626",
+  "theme_color": "#0a1626",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/imsf-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
