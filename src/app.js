@@ -2539,9 +2539,31 @@ let currentGuestEmail = "";
         tags: allTags
       };
 
+      const isOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
+
+      if (!isOnline) {
+        try {
+          localStorage.setItem('imsf_pending_sync_' + currentGuestEmail, JSON.stringify({
+            timestamp: Date.now(),
+            payload: payload
+          }));
+        } catch(e) {}
+        if (statusElem) {
+          statusElem.innerText = 'Saved on device (offline) • Will sync when connected';
+        }
+        return;
+      }
+
+      if (statusElem) {
+        statusElem.innerText = 'Saving...';
+      }
+
       if (window.google && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(function(res) {
+            try {
+              localStorage.removeItem('imsf_pending_sync_' + currentGuestEmail);
+            } catch(e) {}
             if (statusElem) {
               statusElem.innerText = 'Saved ✓';
               setTimeout(() => {
@@ -2550,16 +2572,43 @@ let currentGuestEmail = "";
             }
           })
           .withFailureHandler(function(err) {
-            console.warn("Auto-save error:", err);
-            if (statusElem) statusElem.innerText = '';
+            console.warn("Auto-save network error, queued for offline sync:", err);
+            try {
+              localStorage.setItem('imsf_pending_sync_' + currentGuestEmail, JSON.stringify({
+                timestamp: Date.now(),
+                payload: payload
+              }));
+            } catch(e) {}
+            if (statusElem) {
+              statusElem.innerText = 'Saved on device (offline) • Will sync when connected';
+            }
           })
           .saveGuestArtistFeedback(currentGuestEmail, payload);
       }
     }
 
-    // Fetch remote feedback on startup for cross-device persistence & trigger retroactive sync if needed
-    function fetchGuestArtistFeedback() {
-      if (!currentGuestEmail || !window.google || !google.script || !google.script.run) return;
+    function flushPendingArtistFeedback() {
+      if (!currentGuestEmail) return;
+      const isOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
+      if (!isOnline) return;
+
+      console.log("[Offline Engine] Network reconnected. Pulling remote data to merge before syncing...");
+      // Always pull & merge latest server data first so laptop/other device changes are preserved!
+      fetchGuestArtistFeedback(function() {
+        console.log("[Offline Engine] Smart 2-way merge complete.");
+        const pendingKey = 'imsf_pending_sync_' + currentGuestEmail;
+        if (localStorage.getItem(pendingKey)) {
+          syncArtistFeedbackToServer();
+        }
+      });
+    }
+
+    // Fetch remote feedback on startup or reconnect for cross-device persistence & smart 2-way merge
+    function fetchGuestArtistFeedback(onCompleteCallback) {
+      if (!currentGuestEmail || !window.google || !google.script || !google.script.run) {
+        if (typeof onCompleteCallback === 'function') onCompleteCallback();
+        return;
+      }
       google.script.run
         .withSuccessHandler(function(res) {
           if (res && res.success && res.feedback) {
@@ -2568,37 +2617,52 @@ let currentGuestEmail = "";
             const serverFavs = fb.favorites || {};
             let needsServerPush = false;
 
-            // Merge favorites
-            const mergedFavs = Object.assign({}, serverFavs, localFavs);
+            // 1. Smart Merge Favorites (Union of favorites from both devices)
+            const allFavKeys = new Set([...Object.keys(serverFavs), ...Object.keys(localFavs)]);
+            const mergedFavs = {};
+            allFavKeys.forEach(k => {
+              if (localFavs[k] || serverFavs[k]) {
+                mergedFavs[k] = true;
+              }
+            });
             saveFavorites(mergedFavs);
-
-            // Check if local storage has any favorites not yet recorded on the server
-            const localFavKeys = Object.keys(localFavs).filter(k => !!localFavs[k]);
-            const serverFavKeys = Object.keys(serverFavs).filter(k => !!serverFavs[k]);
-            if (localFavKeys.some(k => !serverFavs[k])) {
+            if (Object.keys(mergedFavs).some(k => !serverFavs[k])) {
               needsServerPush = true;
             }
 
-            // Sync notes
+            // 2. Smart Merge Notes (Granular merge per artist so no notes are lost)
             if (fb.notes) {
               Object.keys(fb.notes).forEach(aId => {
-                if (!getPrivateNote(aId)) savePrivateNoteLocally(aId, fb.notes[aId]);
-              });
-            }
+                const serverNote = (fb.notes[aId] || "").trim();
+                const localNote = (getPrivateNote(aId) || "").trim();
 
-            // Sync tags
-            if (fb.tags) {
-              Object.keys(fb.tags).forEach(aId => {
-                if (!getArtistTags(aId) || getArtistTags(aId).length === 0) {
-                  saveArtistTagsLocally(aId, fb.tags[aId]);
+                if (!localNote && serverNote) {
+                  // Computer had a note, phone was empty: save computer's note locally
+                  savePrivateNoteLocally(aId, serverNote);
+                } else if (localNote && serverNote && localNote !== serverNote) {
+                  // Both devices wrote a note for this artist
+                  if (localNote.includes(serverNote)) {
+                    // Local note already contains the server note (user added more text on phone)
+                    needsServerPush = true;
+                  } else if (serverNote.includes(localNote)) {
+                    // Server note already contains the local note (user added more text on laptop)
+                    savePrivateNoteLocally(aId, serverNote);
+                  } else {
+                    // Two distinct notes written on separate devices: combine them cleanly as continuous text!
+                    const mergedNote = `${localNote}\n\n${serverNote}`;
+                    savePrivateNoteLocally(aId, mergedNote);
+                    needsServerPush = true;
+                  }
+                } else if (localNote && !serverNote) {
+                  // Phone has a note written offline that server doesn't have yet
+                  needsServerPush = true;
                 }
               });
             }
 
-            // Check if local has notes or tags not on server
+            // Also check if local storage has any notes for artists not on the server at all
             try {
               const notePrefix = `artist_note_${currentGuestEmail}_`;
-              const tagPrefix = `artist_tags_${currentGuestEmail}_`;
               for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
                 if (k && k.startsWith(notePrefix)) {
@@ -2607,7 +2671,32 @@ let currentGuestEmail = "";
                   if (n && n.trim() && (!fb.notes || !fb.notes[aId])) {
                     needsServerPush = true;
                   }
-                } else if (k && k.startsWith(tagPrefix)) {
+                }
+              }
+            } catch(e) {}
+
+            // 3. Smart Merge Intent Tags (Union of tags from both devices)
+            if (fb.tags) {
+              Object.keys(fb.tags).forEach(aId => {
+                const serverTagList = Array.isArray(fb.tags[aId]) ? fb.tags[aId] : [];
+                const localTagList = getArtistTags(aId);
+                const mergedTags = Array.from(new Set([...serverTagList, ...localTagList]));
+
+                if (mergedTags.length !== localTagList.length || !mergedTags.every(t => localTagList.includes(t))) {
+                  saveArtistTagsLocally(aId, mergedTags);
+                }
+                if (mergedTags.length !== serverTagList.length || !mergedTags.every(t => serverTagList.includes(t))) {
+                  needsServerPush = true;
+                }
+              });
+            }
+
+            // Also check if local storage has tags for artists not on server
+            try {
+              const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith(tagPrefix)) {
                   const aId = k.replace(tagPrefix, '');
                   const t = localStorage.getItem(k);
                   if (t && (!fb.tags || !fb.tags[aId])) {
@@ -2617,19 +2706,51 @@ let currentGuestEmail = "";
               }
             } catch(e) {}
 
+            // If an artist sheet is currently open, refresh its display with the merged data
+            if (currentOpenArtistId) {
+              const noteInput = document.getElementById('sheet-private-note');
+              if (noteInput && document.activeElement !== noteInput) {
+                noteInput.value = getPrivateNote(currentOpenArtistId);
+              }
+              const currentTags = getArtistTags(currentOpenArtistId);
+              document.querySelectorAll('.sheet-intent-tag-btn').forEach(btn => {
+                const t = btn.getAttribute('data-tag');
+                if (currentTags.includes(t)) btn.classList.add('active');
+                else btn.classList.remove('active');
+              });
+              const favBtn = document.getElementById('sheet-fav-btn');
+              const isFav = !!mergedFavs[currentOpenArtistId];
+              if (favBtn) {
+                if (isFav) {
+                  favBtn.classList.add('active');
+                  const icon = document.getElementById('sheet-fav-icon');
+                  if (icon) icon.setAttribute('fill', 'currentColor');
+                } else {
+                  favBtn.classList.remove('active');
+                  const icon = document.getElementById('sheet-fav-icon');
+                  if (icon) icon.setAttribute('fill', 'none');
+                }
+              }
+            }
+
             filterArtists();
 
             // Retroactive Auto-Sync:
-            // If local storage has favorites or notes from earlier tests/sessions
-            // that aren't on the server yet, push them immediately to Google Sheets!
-            if (needsServerPush || (localFavKeys.length > 0 && serverFavKeys.length === 0)) {
-              console.log("[Retroactive Sync] Pushing unsaved local favorites/notes to Google Sheets for:", currentGuestEmail);
+            // If local storage has favorites, tags or notes that aren't on the server yet,
+            // push the merged multi-device dataset to Google Sheets!
+            if (needsServerPush) {
+              console.log("[Smart Merge Sync] Pushing merged multi-device dataset to Google Sheets for:", currentGuestEmail);
               syncArtistFeedbackToServer();
             }
+
+            if (typeof onCompleteCallback === 'function') onCompleteCallback();
+          } else {
+            if (typeof onCompleteCallback === 'function') onCompleteCallback();
           }
         })
         .withFailureHandler(function(err) {
           console.warn("Could not fetch remote artist feedback:", err);
+          if (typeof onCompleteCallback === 'function') onCompleteCallback();
         })
         .getGuestArtistFeedback(currentGuestEmail);
     }
@@ -2968,7 +3089,15 @@ let currentGuestEmail = "";
       });
 
       const statusElem = document.getElementById('sheet-save-status');
-      if (statusElem) statusElem.innerText = '';
+      if (statusElem) {
+        const isOffline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+        const hasPending = !!localStorage.getItem('imsf_pending_sync_' + currentGuestEmail);
+        if (isOffline || hasPending) {
+          statusElem.innerText = 'Saved on device (offline)';
+        } else {
+          statusElem.innerText = '';
+        }
+      }
 
       // Media Embed - Removed Spotify Embed
       const mediaContainer = document.getElementById('sheet-media-container');
@@ -6771,6 +6900,12 @@ function handleAdminResetCache() {
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ action: 'clearCache' });
+    }
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
   } catch(e) {
     console.error("Error clearing localStorage:", e);
   }
@@ -6808,6 +6943,122 @@ function handleAdminResetCache() {
   }
 }
 
+/* ================= OFFLINE STATUS CONTROLLER ================= */
+let offlinePillTimeout = null;
+
+function updateOnlineOfflineStatus(isOnline, isInitial) {
+  const pill = document.getElementById('offline-status-pill');
+  const textElem = document.getElementById('offline-status-text');
+  if (!pill || !textElem) return;
+
+  if (offlinePillTimeout) {
+    clearTimeout(offlinePillTimeout);
+    offlinePillTimeout = null;
+  }
+
+  if (!isOnline) {
+    pill.classList.remove('online-restored');
+    textElem.innerText = 'Offline Mode • Notes & Timetable Ready';
+    pill.style.display = 'inline-flex';
+  } else {
+    if (!isInitial) {
+      pill.classList.add('online-restored');
+      textElem.innerText = '✓ Back Online • Synchronizing...';
+      pill.style.display = 'inline-flex';
+      
+      // Flush pending offline changes
+      flushPendingArtistFeedback();
+
+      offlinePillTimeout = setTimeout(() => {
+        pill.style.display = 'none';
+        pill.classList.remove('online-restored');
+      }, 3500);
+    } else {
+      pill.style.display = 'none';
+    }
+  }
+}
+
+window.addEventListener('online', () => updateOnlineOfflineStatus(true, false));
+window.addEventListener('offline', () => updateOnlineOfflineStatus(false, false));
+
+// Initial check on page load
+if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+  updateOnlineOfflineStatus(false, true);
+}
+
+/* ================= PWA INSTALLATION HELPER ================= */
+let deferredInstallPrompt = null;
+
+function initPwaInstallUX() {
+  const isStandalone = (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) ||
+                       (typeof navigator !== 'undefined' && navigator.standalone === true);
+  if (isStandalone) {
+    console.log('[PWA] App running in standalone mode');
+    return;
+  }
+
+  const isDismissed = localStorage.getItem('imsf_pwa_install_dismissed') === 'true';
+  const banner = document.getElementById('pwa-install-banner');
+
+  // Android / Chrome / Edge PWA install event
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (!isDismissed && banner) {
+      banner.style.display = 'flex';
+    }
+  });
+
+  // iOS detection
+  const isIos = (typeof navigator !== 'undefined') && /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  if (isIos && !isDismissed && banner) {
+    banner.style.display = 'flex';
+  }
+}
+
+function triggerPwaInstall() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult && choiceResult.outcome === 'accepted') {
+        console.log('[PWA] User accepted install prompt');
+        if (banner) banner.style.display = 'none';
+      }
+      deferredInstallPrompt = null;
+    });
+  } else {
+    const isIos = (typeof navigator !== 'undefined') && /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+    if (isIos) {
+      const iosModal = document.getElementById('pwa-ios-modal-overlay');
+      if (iosModal) iosModal.style.display = 'flex';
+    } else {
+      alert('To install the portal, tap your browser menu (⋮ or Share) and select "Add to Home screen" or "Install App".');
+    }
+  }
+}
+
+function dismissPwaBanner() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'none';
+  try {
+    localStorage.setItem('imsf_pwa_install_dismissed', 'true');
+  } catch(e) {}
+}
+
+function closePwaIosModal() {
+  const iosModal = document.getElementById('pwa-ios-modal-overlay');
+  if (iosModal) iosModal.style.display = 'none';
+}
+
+// Initialize PWA installation UX on DOM load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPwaInstallUX);
+} else {
+  initPwaInstallUX();
+}
+
 window.showToast = showToast;
 window.handleAdminResetCache = handleAdminResetCache;
 window.selectGuideCity = selectGuideCity;
@@ -6822,3 +7073,6 @@ window.renderAdminNetworkingKPIs = renderAdminNetworkingKPIs;
 window.selectScheduleDate = selectScheduleDate;
 window.renderScheduleTabs = renderScheduleTabs;
 window.renderScheduleForDate = renderScheduleForDate;
+window.triggerPwaInstall = triggerPwaInstall;
+window.dismissPwaBanner = dismissPwaBanner;
+window.closePwaIosModal = closePwaIosModal;

@@ -1,4 +1,4 @@
-﻿---
+---
 name: apps-script-deploy-rule
 description: Enforce clasp deploy whenever Apps Script code is pushed
 trigger: always_on
@@ -22,3 +22,10 @@ If you forget to run `clasp deploy`, the frontend will interact with an outdated
 In a previous incident, the agent optimized `PortalBackend.gs` to include `scheduleData` in the return payload and ran `clasp push`, but forgot to run `clasp deploy`. This caused the live Web App to continue returning the old payload without `scheduleData`. The frontend `index.html` evaluated `response.scheduleData` as `undefined` and failed to hide the `<div id="schedule-loader-container">`, resulting in an endless spinning loader for the user.
 
 **DO NOT REPEAT THIS MISTAKE.**
+
+## Production Backend Permissions Alert
+Whenever you deploy code to the **Production** Google Apps Script (`1wFP1kbXUC-7dpdlghPGDPcv2AKtX0ZusEpTpkBIw6w4raDyikZkdvj3z`), Google may invalidate OAuth permissions for sensitive services like `GmailApp` until manually re-confirmed.
+**MANDATORY:** Whenever you deploy a new backend version to Production, you **MUST** immediately prompt the user with the direct editor link:
+`https://script.google.com/home/projects/1wFP1kbXUC-7dpdlghPGDPcv2AKtX0ZusEpTpkBIw6w4raDyikZkdvj3z/edit`
+and ask them to click "Run" once to re-authorize permissions, preventing guest login (OTP) lockouts.
+

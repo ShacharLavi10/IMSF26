@@ -105,3 +105,26 @@ window.google = {
     }
   }
 };
+
+// Register Service Worker for PWA & Offline Support
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => {
+        console.log('[SW] Service Worker registered with scope:', reg.scope);
+      })
+      .catch((err) => {
+        console.warn('[SW] Service Worker registration failed:', err);
+      });
+  });
+}
+
+// Request persistent storage so browser never silently purges offline notes
+if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().then((isPersisted) => {
+    if (isPersisted) {
+      console.log('[Storage] Persistent storage granted');
+    }
+  }).catch(() => {});
+}
+
