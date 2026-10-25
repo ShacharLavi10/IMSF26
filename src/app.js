@@ -5,6 +5,7 @@ let currentGuestEmail = "";
     function closeWelcomeModal() {
       document.getElementById("welcome-modal-overlay").style.display = "none";
       localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
+      setTimeout(checkAndPromptPwaInstall, 400);
     }
 
     function checkSessionOnLoad() {
@@ -264,6 +265,8 @@ let currentGuestEmail = "";
           console.log("Showing welcome modal to user: " + response.guestInfo.firstName);
           document.getElementById("welcome-modal-title").innerText = `Welcome, ${response.guestInfo.firstName}`;
           document.getElementById("welcome-modal-overlay").style.display = "flex";
+        } else {
+          setTimeout(checkAndPromptPwaInstall, 1200);
         }
 
         const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
@@ -6990,66 +6993,110 @@ if (typeof navigator !== 'undefined' && navigator.onLine === false) {
 /* ================= PWA INSTALLATION HELPER ================= */
 let deferredInstallPrompt = null;
 
+function isPwaStandaloneMode() {
+  return (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) ||
+         (typeof navigator !== 'undefined' && navigator.standalone === true);
+}
+
+function hideAllPwaButtons() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'none';
+  const actionBtn = document.getElementById('pwa-action-install-btn');
+  if (actionBtn) actionBtn.style.display = 'none';
+  const promptModal = document.getElementById('pwa-prompt-modal-overlay');
+  if (promptModal) promptModal.style.display = 'none';
+}
+
 function initPwaInstallUX() {
-  const isStandalone = (typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches) ||
-                       (typeof navigator !== 'undefined' && navigator.standalone === true);
-  if (isStandalone) {
+  if (isPwaStandaloneMode()) {
     console.log('[PWA] App running in standalone mode');
+    hideAllPwaButtons();
     return;
   }
 
-  const isDismissed = localStorage.getItem('imsf_pwa_install_dismissed') === 'true';
-  const banner = document.getElementById('pwa-install-banner');
+  const isInstalled = localStorage.getItem('imsf_pwa_installed') === 'true';
+  if (isInstalled) {
+    hideAllPwaButtons();
+    return;
+  }
+
+  // Always show permanent action button if not in standalone and not installed
+  const actionBtn = document.getElementById('pwa-action-install-btn');
+  if (actionBtn) actionBtn.style.display = 'inline-flex';
 
   // Android / Chrome / Edge PWA install event
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
-    if (!isDismissed && banner) {
-      banner.style.display = 'flex';
-    }
   });
 
-  // iOS detection
-  const isIos = (typeof navigator !== 'undefined') && /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-  if (isIos && !isDismissed && banner) {
-    banner.style.display = 'flex';
+  window.addEventListener('appinstalled', () => {
+    console.log('[PWA] Application installed on device');
+    localStorage.setItem('imsf_pwa_installed', 'true');
+    hideAllPwaButtons();
+  });
+}
+
+function checkAndPromptPwaInstall() {
+  if (isPwaStandaloneMode()) return;
+  if (localStorage.getItem('imsf_pwa_installed') === 'true') return;
+  if (sessionStorage.getItem('imsf_pwa_prompt_postponed') === 'true') return;
+
+  const welcomeModal = document.getElementById("welcome-modal-overlay");
+  if (welcomeModal && welcomeModal.style.display !== "none") return;
+
+  const pwaPromptModal = document.getElementById("pwa-prompt-modal-overlay");
+  if (pwaPromptModal) {
+    pwaPromptModal.style.display = "flex";
   }
 }
 
-function triggerPwaInstall() {
-  const banner = document.getElementById('pwa-install-banner');
-  if (deferredInstallPrompt) {
+function handlePwaModalInstall() {
+  const pwaPromptModal = document.getElementById("pwa-prompt-modal-overlay");
+  if (pwaPromptModal) pwaPromptModal.style.display = "none";
+  openPwaInstallFlow();
+}
+
+function handlePwaModalLater() {
+  const pwaPromptModal = document.getElementById("pwa-prompt-modal-overlay");
+  if (pwaPromptModal) pwaPromptModal.style.display = "none";
+  // Postpone for this session only; will prompt again on next visit / full reload
+  sessionStorage.setItem('imsf_pwa_prompt_postponed', 'true');
+}
+
+function openPwaInstallFlow() {
+  const isIos = (typeof navigator !== 'undefined') && (/iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+  if (isIos) {
+    const iosModal = document.getElementById('pwa-ios-modal-overlay');
+    if (iosModal) iosModal.style.display = 'flex';
+  } else if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.then((choiceResult) => {
       if (choiceResult && choiceResult.outcome === 'accepted') {
-        console.log('[PWA] User accepted install prompt');
-        if (banner) banner.style.display = 'none';
+        localStorage.setItem('imsf_pwa_installed', 'true');
+        hideAllPwaButtons();
       }
       deferredInstallPrompt = null;
     });
   } else {
-    const isIos = (typeof navigator !== 'undefined') && /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-    if (isIos) {
-      const iosModal = document.getElementById('pwa-ios-modal-overlay');
-      if (iosModal) iosModal.style.display = 'flex';
-    } else {
-      alert('To install the portal, tap your browser menu (⋮ or Share) and select "Add to Home screen" or "Install App".');
-    }
+    // Other browser / desktop fallback
+    alert('To add IMSF to your home screen, tap your browser menu (⋮ or Share) and select "Add to Home screen" or "Install App".');
+    localStorage.setItem('imsf_pwa_installed', 'true');
+    hideAllPwaButtons();
   }
-}
-
-function dismissPwaBanner() {
-  const banner = document.getElementById('pwa-install-banner');
-  if (banner) banner.style.display = 'none';
-  try {
-    localStorage.setItem('imsf_pwa_install_dismissed', 'true');
-  } catch(e) {}
 }
 
 function closePwaIosModal() {
   const iosModal = document.getElementById('pwa-ios-modal-overlay');
   if (iosModal) iosModal.style.display = 'none';
+  localStorage.setItem('imsf_pwa_installed', 'true');
+  hideAllPwaButtons();
+}
+
+function dismissPwaBanner() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'none';
+  sessionStorage.setItem('imsf_pwa_prompt_postponed', 'true');
 }
 
 // Initialize PWA installation UX on DOM load
@@ -7073,6 +7120,11 @@ window.renderAdminNetworkingKPIs = renderAdminNetworkingKPIs;
 window.selectScheduleDate = selectScheduleDate;
 window.renderScheduleTabs = renderScheduleTabs;
 window.renderScheduleForDate = renderScheduleForDate;
-window.triggerPwaInstall = triggerPwaInstall;
+window.triggerPwaInstall = openPwaInstallFlow;
+window.openPwaInstallFlow = openPwaInstallFlow;
+window.handlePwaModalInstall = handlePwaModalInstall;
+window.handlePwaModalLater = handlePwaModalLater;
+window.checkAndPromptPwaInstall = checkAndPromptPwaInstall;
 window.dismissPwaBanner = dismissPwaBanner;
 window.closePwaIosModal = closePwaIosModal;
+
