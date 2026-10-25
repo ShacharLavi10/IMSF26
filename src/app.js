@@ -2648,8 +2648,8 @@ let currentGuestEmail = "";
                     // Server note already contains the local note (user added more text on laptop)
                     savePrivateNoteLocally(aId, serverNote);
                   } else {
-                    // Two distinct notes written on separate devices: combine them cleanly without losing anything!
-                    const mergedNote = `${localNote}\n\n[From other device]: ${serverNote}`;
+                    // Two distinct notes written on separate devices: combine them cleanly as continuous text!
+                    const mergedNote = `${localNote}\n\n${serverNote}`;
                     savePrivateNoteLocally(aId, mergedNote);
                     needsServerPush = true;
                   }
