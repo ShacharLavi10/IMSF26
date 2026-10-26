@@ -110,6 +110,10 @@
     * **אנימציית הדגשה עזה בקפיצה (Super-Bold Multi-Wave Pulse):** `.timetable-show-card.highlight-pulse`.
     * **סנכרון חיווי היסטוריית חץ אחורה בדפדפן ובמובייל:** שימוש ב-`#sheet` לפתיחת חלונית אמן וב-`#timetable` לקפיצה ללו"ז, ומעקב אחר `lastOpenedArtistId` לחזרה מושלמת ומדויקת לחלונית האמן בלחיצה על Back.
 
-
-
-
+13. **📲 רכיבי PWA, אופליין והתקנה למסך הבית (PWA & Offline Components):**
+    * **אינדיקטור סטטוס רשת ניאו-ברוטליסטי:** `#offline-status-pill` (צף עדין בראש המסך, מוסתר באונליין, מציג `⚡ Offline Mode • Notes & Timetable Ready` באופליין ו-`✓ Back Online • Synchronizing...` בחזרת רשת).
+    * **כפתור התקנה קבוע במסך בית:** `#pwa-action-install-btn`, `.pwa-action-install-btn` ("📲 Add Portal to Home Screen") - מוצג בטאב ה-Home למשתמשי מובייל בלבד.
+    * **באנר התקנה עליון:** `#pwa-install-banner`, `.pwa-install-banner`, `.pwa-install-content`, `.pwa-install-icon`, `.pwa-install-text`, `.pwa-install-actions`, `.pwa-install-btn`, `.pwa-dismiss-btn`.
+    * **מודאל פופאפ אוטומטי להתקנה (Mobile Only):** `#pwa-prompt-modal-overlay` (מוקפץ לאחר סגירת Welcome modal בטלפונים בלבד), כולל כפתור `INSTALL APP` (`handlePwaModalInstall()`) וכפתור `Later` (`handlePwaModalLater()`).
+    * **מודאל הנחיות אייפון (iOS Safari Guide Modal):** `#pwa-ios-modal-overlay`, `.pwa-ios-steps`, `.pwa-ios-step`, `.pwa-step-num` (מציג 2 צעדים פשוטים: Share ⎋ ולאחר מכן Add to Home Screen ⊞).
+    * **הגנת דסקטופ כפולה:** הגנה ב-JS (`isMobileDevice()`) וב-CSS (`@media (min-width: 901px) { display: none !important; }`).

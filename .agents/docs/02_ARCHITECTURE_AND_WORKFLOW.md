@@ -440,21 +440,65 @@ The portal contains an internal Production Dashboard hidden from regular guests.
 1. **שליפה ישירה מטבלת האקסל הוויזואלית:**
    * הפונקציה `getFestivalTimetableSchedule` ב-`src/ArtistsAPI.gs` קוראת ישירות את הגיליון `שיקוף! - מבנה ליינאפ`.
    * הפונקציה `parseLineupGrid` מפענחת את 6 ימי הפסטיבל, הבמות ושעות המופעים ללא צורך בהזנה כפולה.
-2. **הצלבה חכמה מול כלל האמנים (`findMatchedArtist`):**
+2. **הצלבה חכמה ותרגום מלא לאנגלית נקייה (Clean English & No Hebrew):**
    * כל אמן עובר נורמליזציה מלאה של אותיות מיוחדות (למשל `BĘÃTFÓØT` -> `beatfoot`), גרשיים, מקפים ורווחים.
    * מילון כינויים ייעודי (`ARTIST_NAME_ALIASES_DICT`) מחבר בין שמות בעברית ובאנגלית לכרטיסיות האמן המלאות (כולל Deswa, BILTEEZ, BĘÃTFÓØT ועוד).
+   * **תרגום שמות במות לאנגלית תקנית:** `B2 Main Stage`, `Grand Hall 1 & 2`, `Prayer Room`, `Auditorium 400`, `Container House`, `Tower of David`, `Submarine Hall`, `The Club`, `Sculpture Yard`, `Hameretz 2` ועוד.
+   * **תרגום אירועים כלליים:** `Doors Opening`, `Welcome Reception`, `Intermission`, `Panel & Talk Session`, `Opening Showcase`, `Closing Event`, `Official Delegation Networking Event`, `DJ Set`.
 3. **סינון רעשים קפדני (`shouldKeepTimetableItem`):**
-   * **אי-הצגת רעשים והערות:** פריטים שאינם אמנים רשמיים נזרקים אוטומטית (כגון סימני שאלה `?`, `B2 מסתובבים`, `אפטרים`, שמות במות כגון `מזקקה?`, `Besarabia?`, הערות מחיר כמו `40/50 ש"ח`, `מופע ראשון`, `מפגש - הרצאה`, הערות שיבוץ צוות וכו').
+   * **אי-הצגת רעשים והערות:** פריטים שאינם אמנים רשמיים נזרקים אוטומטית (כגון סימני שאלה `?`, `B2 מסתובבים`, `אפטרים`, שמות במות כגון `מזקקה?`, `Besarabia?`, הערות מחיר כמו `40/50 ש"ח`, הערות שיבוץ צוות וכו').
    * **חריגים מאושרים להצגה ללא אמן תואם:**
-     - **פתיחת דלתות:** `דלתות`, `פתיחת דלתות`, `Doors` (מתוקנן לתצוגה דו-לשונית `Doors (דלתות)` עם אייקון 🚪).
-     - **סטים של תקלוט / DJ:** `DJ`, `DJ?`, `דיג'יי`, `דיגיי`, `תקלוט` (שומרים מקום עד שמותקן שם הדיג'יי הסופי שיישלף אוטומטית).
-     - **אירועים רשמיים:** `קבלת פנים אורחים`, `הפסקה 20 דק`, `שוק דגים`, `Official Delegation Networking & Closing Event`.
+     - **פתיחת דלתות:** מתורגם ל-`Doors Opening` באנגלית מלאה.
+     - **סטים של תקלוט:** מתורגם ל-`DJ Set`.
+     - **אירועים רשמיים:** `Welcome Reception`, `Intermission`, `Panel & Talk Session`, `Official Delegation Networking Event`.
 4. **הגנה דו-שכבתית (Dual-Layer Shield):**
    * מנגנון הסינון מיושם הן בצד השרת (`ArtistsAPI.gs`) טרם השמירה במטמון `CacheService`, והן בצד הלקוח (`app.js`) בכל פעולות הסינון והרינדור (`renderTimetableShows`, `renderTimetableMasterSwitcher`, `renderTimetableStageSelector`).
 
 ---
 
-## 🚀 4. נוהל פריסה ובדיקות (Deployment & Sandbox Workflow)
+## 📱 10. ארכיטקטורת PWA, אופליין ומיזוג חכם דו-כיווני (PWA, Offline Mode & Two-Way Smart Merge)
+
+כדי להבטיח זמינות מקסימלית עבור אורחי הפסטיבל גם בעת שהייה במרתפים או מועדונים ללא קליטה סלולרית / WiFi:
+
+### א. ליבת האפליקציה ו-Service Worker (`public/sw.js` & `public/manifest.json`)
+1. **הגדרת אפליקציית Web עצמאית (Standalone Manifest):**
+   - קובץ `manifest.json` מגדיר שם אפליקציה ("IMSF 2026 Portal"), צבעי נושא תואמים (`#0a1626`), תצוגת Standalone מלאה ללא שורת כתובת של דפדפן, ואייקונים ייעודיים.
+2. **אסטרטגיית Stale-While-Revalidate (SWR):**
+   - שלד האפליקציה (HTML, CSS, JS, פונטים ולוגואים) נשמר מקומית ב-Cache ונטען ב-0 שניות.
+   - ברקע, ה-Service Worker בודק עדכוני גרסה שקטים מול השרת ומעדכן את המטמון.
+3. **מטמון תמונות ייעודי (`imsf-portal-images-v1`):**
+   - תמונות האמנים והאורחים נשמרות במטמון ייעודי המאפשר גלישה ויזואלית מלאה ללא חיבור רשת.
+4. **הגנה על פעולות כתיבה (POST Bypassing):**
+   - בקשות POST וקריאות ישירות ל-Google Apps Script עוקפות את המטמון כדי שהסנכרון ינוהל ע"י מנגנון ה-Offline Outbox.
+
+### ב. מנגנון תור אופליין ומיזוג חכם דו-כיווני (Two-Way Smart Merge & Offline Outbox)
+1. **שמירה מקומית מיידית:**
+   - כל לחיצה על מועדף (❤️), תגית כוונה או שינוי בהערה נשמרים מיד ב-`localStorage`.
+   - אם אין חיבור רשת, הפעולה נרשמת בתור סנכרון מקומי (`imsf_pending_sync_[email]`) וחלונית האמן מציגה `Saved on device (offline) • Will sync when connected`.
+2. **מיזוג חכם דו-כיווני (Two-Way Merge on Reconnect):**
+   - בחזרת רשת (`online` event) או בעליית האתר, המערכת אינה דורסת את השרת באופן עיוור.
+   - המערכת תחילה שולפת את הנתונים העדכניים מהשרת (`fetchGuestArtistFeedback`), ממזגת אותם עם השינויים שבוצעו במכשיר הנייד (איחוד מלא של מועדפים, תגיות והערות), ורק אז שולחת את המידע המאוחד המלא חזרה ל-Google Sheets (`flushPendingArtistFeedback`).
+3. **חיבור הערות חוצה-מכשירים ללא אובדן מידע:**
+   - במקרה שבו נכתבו הערות שונות על אותו אמן משני מכשירים שונים (לדוגמה: מחשב בלפטופ בבוקר, וסלולרי במועדון בערב), המערכת מחברת ביניהן ברצף טבעי ונקי ללא תוויות מקור מיותרות, כך שאף פרט לא נאבד לעולם.
+
+### ג. חוויית התקנה למסך הבית למובייל בלבד (Mobile-Only PWA Install UX)
+1. **זיהוי מובייל ייעודי (`isMobileDevice`):**
+   - בדיקה קפדנית של User Agent, תמיכת מגע coarse, ורוחב מסך (`<= 900px`).
+2. **הגנה כפולה לדסקטופ (Dual Desktop Guard):**
+   - **ברמת JavaScript:** פונקציות ה-Init והפופאפ יוצאות מיידית (`if (!isMobileDevice()) return;`) ומסתירות את הכפתורים.
+   - **ברמת CSS:** כלל מדיה `@media (min-width: 901px) { display: none !important; }` מסתיר לחלוטין את מודאל ההתקנה, כפתורי ההתקנה והבאנר במסכי מחשב.
+3. **מודאל התקנה אוטומטי במובייל (`#pwa-prompt-modal-overlay`):**
+   - מוקפץ לאחר סגירת מודאל ההסבר (Welcome modal) רק בטלפונים וטאבלטים שטרם התקינו את האפליקציה.
+   - מאפשר התקנה בלחיצה אחת או בחירה ב-`Later` (זוכר את הבחירה בסשן הנוכחי ויציג שוב בביקור הבא עד להתקנה).
+4. **תמיכה ב-iOS ואנדרואיד:**
+   - באנדרואיד / Chrome: מפעיל ישירות את דיאלוג ההתקנה הטבעי של הדפדפן.
+   - באייפון (iOS Safari): פותח חלונית מעוצבת המדריכה את המשתמש בשני שלבים פשוטים (`Share ⎋ -> Add to Home Screen ⊞`).
+5. **חיווי סטטוס אופליין צף (`#offline-status-pill`):**
+   - תגית עדינה בראש המסך: מוסתרת באונליין, מציגה `⚡ Offline Mode • Notes & Timetable Ready` באופליין, והופכת ל-`✓ Back Online • Synchronizing...` בחזרת רשת לפני היעלמות שקטה.
+
+---
+
+## 🚀 11. נוהל פריסה ובדיקות (Deployment & Sandbox Workflow)
 
 ### א. פריסת Frontend לסביבת Sandbox (אוטומטי ומיידי):
 בכל שינוי קוד (HTML, CSS, JS):
@@ -478,3 +522,4 @@ npx.cmd clasp push -f
 npx.cmd clasp deploy -i <DEPLOYMENT_ID> -d "Update description"
 ```
 * **חובה:** תמיד לבצע `clasp deploy` לאחר `clasp push` כדי שה-Web App ישתמש בגרסה החדשה של הקוד ולא בגרסה ישנה השמורה בהפצה.
+
