@@ -3046,7 +3046,7 @@ let currentGuestEmail = "";
             const venueLabel = dayObj ? dayObj.venue : '';
             const cityLabel = dayObj ? dayObj.city : '';
             const locationStr = venueLabel ? `${venueLabel}${cityLabel ? ' (' + cityLabel + ')' : ''}` : '';
-            const timeStr = `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}`;
+            const timeStr = s.startTime ? `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}` : 'DJ Set (Time TBA)';
 
             showtimesHtml += `
               <div class="sheet-showtime-row clickable" onclick="jumpToTimetableShow('${s.date}', '${s.id}', '${artist.id}')" title="Tap to view in Festival Timetable">
@@ -3443,6 +3443,20 @@ let currentGuestEmail = "";
                   "קדמון"
             ],
             "format": "Aftershow Party / Free Entry"
+      },
+      {
+            "id": "show_1_dj_adi_bareket",
+            "date": "2026-11-17",
+            "stage": "Parking Lot",
+            "startTime": "",
+            "endTime": "",
+            "artistName": "DJ Adi Bareket",
+            "aliases": [
+                  "DJ ADI BAREKET",
+                  "Adi Bareket",
+                  "עדי ברקת"
+            ],
+            "format": "DJ Set"
       },
       {
             "id": "show_2_1",
@@ -4041,6 +4055,20 @@ let currentGuestEmail = "";
             "format": "Hameretz 2 Stage"
       },
       {
+            "id": "show_5_dj_ram_malca",
+            "date": "2026-11-21",
+            "stage": "Hameretz 2",
+            "startTime": "",
+            "endTime": "",
+            "artistName": "DJ Ram Malca",
+            "aliases": [
+                  "DJ Ram Malca",
+                  "רם מלכה",
+                  "Ram Malca"
+            ],
+            "format": "DJ Set"
+      },
+      {
             "id": "show_6_1",
             "date": "2026-11-22",
             "stage": "Container House",
@@ -4217,17 +4245,64 @@ let currentGuestEmail = "";
       return null;
     }
 
+    function isNamedDJ(rawName, matchedArtist) {
+      if (!rawName) return false;
+      const s = String(rawName).trim();
+      const lower = s.toLowerCase();
+
+      // Exclude generic placeholders or notes
+      if (/^[\s?؟!\-–—.,/\\|]+$/.test(s)) return false;
+      if (lower === 'dj' || lower === 'dj?' || lower === 'dj ?' || lower === "דיג'יי" || lower === "דיגיי" || lower === "דיג'ייס" || lower === "תקלוט") {
+        return false;
+      }
+      if (s === 'נועם הלפר' || s === 'רמזי' || s === 'מור' || s === 'אליענה') {
+        return false;
+      }
+
+      // 1. If matched artist has 'dj' in name (e.g. 'DJ Adi Bareket')
+      if (matchedArtist && matchedArtist.name && matchedArtist.name.toLowerCase().includes('dj')) {
+        return true;
+      }
+
+      // 2. If alias dictionary maps to a name with DJ (e.g. 'DJ Ram Malca')
+      const norm = normalizeArtistString(s);
+      if (ARTIST_NAME_ALIASES_DICT[norm] && ARTIST_NAME_ALIASES_DICT[norm].toLowerCase().includes('dj')) {
+        return true;
+      }
+      for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+        if (val.toLowerCase().includes('dj') && (norm.includes(key) || key.includes(norm))) {
+          return true;
+        }
+      }
+
+      // 3. If string explicitly starts with DJ / דיג'יי / דיגיי followed by a name
+      const djNameMatch = s.match(/^(?:dj|דיג['׳]?[יי]?)\s+([A-Za-z\u0590-\u05FF]{2,})/i);
+      if (djNameMatch) {
+        const after = djNameMatch[1].trim().toLowerCase();
+        if (after !== 'set' && after !== '?' && after !== 'יס' && after !== 'סט') {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     function shouldKeepTimetableItem(show) {
       if (!show || !show.artistName) return false;
-      
-      // Strict rule: Timetable shows MUST have a valid start time!
-      if (!show.startTime) return false;
 
       const raw = String(show.artistName).trim();
       const lower = raw.toLowerCase();
 
+      const matched = findMatchedArtist(raw, show.aliases);
+      const namedDJ = isNamedDJ(raw, matched);
+
+      // If no start time: ONLY keep if it is a specific named DJ (e.g. DJ Adi Bareket, DJ Ram Malca)
+      if (!show.startTime) {
+        return namedDJ;
+      }
+
       // 1. If it matches an artist from globalArtistsData or our alias dictionary, KEEP!
-      if (findMatchedArtist(raw, show.aliases)) return true;
+      if (matched) return true;
 
       const normRaw = normalizeArtistString(raw);
       if (ARTIST_NAME_ALIASES_DICT[normRaw]) return true;
@@ -4293,7 +4368,7 @@ let currentGuestEmail = "";
       return false;
     }
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v9';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v10';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {
@@ -4307,6 +4382,7 @@ let currentGuestEmail = "";
       } catch (e) {}
       return DEFAULT_FESTIVAL_SHOWS_SCHEDULE.filter(shouldKeepTimetableItem);
     })();
+    window.FESTIVAL_SHOWS_SCHEDULE = FESTIVAL_SHOWS_SCHEDULE;
 
     let isFetchingTimetableSchedule = false;
 
@@ -4678,7 +4754,7 @@ let currentGuestEmail = "";
           ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === s.date)
           : null;
         const dayLabel = dayObj ? `${dayObj.dayOfWeek} ${dayObj.dayNum}.11` : s.date;
-        const timeLabel = `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}`;
+        const timeLabel = s.startTime ? `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}` : 'DJ Set (Time TBA)';
 
         const avatarHtml = (artist && artist.image)
           ? `<img src="${artist.image}" alt="${escapeHtml(displayName)}" class="timetable-search-item-avatar" />`
@@ -4822,8 +4898,13 @@ let currentGuestEmail = "";
         html += `
           <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
             <div class="timetable-time-box">
-              <span class="start-time">${escapeHtml(s.startTime)}</span>
-              ${s.endTime ? `<span class="end-time">${escapeHtml(s.endTime)}</span>` : ''}
+              ${s.startTime ? `
+                <span class="start-time">${escapeHtml(s.startTime)}</span>
+                ${s.endTime ? `<span class="end-time">${escapeHtml(s.endTime)}</span>` : ''}
+              ` : `
+                <span class="start-time" style="font-size:0.75rem;font-weight:700;color:var(--accent);">DJ SET</span>
+                <span class="end-time" style="font-size:0.68rem;opacity:0.8;">TBA</span>
+              `}
             </div>
             <div class="timetable-show-body">
               <div class="timetable-artist-header">

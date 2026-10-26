@@ -1187,17 +1187,63 @@ function findMatchedArtistBackend(artistName, artistsList) {
   return null;
 }
 
+function isNamedDJ(rawName, matchedArtist) {
+  if (!rawName) return false;
+  const s = String(rawName).trim();
+  const lower = s.toLowerCase();
+
+  // Exclude generic placeholders or notes
+  if (/^[\s?؟!\-–—.,/\\|]+$/.test(s)) return false;
+  if (lower === 'dj' || lower === 'dj?' || lower === 'dj ?' || lower === "דיג'יי" || lower === "דיגיי" || lower === "דיג'ייס" || lower === "תקלוט") {
+    return false;
+  }
+  if (s === 'נועם הלפר' || s === 'רמזי' || s === 'מור' || s === 'אליענה') {
+    return false;
+  }
+
+  // 1. If matched artist has 'dj' in name (e.g. 'DJ Adi Bareket')
+  if (matchedArtist && matchedArtist.name && matchedArtist.name.toLowerCase().includes('dj')) {
+    return true;
+  }
+
+  // 2. If alias dictionary maps to a name with DJ (e.g. 'DJ Ram Malca')
+  const norm = normalizeArtistString(s);
+  if (ARTIST_NAME_ALIASES_DICT[norm] && ARTIST_NAME_ALIASES_DICT[norm].toLowerCase().includes('dj')) {
+    return true;
+  }
+  for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+    if (val.toLowerCase().includes('dj') && (norm.includes(key) || key.includes(norm))) {
+      return true;
+    }
+  }
+
+  // 3. If string explicitly starts with DJ / דיג'יי / דיגיי followed by a name
+  const djNameMatch = s.match(/^(?:dj|דיג['׳]?[יי]?)\s+([A-Za-z\u0590-\u05FF]{2,})/i);
+  if (djNameMatch) {
+    const after = djNameMatch[1].trim().toLowerCase();
+    if (after !== 'set' && after !== '?' && after !== 'יס' && after !== 'סט') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function shouldKeepTimetableItem(show, artistsList) {
   if (!show || !show.artistName) return false;
-  
-  // Strict rule: Timetable shows MUST have a valid start time!
-  if (!show.startTime) return false;
 
   const raw = String(show.artistName).trim();
   const lower = raw.toLowerCase();
 
-  // 1. If it matches an artist, always keep!
   const matched = findMatchedArtistBackend(raw, artistsList);
+  const namedDJ = isNamedDJ(raw, matched);
+
+  // If no start time: ONLY keep if it is a specific named DJ (e.g. DJ Adi Bareket, DJ Ram Malca)
+  if (!show.startTime) {
+    return namedDJ;
+  }
+
+  // 1. If it matches an artist, always keep!
   if (matched) return true;
 
   const normRaw = normalizeArtistString(raw);
