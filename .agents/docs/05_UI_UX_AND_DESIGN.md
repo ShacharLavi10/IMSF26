@@ -119,7 +119,17 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Opening an artist modal sets `window.location.hash = "sheet"`.
     - Tapping "View in Timetable" sets `window.location.hash = "timetable"` without popping history, establishing a forward history entry.
     - Tapping the physical/browser **Back button** from the Timetable returns the delegate directly to the Artists Lineup tab and automatically re-opens the artist modal for `lastOpenedArtistId`.
-    - Tapping Back again closes the modal and stays on the Lineup grid (matching the behavior of the Guest popup sheet).
+- **PWA & Offline Indicator UX (`#offline-status-pill`, `#pwa-prompt-modal-overlay`, `.pwa-action-install-btn`)**:
+  - **Discrete Floating Pill (`#offline-status-pill`)**:
+    - Zero vertical footprint while online (`display: none`).
+    - Flashes subtle Neo-Brutalist amber badge `⚡ Offline Mode • Notes & Timetable Ready` when disconnected.
+    - Turns into a gentle green confirmation `✓ Back Online • Synchronizing...` for 3.5s upon reconnection.
+  - **Mobile-Exclusive Install Prompts & Buttons**:
+    - Permanent button `#pwa-action-install-btn` (`📲 Add Portal to Home Screen`) and recurring welcome popup modal `#pwa-prompt-modal-overlay` are strictly limited to mobile devices (`isMobileDevice()`).
+    - Desktop screens (>900px) completely hide all install buttons, banners, and overlays via `@media (min-width: 901px) { display: none !important; }`.
+  - **Native Android / Chrome & 2-Step iOS Guidance**:
+    - Chrome/Android triggers the native browser install dialog directly.
+    - iOS Safari triggers a styled Neo-Brutalist guide modal (`#pwa-ios-modal-overlay`) explaining the 2-step flow (`Share ⎋ -> Add to Home Screen ⊞`).
 
 
 
