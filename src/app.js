@@ -1174,6 +1174,13 @@ let currentGuestEmail = "";
     }
 
     function openGuestSheet(target) {
+      const sheetEl = document.getElementById('guest-bottom-sheet');
+      if (sheetEl) {
+        sheetEl.scrollTop = 0;
+        const sheetContentEl = sheetEl.querySelector('.sheet-content');
+        if (sheetContentEl) sheetContentEl.scrollTop = 0;
+      }
+
       let guest = null;
       if (typeof target === 'number') {
         guest = globalDirectoryData[target];
@@ -1250,7 +1257,6 @@ let currentGuestEmail = "";
 
       // If an admin sheet is open, ensure guest sheet appears cleanly on top
       const overlayEl = document.getElementById('guest-sheet-overlay');
-      const sheetEl = document.getElementById('guest-bottom-sheet');
       const adminSheet = document.getElementById('admin-bottom-sheet');
       if (adminSheet && adminSheet.classList.contains('active')) {
         overlayEl.style.zIndex = '1010';
@@ -1263,6 +1269,20 @@ let currentGuestEmail = "";
       overlayEl.classList.add('active');
       sheetEl.classList.add('active');
       document.body.style.overflow = 'hidden';
+
+      // Reset scroll position to top
+      if (sheetEl) {
+        sheetEl.scrollTop = 0;
+        const sheetContentEl = sheetEl.querySelector('.sheet-content');
+        if (sheetContentEl) sheetContentEl.scrollTop = 0;
+      }
+      requestAnimationFrame(() => {
+        if (sheetEl) {
+          sheetEl.scrollTop = 0;
+          const sheetContentEl = sheetEl.querySelector('.sheet-content');
+          if (sheetContentEl) sheetContentEl.scrollTop = 0;
+        }
+      });
       
       window.location.hash = "guestsheet";
     }
@@ -1270,6 +1290,11 @@ let currentGuestEmail = "";
     function closeGuestSheet(isHashChange) {
       const overlayEl = document.getElementById('guest-sheet-overlay');
       const sheetEl = document.getElementById('guest-bottom-sheet');
+      if (sheetEl) {
+        sheetEl.scrollTop = 0;
+        const sheetContentEl = sheetEl.querySelector('.sheet-content');
+        if (sheetContentEl) sheetContentEl.scrollTop = 0;
+      }
       overlayEl.classList.remove('active');
       sheetEl.classList.remove('active');
       overlayEl.style.zIndex = '';
@@ -2968,6 +2993,14 @@ let currentGuestEmail = "";
     // Bottom Sheet
     function openArtistSheet(artistId, isFromHash) {
       if (!artistId) return;
+
+      const artistSheetEl = document.getElementById('artist-bottom-sheet');
+      if (artistSheetEl) {
+        artistSheetEl.scrollTop = 0;
+        const sheetContentEl = artistSheetEl.querySelector('.sheet-content');
+        if (sheetContentEl) sheetContentEl.scrollTop = 0;
+      }
+
       lastOpenedArtistId = artistId;
       if (typeof currentArtistsSubTab !== 'undefined') {
         artistOpenedFromSubTab = currentArtistsSubTab;
@@ -3161,9 +3194,24 @@ let currentGuestEmail = "";
       mediaContainer.style.display = 'none';
 
       // Show
+      const artistSheet = document.getElementById('artist-bottom-sheet');
       document.getElementById('artist-sheet-overlay').classList.add('active');
-      document.getElementById('artist-bottom-sheet').classList.add('active');
+      if (artistSheet) artistSheet.classList.add('active');
       document.body.style.overflow = 'hidden'; // prevent bg scrolling
+
+      // Ensure scroll is reset to top on open
+      if (artistSheet) {
+        artistSheet.scrollTop = 0;
+        const sheetContentEl = artistSheet.querySelector('.sheet-content');
+        if (sheetContentEl) sheetContentEl.scrollTop = 0;
+      }
+      requestAnimationFrame(() => {
+        if (artistSheet) {
+          artistSheet.scrollTop = 0;
+          const sheetContentEl = artistSheet.querySelector('.sheet-content');
+          if (sheetContentEl) sheetContentEl.scrollTop = 0;
+        }
+      });
       
       // Setting hash creates a reliable history entry on all mobile browsers
       if (!isFromHash && window.location.hash !== "#sheet") {
@@ -3173,8 +3221,14 @@ let currentGuestEmail = "";
 
     function closeArtistSheet(isHashChange) {
       flushFeedbackAutoSave();
+      const artistSheet = document.getElementById('artist-bottom-sheet');
+      if (artistSheet) {
+        artistSheet.scrollTop = 0;
+        const sheetContentEl = artistSheet.querySelector('.sheet-content');
+        if (sheetContentEl) sheetContentEl.scrollTop = 0;
+        artistSheet.classList.remove('active');
+      }
       document.getElementById('artist-sheet-overlay').classList.remove('active');
-      document.getElementById('artist-bottom-sheet').classList.remove('active');
       document.body.style.overflow = '';
       currentOpenArtistId = null;
       // Re-render grid to reflect any favorite changes from sheet
@@ -5908,17 +5962,34 @@ function openNetworkingDetail(type, target) {
     `;
   }
 
+  if (sheet) {
+    sheet.scrollTop = 0;
+    if (content) content.scrollTop = 0;
+  }
   overlay.classList.add('active');
   sheet.classList.add('active');
   document.body.style.overflow = 'hidden';
+
+  requestAnimationFrame(() => {
+    if (sheet) {
+      sheet.scrollTop = 0;
+      if (content) content.scrollTop = 0;
+    }
+  });
+
   window.location.hash = "networkingsheet";
 }
 
 function closeNetworkingDetailSheet(isHashChange) {
   const overlay = document.getElementById('networking-sheet-overlay');
   const sheet = document.getElementById('networking-bottom-sheet');
+  if (sheet) {
+    sheet.scrollTop = 0;
+    const content = document.getElementById('networking-modal-content');
+    if (content) content.scrollTop = 0;
+    sheet.classList.remove('active');
+  }
   if (overlay) overlay.classList.remove('active');
-  if (sheet) sheet.classList.remove('active');
   document.body.style.overflow = '';
   
   if (isHashChange !== true && window.location.hash === "#networkingsheet") {
@@ -6172,7 +6243,15 @@ function filterAdminGuests(query) {
 }
 
 function closeAdminModal(isHashChange) {
-  document.getElementById('admin-bottom-sheet').classList.remove('active');
+  const adminSheetEl = document.getElementById('admin-bottom-sheet');
+  const adminContentEl = document.getElementById('admin-modal-content');
+  if (adminSheetEl) {
+    adminSheetEl.scrollTop = 0;
+    adminSheetEl.classList.remove('active');
+  }
+  if (adminContentEl) {
+    adminContentEl.scrollTop = 0;
+  }
   document.getElementById('admin-modal-overlay').classList.remove('active');
   document.body.style.overflow = '';
   
@@ -6643,10 +6722,23 @@ function viewAdminGuestDetails(rowIndex) {
     </div>
   `;
   
-  document.getElementById('admin-modal-content').innerHTML = html;
+  const adminSheetEl = document.getElementById('admin-bottom-sheet');
+  const adminContentEl = document.getElementById('admin-modal-content');
+  if (adminContentEl) {
+    adminContentEl.innerHTML = html;
+    adminContentEl.scrollTop = 0;
+  }
+  if (adminSheetEl) {
+    adminSheetEl.scrollTop = 0;
+  }
   document.getElementById('admin-modal-overlay').classList.add('active');
-  document.getElementById('admin-bottom-sheet').classList.add('active');
+  if (adminSheetEl) adminSheetEl.classList.add('active');
   document.body.style.overflow = 'hidden';
+
+  requestAnimationFrame(() => {
+    if (adminSheetEl) adminSheetEl.scrollTop = 0;
+    if (adminContentEl) adminContentEl.scrollTop = 0;
+  });
   
   renderAdminGuestPersonalMessages(email, parsedMsgs);
   
