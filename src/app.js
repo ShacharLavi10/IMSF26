@@ -3025,8 +3025,13 @@ let currentGuestEmail = "";
       if (showtimeElem) {
         const artistShows = (typeof FESTIVAL_SHOWS_SCHEDULE !== 'undefined')
           ? FESTIVAL_SHOWS_SCHEDULE.filter(s => {
+              if (s.artistId && s.artistId === artist.id) return true;
               const matched = findMatchedArtist(s.artistName, s.aliases);
-              return matched && (matched.id === artist.id || matched.name === artist.name);
+              if (matched && (matched.id === artist.id || matched.name === artist.name)) return true;
+              const normShow = normalizeArtistString(s.artistName);
+              const normArt = normalizeArtistString(artist.name);
+              if (normShow === normArt || (normShow.length >= 4 && (normShow.includes(normArt) || normArt.includes(normShow)))) return true;
+              return false;
             })
           : [];
 
@@ -3288,8 +3293,8 @@ let currentGuestEmail = "";
         dayNum: '19',
         city: 'Jerusalem',
         venue: 'Museum of Tolerance',
-        meta: 'Doors 18:30 | B2 Main Stage, Grand Hall 1 & Grand Hall 2',
-        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2']
+        meta: 'Doors 18:30 | B2 Main Stage, Grand Hall 1 & 2, Prayer Room, Auditorium, Plaza & Amphi',
+        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2', 'Grand Hall Full', 'Prayer Room', 'Auditorium 400', 'Plaza Stage', 'Amphi', 'Nocturno Club']
       },
       {
         date: '2026-11-20',
@@ -3305,9 +3310,9 @@ let currentGuestEmail = "";
         dayOfWeek: 'Sat',
         dayNum: '21',
         city: 'Tel Aviv',
-        venue: 'Radical Complex',
-        meta: 'Doors 14:00 | Main Hall, Club, Sculpture Yard, Fish Market',
-        stages: ['All', 'Main Hall', 'Club', 'Sculpture Yard', 'Fish Market']
+        venue: 'Radical Complex & Hameretz 2',
+        meta: 'Doors 14:00 | Grand Hall, The Club, Sculpture Yard, Fish Market, Hameretz 2',
+        stages: ['All', 'Grand Hall', 'The Club', 'Sculpture Yard', 'Fish Market', 'Hameretz 2']
       },
       {
         date: '2026-11-22',
@@ -3316,7 +3321,7 @@ let currentGuestEmail = "";
         city: 'Jaffa / Tel Aviv',
         venue: 'Container House, Jaffa Port',
         meta: 'Official Networking (14:00-16:00) | Live Shows, DJ Sets & Closing Event',
-        stages: ['All', 'Main Stage', 'Networking Area']
+        stages: ['All', 'Container House']
       }
     ];
 
@@ -3790,6 +3795,20 @@ let currentGuestEmail = "";
             "format": "Grand Hall Full"
       },
       {
+            "id": "show_3_17",
+            "date": "2026-11-19",
+            "stage": "Nocturno Club",
+            "startTime": "23:00",
+            "endTime": "01:00",
+            "artistName": "Las Piratas Piratas",
+            "aliases": [
+                  "הפיראטיות",
+                  "פיראטיות",
+                  "אפטר בנוקטורנו הפיראטיות"
+            ],
+            "format": "Aftershow at Nocturno Club"
+      },
+      {
             "id": "show_4_1",
             "date": "2026-11-20",
             "stage": "Main Plaza",
@@ -4024,32 +4043,40 @@ let currentGuestEmail = "";
       {
             "id": "show_6_1",
             "date": "2026-11-22",
-            "stage": "Beit HaMecholot",
-            "startTime": "12:30",
-            "endTime": "14:00",
-            "artistName": "Artists Arrival & Booth Setup",
-            "format": "Jaffa Port Container House",
+            "stage": "Container House",
+            "startTime": "14:00",
+            "endTime": "16:00",
+            "artistName": "Official Delegation Networking Event",
+            "format": "Beit HaMecholot, Jaffa Port",
             "isGeneralEvent": true
       },
       {
             "id": "show_6_2",
             "date": "2026-11-22",
-            "stage": "Networking Area",
+            "stage": "Container House",
             "startTime": "14:00",
-            "endTime": "16:00",
-            "artistName": "Official Delegation Networking Event",
-            "format": "Networking Trade Fair",
-            "isGeneralEvent": true
+            "endTime": "18:00",
+            "artistName": "Fortuna Records",
+            "aliases": [
+                  "פורטונה רקורדס",
+                  "פורטונה"
+            ],
+            "format": "DJ Set & Networking"
       },
       {
             "id": "show_6_3",
             "date": "2026-11-22",
-            "stage": "Main Stage",
-            "startTime": "16:00",
+            "stage": "Container House",
+            "startTime": "17:00",
             "endTime": "18:00",
-            "artistName": "Closing Festival Showcase: FeelBeat Ensemble & DJ Sets",
-            "format": "Closing Showcase & Party",
-            "isGeneralEvent": true
+            "artistName": "FeelBeat Ensemble",
+            "aliases": [
+                  "אנסמבל פיל ביית",
+                  "אנסמבל פיל בית",
+                  "פיל בית",
+                  "פילבט"
+            ],
+            "format": "Closing Showcase Live Concert"
       }
 ];
 
@@ -4138,7 +4165,13 @@ let currentGuestEmail = "";
       'shiwabiwa': 'SHIWABIWA B2B ISC',
       'דיגיי עדי ברקת': 'DJ Adi Bareket',
       'עדי ברקת': 'DJ Adi Bareket',
-      'dj adi bareket': 'DJ Adi Bareket'
+      'dj adi bareket': 'DJ Adi Bareket',
+      'הפיראטיות': 'Las Piratas Piratas',
+      'פיראטיות': 'Las Piratas Piratas',
+      'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
+      'אפטר בנוקטורנו': 'Las Piratas Piratas',
+      'las piratas piratas': 'Las Piratas Piratas',
+      'piratas': 'Las Piratas Piratas'
     };
 
     function findMatchedArtist(artistName, aliases) {
@@ -4260,9 +4293,11 @@ let currentGuestEmail = "";
       return false;
     }
 
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v9';
+
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {
-        const cached = localStorage.getItem('imsf_timetable_schedule_cache');
+        const cached = localStorage.getItem(TIMETABLE_CACHE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -4291,7 +4326,7 @@ let currentGuestEmail = "";
             
             FESTIVAL_SHOWS_SCHEDULE = newSchedule;
             try {
-              localStorage.setItem('imsf_timetable_schedule_cache', newSerialized);
+              localStorage.setItem(TIMETABLE_CACHE_KEY, newSerialized);
             } catch (e) {}
 
             // Re-render only if data actually changed or if view is visible
@@ -4311,12 +4346,14 @@ let currentGuestEmail = "";
     }
     window.fetchDynamicTimetableSchedule = fetchDynamicTimetableSchedule;
 
-    // Real-time synchronization: automatically fetch fresh timetable when switching back to tab
+    // Real-time synchronization: automatically fetch fresh timetable on boot and on tab focus
     if (typeof window !== 'undefined') {
+      setTimeout(function() {
+        fetchDynamicTimetableSchedule(true);
+      }, 600);
+
       window.addEventListener('focus', function() {
-        if (currentArtistsSubTab === 'timetable' || (document.getElementById('artists-timetable-view') && document.getElementById('artists-timetable-view').style.display !== 'none')) {
-          fetchDynamicTimetableSchedule(true);
-        }
+        fetchDynamicTimetableSchedule(true);
       });
 
       // Periodic background sync every 30 seconds if user is viewing timetable

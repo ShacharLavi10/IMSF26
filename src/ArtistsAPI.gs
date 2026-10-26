@@ -897,6 +897,58 @@ function getFestivalTimetableSchedule(forceRefresh) {
 }
 
 /**
+ * Inspection function to diagnose raw cells and parsing
+ */
+function getLineupInspection() {
+  try {
+    const ssId = CONFIG.LINEUP_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+    const ss = SpreadsheetApp.openById(ssId);
+    let sheet = ss.getSheetByName("שיקוף! - מבנה ליינאפ") || ss.getSheetByName("מבנה ליינאפ");
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const grid = sheet.getDataRange().getDisplayValues();
+    const artistsRes = getArtistsData(false);
+    const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
+    
+    // Check all cells where any text exists
+    const dayConfigs = [
+      { day: 'Tue', date: '2026-11-17', colArtist: 0, colTime: 1 },
+      { day: 'Wed', date: '2026-11-18', colArtist: 3, colTime: 4 },
+      { day: 'Thu', date: '2026-11-19', colArtist: 6, colTime: 7 },
+      { day: 'Fri', date: '2026-11-20', colArtist: 9, colTime: 10 },
+      { day: 'Sat', date: '2026-11-21', colArtist: 12, colTime: 13 },
+      { day: 'Sun', date: '2026-11-22', colArtist: 15, colTime: 16 }
+    ];
+
+    const rawDayRows = [];
+    dayConfigs.forEach(cfg => {
+      const items = [];
+      for (let r = 0; r < grid.length; r++) {
+        const row = grid[r] || [];
+        const artistCell = (cfg.colArtist < row.length) ? String(row[cfg.colArtist] || '').trim() : '';
+        const timeCell = (cfg.colTime < row.length) ? String(row[cfg.colTime] || '').trim() : '';
+        if (artistCell || timeCell) {
+          items.push({ row: r + 1, artist: artistCell, time: timeCell });
+        }
+      }
+      rawDayRows.push({ day: cfg.day, date: cfg.date, items: items });
+    });
+
+    const parsed = parseLineupGrid(grid, artistsList);
+
+    return {
+      success: true,
+      gridRows: grid.length,
+      gridCols: grid[0] ? grid[0].length : 0,
+      rawDayRows: rawDayRows,
+      parsedCount: parsed.length,
+      parsed: parsed
+    };
+  } catch(err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+/**
  * Cache invalidation for real-time timetable updates
  */
 function clearTimetableCache() {
@@ -1074,7 +1126,13 @@ const ARTIST_NAME_ALIASES_DICT = {
   'shiwabiwa': 'SHIWABIWA B2B ISC',
   'דיגיי עדי ברקת': 'DJ Adi Bareket',
   'עדי ברקת': 'DJ Adi Bareket',
-  'dj adi bareket': 'DJ Adi Bareket'
+  'dj adi bareket': 'DJ Adi Bareket',
+  'הפיראטיות': 'Las Piratas Piratas',
+  'פיראטיות': 'Las Piratas Piratas',
+  'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
+  'אפטר בנוקטורנו': 'Las Piratas Piratas',
+  'las piratas piratas': 'Las Piratas Piratas',
+  'piratas': 'Las Piratas Piratas'
 };
 
 function normalizeArtistString(str) {
@@ -1242,7 +1300,8 @@ function parseLineupGrid(grid, artistsList) {
     'אפטר': 'Aftershow',
     'מגדל דוד': 'Tower of David',
     'צוללת': 'Submarine Hall',
-    'בית המכולות': 'Container House'
+    'בית המכולות': 'Container House',
+    'נוקטורנו': 'Nocturno Club'
   };
 
   const allShows = [];
@@ -1345,15 +1404,37 @@ function parseLineupGrid(grid, artistsList) {
         isGeneralEvent: isGeneral
       };
 
+      if (cellArtist.includes('נוקטורנו') && (cellArtist.includes('פיראטי') || cellArtist.includes('הפיראטיות'))) {
+        candidateShow.stage = 'Nocturno Club';
+        candidateShow.artistName = 'Las Piratas Piratas';
+      }
+
       if (shouldKeepTimetableItem(candidateShow, artistsList)) {
         // Translate to clean English (NO HEBREW)
         const matchedArtist = findMatchedArtistBackend(candidateShow.artistName, artistsList);
         if (matchedArtist) {
           candidateShow.artistName = matchedArtist.name;
+          candidateShow.artistId = matchedArtist.id;
+          candidateShow.matchedArtist = {
+            id: matchedArtist.id,
+            name: matchedArtist.name,
+            image: matchedArtist.image,
+            genre: matchedArtist.genre
+          };
         } else {
           const norm = normalizeArtistString(candidateShow.artistName);
           if (ARTIST_NAME_ALIASES_DICT[norm]) {
             candidateShow.artistName = ARTIST_NAME_ALIASES_DICT[norm];
+            const aliasMatch = artistsList.find(a => normalizeArtistString(a.name) === normalizeArtistString(candidateShow.artistName));
+            if (aliasMatch) {
+              candidateShow.artistId = aliasMatch.id;
+              candidateShow.matchedArtist = {
+                id: aliasMatch.id,
+                name: aliasMatch.name,
+                image: aliasMatch.image,
+                genre: aliasMatch.genre
+              };
+            }
           } else {
             const lowerName = candidateShow.artistName.toLowerCase();
             if (candidateShow.artistName.includes('דלתות') || lowerName.includes('doors')) {
@@ -1384,6 +1465,7 @@ function parseLineupGrid(grid, artistsList) {
           }
         }
 
+        candidateShow.aliases = [cellArtist, candidateShow.artistName];
         allShows.push(candidateShow);
       }
     }
