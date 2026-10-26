@@ -4015,9 +4015,11 @@ let currentGuestEmail = "";
             "stage": "Hameretz 2",
             "startTime": "23:00",
             "endTime": "23:30",
-            "artistName": "Closing Showcase Set & DJ",
-            "format": "Hameretz 2 Stage",
-            "isGeneralEvent": true
+            "artistName": "Eden Derso",
+            "aliases": [
+                  "עדן דרסו"
+            ],
+            "format": "Hameretz 2 Stage"
       },
       {
             "id": "show_6_1",
@@ -4271,25 +4273,58 @@ let currentGuestEmail = "";
       return DEFAULT_FESTIVAL_SHOWS_SCHEDULE.filter(shouldKeepTimetableItem);
     })();
 
+    let isFetchingTimetableSchedule = false;
+
     function fetchDynamicTimetableSchedule(forceRefresh) {
       if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+      if (isFetchingTimetableSchedule) return;
+      isFetchingTimetableSchedule = true;
+
+      const shouldForce = (forceRefresh !== false); // default to true to always get freshest changes
       google.script.run
         .withSuccessHandler(function(res) {
+          isFetchingTimetableSchedule = false;
           if (res && res.success && Array.isArray(res.schedule) && res.schedule.length > 0) {
-            FESTIVAL_SHOWS_SCHEDULE = res.schedule.filter(shouldKeepTimetableItem);
+            const newSchedule = res.schedule.filter(shouldKeepTimetableItem);
+            const prevSerialized = JSON.stringify(FESTIVAL_SHOWS_SCHEDULE);
+            const newSerialized = JSON.stringify(newSchedule);
+            
+            FESTIVAL_SHOWS_SCHEDULE = newSchedule;
             try {
-              localStorage.setItem('imsf_timetable_schedule_cache', JSON.stringify(FESTIVAL_SHOWS_SCHEDULE));
+              localStorage.setItem('imsf_timetable_schedule_cache', newSerialized);
             } catch (e) {}
-            if (typeof renderTimetableMasterSwitcher === 'function') renderTimetableMasterSwitcher();
-            if (typeof renderTimetableStageSelector === 'function') renderTimetableStageSelector();
-            if (typeof renderTimetableShows === 'function') renderTimetableShows();
-            if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
+
+            // Re-render only if data actually changed or if view is visible
+            if (prevSerialized !== newSerialized || currentArtistsSubTab === 'timetable') {
+              if (typeof renderTimetableMasterSwitcher === 'function') renderTimetableMasterSwitcher();
+              if (typeof renderTimetableStageSelector === 'function') renderTimetableStageSelector();
+              if (typeof renderTimetableShows === 'function') renderTimetableShows();
+              if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
+            }
           }
         })
         .withFailureHandler(function(err) {
+          isFetchingTimetableSchedule = false;
           console.warn('Could not load dynamic timetable schedule from Google Sheets:', err);
         })
-        .getFestivalTimetableSchedule(forceRefresh || false);
+        .getFestivalTimetableSchedule(shouldForce);
+    }
+    window.fetchDynamicTimetableSchedule = fetchDynamicTimetableSchedule;
+
+    // Real-time synchronization: automatically fetch fresh timetable when switching back to tab
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', function() {
+        if (currentArtistsSubTab === 'timetable' || (document.getElementById('artists-timetable-view') && document.getElementById('artists-timetable-view').style.display !== 'none')) {
+          fetchDynamicTimetableSchedule(true);
+        }
+      });
+
+      // Periodic background sync every 30 seconds if user is viewing timetable
+      setInterval(function() {
+        if (document.visibilityState === 'visible' && (currentArtistsSubTab === 'timetable' || (document.getElementById('artists-timetable-view') && document.getElementById('artists-timetable-view').style.display !== 'none'))) {
+          fetchDynamicTimetableSchedule(true);
+        }
+      }, 30000);
     }
 
     function switchArtistsSubTab(subTabName) {
@@ -4315,6 +4350,7 @@ let currentGuestEmail = "";
           dirView.style.display = 'none';
           ttView.style.display = 'block';
           initFestivalTimetableUI();
+          fetchDynamicTimetableSchedule(true);
         }
       }
     }
@@ -4326,7 +4362,7 @@ let currentGuestEmail = "";
       renderTimetableMasterSwitcher();
       renderTimetableStageSelector();
       renderTimetableShows();
-      fetchDynamicTimetableSchedule();
+      fetchDynamicTimetableSchedule(true);
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
 

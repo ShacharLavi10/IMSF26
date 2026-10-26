@@ -843,19 +843,28 @@ function syncAllArtistsAndLeads() {
  */
 function getFestivalTimetableSchedule(forceRefresh) {
   try {
-    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
-    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+    const ssId = CONFIG.LINEUP_SPREADSHEET_ID || CONFIG.ARTISTS_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+    if (!ssId) return { success: false, message: "Lineup spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v7_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v8_' + ssId;
     if (forceRefresh) {
-      try { cache.remove(cacheKey); } catch(e) {}
+      try { 
+        cache.remove(cacheKey);
+        cache.remove('festival_timetable_schedule_v7_' + ssId);
+        cache.remove('festival_timetable_schedule_latest');
+      } catch(e) {}
     } else {
       const cached = cache.get(cacheKey);
       if (cached) {
         return { success: true, schedule: JSON.parse(cached) };
       }
     }
+
+    // Force fresh data reading from Google Sheets
+    try {
+      SpreadsheetApp.flush();
+    } catch(e) {}
 
     const ss = SpreadsheetApp.openById(ssId);
     let lineupSheet = ss.getSheetByName("שיקוף! - מבנה ליינאפ") || 
@@ -872,13 +881,97 @@ function getFestivalTimetableSchedule(forceRefresh) {
     const parsedSchedule = parseLineupGrid(grid, artistsList);
 
     try {
-      cache.put(cacheKey, JSON.stringify(parsedSchedule), 600); // 10 minutes cache
+      cache.put(cacheKey, JSON.stringify(parsedSchedule), 60); // 60 seconds cache for rapid live synchronization
     } catch(e) {}
 
-    return { success: true, schedule: parsedSchedule };
+    return { 
+      success: true, 
+      schedule: parsedSchedule,
+      updatedAt: new Date().toISOString(),
+      sourceSheetId: ssId
+    };
   } catch(err) {
     console.error("Error in getFestivalTimetableSchedule:", err);
     return { success: false, message: "Error parsing timetable: " + err.toString() };
+  }
+}
+
+/**
+ * Cache invalidation for real-time timetable updates
+ */
+function clearTimetableCache() {
+  try {
+    const cache = CacheService.getScriptCache();
+    const ids = [
+      CONFIG.ARTISTS_SPREADSHEET_ID,
+      CONFIG.LINEUP_SPREADSHEET_ID,
+      "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ",
+      "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo"
+    ];
+    ids.forEach(id => {
+      if (id) {
+        try {
+          cache.remove('festival_timetable_schedule_v8_' + id);
+          cache.remove('festival_timetable_schedule_v7_' + id);
+          cache.remove('global_artists_data_v2_' + id);
+        } catch(e) {}
+      }
+    });
+    cache.remove('festival_timetable_schedule_latest');
+    PropertiesService.getScriptProperties().setProperty('LINEUP_LAST_MODIFIED', String(Date.now()));
+    Logger.log("✅ Timetable cache cleared successfully");
+    return { success: true, message: "Timetable cache cleared." };
+  } catch(e) {
+    Logger.log("Error clearing timetable cache: " + e);
+    return { success: false, error: e.toString() };
+  }
+}
+
+/**
+ * Event listener triggered on edit or change in the Artists / Lineup spreadsheet
+ */
+function handleArtistsSheetChange(e) {
+  Logger.log("⚡ handleArtistsSheetChange triggered");
+  clearTimetableCache();
+  try {
+    // If running in sandbox and lineup is edited in prod, sync to sandbox sheet too
+    if (CONFIG.ARTISTS_SPREADSHEET_ID && CONFIG.LINEUP_SPREADSHEET_ID && CONFIG.ARTISTS_SPREADSHEET_ID !== CONFIG.LINEUP_SPREADSHEET_ID) {
+      syncLineupToSandboxSheet();
+    }
+  } catch(err) {
+    Logger.log("Error in auto-sync to sandbox: " + err);
+  }
+}
+
+/**
+ * Copies the live lineup sheet from the main Artists 26 spreadsheet into the Sandbox mock sheet
+ */
+function syncLineupToSandboxSheet() {
+  try {
+    const mainSsId = CONFIG.LINEUP_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+    const sandboxSsId = CONFIG.ARTISTS_SPREADSHEET_ID || "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo";
+    if (mainSsId === sandboxSsId) return { success: true, message: "Same spreadsheet, no sync needed." };
+
+    const sourceSs = SpreadsheetApp.openById(mainSsId);
+    const targetSs = SpreadsheetApp.openById(sandboxSsId);
+    const sourceSheet = sourceSs.getSheetByName("שיקוף! - מבנה ליינאפ");
+    if (!sourceSheet) return { success: false, message: "Source lineup sheet not found." };
+
+    let targetSheet = targetSs.getSheetByName("שיקוף! - מבנה ליינאפ");
+    if (!targetSheet) {
+      targetSheet = targetSs.insertSheet("שיקוף! - מבנה ליינאפ");
+    }
+
+    const data = sourceSheet.getDataRange().getValues();
+    if (data && data.length > 0) {
+      targetSheet.clear();
+      targetSheet.getRange(1, 1, data.length, data[0].length).setValues(data);
+      Logger.log("✅ Successfully synced 'שיקוף! - מבנה ליינאפ' from Prod to Sandbox sheet!");
+    }
+    return { success: true, rows: data.length };
+  } catch(e) {
+    Logger.log("syncLineupToSandboxSheet error: " + e.toString());
+    return { success: false, error: e.toString() };
   }
 }
 

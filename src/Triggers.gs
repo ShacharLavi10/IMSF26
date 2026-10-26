@@ -33,7 +33,45 @@ function setupInstallableTriggers() {
     .atHour(3)
     .everyDays(1)
     .create();
+
+  // 5. Create installable triggers for the Artists / Lineup spreadsheet
+  setupArtistsSpreadsheetTriggers();
     
   Logger.log('✅ Installable triggers have been successfully setup!');
-  SpreadsheetApp.getUi().alert('הטריגרים הותקנו בהצלחה!\nמעתה פונקציות העריכה ירוצו תחת ההרשאות שלך.');
+  try {
+    SpreadsheetApp.getUi().alert('הטריגרים הותקנו בהצלחה!\nמעתה פונקציות העריכה והסנכרון האוטומטי ירוצו תחת ההרשאות שלך.');
+  } catch(e) {}
+}
+
+/**
+ * Setup installable triggers specifically for the Artists / Lineup spreadsheet
+ */
+function setupArtistsSpreadsheetTriggers() {
+  const ssId = CONFIG.LINEUP_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+  try {
+    const ss = SpreadsheetApp.openById(ssId);
+    const existingTriggers = ScriptApp.getProjectTriggers();
+    for (let i = 0; i < existingTriggers.length; i++) {
+      const handlerName = existingTriggers[i].getHandlerFunction();
+      if (handlerName === 'handleArtistsSheetChange') {
+        ScriptApp.deleteTrigger(existingTriggers[i]);
+      }
+    }
+    
+    ScriptApp.newTrigger('handleArtistsSheetChange')
+      .forSpreadsheet(ss)
+      .onChange()
+      .create();
+
+    ScriptApp.newTrigger('handleArtistsSheetChange')
+      .forSpreadsheet(ss)
+      .onEdit()
+      .create();
+
+    Logger.log('✅ Artists & Lineup triggers installed successfully for spreadsheet: ' + ssId);
+    return { success: true, spreadsheetId: ssId };
+  } catch (err) {
+    Logger.log('Could not setup Artists spreadsheet trigger: ' + err.toString());
+    return { success: false, error: err.toString() };
+  }
 }
