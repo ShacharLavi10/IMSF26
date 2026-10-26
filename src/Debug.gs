@@ -886,3 +886,30 @@ function debugInspectArtistsSpreadsheet() {
   return result;
 }
 
+function syncLineupSheetFromProdToSandbox() {
+  try {
+    const sbId = "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo";
+    const prodId = "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+    const prodSs = SpreadsheetApp.openById(prodId);
+    const sbSs = SpreadsheetApp.openById(sbId);
+    
+    const prodSheet = prodSs.getSheetByName("שיקוף! - מבנה ליינאפ");
+    if (!prodSheet) return { success: false, message: "Prod lineup sheet not found" };
+    
+    let sbSheet = sbSs.getSheetByName("שיקוף! - מבנה ליינאפ");
+    if (!sbSheet) {
+      sbSheet = sbSs.insertSheet("שיקוף! - מבנה ליינאפ");
+    }
+    
+    const vals = prodSheet.getDataRange().getDisplayValues();
+    sbSheet.clearContents();
+    if (vals.length > 0 && vals[0].length > 0) {
+      sbSheet.getRange(1, 1, vals.length, vals[0].length).setValues(vals);
+    }
+    return { success: true, message: "Synced lineup from prod to sandbox successfully", rows: vals.length, cols: vals[0].length };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+
