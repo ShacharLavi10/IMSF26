@@ -843,19 +843,28 @@ function syncAllArtistsAndLeads() {
  */
 function getFestivalTimetableSchedule(forceRefresh) {
   try {
-    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
-    if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
+    const ssId = CONFIG.LINEUP_SPREADSHEET_ID || CONFIG.ARTISTS_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+    if (!ssId) return { success: false, message: "Lineup spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v6_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v8_' + ssId;
     if (forceRefresh) {
-      try { cache.remove(cacheKey); } catch(e) {}
+      try { 
+        cache.remove(cacheKey);
+        cache.remove('festival_timetable_schedule_v7_' + ssId);
+        cache.remove('festival_timetable_schedule_latest');
+      } catch(e) {}
     } else {
       const cached = cache.get(cacheKey);
       if (cached) {
         return { success: true, schedule: JSON.parse(cached) };
       }
     }
+
+    // Force fresh data reading from Google Sheets
+    try {
+      SpreadsheetApp.flush();
+    } catch(e) {}
 
     const ss = SpreadsheetApp.openById(ssId);
     let lineupSheet = ss.getSheetByName("שיקוף! - מבנה ליינאפ") || 
@@ -872,13 +881,149 @@ function getFestivalTimetableSchedule(forceRefresh) {
     const parsedSchedule = parseLineupGrid(grid, artistsList);
 
     try {
-      cache.put(cacheKey, JSON.stringify(parsedSchedule), 600); // 10 minutes cache
+      cache.put(cacheKey, JSON.stringify(parsedSchedule), 60); // 60 seconds cache for rapid live synchronization
     } catch(e) {}
 
-    return { success: true, schedule: parsedSchedule };
+    return { 
+      success: true, 
+      schedule: parsedSchedule,
+      updatedAt: new Date().toISOString(),
+      sourceSheetId: ssId
+    };
   } catch(err) {
     console.error("Error in getFestivalTimetableSchedule:", err);
     return { success: false, message: "Error parsing timetable: " + err.toString() };
+  }
+}
+
+/**
+ * Inspection function to diagnose raw cells and parsing
+ */
+function getLineupInspection() {
+  try {
+    const ssId = CONFIG.LINEUP_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+    const ss = SpreadsheetApp.openById(ssId);
+    let sheet = ss.getSheetByName("שיקוף! - מבנה ליינאפ") || ss.getSheetByName("מבנה ליינאפ");
+    if (!sheet) return { success: false, message: "Sheet not found" };
+    const grid = sheet.getDataRange().getDisplayValues();
+    const artistsRes = getArtistsData(false);
+    const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
+    
+    // Check all cells where any text exists
+    const dayConfigs = [
+      { day: 'Tue', date: '2026-11-17', colArtist: 0, colTime: 1 },
+      { day: 'Wed', date: '2026-11-18', colArtist: 3, colTime: 4 },
+      { day: 'Thu', date: '2026-11-19', colArtist: 6, colTime: 7 },
+      { day: 'Fri', date: '2026-11-20', colArtist: 9, colTime: 10 },
+      { day: 'Sat', date: '2026-11-21', colArtist: 12, colTime: 13 },
+      { day: 'Sun', date: '2026-11-22', colArtist: 15, colTime: 16 }
+    ];
+
+    const rawDayRows = [];
+    dayConfigs.forEach(cfg => {
+      const items = [];
+      for (let r = 0; r < grid.length; r++) {
+        const row = grid[r] || [];
+        const artistCell = (cfg.colArtist < row.length) ? String(row[cfg.colArtist] || '').trim() : '';
+        const timeCell = (cfg.colTime < row.length) ? String(row[cfg.colTime] || '').trim() : '';
+        if (artistCell || timeCell) {
+          items.push({ row: r + 1, artist: artistCell, time: timeCell });
+        }
+      }
+      rawDayRows.push({ day: cfg.day, date: cfg.date, items: items });
+    });
+
+    const parsed = parseLineupGrid(grid, artistsList);
+
+    return {
+      success: true,
+      gridRows: grid.length,
+      gridCols: grid[0] ? grid[0].length : 0,
+      rawDayRows: rawDayRows,
+      parsedCount: parsed.length,
+      parsed: parsed
+    };
+  } catch(err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+/**
+ * Cache invalidation for real-time timetable updates
+ */
+function clearTimetableCache() {
+  try {
+    const cache = CacheService.getScriptCache();
+    const ids = [
+      CONFIG.ARTISTS_SPREADSHEET_ID,
+      CONFIG.LINEUP_SPREADSHEET_ID,
+      "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ",
+      "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo"
+    ];
+    ids.forEach(id => {
+      if (id) {
+        try {
+          cache.remove('festival_timetable_schedule_v8_' + id);
+          cache.remove('festival_timetable_schedule_v7_' + id);
+          cache.remove('global_artists_data_v2_' + id);
+        } catch(e) {}
+      }
+    });
+    cache.remove('festival_timetable_schedule_latest');
+    PropertiesService.getScriptProperties().setProperty('LINEUP_LAST_MODIFIED', String(Date.now()));
+    Logger.log("✅ Timetable cache cleared successfully");
+    return { success: true, message: "Timetable cache cleared." };
+  } catch(e) {
+    Logger.log("Error clearing timetable cache: " + e);
+    return { success: false, error: e.toString() };
+  }
+}
+
+/**
+ * Event listener triggered on edit or change in the Artists / Lineup spreadsheet
+ */
+function handleArtistsSheetChange(e) {
+  Logger.log("⚡ handleArtistsSheetChange triggered");
+  clearTimetableCache();
+  try {
+    // If running in sandbox and lineup is edited in prod, sync to sandbox sheet too
+    if (CONFIG.ARTISTS_SPREADSHEET_ID && CONFIG.LINEUP_SPREADSHEET_ID && CONFIG.ARTISTS_SPREADSHEET_ID !== CONFIG.LINEUP_SPREADSHEET_ID) {
+      syncLineupToSandboxSheet();
+    }
+  } catch(err) {
+    Logger.log("Error in auto-sync to sandbox: " + err);
+  }
+}
+
+/**
+ * Copies the live lineup sheet from the main Artists 26 spreadsheet into the Sandbox mock sheet
+ */
+function syncLineupToSandboxSheet() {
+  try {
+    const mainSsId = CONFIG.LINEUP_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ";
+    const sandboxSsId = CONFIG.ARTISTS_SPREADSHEET_ID || "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo";
+    if (mainSsId === sandboxSsId) return { success: true, message: "Same spreadsheet, no sync needed." };
+
+    const sourceSs = SpreadsheetApp.openById(mainSsId);
+    const targetSs = SpreadsheetApp.openById(sandboxSsId);
+    const sourceSheet = sourceSs.getSheetByName("שיקוף! - מבנה ליינאפ");
+    if (!sourceSheet) return { success: false, message: "Source lineup sheet not found." };
+
+    let targetSheet = targetSs.getSheetByName("שיקוף! - מבנה ליינאפ");
+    if (!targetSheet) {
+      targetSheet = targetSs.insertSheet("שיקוף! - מבנה ליינאפ");
+    }
+
+    const data = sourceSheet.getDataRange().getValues();
+    if (data && data.length > 0) {
+      targetSheet.clear();
+      targetSheet.getRange(1, 1, data.length, data[0].length).setValues(data);
+      Logger.log("✅ Successfully synced 'שיקוף! - מבנה ליינאפ' from Prod to Sandbox sheet!");
+    }
+    return { success: true, rows: data.length };
+  } catch(e) {
+    Logger.log("syncLineupToSandboxSheet error: " + e.toString());
+    return { success: false, error: e.toString() };
   }
 }
 
@@ -894,6 +1039,18 @@ function parseLineupTime(str) {
     return { start: matchSingle[1].padStart(5, '0'), end: '' };
   }
   return { start: '', end: '' };
+}
+
+function getTimetableSortMinutes(timeStr) {
+  if (!timeStr) return 9999;
+  const match = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+  if (!match) return 9999;
+  let h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  if (h < 6) {
+    h += 24;
+  }
+  return h * 60 + m;
 }
 
 const ARTIST_NAME_ALIASES_DICT = {
@@ -969,7 +1126,13 @@ const ARTIST_NAME_ALIASES_DICT = {
   'shiwabiwa': 'SHIWABIWA B2B ISC',
   'דיגיי עדי ברקת': 'DJ Adi Bareket',
   'עדי ברקת': 'DJ Adi Bareket',
-  'dj adi bareket': 'DJ Adi Bareket'
+  'dj adi bareket': 'DJ Adi Bareket',
+  'הפיראטיות': 'Las Piratas Piratas',
+  'פיראטיות': 'Las Piratas Piratas',
+  'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
+  'אפטר בנוקטורנו': 'Las Piratas Piratas',
+  'las piratas piratas': 'Las Piratas Piratas',
+  'piratas': 'Las Piratas Piratas'
 };
 
 function normalizeArtistString(str) {
@@ -1024,17 +1187,63 @@ function findMatchedArtistBackend(artistName, artistsList) {
   return null;
 }
 
+function isNamedDJ(rawName, matchedArtist) {
+  if (!rawName) return false;
+  const s = String(rawName).trim();
+  const lower = s.toLowerCase();
+
+  // Exclude generic placeholders or notes
+  if (/^[\s?؟!\-–—.,/\\|]+$/.test(s)) return false;
+  if (lower === 'dj' || lower === 'dj?' || lower === 'dj ?' || lower === "דיג'יי" || lower === "דיגיי" || lower === "דיג'ייס" || lower === "תקלוט") {
+    return false;
+  }
+  if (s === 'נועם הלפר' || s === 'רמזי' || s === 'מור' || s === 'אליענה') {
+    return false;
+  }
+
+  // 1. If matched artist has 'dj' in name (e.g. 'DJ Adi Bareket')
+  if (matchedArtist && matchedArtist.name && matchedArtist.name.toLowerCase().includes('dj')) {
+    return true;
+  }
+
+  // 2. If alias dictionary maps to a name with DJ (e.g. 'DJ Ram Malca')
+  const norm = normalizeArtistString(s);
+  if (ARTIST_NAME_ALIASES_DICT[norm] && ARTIST_NAME_ALIASES_DICT[norm].toLowerCase().includes('dj')) {
+    return true;
+  }
+  for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
+    if (val.toLowerCase().includes('dj') && (norm.includes(key) || key.includes(norm))) {
+      return true;
+    }
+  }
+
+  // 3. If string explicitly starts with DJ / דיג'יי / דיגיי followed by a name
+  const djNameMatch = s.match(/^(?:dj|דיג['׳]?[יי]?)\s+([A-Za-z\u0590-\u05FF]{2,})/i);
+  if (djNameMatch) {
+    const after = djNameMatch[1].trim().toLowerCase();
+    if (after !== 'set' && after !== '?' && after !== 'יס' && after !== 'סט') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function shouldKeepTimetableItem(show, artistsList) {
   if (!show || !show.artistName) return false;
-  
-  // Strict rule: Timetable shows MUST have a valid start time!
-  if (!show.startTime) return false;
 
   const raw = String(show.artistName).trim();
   const lower = raw.toLowerCase();
 
-  // 1. If it matches an artist, always keep!
   const matched = findMatchedArtistBackend(raw, artistsList);
+  const namedDJ = isNamedDJ(raw, matched);
+
+  // If no start time: ONLY keep if it is a specific named DJ (e.g. DJ Adi Bareket, DJ Ram Malca)
+  if (!show.startTime) {
+    return namedDJ;
+  }
+
+  // 1. If it matches an artist, always keep!
   if (matched) return true;
 
   const normRaw = normalizeArtistString(raw);
@@ -1137,7 +1346,8 @@ function parseLineupGrid(grid, artistsList) {
     'אפטר': 'Aftershow',
     'מגדל דוד': 'Tower of David',
     'צוללת': 'Submarine Hall',
-    'בית המכולות': 'Container House'
+    'בית המכולות': 'Container House',
+    'נוקטורנו': 'Nocturno Club'
   };
 
   const allShows = [];
@@ -1240,15 +1450,37 @@ function parseLineupGrid(grid, artistsList) {
         isGeneralEvent: isGeneral
       };
 
+      if (cellArtist.includes('נוקטורנו') && (cellArtist.includes('פיראטי') || cellArtist.includes('הפיראטיות'))) {
+        candidateShow.stage = 'Nocturno Club';
+        candidateShow.artistName = 'Las Piratas Piratas';
+      }
+
       if (shouldKeepTimetableItem(candidateShow, artistsList)) {
         // Translate to clean English (NO HEBREW)
         const matchedArtist = findMatchedArtistBackend(candidateShow.artistName, artistsList);
         if (matchedArtist) {
           candidateShow.artistName = matchedArtist.name;
+          candidateShow.artistId = matchedArtist.id;
+          candidateShow.matchedArtist = {
+            id: matchedArtist.id,
+            name: matchedArtist.name,
+            image: matchedArtist.image,
+            genre: matchedArtist.genre
+          };
         } else {
           const norm = normalizeArtistString(candidateShow.artistName);
           if (ARTIST_NAME_ALIASES_DICT[norm]) {
             candidateShow.artistName = ARTIST_NAME_ALIASES_DICT[norm];
+            const aliasMatch = artistsList.find(a => normalizeArtistString(a.name) === normalizeArtistString(candidateShow.artistName));
+            if (aliasMatch) {
+              candidateShow.artistId = aliasMatch.id;
+              candidateShow.matchedArtist = {
+                id: aliasMatch.id,
+                name: aliasMatch.name,
+                image: aliasMatch.image,
+                genre: aliasMatch.genre
+              };
+            }
           } else {
             const lowerName = candidateShow.artistName.toLowerCase();
             if (candidateShow.artistName.includes('דלתות') || lowerName.includes('doors')) {
@@ -1279,9 +1511,18 @@ function parseLineupGrid(grid, artistsList) {
           }
         }
 
+        candidateShow.aliases = [cellArtist, candidateShow.artistName];
         allShows.push(candidateShow);
       }
     }
+  });
+
+  allShows.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    const timeA = getTimetableSortMinutes(a.startTime);
+    const timeB = getTimetableSortMinutes(b.startTime);
+    if (timeA !== timeB) return timeA - timeB;
+    return (a.stage || '').localeCompare(b.stage || '');
   });
 
   return allShows;

@@ -1797,6 +1797,10 @@ function clearAppCache(sessionToken) {
       'global_guide_data'
     ]);
     
+    if (typeof clearTimetableCache === 'function') {
+      try { clearTimetableCache(); } catch(e) {}
+    }
+
     return { success: true, message: 'Server cache purged successfully.' };
   } catch (err) {
     return { success: false, message: 'Error clearing cache: ' + err.toString() };
