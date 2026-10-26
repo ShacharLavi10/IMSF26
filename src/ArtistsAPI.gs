@@ -847,7 +847,7 @@ function getFestivalTimetableSchedule(forceRefresh) {
     if (!ssId) return { success: false, message: "Artists spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v6_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v7_' + ssId;
     if (forceRefresh) {
       try { cache.remove(cacheKey); } catch(e) {}
     } else {
@@ -894,6 +894,18 @@ function parseLineupTime(str) {
     return { start: matchSingle[1].padStart(5, '0'), end: '' };
   }
   return { start: '', end: '' };
+}
+
+function getTimetableSortMinutes(timeStr) {
+  if (!timeStr) return 9999;
+  const match = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+  if (!match) return 9999;
+  let h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  if (h < 6) {
+    h += 24;
+  }
+  return h * 60 + m;
 }
 
 const ARTIST_NAME_ALIASES_DICT = {
@@ -1282,6 +1294,14 @@ function parseLineupGrid(grid, artistsList) {
         allShows.push(candidateShow);
       }
     }
+  });
+
+  allShows.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    const timeA = getTimetableSortMinutes(a.startTime);
+    const timeB = getTimetableSortMinutes(b.startTime);
+    if (timeA !== timeB) return timeA - timeB;
+    return (a.stage || '').localeCompare(b.stage || '');
   });
 
   return allShows;

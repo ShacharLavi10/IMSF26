@@ -4526,6 +4526,154 @@ let currentGuestEmail = "";
     }
     window.jumpToTimetableShow = jumpToTimetableShow;
 
+    function getTimetableSortMinutes(timeStr) {
+      if (!timeStr) return 9999;
+      const match = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+      if (!match) return 9999;
+      let h = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10);
+      if (h < 6) {
+        h += 24;
+      }
+      return h * 60 + m;
+    }
+    window.getTimetableSortMinutes = getTimetableSortMinutes;
+
+    function handleTimetableArtistSearch(val) {
+      const query = (val || '').trim();
+      const clearBtn = document.getElementById('clear-timetable-search-btn');
+      const resultsContainer = document.getElementById('timetable-search-results');
+      if (!resultsContainer) return;
+
+      if (!query) {
+        if (clearBtn) clearBtn.style.display = 'none';
+        resultsContainer.innerHTML = '';
+        resultsContainer.style.display = 'none';
+        return;
+      }
+
+      if (clearBtn) clearBtn.style.display = 'flex';
+
+      const normQ = normalizeArtistString(query);
+      const matches = [];
+      const seenShowIds = new Set();
+
+      (FESTIVAL_SHOWS_SCHEDULE || []).forEach(show => {
+        if (!shouldKeepTimetableItem(show)) return;
+        if (seenShowIds.has(show.id)) return;
+
+        const matched = findMatchedArtist(show.artistName, show.aliases);
+        const normName = normalizeArtistString(show.artistName);
+        const normMatched = matched ? normalizeArtistString(matched.name) : '';
+        const aliasesNorm = (show.aliases || []).map(a => normalizeArtistString(a));
+
+        const isMatch = normName.includes(normQ) ||
+                        normMatched.includes(normQ) ||
+                        aliasesNorm.some(a => a.includes(normQ));
+
+        if (isMatch) {
+          seenShowIds.add(show.id);
+          matches.push({
+            show: show,
+            artist: matched
+          });
+        }
+      });
+
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `
+          <div class="timetable-search-no-results">
+            No performances found for "${escapeHtml(query)}"
+          </div>
+        `;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+
+      // Sort matches chronologically by date and start time
+      matches.sort((a, b) => {
+        if (a.show.date !== b.show.date) return a.show.date.localeCompare(b.show.date);
+        return getTimetableSortMinutes(a.show.startTime) - getTimetableSortMinutes(b.show.startTime);
+      });
+
+      let resultsHtml = '';
+      matches.slice(0, 8).forEach(m => {
+        const s = m.show;
+        const artist = m.artist;
+        const displayName = artist ? artist.name : s.artistName;
+        const dayObj = (typeof FESTIVAL_TIMETABLE_DAYS !== 'undefined')
+          ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === s.date)
+          : null;
+        const dayLabel = dayObj ? `${dayObj.dayOfWeek} ${dayObj.dayNum}.11` : s.date;
+        const timeLabel = `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}`;
+
+        const avatarHtml = (artist && artist.image)
+          ? `<img src="${artist.image}" alt="${escapeHtml(displayName)}" class="timetable-search-item-avatar" />`
+          : ((s.artistName.includes('Doors') || s.artistName.includes('דלתות')) ? `<span class="timetable-search-item-fallback">🚪</span>` : `<span class="timetable-search-item-fallback">🎸</span>`);
+
+        resultsHtml += `
+          <div class="timetable-search-item" onclick="selectTimetableSearchResult('${s.date}', '${s.id}', '${artist ? artist.id : ''}')">
+            ${avatarHtml}
+            <div class="timetable-search-item-info">
+              <div class="timetable-search-item-name">${escapeHtml(displayName)}</div>
+              <div class="timetable-search-item-meta">
+                <span class="timetable-search-item-time">📅 ${escapeHtml(dayLabel)} • ${escapeHtml(timeLabel)}</span>
+                <span>• 📍 ${escapeHtml(s.stage)}</span>
+              </div>
+            </div>
+            <span class="timetable-search-item-arrow" style="color: var(--accent); font-weight: bold;">→</span>
+          </div>
+        `;
+      });
+
+      resultsContainer.innerHTML = resultsHtml;
+      resultsContainer.style.display = 'block';
+    }
+    window.handleTimetableArtistSearch = handleTimetableArtistSearch;
+
+    function clearTimetableSearch() {
+      const input = document.getElementById('timetable-artist-search');
+      if (input) input.value = '';
+      const clearBtn = document.getElementById('clear-timetable-search-btn');
+      if (clearBtn) clearBtn.style.display = 'none';
+      const resultsContainer = document.getElementById('timetable-search-results');
+      if (resultsContainer) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.style.display = 'none';
+      }
+    }
+    window.clearTimetableSearch = clearTimetableSearch;
+
+    function selectTimetableSearchResult(dateStr, showId, artistId) {
+      clearTimetableSearch();
+      jumpToTimetableShow(dateStr, showId, artistId);
+    }
+    window.selectTimetableSearchResult = selectTimetableSearchResult;
+
+    function handleTimetableSearchKey(e) {
+      if (e.key === 'Enter') {
+        const resultsContainer = document.getElementById('timetable-search-results');
+        if (resultsContainer) {
+          const firstItem = resultsContainer.querySelector('.timetable-search-item');
+          if (firstItem) {
+            firstItem.click();
+          }
+        }
+      } else if (e.key === 'Escape') {
+        clearTimetableSearch();
+      }
+    }
+    window.handleTimetableSearchKey = handleTimetableSearchKey;
+
+    // Close search dropdown on click outside
+    document.addEventListener('click', function(e) {
+      const container = document.querySelector('.timetable-search-container');
+      const resultsContainer = document.getElementById('timetable-search-results');
+      if (container && resultsContainer && !container.contains(e.target)) {
+        resultsContainer.style.display = 'none';
+      }
+    });
+
     function renderTimetableShows() {
       const container = document.getElementById('timetable-shows-container');
       if (!container) return;
@@ -4548,6 +4696,14 @@ let currentGuestEmail = "";
       if (currentTimetableMode === 'schedule') {
         finalShows = enrichedShows.filter(s => s.isFav);
       }
+
+      // Sort chronologically by start time (like a real festival timetable!)
+      finalShows.sort((a, b) => {
+        const timeA = getTimetableSortMinutes(a.startTime);
+        const timeB = getTimetableSortMinutes(b.startTime);
+        if (timeA !== timeB) return timeA - timeB;
+        return (a.stage || '').localeCompare(b.stage || '');
+      });
       
       if (finalShows.length === 0) {
         if (currentTimetableMode === 'schedule') {
