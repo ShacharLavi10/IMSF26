@@ -439,7 +439,7 @@ function fetchMappedData(sheet, email, mappingArray) {
 
           let finalVal = rawVal;
 
-          if ((item.label === "Final Ticket Link" || item.label === "Airport Invitation Link") && cIdx !== -1) {
+          if ((item.label === "Final Ticket Link" || item.label === "Airport Invitation Link" || item.label === "Check-in Link") && cIdx !== -1) {
             try {
               const cellRange = sheet.getRange(i + 1, cIdx + 1);
               const cellFormula = cellRange.getFormula();

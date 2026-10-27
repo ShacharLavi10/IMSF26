@@ -982,6 +982,192 @@ body.light-mode .shuttle-info-card h4 {
   color: #1e293b !important;
 }
 
+/* FLIGHT WEB CHECK-IN & BOOKING REFERENCE */
+.flight-checkin-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid #000;
+  border-radius: var(--radius-xl, 12px);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+body.light-mode .flight-checkin-card {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 1) !important;
+}
+
+.checkin-tip-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(241, 169, 160, 0.12);
+  border: 1.5px solid rgba(241, 169, 160, 0.4);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--foreground);
+}
+
+body.light-mode .checkin-tip-box {
+  background: rgba(241, 169, 160, 0.15) !important;
+  border-color: rgba(241, 169, 160, 0.5) !important;
+  color: #1e293b !important;
+}
+
+.checkin-tip-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.checkin-tip-content {
+  flex: 1;
+}
+
+.checkin-tip-text {
+  font-weight: 500;
+}
+
+.checkin-custom-note {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(241, 169, 160, 0.4);
+  font-size: 0.84rem;
+  color: var(--accent-bright, #f1a9a0);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-weight: 600;
+}
+
+body.light-mode .checkin-custom-note {
+  color: #be185d !important;
+  border-top-color: rgba(190, 24, 93, 0.25) !important;
+}
+
+.checkin-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+body.light-mode .checkin-code-row {
+  background: #f8fafc !important;
+  border: 1.5px solid #e2e8f0 !important;
+}
+
+.checkin-code-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--foreground-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.checkin-code-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkin-code-val {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--accent, #f1a9a0);
+  background: rgba(241, 169, 160, 0.12);
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: 1px dashed rgba(241, 169, 160, 0.5);
+}
+
+body.light-mode .checkin-code-val {
+  color: #c2410c !important;
+  background: #fff7ed !important;
+  border-color: #fdba74 !important;
+}
+
+.checkin-copy-btn {
+  background: var(--surface, #1e293b);
+  color: var(--foreground, #fff);
+  border: 1.5px solid #000;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 2px 2px 0px rgba(0,0,0,1);
+  transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.1s ease;
+}
+
+body.light-mode .checkin-copy-btn {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #000000 !important;
+}
+
+.checkin-copy-btn:hover {
+  filter: brightness(1.05);
+}
+
+.checkin-copy-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px rgba(0,0,0,1);
+}
+
+.checkin-copy-btn.copied {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #047857 !important;
+}
+
+.checkin-action-btn {
+  background: var(--accent, #f1a9a0);
+  color: #000000 !important;
+  border: 2px solid #000000;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 1);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.checkin-action-btn:hover {
+  filter: brightness(1.05);
+}
+
+.checkin-action-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
+}
+
 /* ========================================================= */
 /* SCHEDULE TIMELINE & EVENT CARDS (NEO-BRUTALISM)           */
 /* ========================================================= */

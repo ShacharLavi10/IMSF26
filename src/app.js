@@ -1,6 +1,7 @@
 let currentGuestEmail = "";
-    let globalDirectoryData = [];
-    let isCurrentGuestAdmin = false;
+let currentGuestData = null;
+let globalDirectoryData = [];
+let isCurrentGuestAdmin = false;
 
     function closeWelcomeModal() {
       document.getElementById("welcome-modal-overlay").style.display = "none";
@@ -234,6 +235,7 @@ let currentGuestEmail = "";
         return;
       }
       currentGuestEmail = response.guestInfo.email;
+      currentGuestData = response.guestInfo;
       
       isCurrentGuestAdmin = !!(response.guestInfo && (response.guestInfo.isAdmin === true || response.guestInfo.role === 'הפקה חשיפה'));
       
@@ -663,6 +665,63 @@ let currentGuestEmail = "";
       return renderTravelDocsButtonsHtml(ticketLink, invitationLink);
     }
 
+    function extractFirstUrl(rawVal) {
+      if (!rawVal) return null;
+      const text = String(rawVal).trim();
+      if (!text || text === '-' || /^#|^=/i.test(text) || /^n\/?a$/i.test(text) || /^none$/i.test(text) || /^null$/i.test(text)) {
+        return null;
+      }
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/i;
+      const match = text.match(urlRegex);
+      if (match) {
+        return match[0].replace(/[.,;)]+$/, '');
+      }
+      if (/^www\./i.test(text)) {
+        return 'https://' + text;
+      }
+      return null;
+    }
+
+    window.copyBookingCode = function(code, btn) {
+      if (!code) return;
+      const handleSuccess = () => {
+        if (btn) {
+          const origHtml = btn.innerHTML;
+          btn.classList.add('copied');
+          btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Copied! ✓</span>
+          `;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = origHtml;
+          }, 2000);
+        }
+      };
+
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(handleSuccess).catch(() => {
+          fallbackCopyText(code, handleSuccess);
+        });
+      } else {
+        fallbackCopyText(code, handleSuccess);
+      }
+    };
+
+    function fallbackCopyText(text, cb) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (cb) cb();
+      } catch(e) {}
+    }
+
     function renderBoardingPassData(containerId, dataArray, emptyText) {
       const container = document.getElementById(containerId);
       if (!dataArray || dataArray.length === 0) {
@@ -673,6 +732,7 @@ let currentGuestEmail = "";
       let arrival = "TBD", arrivalTime = "", arrivalFlight = "", arrivalAirline = "", origin = "TBD";
       let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
       let ticketLink = null, shuttle = null, togetherWith = null, airportInvitationLink = null;
+      let bookingCode = null, checkInLink = null, checkInNotes = null;
       
       function formatFlightDate(dStr) {
         if (!dStr) return '';
@@ -802,6 +862,9 @@ let currentGuestEmail = "";
         if (lbl === "together with" || lbl.startsWith("together") || lbl.includes("ביחד") || lbl.includes("יחד") || lbl.includes("נוסע") || lbl.includes("שותפ") || lbl.includes("passengers")) togetherWith = item.value;
         if (lbl === "final ticket link" || lbl.includes("ticket link") || lbl.includes("כרטיס")) ticketLink = item.value;
         if (lbl === "airport invitation link" || lbl.includes("airport invitation") || lbl.includes("הזמנה לנתב") || lbl.includes("הזמנה")) airportInvitationLink = item.value;
+        if (lbl === "booking code" || lbl.includes("booking code") || lbl.includes("מספר הזמנה") || lbl.includes("קוד הזמנה") || lbl === "pnr" || lbl.includes("booking ref")) bookingCode = item.value;
+        if (lbl === "check-in link" || lbl.includes("check-in link") || lbl.includes("צק-אין") || lbl.includes("צ'ק-אין") || lbl.includes("checkin")) checkInLink = item.value;
+        if (lbl === "check-in notes" || lbl.includes("check-in notes") || lbl.includes("הערות צק") || lbl.includes("הערות צ'ק")) checkInNotes = item.value;
       });
 
       const formattedShuttle = formatShuttleTime(shuttle);
@@ -827,6 +890,73 @@ let currentGuestEmail = "";
 
       if (ticketLink || airportInvitationLink) {
         html += renderTravelDocsButtonsHtml(ticketLink, airportInvitationLink);
+      }
+
+      // Web Check-in & Booking Reference Rubric
+      const cleanBookingCode = bookingCode ? String(bookingCode).trim() : '';
+      const hasBookingCode = cleanBookingCode !== '' && 
+                             !cleanBookingCode.startsWith('#') && 
+                             !cleanBookingCode.startsWith('=') && 
+                             !/^n\/?a$/i.test(cleanBookingCode) && 
+                             !/^none$/i.test(cleanBookingCode) && 
+                             !/^null$/i.test(cleanBookingCode) && 
+                             cleanBookingCode !== '-';
+
+      const checkInUrl = extractFirstUrl(checkInLink);
+
+      const cleanCheckInNotes = checkInNotes ? String(checkInNotes).trim() : '';
+      const hasCheckInNotes = cleanCheckInNotes !== '' && 
+                              !cleanCheckInNotes.startsWith('#') && 
+                              !cleanCheckInNotes.startsWith('=') && 
+                              !/^n\/?a$/i.test(cleanCheckInNotes) && 
+                              !/^none$/i.test(cleanCheckInNotes) && 
+                              !/^null$/i.test(cleanCheckInNotes) && 
+                              cleanCheckInNotes !== '-';
+
+      if (hasBookingCode || checkInUrl || hasCheckInNotes) {
+        const defaultRec = "It is highly recommended to make web check in 24 hours prior to your flight.";
+        const isDuplicateRec = hasCheckInNotes && cleanCheckInNotes.toLowerCase().includes("web check in") && cleanCheckInNotes.toLowerCase().includes("24 hours");
+        
+        let tipContentHtml = '';
+        if (isDuplicateRec) {
+          tipContentHtml = `<div class="checkin-tip-text">${escapeHtml(cleanCheckInNotes)}</div>`;
+        } else {
+          tipContentHtml = `
+            <div class="checkin-tip-text">${defaultRec}</div>
+            ${hasCheckInNotes ? `<div class="checkin-custom-note"><span>📌</span> <span><strong>Note:</strong> ${escapeHtml(cleanCheckInNotes)}</span></div>` : ''}
+          `;
+        }
+
+        html += `
+          <div class="flight-checkin-card">
+            <div class="checkin-tip-box">
+              <span class="checkin-tip-icon">💡</span>
+              <div class="checkin-tip-content">
+                ${tipContentHtml}
+              </div>
+            </div>
+
+            ${hasBookingCode ? `
+              <div class="checkin-code-row">
+                <span class="checkin-code-label">Booking Reference:</span>
+                <div class="checkin-code-box">
+                  <span class="checkin-code-val">${escapeHtml(cleanBookingCode)}</span>
+                  <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(cleanBookingCode).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                    <span>Copy</span>
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+
+            ${checkInUrl ? `
+              <a href="${checkInUrl}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                <span>🛫 Open Web Check-In</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+            ` : ''}
+          </div>
+        `;
       }
 
       html += `
@@ -3439,7 +3569,7 @@ let currentGuestEmail = "";
       const allExportIds = new Set([...favIds, ...noteIds, ...tagIds]);
 
       if (allExportIds.size === 0) {
-        showCustomAlert("You haven't added any favorite artists or private notes yet! Mark some artists with ❤️ or write a note to export your personal briefcase.");
+        alert("You haven't added any favorite artists or private notes yet! Mark some artists with ❤️ or write a note to export your personal briefcase.");
         return;
       }
 
@@ -3479,7 +3609,7 @@ let currentGuestEmail = "";
     function executeBriefcaseExport(actionType) {
       if (isExportingBriefcase) return;
       if (!currentGuestEmail) {
-        showCustomAlert("Please make sure you are logged in to export your briefcase.");
+        alert("Please make sure you are logged in to export your briefcase.");
         return;
       }
 
@@ -3518,7 +3648,7 @@ let currentGuestEmail = "";
         isExportingBriefcase = false;
         if (statusDiv) statusDiv.style.display = 'none';
         if (actionsDiv) actionsDiv.style.display = 'flex';
-        showCustomAlert("Connection unavailable. Please try again shortly.");
+        alert("Connection unavailable. Please try again shortly.");
         return;
       }
 
@@ -3529,7 +3659,7 @@ let currentGuestEmail = "";
 
           if (!res || !res.success) {
             if (actionsDiv) actionsDiv.style.display = 'flex';
-            showCustomAlert("Could not export briefcase: " + ((res && res.message) || "Unknown error"));
+            alert("Could not export briefcase: " + ((res && res.message) || "Unknown error"));
             return;
           }
 
@@ -3582,7 +3712,7 @@ let currentGuestEmail = "";
           isExportingBriefcase = false;
           if (statusDiv) statusDiv.style.display = 'none';
           if (actionsDiv) actionsDiv.style.display = 'flex';
-          showCustomAlert("Error sending briefcase: " + (err.message || err.toString()));
+          alert("Error sending briefcase: " + (err.message || err.toString()));
         })
         .generateAndSendBriefcasePdf(currentGuestEmail, payload, options);
     }
@@ -6674,6 +6804,9 @@ function viewAdminGuestDetails(rowIndex) {
     let ticketLink = getFlightVal(["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי", "final ticket link"]);
     let invitationLink = getFlightVal(["הזמנה לנתב\"ג", "הזמנה לנתבג", "הזמנה לנתב״ג", "מכתב הזמנה לנתב\"ג", "מכתב הזמנה", "הזמנה נתב\"ג", "airport invitation", "invitation letter", "airport invitation link"]);
     let flightNotes = fData['הערות טיסות'] || '';
+    let bookingCode = getFlightVal(["מספר הזמנה", "קוד הזמנה", "קוד טיסה", "מספר הזמנת טיסה", "booking code", "booking reference", "pnr"]);
+    let checkInLink = getFlightVal(["לינק לצק-אין", "לינק לצ'ק-אין", "לינק לצ'ק אין", "לינק לצק אין", "לינק צ'ק אין", "קישור לצ'ק אין", "check-in link", "check in link"]);
+    let checkInNotes = getFlightVal(["הערות צק-אין", "הערות צ'ק-אין", "הערות צ'ק אין", "הערות צק אין", "check-in notes", "check in notes"]);
 
     function formatFlightDate(dStr) {
       if (!dStr) return '';
@@ -6866,6 +6999,18 @@ function viewAdminGuestDetails(rowIndex) {
     }
     if (flightNotes) {
       flightHtml += `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${flightNotes}</div>`;
+    }
+    if (bookingCode || checkInLink || checkInNotes) {
+      flightHtml += `
+        <div style="margin-top:8px; padding:10px; background:rgba(241, 169, 160, 0.1); border:1.5px solid rgba(241, 169, 160, 0.35); border-radius:6px; font-size:0.85rem;">
+          <div style="font-weight:bold; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
+            <span>🛫</span><span>Web Check-In & Booking:</span>
+          </div>
+          ${bookingCode ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent); background:rgba(0,0,0,0.15); padding:2px 6px; border-radius:4px;">${escapeHtml(bookingCode)}</code></div>` : ''}
+          ${checkInLink ? `<div style="margin-top:3px;"><strong>Link:</strong> <a href="${escapeHtml(checkInLink)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(checkInLink.length > 45 ? checkInLink.slice(0, 45) + '...' : checkInLink)}</a></div>` : ''}
+          ${checkInNotes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(checkInNotes)}</div>` : ''}
+        </div>
+      `;
     }
   }
 
