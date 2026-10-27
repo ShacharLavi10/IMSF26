@@ -84,7 +84,8 @@ const MAPPINGS = {
     { key: "יעד חזרה", altKeys: ["יעד חזרה", "לאיפה", "מדינת חזרה", "לאן"], label: "Destination / To" },
     { key: "שיוך לשאטל", altKeys: ["שיוך לשאטל", "שיוך שאטל", "שאטל", "שעת שאטל", "שעה שאטל", "שאטלים", "הסעה נדרשת", "הסעה", "שעת הסעה", "הסעות", "shuttle", "shuttle time"], label: "Shuttle" },
     { key: "ביחד עם", altKeys: ["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "Together with", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"], label: "Together With" },
-    { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי"], label: "Final Ticket Link" }
+    { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי"], label: "Final Ticket Link" },
+    { key: "הזמנה לנתב\"ג", altKeys: ["הזמנה לנתב\"ג", "הזמנה לנתבג", "הזמנה לנתב״ג", "מכתב הזמנה לנתב\"ג", "מכתב הזמנה", "הזמנה נתב\"ג", "הזמנה לנתב ג", "הזמנת נתב\"ג", "Airport Invitation", "Invitation Letter", "Airport Invitation Link", "TLV Invitation"], label: "Airport Invitation Link" }
   ],
   HOTELS: [
     { key: "כמות לילות", label: "Nights Count" },

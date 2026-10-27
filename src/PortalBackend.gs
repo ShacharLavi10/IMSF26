@@ -439,9 +439,19 @@ function fetchMappedData(sheet, email, mappingArray) {
 
           let finalVal = rawVal;
 
-          if (item.label === "Final Ticket Link" && cIdx !== -1) {
+          if ((item.label === "Final Ticket Link" || item.label === "Airport Invitation Link") && cIdx !== -1) {
             try {
-              const rt = sheet.getRange(i + 1, cIdx + 1).getRichTextValue();
+              const cellRange = sheet.getRange(i + 1, cIdx + 1);
+              const cellFormula = cellRange.getFormula();
+              if (cellFormula && cellFormula.toUpperCase().includes("HYPERLINK")) {
+                const match = cellFormula.match(/HYPERLINK\(\s*["']([^"']+)["']/i);
+                if (match && match[1]) {
+                  dispVal = match[1].trim();
+                  rawVal = dispVal;
+                  finalVal = dispVal;
+                }
+              }
+              const rt = cellRange.getRichTextValue();
               if (rt) {
                 const runs = rt.getRuns();
                 const runLinks = [];

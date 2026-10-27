@@ -595,16 +595,53 @@ let currentGuestEmail = "";
       ];
     }
 
-    function renderTicketButtonsHtml(ticketLink) {
-      const tickets = parseTicketLinks(ticketLink);
-      if (!tickets || tickets.length === 0) return '';
+    function parseInvitationLink(rawVal) {
+      if (!rawVal) return null;
+      const text = String(rawVal).trim();
+      if (!text || text === '-' || /^#|^=/i.test(text) || /^n\/?a$/i.test(text) || /^none$/i.test(text) || /^null$/i.test(text)) {
+        return null;
+      }
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/gi;
+      const matches = text.match(urlRegex) || [];
+      if (matches.length > 0) {
+        return matches[0].replace(/[.,;)]+$/, '');
+      }
+      const driveIdMatch = text.match(/[-\w]{25,}/);
+      if (driveIdMatch) {
+        return `https://drive.google.com/file/d/${driveIdMatch[0]}/view`;
+      }
+      return null;
+    }
 
-      if (tickets.length === 1) {
+    function renderTravelDocsButtonsHtml(ticketLink, invitationLink) {
+      const tickets = parseTicketLinks(ticketLink);
+      const invUrl = parseInvitationLink(invitationLink);
+
+      const items = [];
+      if (tickets && tickets.length > 0) {
+        tickets.forEach(t => items.push({
+          url: t.url,
+          label: t.label,
+          icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>`
+        }));
+      }
+
+      if (invUrl) {
+        items.push({
+          url: invUrl,
+          label: 'Airport Invitation (PDF)',
+          icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+        });
+      }
+
+      if (items.length === 0) return '';
+
+      if (items.length === 1) {
         return `
           <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-            <a href="${tickets[0].url}" target="_blank" rel="noopener noreferrer" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              View E-Ticket (PDF)
+            <a href="${items[0].url}" target="_blank" rel="noopener noreferrer" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; box-sizing: border-box;">
+              ${items[0].icon}
+              <span>${items[0].label}</span>
             </a>
           </div>
         `;
@@ -612,14 +649,18 @@ let currentGuestEmail = "";
 
       return `
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
-          ${tickets.map(t => `
-            <a href="${t.url}" target="_blank" rel="noopener noreferrer" class="primary" style="flex: 1 1 calc(50% - 6px); min-width: 140px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 0.95rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; text-align: center; box-sizing: border-box;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              <span>${t.label}</span>
+          ${items.map(it => `
+            <a href="${it.url}" target="_blank" rel="noopener noreferrer" class="primary" style="flex: 1 1 calc(50% - 6px); min-width: 140px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 0.95rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; text-align: center; box-sizing: border-box;">
+              ${it.icon}
+              <span>${it.label}</span>
             </a>
           `).join('')}
         </div>
       `;
+    }
+
+    function renderTicketButtonsHtml(ticketLink, invitationLink) {
+      return renderTravelDocsButtonsHtml(ticketLink, invitationLink);
     }
 
     function renderBoardingPassData(containerId, dataArray, emptyText) {
@@ -631,7 +672,7 @@ let currentGuestEmail = "";
       
       let arrival = "TBD", arrivalTime = "", arrivalFlight = "", arrivalAirline = "", origin = "TBD";
       let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
-      let ticketLink = null, shuttle = null, togetherWith = null;
+      let ticketLink = null, shuttle = null, togetherWith = null, airportInvitationLink = null;
       
       function formatFlightDate(dStr) {
         if (!dStr) return '';
@@ -760,6 +801,7 @@ let currentGuestEmail = "";
         if (lbl === "shuttle" || lbl.includes("shuttle") || lbl.includes("שאטל") || lbl.includes("הסעה")) shuttle = item.value;
         if (lbl === "together with" || lbl.startsWith("together") || lbl.includes("ביחד") || lbl.includes("יחד") || lbl.includes("נוסע") || lbl.includes("שותפ") || lbl.includes("passengers")) togetherWith = item.value;
         if (lbl === "final ticket link" || lbl.includes("ticket link") || lbl.includes("כרטיס")) ticketLink = item.value;
+        if (lbl === "airport invitation link" || lbl.includes("airport invitation") || lbl.includes("הזמנה לנתב") || lbl.includes("הזמנה")) airportInvitationLink = item.value;
       });
 
       const formattedShuttle = formatShuttleTime(shuttle);
@@ -783,8 +825,8 @@ let currentGuestEmail = "";
 
       let html = '';
 
-      if (ticketLink) {
-        html += renderTicketButtonsHtml(ticketLink);
+      if (ticketLink || airportInvitationLink) {
+        html += renderTravelDocsButtonsHtml(ticketLink, airportInvitationLink);
       }
 
       html += `
@@ -6396,6 +6438,7 @@ function viewAdminGuestDetails(rowIndex) {
     let shuttle = getFlightVal(["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"]);
     let togetherWith = getFlightVal(["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"]);
     let ticketLink = getFlightVal(["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי", "final ticket link"]);
+    let invitationLink = getFlightVal(["הזמנה לנתב\"ג", "הזמנה לנתבג", "הזמנה לנתב״ג", "מכתב הזמנה לנתב\"ג", "מכתב הזמנה", "הזמנה נתב\"ג", "airport invitation", "invitation letter", "airport invitation link"]);
     let flightNotes = fData['הערות טיסות'] || '';
 
     function formatFlightDate(dStr) {
@@ -6502,8 +6545,8 @@ function viewAdminGuestDetails(rowIndex) {
 
     flightHtml = '';
 
-    if (ticketLink) {
-      flightHtml += renderTicketButtonsHtml(ticketLink);
+    if (ticketLink || invitationLink) {
+      flightHtml += renderTravelDocsButtonsHtml(ticketLink, invitationLink);
     }
 
     flightHtml += `
