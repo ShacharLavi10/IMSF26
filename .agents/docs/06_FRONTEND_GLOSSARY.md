@@ -97,18 +97,25 @@
     * **מעטפת תצוגת הלו"ז:** `#artists-timetable-view`.
     * **סרגל ימי הופעות (Zero-Scroll Days Strip):** `#timetable-days-nav`, `.timetable-day-pill` (כולל `.day-weekday`, `.day-num`, ומצב `.active`).
     * **באנר לוקיישן וזמני פתיחה:** `#timetable-venue-banner`.
+    * **שורת חיפוש אומן בלו"ז (Timetable Artist Search):**
+      - מיכל חיפוש: `.timetable-search-container`.
+      - שדה קלט: `#timetable-artist-search` (חיפוש בזמן אמת לפי שם אמן או כינוי).
+      - כפתור ניקוי חיפוש: `#clear-timetable-search-btn`.
+      - תפריט תוצאות צף: `#timetable-search-results`.
+      - שורת תוצאת חיפוש: `.timetable-search-item` (כולל `.timetable-search-item-avatar`, `.timetable-search-item-name`, `.timetable-search-item-time`, לחיצה עליה מנווטת ישירות לכרטיס המופע ומפעילה פולס).
     * **מתג אב דו-מצבי (Master Switcher):** `#timetable-master-switcher`, `.timetable-master-tabs`, `.master-tab-btn` (מתג 50/50: `[data-mode="all"]` ללו"ז המלא עם מונה הופעות, ו-`[data-mode="favorites"]` ללו"ז מועדפים אישי עם מונה מועדפים).
     * **בורר במות קומפקטי בשורה אחת:** `#timetable-stage-filter-wrapper`, `.timetable-stage-picker.full-width`, `.timetable-stage-select` (מוצג במצב "Full Timetable", מאפשר פילטור לפי במה עם מונה הופעות לכל במה).
     * **מיכל רשימת ההופעות:** `#timetable-shows-container`, `.timetable-shows-list`.
     * **כרטיסיית הופעה בודדת (Concert Card):** `.timetable-show-card` (תצוגת שורה קומפקטית ואלגנטית עם תמונת אמן עגולה/אייקון, פס צבע צדדי, ורקע ניאו-ברוטליסטי נקי).
     * **מרכיבי כרטיסיית הופעה:**
-      - תגית שעה: `.timetable-time-badge`, `.timetable-time-range` (שעת התחלה וסיום).
-      - תמונת אמן / אינדיקטור: `.timetable-avatar-col`, `.timetable-artist-img`.
-      - גוף המופע: `.timetable-show-main`, שם אמן `.timetable-artist-name`, תגית ז'אנר `.timetable-genre-tag`, תגית פורמט במה `.timetable-stage-badge`, תגית מיקום `.timetable-location-badge`.
-      - כפתור מועדפים ישיר מהלו"ז: `.timetable-fav-btn`.
+      - תיבת שעה / תגית דיג'יי: `.timetable-time-box` (מציגה `.start-time` ו-`.end-time`, או תגית דיג'יי `DJ SET` / `TBA` עבור דיג'יים ללא שעה מוגדרת באקסל).
+      - תמונת אמן / אינדיקטור: `.timetable-avatar-col`, `.timetable-artist-avatar`.
+      - גוף המופע: `.timetable-show-body`, שם אמן `.timetable-artist-name`, תגית ז'אנר `.timetable-genre-tag`, תגית פורמט במה `.timetable-format-tag`, תגית מיקום ובמה `.timetable-stage-badge`, תגית מועדף `.timetable-fav-mini-badge`.
+      - חץ מעבר לפרופיל אמן מלא: `.timetable-open-arrow`.
     * **קישור קפיצה מתוך חלונית אמן:** `.sheet-showtime-row.clickable`, `.sheet-showtime-link` (בלחיצה מפעיל `jumpToTimetableShow(date, showId, artistId)`).
     * **אנימציית הדגשה עזה בקפיצה (Super-Bold Multi-Wave Pulse):** `.timetable-show-card.highlight-pulse`.
     * **סנכרון חיווי היסטוריית חץ אחורה בדפדפן ובמובייל:** שימוש ב-`#sheet` לפתיחת חלונית אמן וב-`#timetable` לקפיצה ללו"ז, ומעקב אחר `lastOpenedArtistId` לחזרה מושלמת ומדויקת לחלונית האמן בלחיצה על Back.
+    * **איפוס גלילה אוטומטי בחלוניות קופצות (Scroll Reset to Top):** בכל פתיחה או סגירה של חלונית אמן (`#artist-bottom-sheet`), אורח (`#guest-bottom-sheet`), מנהל (`#admin-bottom-sheet`) או נטוורקינג (`#networking-bottom-sheet`), גלילת החלונית והמיכל הפנימי שלה (`.sheet-content` / `#admin-modal-content`) מאופסת אוטומטית לראש העמוד (`scrollTop = 0`) כולל הגנה נוספת ב-`requestAnimationFrame` למניעת שימור גלילה בדפדפני מובייל.
 
 13. **📲 רכיבי PWA, אופליין והתקנה למסך הבית (PWA & Offline Components):**
     * **אינדיקטור סטטוס רשת ניאו-ברוטליסטי:** `#offline-status-pill` (צף עדין בראש המסך, מוסתר באונליין, מציג `⚡ Offline Mode • Notes & Timetable Ready` באופליין ו-`✓ Back Online • Synchronizing...` בחזרת רשת).
