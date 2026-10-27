@@ -1528,5 +1528,362 @@ function parseLineupGrid(grid, artistsList) {
   return allShows;
 }
 
+/**
+ * ==========================================================================
+ * DELEGATE BRIEFCASE PDF & EMAIL GENERATION ENGINE
+ * ==========================================================================
+ */
+
+function escapeBriefcaseHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Constructs the HTML document for the Briefcase PDF
+ */
+function buildBriefcasePdfHtml(guestName, guestEmail, exportArtists) {
+  const noteCount = exportArtists.filter(e => !!e.note).length;
+  const favCount = exportArtists.filter(e => e.isFav).length;
+  const nowStr = Utilities.formatDate(new Date(), "GMT+2", "dd/MM/yyyy HH:mm");
+
+  let cardsHtml = "";
+  exportArtists.forEach((item, idx) => {
+    const a = item.artist;
+    const isFav = item.isFav;
+    const note = item.note;
+    const tags = item.tags || [];
+
+    // Social Links buttons
+    let linksHtml = "";
+    if (a.socialLinks && a.socialLinks.length > 0) {
+      linksHtml = a.socialLinks.map(link => {
+        return `<a href="${escapeBriefcaseHtml(link.url)}" style="display: inline-block; background-color: #f1f5f9; border: 1.5px solid #0f172a; border-radius: 4px; padding: 3px 8px; margin: 2px 4px 2px 0; font-size: 11px; font-weight: bold; color: #0f172a; text-decoration: none;">${escapeBriefcaseHtml(link.label)} &rarr;</a>`;
+      }).join(" ");
+    }
+
+    // Intent Tags pills
+    let tagsHtml = "";
+    if (tags.length > 0) {
+      tagsHtml = tags.map(tag => {
+        let tagIcon = "🔖";
+        let tagBg = "#e0f2fe";
+        let tagBorder = "#0284c7";
+        let tagText = "#0369a1";
+        if (tag === "Booking") { tagIcon = "🎯"; tagBg = "#ffe4e6"; tagBorder = "#e11d48"; tagText = "#9f1239"; }
+        else if (tag === "Connect") { tagIcon = "🤝"; tagBg = "#dcfce7"; tagBorder = "#16a34a"; tagText = "#166534"; }
+        else if (tag === "Press") { tagIcon = "📰"; tagBg = "#fef3c7"; tagBorder = "#d97706"; tagText = "#92400e"; }
+        else if (tag === "General Note" || tag === "Scouting") { tagIcon = "🔍"; tagBg = "#f3e8ff"; tagBorder = "#9333ea"; tagText = "#6b21a8"; }
+        return `<span style="display: inline-block; background-color: ${tagBg}; border: 1.5px solid ${tagBorder}; border-radius: 4px; padding: 2px 7px; margin: 2px 4px 2px 0; font-size: 11px; font-weight: bold; color: ${tagText};">${tagIcon} ${escapeBriefcaseHtml(tag)}</span>`;
+      }).join(" ");
+    }
+
+    // Private Note container
+    let noteContainerHtml = "";
+    if (note) {
+      noteContainerHtml = `
+        <div style="background-color: #fffbeb; border: 1.5px solid #d97706; border-left: 5px solid #b45309; border-radius: 4px; padding: 10px 14px; margin: 10px 0; font-size: 13px; color: #78350f;">
+          <div style="font-weight: bold; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">📝 Your Private Note:</div>
+          <div style="white-space: pre-wrap; line-height: 1.45;">${escapeBriefcaseHtml(note)}</div>
+        </div>
+      `;
+    }
+
+    // Thumbnail / Avatar
+    let avatarHtml = `<div style="width: 75px; height: 75px; background-color: #f1f5f9; border: 2px solid #0f172a; border-radius: 6px; text-align: center; line-height: 75px; font-size: 26px;">🎸</div>`;
+    if (a.image) {
+      avatarHtml = `<img src="${escapeBriefcaseHtml(a.image)}" width="75" height="75" style="object-fit: cover; border-radius: 6px; border: 2px solid #0f172a; display: block;" alt="${escapeBriefcaseHtml(a.name)}" />`;
+    }
+
+    // Single Artist Card
+    cardsHtml += `
+      <div class="artist-card" style="border: 2px solid #0f172a; border-radius: 6px; background-color: #ffffff; padding: 14px 16px; margin-bottom: 16px; page-break-inside: avoid;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="88" valign="top">
+              ${avatarHtml}
+            </td>
+            <td valign="top" style="padding-left: 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td valign="top">
+                    <div style="font-size: 17px; font-weight: bold; color: #0f172a; line-height: 1.2;">
+                      ${escapeBriefcaseHtml(a.name)}
+                      ${isFav ? '<span style="color: #ef4444; font-size: 15px; margin-left: 4px;" title="Favorited">❤️</span>' : ''}
+                    </div>
+                    ${a.genre ? `<div style="display: inline-block; margin-top: 4px; background-color: #f8fafc; border: 1.5px solid #0f172a; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: bold; color: #0f172a;">${escapeBriefcaseHtml(a.genre)}</div>` : ''}
+                  </td>
+                  <td width="70" align="right" valign="top">
+                    <span style="font-size: 11px; font-weight: bold; color: #94a3b8;">#${idx + 1}</span>
+                  </td>
+                </tr>
+              </table>
+
+              ${tagsHtml ? `<div style="margin-top: 8px;">${tagsHtml}</div>` : ''}
+            </td>
+          </tr>
+        </table>
+
+        ${noteContainerHtml}
+
+        <!-- Contact & Management details -->
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 12px; margin-top: 8px; font-size: 12px; color: #334155;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td>
+                <strong>Contact / Booking:</strong> ${escapeBriefcaseHtml(a.contactName || "Management")}
+                ${a.contactEmail ? ` &bull; <a href="mailto:${escapeBriefcaseHtml(a.contactEmail)}" style="color: #0284c7; font-weight: bold; text-decoration: underline;">${escapeBriefcaseHtml(a.contactEmail)}</a>` : ""}
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        ${linksHtml ? `<div style="margin-top: 8px;">${linksHtml}</div>` : ''}
+
+        ${a.members ? `<div style="font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.35;"><strong>Lineup:</strong> ${escapeBriefcaseHtml(a.members)}</div>` : ''}
+        ${a.bio ? `<div style="font-size: 11px; color: #475569; margin-top: 6px; line-height: 1.4;">${escapeBriefcaseHtml(a.bio.length > 320 ? a.bio.substring(0, 320) + "..." : a.bio)}</div>` : ''}
+      </div>
+    `;
+  });
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>IMSF 2026 - Personal Briefcase</title>
+      <style>
+        @page {
+          size: A4;
+          margin: 14mm 12mm 14mm 12mm;
+        }
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          color: #0f172a;
+          background-color: #ffffff;
+          margin: 0;
+          padding: 0;
+          font-size: 13px;
+        }
+        .header-box {
+          background-color: #0a1626;
+          border: 2px solid #000000;
+          border-radius: 6px;
+          padding: 18px 20px;
+          color: #ffffff;
+          margin-bottom: 20px;
+        }
+        .header-title {
+          font-size: 21px;
+          font-weight: bold;
+          margin: 0;
+          color: #ffffff;
+          letter-spacing: 0.5px;
+        }
+        .header-subtitle {
+          font-size: 14px;
+          font-weight: bold;
+          color: #F1A9A0;
+          margin: 6px 0 0 0;
+        }
+        .header-desc {
+          font-size: 12px;
+          color: #94a3b8;
+          margin: 6px 0 0 0;
+          line-height: 1.4;
+        }
+        .summary-bar {
+          background-color: #f1f5f9;
+          border: 1.5px solid #0f172a;
+          border-radius: 4px;
+          padding: 8px 12px;
+          margin-bottom: 20px;
+          font-size: 12px;
+          font-weight: bold;
+          color: #1e293b;
+        }
+        .footer-box {
+          border-top: 2px solid #e2e8f0;
+          padding-top: 14px;
+          margin-top: 24px;
+          font-size: 11px;
+          color: #64748b;
+          text-align: center;
+        }
+      </style>
+    </head>
+    <body>
+      <!-- FESTIVAL HEADER -->
+      <div class="header-box">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="middle">
+              <div class="header-title">Israel Music Showcase Festival 2026</div>
+              <div class="header-subtitle">Personal Lineup &amp; Notes Briefcase for ${escapeBriefcaseHtml(guestName)}</div>
+              <div class="header-desc">Here is the summary of all the artists you liked, noted, and discovered at the festival.</div>
+            </td>
+            <td width="90" align="right" valign="middle">
+              <div style="background-color: #F1A9A0; color: #0a1626; font-weight: bold; font-size: 11px; border: 1.5px solid #000; border-radius: 4px; padding: 6px 8px; text-align: center; text-transform: uppercase;">
+                IMSF 2026<br><span style="font-size: 9px; opacity: 0.85;">DELEGATE</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- SUMMARY BAR -->
+      <div class="summary-bar">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td>
+              <span>⭐ <strong>${exportArtists.length}</strong> Total Artists</span>
+              &nbsp;&bull;&nbsp;
+              <span>❤️ <strong>${favCount}</strong> Favorites</span>
+              &nbsp;&bull;&nbsp;
+              <span>📝 <strong>${noteCount}</strong> Private Notes</span>
+            </td>
+            <td align="right" style="font-size: 11px; color: #64748b;">
+              Exported on ${nowStr}
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- ARTIST CARDS -->
+      ${cardsHtml}
+
+      <!-- FOOTER -->
+      <div class="footer-box">
+        <strong>Exposure Festival 2026 / Yellow Submarine, Jerusalem</strong><br>
+        For inquiries, partnerships and booking introductions: <a href="mailto:imsfhost@gmail.com" style="color: #0284c7; text-decoration: underline;">imsfhost@gmail.com</a> &bull; <a href="https://yellowsubmarine.org.il" style="color: #0284c7; text-decoration: underline;">yellowsubmarine.org.il</a>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Main Controller: Generates the Briefcase PDF and sends it via GmailApp
+ */
+function generateAndSendBriefcasePdf(email, clientPayload, options) {
+  try {
+    if (!email) {
+      return { success: false, message: "Email is required." };
+    }
+    const cleanEmail = email.toString().trim().toLowerCase();
+    options = options || {};
+    const shouldSendEmail = (options.sendEmail !== false);
+    const returnBase64 = (options.returnBase64 !== false);
+
+    // Get guest name from master sheet
+    const guestDetails = getGuestDetailsFromMaster(cleanEmail);
+    const guestName = (options.guestName || guestDetails.fullName || cleanEmail).trim();
+
+    // Get artists list
+    const artistsRes = getArtistsData(false);
+    const allArtists = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
+
+    // Parse payload
+    const payload = (typeof clientPayload === "string") ? JSON.parse(clientPayload) : (clientPayload || {});
+    const favorites = payload.favorites || {};
+    const notes = payload.notes || {};
+    const tags = payload.tags || {};
+
+    // Filter artists: has fav OR note OR tags
+    const exportArtists = [];
+    allArtists.forEach(artist => {
+      const isFav = !!favorites[artist.id];
+      const note = (notes[artist.id] || "").trim();
+      const aTags = Array.isArray(tags[artist.id]) ? tags[artist.id] : [];
+      if (isFav || note || aTags.length > 0) {
+        exportArtists.push({
+          artist: artist,
+          isFav: isFav,
+          note: note,
+          tags: aTags
+        });
+      }
+    });
+
+    if (exportArtists.length === 0) {
+      return { success: false, message: "No favorites or notes found to export." };
+    }
+
+    // Build the PDF HTML
+    const pdfHtml = buildBriefcasePdfHtml(guestName, cleanEmail, exportArtists);
+    const pdfOutput = HtmlService.createHtmlOutput(pdfHtml);
+    const safeGuestName = guestName.replace(/[^a-zA-Z0-9_\-\s]/g, '').trim().replace(/\s+/g, '_') || 'Guest';
+    const pdfFileName = 'IMSF26_Briefcase_' + safeGuestName + '.pdf';
+    const pdfBlob = pdfOutput.getAs('application/pdf').setName(pdfFileName);
+
+    let emailSent = false;
+    if (shouldSendEmail) {
+      const emailSubject = "Your IMSF 2026 Artist Briefcase is Here! 🎸";
+      const emailBodyHtml = `
+        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 620px; margin: 0 auto; background-color: #f8fafc; padding: 24px;">
+          <div style="background-color: #0a1626; border-radius: 8px 8px 0 0; padding: 28px 24px; text-align: center; border-bottom: 4px solid #F1A9A0;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: bold; letter-spacing: 0.5px;">Israel Music Showcase Festival 2026</h1>
+            <p style="color: #F1A9A0; margin: 8px 0 0; font-size: 14px; font-weight: 600;">Personal Delegate Briefcase &amp; Networking Digest</p>
+          </div>
+          <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; padding: 28px 24px; color: #1e293b; line-height: 1.6;">
+            <p style="font-size: 15px; margin-top: 0;">Hi <strong>${escapeBriefcaseHtml(guestName)}</strong>,</p>
+            <p style="font-size: 14px;">Thank you for attending <strong>IMSF 2026</strong>! We hope you enjoyed the performances and connected with incredible talent.</p>
+            <p style="font-size: 14px;">Attached to this email is your <strong>Personal Artist Briefcase (PDF)</strong> containing all the artists you liked, the private notes you wrote during the showcase, collaboration intent tags, and full contact details for easy follow-up.</p>
+            
+            <div style="background-color: #fff5f5; border: 1.5px solid #F1A9A0; border-radius: 6px; padding: 14px 18px; margin: 20px 0;">
+              <strong style="color: #9b2c2c; font-size: 14px;">Briefcase Summary:</strong>
+              <ul style="margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: #4a5568;">
+                <li>Total Artists: <strong>${exportArtists.length}</strong></li>
+                <li>Private Notes: <strong>${exportArtists.filter(e => !!e.note).length}</strong></li>
+              </ul>
+            </div>
+
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 24px;">
+              All links inside the attached PDF (Spotify, YouTube, Instagram, and booking emails) are fully clickable.
+            </p>
+
+            <div style="border-top: 1px solid #edf2f7; padding-top: 18px; font-size: 13px; color: #718096;">
+              Warm regards,<br>
+              <strong>The IMSF 2026 Production Team</strong><br>
+              Yellow Submarine, Jerusalem
+            </div>
+          </div>
+        </div>
+      `;
+
+      GmailApp.sendEmail(cleanEmail, emailSubject, "", {
+        htmlBody: emailBodyHtml,
+        from: "imsfhost@gmail.com",
+        name: "Israel Music Showcase Festival 2026",
+        bcc: "imsfhost@gmail.com",
+        attachments: [pdfBlob]
+      });
+      emailSent = true;
+    }
+
+    let base64 = "";
+    if (returnBase64) {
+      base64 = Utilities.base64Encode(pdfBlob.getBytes());
+    }
+
+    return {
+      success: true,
+      emailSent: emailSent,
+      filename: pdfFileName,
+      count: exportArtists.length,
+      pdfBase64: base64
+    };
+  } catch (err) {
+    console.error("Error in generateAndSendBriefcasePdf:", err);
+    return { success: false, message: "Error generating briefcase: " + err.toString() };
+  }
+}
+
+
 
 

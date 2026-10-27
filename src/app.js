@@ -2944,8 +2944,7 @@ let currentGuestEmail = "";
       grid.innerHTML = html;
 
       // Handle Export Briefcase visibility
-      const hasFavs = Object.keys(favs).length > 0;
-      document.getElementById('export-briefcase-container').style.display = hasFavs ? 'block' : 'none';
+      updateExportBriefcaseVisibility();
     }
 
     function toggleCardFav(event, artistId) {
@@ -2981,9 +2980,7 @@ let currentGuestEmail = "";
       }
 
       // Handle Export Briefcase visibility
-      const hasFavs = Object.keys(favs).length > 0;
-      const exportContainer = document.getElementById('export-briefcase-container');
-      if (exportContainer) exportContainer.style.display = hasFavs ? 'block' : 'none';
+      updateExportBriefcaseVisibility();
     }
 
     function filterArtists() {
@@ -3342,6 +3339,7 @@ let currentGuestEmail = "";
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
       if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
+      updateExportBriefcaseVisibility();
     }
 
     function savePrivateNote() {
@@ -3349,10 +3347,244 @@ let currentGuestEmail = "";
       const note = document.getElementById('sheet-private-note').value;
       savePrivateNoteLocally(currentOpenArtistId, note);
       triggerFeedbackAutoSave(3500);
+      updateExportBriefcaseVisibility();
+    }
+
+    function updateExportBriefcaseVisibility() {
+      const exportContainer = document.getElementById('export-briefcase-container');
+      if (!exportContainer) return;
+      const favs = getFavorites();
+      const hasFavs = Object.keys(favs).some(k => !!favs[k]);
+      
+      let hasNotes = false;
+      let notesCount = 0;
+      if (currentGuestEmail) {
+        const notePrefix = `artist_note_${currentGuestEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) {
+              hasNotes = true;
+              notesCount++;
+            }
+          }
+        }
+      }
+
+      const shouldShow = hasFavs || hasNotes;
+      exportContainer.style.display = shouldShow ? 'block' : 'none';
+
+      const btn = document.getElementById('export-briefcase-btn');
+      if (btn) {
+        const span = btn.querySelector('span');
+        if (span) {
+          const favCount = Object.keys(favs).filter(k => !!favs[k]).length;
+          span.innerText = favCount > 0 ? `Export My Briefcase (${favCount})` : 'Export My Briefcase';
+        }
+      }
+    }
+
+    function getBriefcaseExportPayload() {
+      const favs = getFavorites();
+      const allNotes = {};
+      const allTags = {};
+      if (currentGuestEmail) {
+        const notePrefix = `artist_note_${currentGuestEmail}_`;
+        const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const aId = k.replace(notePrefix, '');
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) allNotes[aId] = val.trim();
+          } else if (k && k.startsWith(tagPrefix)) {
+            const aId = k.replace(tagPrefix, '');
+            const val = localStorage.getItem(k);
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed) && parsed.length > 0) allTags[aId] = parsed;
+              } catch(e) {}
+            }
+          }
+        }
+      }
+
+      // Ensure open artist is synced
+      if (currentOpenArtistId) {
+        const currentInput = document.getElementById('sheet-private-note');
+        if (currentInput && currentInput.value.trim()) {
+          allNotes[currentOpenArtistId] = currentInput.value.trim();
+        }
+        const currentTags = getArtistTags(currentOpenArtistId);
+        if (currentTags && currentTags.length > 0) {
+          allTags[currentOpenArtistId] = currentTags;
+        }
+      }
+
+      return {
+        favorites: favs,
+        notes: allNotes,
+        tags: allTags
+      };
     }
 
     function exportBriefcase() {
-      alert("This will generate and download a PDF summarizing your liked artists and private notes!");
+      flushFeedbackAutoSave();
+      const payload = getBriefcaseExportPayload();
+      const favIds = Object.keys(payload.favorites).filter(k => !!payload.favorites[k]);
+      const noteIds = Object.keys(payload.notes);
+      const tagIds = Object.keys(payload.tags);
+      const allExportIds = new Set([...favIds, ...noteIds, ...tagIds]);
+
+      if (allExportIds.size === 0) {
+        showCustomAlert("You haven't added any favorite artists or private notes yet! Mark some artists with ❤️ or write a note to export your personal briefcase.");
+        return;
+      }
+
+      // Check if user chose to skip intro explanation
+      const skipIntro = localStorage.getItem('imsf_briefcase_skip_intro') === 'true';
+
+      // Update modal stats
+      const modal = document.getElementById('briefcase-modal-overlay');
+      if (!modal) return;
+
+      const artistsCountElem = document.getElementById('briefcase-modal-artists-count');
+      const notesCountElem = document.getElementById('briefcase-modal-notes-count');
+      const emailElem = document.getElementById('briefcase-modal-email');
+      const skipCheck = document.getElementById('briefcase-skip-intro-check');
+      const statusDiv = document.getElementById('briefcase-modal-status');
+      const successDiv = document.getElementById('briefcase-modal-success');
+      const actionsDiv = document.getElementById('briefcase-modal-actions');
+
+      if (artistsCountElem) artistsCountElem.innerText = `${allExportIds.size} Artist${allExportIds.size !== 1 ? 's' : ''}`;
+      if (notesCountElem) notesCountElem.innerText = `${noteIds.length} Note${noteIds.length !== 1 ? 's' : ''}`;
+      if (emailElem) emailElem.innerText = currentGuestEmail || 'your email';
+      if (skipCheck) skipCheck.checked = skipIntro;
+
+      if (statusDiv) statusDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+      if (actionsDiv) actionsDiv.style.display = 'flex';
+
+      modal.style.display = 'flex';
+    }
+
+    function closeBriefcaseModal() {
+      const modal = document.getElementById('briefcase-modal-overlay');
+      if (modal) modal.style.display = 'none';
+    }
+
+    let isExportingBriefcase = false;
+    function executeBriefcaseExport(actionType) {
+      if (isExportingBriefcase) return;
+      if (!currentGuestEmail) {
+        showCustomAlert("Please make sure you are logged in to export your briefcase.");
+        return;
+      }
+
+      // Save skip intro preference
+      const skipCheck = document.getElementById('briefcase-skip-intro-check');
+      if (skipCheck) {
+        localStorage.setItem('imsf_briefcase_skip_intro', skipCheck.checked ? 'true' : 'false');
+      }
+
+      const actionsDiv = document.getElementById('briefcase-modal-actions');
+      const statusDiv = document.getElementById('briefcase-modal-status');
+      const statusText = document.getElementById('briefcase-status-text');
+      const successDiv = document.getElementById('briefcase-modal-success');
+      const successText = document.getElementById('briefcase-success-text');
+      const successDetail = document.getElementById('briefcase-success-detail');
+
+      if (actionsDiv) actionsDiv.style.display = 'none';
+      if (statusDiv) statusDiv.style.display = 'block';
+      if (successDiv) successDiv.style.display = 'none';
+
+      if (statusText) {
+        statusText.innerText = (actionType === 'download') ? 'Generating your PDF file... ⏳' : 'Generating & emailing your Briefcase PDF... ⏳';
+      }
+
+      isExportingBriefcase = true;
+      const payload = getBriefcaseExportPayload();
+      const guestName = (currentGuestData && (currentGuestData.fullName || (currentGuestData.firstName ? (currentGuestData.firstName + ' ' + (currentGuestData.lastName || '')) : ''))) || '';
+
+      const options = {
+        sendEmail: (actionType === 'email'),
+        returnBase64: true,
+        guestName: guestName
+      };
+
+      if (!window.google || !google.script || !google.script.run) {
+        isExportingBriefcase = false;
+        if (statusDiv) statusDiv.style.display = 'none';
+        if (actionsDiv) actionsDiv.style.display = 'flex';
+        showCustomAlert("Connection unavailable. Please try again shortly.");
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          isExportingBriefcase = false;
+          if (statusDiv) statusDiv.style.display = 'none';
+
+          if (!res || !res.success) {
+            if (actionsDiv) actionsDiv.style.display = 'flex';
+            showCustomAlert("Could not export briefcase: " + ((res && res.message) || "Unknown error"));
+            return;
+          }
+
+          // If download requested or base64 available, trigger direct download / preview
+          if (actionType === 'download' && res.pdfBase64) {
+            try {
+              const byteCharacters = atob(res.pdfBase64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              const blobUrl = URL.createObjectURL(blob);
+
+              const downloadLink = document.createElement('a');
+              downloadLink.href = blobUrl;
+              downloadLink.download = res.filename || 'IMSF26_Personal_Briefcase.pdf';
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+
+              // Also attempt to open preview in new tab
+              window.open(blobUrl, '_blank');
+            } catch(e) {
+              console.warn("Direct blob download error, falling back to data URI:", e);
+              const downloadLink = document.createElement('a');
+              downloadLink.href = 'data:application/pdf;base64,' + res.pdfBase64;
+              downloadLink.download = res.filename || 'IMSF26_Personal_Briefcase.pdf';
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            }
+
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'PDF Ready & Downloaded!';
+              if (successDetail) successDetail.innerText = 'Your briefcase PDF has been downloaded to your device.';
+            }
+          } else {
+            // Email sent successfully
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'Briefcase Sent to Your Email!';
+              if (successDetail) successDetail.innerText = `We have sent your PDF to ${currentGuestEmail}. Check your inbox and spam folder.`;
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          isExportingBriefcase = false;
+          if (statusDiv) statusDiv.style.display = 'none';
+          if (actionsDiv) actionsDiv.style.display = 'flex';
+          showCustomAlert("Error sending briefcase: " + (err.message || err.toString()));
+        })
+        .generateAndSendBriefcasePdf(currentGuestEmail, payload, options);
     }
 
     /* ==========================================================================
@@ -5093,6 +5325,8 @@ window.filterArtists = filterArtists;
 window.clearArtistSearch = clearArtistSearch;
 window.toggleFavFilter = toggleFavFilter;
 window.exportBriefcase = exportBriefcase;
+window.closeBriefcaseModal = closeBriefcaseModal;
+window.executeBriefcaseExport = executeBriefcaseExport;
 window.closeArtistSheet = closeArtistSheet;
 window.toggleSheetFav = toggleSheetFav;
 window.toggleCardFav = toggleCardFav;
