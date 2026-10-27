@@ -1645,7 +1645,7 @@ function buildBriefcasePdfHtml(guestName, guestEmail, exportArtists) {
 
         ${linksHtml ? `<div style="margin-top: 8px;">${linksHtml}</div>` : ''}
 
-        ${a.members ? `<div style="font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.35;"><strong>Lineup:</strong> ${escapeBriefcaseHtml(a.members)}</div>` : ''}
+        ${a.members ? `<div style="font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.35;"><strong>Band Members:</strong> ${escapeBriefcaseHtml(a.members)}</div>` : ''}
         ${a.bio ? `<div style="font-size: 11px; color: #475569; margin-top: 6px; line-height: 1.4;">${escapeBriefcaseHtml(a.bio.length > 320 ? a.bio.substring(0, 320) + "..." : a.bio)}</div>` : ''}
       </div>
     `;
@@ -1823,7 +1823,7 @@ function generateAndSendBriefcasePdf(email, clientPayload, options) {
 
     let emailSent = false;
     if (shouldSendEmail) {
-      const emailSubject = "Your IMSF 2026 Artist Briefcase is Here! 🎸";
+      const emailSubject = "Your IMSF 2026 Artist Briefcase is Here";
       const emailBodyHtml = `
         <div style="font-family: Arial, Helvetica, sans-serif; max-width: 620px; margin: 0 auto; background-color: #f8fafc; padding: 24px;">
           <div style="background-color: #0a1626; border-radius: 8px 8px 0 0; padding: 28px 24px; text-align: center; border-bottom: 4px solid #F1A9A0;">

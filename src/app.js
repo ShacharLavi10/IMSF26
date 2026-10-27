@@ -3573,9 +3573,6 @@ let isCurrentGuestAdmin = false;
         return;
       }
 
-      // Check if user chose to skip intro explanation
-      const skipIntro = localStorage.getItem('imsf_briefcase_skip_intro') === 'true';
-
       // Update modal stats
       const modal = document.getElementById('briefcase-modal-overlay');
       if (!modal) return;
@@ -3583,7 +3580,6 @@ let isCurrentGuestAdmin = false;
       const artistsCountElem = document.getElementById('briefcase-modal-artists-count');
       const notesCountElem = document.getElementById('briefcase-modal-notes-count');
       const emailElem = document.getElementById('briefcase-modal-email');
-      const skipCheck = document.getElementById('briefcase-skip-intro-check');
       const statusDiv = document.getElementById('briefcase-modal-status');
       const successDiv = document.getElementById('briefcase-modal-success');
       const actionsDiv = document.getElementById('briefcase-modal-actions');
@@ -3591,7 +3587,6 @@ let isCurrentGuestAdmin = false;
       if (artistsCountElem) artistsCountElem.innerText = `${allExportIds.size} Artist${allExportIds.size !== 1 ? 's' : ''}`;
       if (notesCountElem) notesCountElem.innerText = `${noteIds.length} Note${noteIds.length !== 1 ? 's' : ''}`;
       if (emailElem) emailElem.innerText = currentGuestEmail || 'your email';
-      if (skipCheck) skipCheck.checked = skipIntro;
 
       if (statusDiv) statusDiv.style.display = 'none';
       if (successDiv) successDiv.style.display = 'none';
@@ -3613,12 +3608,6 @@ let isCurrentGuestAdmin = false;
         return;
       }
 
-      // Save skip intro preference
-      const skipCheck = document.getElementById('briefcase-skip-intro-check');
-      if (skipCheck) {
-        localStorage.setItem('imsf_briefcase_skip_intro', skipCheck.checked ? 'true' : 'false');
-      }
-
       const actionsDiv = document.getElementById('briefcase-modal-actions');
       const statusDiv = document.getElementById('briefcase-modal-status');
       const statusText = document.getElementById('briefcase-status-text');
@@ -3630,8 +3619,19 @@ let isCurrentGuestAdmin = false;
       if (statusDiv) statusDiv.style.display = 'block';
       if (successDiv) successDiv.style.display = 'none';
 
-      if (statusText) {
-        statusText.innerText = (actionType === 'download') ? 'Generating your PDF file... ⏳' : 'Generating & emailing your Briefcase PDF... ⏳';
+      let previewWindow = null;
+      if (actionType === 'preview') {
+        if (statusText) statusText.innerText = 'Preparing your PDF preview... ⏳';
+        try {
+          previewWindow = window.open('', '_blank');
+          if (previewWindow) {
+            previewWindow.document.write('<html><head><title>Loading Briefcase...</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#0a1626;color:#ffffff;"><div style="text-align:center;"><h2>Loading your Briefcase PDF... ⏳</h2><p>Please wait a moment while the document renders.</p></div></body></html>');
+          }
+        } catch(e) {}
+      } else if (actionType === 'download') {
+        if (statusText) statusText.innerText = 'Generating your PDF file... ⏳';
+      } else {
+        if (statusText) statusText.innerText = 'Generating & emailing your Briefcase PDF... ⏳';
       }
 
       isExportingBriefcase = true;
@@ -3648,6 +3648,7 @@ let isCurrentGuestAdmin = false;
         isExportingBriefcase = false;
         if (statusDiv) statusDiv.style.display = 'none';
         if (actionsDiv) actionsDiv.style.display = 'flex';
+        if (previewWindow) previewWindow.close();
         alert("Connection unavailable. Please try again shortly.");
         return;
       }
@@ -3659,12 +3660,45 @@ let isCurrentGuestAdmin = false;
 
           if (!res || !res.success) {
             if (actionsDiv) actionsDiv.style.display = 'flex';
+            if (previewWindow) previewWindow.close();
             alert("Could not export briefcase: " + ((res && res.message) || "Unknown error"));
             return;
           }
 
-          // If download requested or base64 available, trigger direct download / preview
-          if (actionType === 'download' && res.pdfBase64) {
+          if (actionType === 'preview' && res.pdfBase64) {
+            let blobUrl = '';
+            try {
+              const byteCharacters = atob(res.pdfBase64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              blobUrl = URL.createObjectURL(blob);
+              if (previewWindow && !previewWindow.closed) {
+                previewWindow.location.href = blobUrl;
+              } else {
+                window.open(blobUrl, '_blank');
+              }
+            } catch(e) {
+              console.warn("Direct blob preview error, falling back to data URI:", e);
+              blobUrl = 'data:application/pdf;base64,' + res.pdfBase64;
+              if (previewWindow && !previewWindow.closed) {
+                previewWindow.location.href = blobUrl;
+              } else {
+                window.open(blobUrl, '_blank');
+              }
+            }
+
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'PDF Preview Ready!';
+              if (successDetail) {
+                successDetail.innerHTML = `Your briefcase PDF has opened in a new tab.<br><a href="${blobUrl}" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: bold; margin-top: 6px; display: inline-block;">Click here if your browser blocked the tab</a>`;
+              }
+            }
+          } else if (actionType === 'download' && res.pdfBase64) {
             try {
               const byteCharacters = atob(res.pdfBase64);
               const byteNumbers = new Array(byteCharacters.length);
@@ -3681,9 +3715,6 @@ let isCurrentGuestAdmin = false;
               document.body.appendChild(downloadLink);
               downloadLink.click();
               document.body.removeChild(downloadLink);
-
-              // Also attempt to open preview in new tab
-              window.open(blobUrl, '_blank');
             } catch(e) {
               console.warn("Direct blob download error, falling back to data URI:", e);
               const downloadLink = document.createElement('a');
@@ -3696,8 +3727,8 @@ let isCurrentGuestAdmin = false;
 
             if (successDiv) {
               successDiv.style.display = 'block';
-              if (successText) successText.innerText = 'PDF Ready & Downloaded!';
-              if (successDetail) successDetail.innerText = 'Your briefcase PDF has been downloaded to your device.';
+              if (successText) successText.innerText = 'PDF Downloaded Successfully!';
+              if (successDetail) successDetail.innerText = 'Your briefcase PDF has been downloaded to your device files.';
             }
           } else {
             // Email sent successfully
@@ -3712,7 +3743,8 @@ let isCurrentGuestAdmin = false;
           isExportingBriefcase = false;
           if (statusDiv) statusDiv.style.display = 'none';
           if (actionsDiv) actionsDiv.style.display = 'flex';
-          alert("Error sending briefcase: " + (err.message || err.toString()));
+          if (previewWindow) previewWindow.close();
+          alert("Error exporting briefcase: " + (err.message || err.toString()));
         })
         .generateAndSendBriefcasePdf(currentGuestEmail, payload, options);
     }
