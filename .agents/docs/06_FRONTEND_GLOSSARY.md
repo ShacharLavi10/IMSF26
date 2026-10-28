@@ -124,3 +124,31 @@
     * **מודאל פופאפ אוטומטי להתקנה (Mobile Only):** `#pwa-prompt-modal-overlay` (מוקפץ לאחר סגירת Welcome modal בטלפונים בלבד), כולל כפתור `INSTALL APP` (`handlePwaModalInstall()`) וכפתור `Later` (`handlePwaModalLater()`).
     * **מודאל הנחיות אייפון (iOS Safari Guide Modal):** `#pwa-ios-modal-overlay`, `.pwa-ios-steps`, `.pwa-ios-step`, `.pwa-step-num` (מציג 2 צעדים פשוטים: Share ⎋ ולאחר מכן Add to Home Screen ⊞).
     * **הגנת דסקטופ כפולה:** הגנה ב-JS (`isMobileDevice()`) וב-CSS (`@media (min-width: 901px) { display: none !important; }`).
+
+14. **✈️ רכיבי טיסות, צ'ק-אין מקוון ומסמכי מעבר (Flights, Web Check-In & Travel Rubrics Components):**
+    * **מעטפת רובריקה תקנית:** `.flight-rubric-wrap` (עוטפת כל אחת מ-4 רובריקות הטיסה במרווח אנכי תקני ומבנה נקי).
+    * **מיני-כותרת רובריקה מעוצבת:** `.rubric-subheading` (גופן Oswald, אותיות גדולות, פס הדגשה סלמון שמאלי).
+    * **כותרת הרובריקה:** `.rubric-title` (למשל `Travel & Border Documents`, `Online Web Check-In`, `Flight Schedule & Routes`, `Airport Shuttle & Transfers`).
+    * **תגית קטגוריה ברובריקה:** `.rubric-tag` (תגית מינימליסטית לצד הכותרת, כגון `Documents`, `Important`, `Itinerary`, `Transfer`).
+    * **רובריקה 1 - מסמכי טיסה ומעבר גבול:**
+      - `.flight-documents-actions`: מיכל כפתורי המסמכים.
+      - כפתור כרטיס טיסה אלקטרוני: `View E-Ticket (PDF)` או פיצול לשניים `Inbound Ticket (PDF)` ו-`Outbound Ticket (PDF)`.
+      - כפתור מכתב הזמנה רשמי לנתב"ג: `.border-invitation-btn` ("📄 Ben Gurion Invitation (PDF)").
+    * **רובריקה 2 - צ'ק-אין מקוון וקוד הזמנה:**
+      - מעטפת כרטיסיית צ'ק-אין: `.flight-checkin-card`.
+      - תגית קוד הזמנה: `.checkin-code-pill` וקוד מודגש `.checkin-code-value`.
+      - כפתור העתקה מהירה: `.btn-copy-booking` (כולל חיווי `Copied!`).
+      - כפתור פתיחת צ'ק-אין ישיר: `.checkin-cta-btn` ("🛫 Open Web Check-In").
+      - שורת אישור סיום: `.checkin-done-row`.
+      - תיבת סימון צ'ק-אין: `.checkin-done-checkbox` (`#flight-checkin-completed-toggle`).
+      - כרטיס מקופל ומכווץ: `.flight-checkin-collapsed` (מוצג כשהצ'ק-אין בוצע).
+      - קישור שחזור פרטים: `.checkin-restore-link` ("Show check-in details").
+      - מפתח שמירה ב-`localStorage`: `imsf_checkin_done_<bookingKey>`.
+      - מנגנון תפוגה אוטומטי: הסתרה מלאה כאשר `today >= arrivalFlightDate + 1 day`.
+    * **רובריקה 3 - לו"ז טיסות וכרטיס עליה למטוס:**
+      - מעטפת כרטיס עליה למטוס: `.flight-pass-card`, `.ticket-cutout-top`, `.ticket-cutout-bottom`.
+      - מקטעי טיסה הלוך וחזור: `.flight-legs-container`, `.flight-leg-row`.
+    * **רובריקה 4 - שאטלים והסעות מנתב"ג:**
+      - מעטפת כרטיס שאטל: `.flight-shuttle-card`.
+      - פרטי מפגש וזמנים: `.shuttle-time-badge`, `.shuttle-meeting-point`.
+      - שותפים לשאטל: `.shuttle-passengers-wrap`, `.shuttle-passenger-badge` (לחיץ לפתיחת פרופיל אורח).

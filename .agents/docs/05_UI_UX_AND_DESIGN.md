@@ -144,9 +144,31 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - **Mobile-Exclusive Install Prompts & Buttons**:
     - Permanent button `#pwa-action-install-btn` (`📲 Add Portal to Home Screen`) and recurring welcome popup modal `#pwa-prompt-modal-overlay` are strictly limited to mobile devices (`isMobileDevice()`).
     - Desktop screens (>900px) completely hide all install buttons, banners, and overlays via `@media (min-width: 901px) { display: none !important; }`.
-  - **Native Android / Chrome & 2-Step iOS Guidance**:
-    - Chrome/Android triggers the native browser install dialog directly.
-    - iOS Safari triggers a styled Neo-Brutalist guide modal (`#pwa-ios-modal-overlay`) explaining the 2-step flow (`Share ⎋ -> Add to Home Screen ⊞`).
+- **Flights Rubrics & Web Check-In UX (`.flight-rubric-wrap`, `.rubric-subheading`, `.flight-checkin-card`)**:
+  - **4 Structured Rubrics with Mini-Headings**:
+    To eliminate visual clutter in the Flights section of the "My Trip" tab, all content is strictly organized into 4 standardized rubrics:
+    1. `📄 Travel & Border Documents` (Tag: `Documents`): Flight e-tickets and the official Ben Gurion Airport border invitation letter.
+    2. `🛫 Online Web Check-In` (Tag: `Important`): Check-in banner, airline notes, booking code copy, airline CTA, and interactive dismissal.
+    3. `✈️ Flight Schedule & Routes` (Tag: `Itinerary`): Official flight itinerary / Boarding pass card with inbound and outbound legs.
+    4. `🚐 Airport Shuttle & Transfers` (Tag: `Transfer`): Airport shuttle times, meeting points, and fellow passenger badges.
+  - **Mini-Heading Visual Specification (`.rubric-subheading`)**:
+    - Oswald font, uppercase, letter-spacing `0.5px`, size `0.85rem` to `0.9rem`.
+    - Salmon Pink accent bar (`border-left: 4px solid var(--accent)`) anchoring the left edge.
+    - Accompanying `.rubric-tag` badge on the right displaying semantic context.
+  - **Interactive Web Check-In Card (`.flight-checkin-card`)**:
+    - High-visibility banner with custom notes (e.g. "For the return flight with Arkia, no web check in required").
+    - **One-Tap Booking Code Copy (`.btn-copy-booking`)**: Code badge accompanied by a copy button with instant "Copied!" visual feedback.
+    - **Direct CTA Button (`.checkin-cta-btn`)**: Prominent action button styled with "🛫 Open Web Check-In" linking straight to the airline check-in portal.
+    - **Completion Toggle & Smart Collapse (`.checkin-done-checkbox`, `.flight-checkin-collapsed`)**: Checking "I've completed check-in" collapses the bulky card into a compact 32px pill ("Check-in completed ✓") with a discreet "Show details" restore button. State is preserved in `localStorage` under `imsf_checkin_done_<bookingKey>`.
+    - **Auto-Expiration Rule**: When `today >= arrivalFlightDate + 1 day`, the entire check-in card is automatically hidden from the DOM to avoid cluttering the guest's view after arrival and throughout festival days.
+
+- **Artist Briefcase Export Modal (`#artist-briefcase-modal`, `.briefcase-action-btn`)**:
+  - Neo-Brutalist export dialog offering 3 discrete delivery methods for favorited artists:
+    1. `📧 Send to My Email`: Sends a high-res PDF briefcase directly to the delegate's registered email via `GmailApp`.
+    2. `📥 Download PDF`: Triggers a direct client download of the PDF file.
+    3. `👁️ Preview in Browser`: Opens the PDF in a new browser tab for immediate viewing.
+  - Terminology updated from "Band Members" to "Band / Team Members" across all briefcase export cards.
+  - Includes a dedicated festival recommendation tip for delegates attending showcase concerts.
 
 
 
