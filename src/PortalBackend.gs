@@ -1203,7 +1203,8 @@ function getAdminDashboardData(sessionToken) {
       flightsUpdates: getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME),
       hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
       hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
-      announcements: getAdminAnnouncementsList(ss)
+      announcements: getAdminAnnouncementsList(ss),
+      productionSchedule: getSheetData("לוז הפקה") || getSheetData("לו\"ז הפקה")
     };
   } catch (err) {
     console.error("Error in getAdminDashboardData:", err);

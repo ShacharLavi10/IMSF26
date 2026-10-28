@@ -6533,7 +6533,49 @@ function renderAdminDashboard() {
         </div>
       </details>
 
-      <!-- 2. LINEUP & NETWORKING LEADS ACCORDION -->
+      <!-- 2. INTERNAL PRODUCTION SCHEDULE ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-prod-schedule" open>
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">🗓️</span>
+            <span class="admin-section-title">Production Schedule (לו"ז הפקה פנימי)</span>
+          </div>
+          <div class="admin-section-meta">
+            <span id="admin-schedule-count-badge" class="admin-section-badge">לו"ז שבועי</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="admin-section-content" style="direction: rtl; text-align: right;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin: 0;">
+              לו"ז תפעול ומשימות פנימיות לצוות הפסטיבל בירושלים ובתל אביב
+            </p>
+            <button class="primary" style="padding: 6px 12px; font-size: 0.85rem; direction: ltr;" onclick="loadAdminDashboard(true)">
+              🔄 רענן לו"ז
+            </button>
+          </div>
+
+          <!-- Search input -->
+          <div style="margin-bottom: 14px; position: relative; direction: ltr;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; right: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="admin-schedule-search" placeholder="חיפוש משימה, מיקום, שעה או איש קשר..." style="width: 100%; padding: 10px 40px 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); box-sizing: border-box; direction: rtl; text-align: right;" onkeyup="filterAdminProductionSchedule(this.value)">
+          </div>
+
+          <!-- Day Pills Navigation -->
+          <div id="admin-schedule-days-nav" class="admin-schedule-pills-nav"></div>
+
+          <!-- Events Container -->
+          <div id="admin-schedule-events-container">
+            <p style="text-align: center; color: var(--foreground-muted); padding: 20px;">טוען לו"ז הפקה...</p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 3. LINEUP & NETWORKING LEADS ACCORDION -->
       <details class="admin-section-accordion" id="admin-sec-networking">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
@@ -6620,7 +6662,321 @@ function renderAdminDashboard() {
   }
   filterAdminGuests("");
   loadAdminNetworkingData(false);
+  initAdminProductionSchedule();
 }
+
+let adminProductionScheduleData = null; // map of date -> array of events
+let adminProductionScheduleAllEvents = []; // flat array of all events
+let currentAdminScheduleDate = null;
+let adminScheduleSearchTerm = "";
+
+function parseAdminProductionSchedule(rawSchedule) {
+  if (!rawSchedule || !Array.isArray(rawSchedule) || rawSchedule.length < 2) {
+    return { byDate: {}, all: [] };
+  }
+
+  const headers = rawSchedule[0].map(h => String(h || "").trim().toLowerCase());
+  const colDay = headers.indexOf("יום");
+  let colDate = headers.indexOf("תאריך");
+  if (colDate === -1) colDate = headers.indexOf("date");
+  let colTime = headers.indexOf("שעה");
+  if (colTime === -1) colTime = headers.indexOf("time");
+  let colTask = headers.indexOf("אירוע / משימה");
+  if (colTask === -1) colTask = headers.indexOf("משימה");
+  if (colTask === -1) colTask = headers.indexOf("אירוע");
+  let colLoc = headers.indexOf("מיקום");
+  let colContact = headers.indexOf("איש קשר וטלפון");
+  if (colContact === -1) colContact = headers.indexOf("איש קשר");
+  let colNotes = headers.indexOf("דגשים והערות");
+  if (colNotes === -1) colNotes = headers.indexOf("הערות");
+  let colCat = headers.indexOf("קטגוריה");
+
+  const byDate = {};
+  const all = [];
+
+  for (let i = 1; i < rawSchedule.length; i++) {
+    const row = rawSchedule[i];
+    if (!row || row.every(c => String(c || "").trim() === "")) continue;
+
+    let dateVal = colDate !== -1 ? String(row[colDate] || "").trim() : "";
+    const dateMatch = dateVal.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      dateVal = dateMatch[1];
+    } else {
+      const altMatch = dateVal.match(/(\d{1,2})[\.\/](\d{1,2})/);
+      if (altMatch) {
+        const d = altMatch[1].padStart(2, '0');
+        const m = altMatch[2].padStart(2, '0');
+        dateVal = `2026-${m}-${d}`;
+      }
+    }
+
+    if (!dateVal) continue;
+
+    const event = {
+      id: "prod_event_" + i,
+      day: colDay !== -1 ? String(row[colDay] || "").trim() : "",
+      date: dateVal,
+      time: colTime !== -1 ? String(row[colTime] || "").trim() : "",
+      task: colTask !== -1 ? String(row[colTask] || "").trim() : "",
+      location: colLoc !== -1 ? String(row[colLoc] || "").trim() : "",
+      contact: colContact !== -1 ? String(row[colContact] || "").trim() : "",
+      notes: colNotes !== -1 ? String(row[colNotes] || "").trim() : "",
+      category: colCat !== -1 ? String(row[colCat] || "").trim() : ""
+    };
+
+    if (!byDate[dateVal]) {
+      byDate[dateVal] = [];
+    }
+    byDate[dateVal].push(event);
+    all.push(event);
+  }
+
+  return { byDate, all };
+}
+
+function formatAdminScheduleNotes(text) {
+  if (!text) return "";
+  let escaped = escapeHtmlAdmin(text);
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  escaped = escaped.replace(urlRegex, (url) => {
+    let label = "פתח קישור ↗";
+    let extraClass = "";
+    if (url.includes("google") || url.includes("maps") || url.includes("share.google")) {
+      label = "📍 מיקום במפה ↗";
+    } else if (url.includes("eventer") || url.includes("pay") || url.includes("checkout")) {
+      label = "💳 לינק תשלום Eventer ↗";
+      extraClass = "pay-link";
+    }
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="admin-inline-link ${extraClass}">${label}</a>`;
+  });
+  return escaped;
+}
+
+function formatAdminContactInfo(contactText) {
+  if (!contactText) return "";
+  const clean = String(contactText).trim();
+  if (!clean) return "";
+
+  const phoneRegex = /(0\d{1,2}-?\d{7,8}|\+?972-?\d{1,2}-?\d{7,8})/g;
+  const matches = clean.match(phoneRegex);
+
+  let phoneActions = "";
+  if (matches && matches.length > 0) {
+    matches.forEach(phone => {
+      const digits = phone.replace(/\D/g, "");
+      let waDigits = digits;
+      if (waDigits.startsWith("0")) {
+        waDigits = "972" + waDigits.slice(1);
+      }
+      phoneActions += `
+        <a href="tel:${digits}" class="admin-quick-action-btn call-btn" title="חייג אל ${phone}">
+          📞 חייג
+        </a>
+      `;
+      if (digits.startsWith("05") || waDigits.startsWith("9725")) {
+        phoneActions += `
+          <a href="https://wa.me/${waDigits}" target="_blank" rel="noopener noreferrer" class="admin-quick-action-btn wa-btn" title="שלח וואטסאפ אל ${phone}">
+            💬 וואטסאפ
+          </a>
+        `;
+      }
+    });
+  }
+
+  return `
+    <div class="admin-contact-pill">
+      <span>👤 <strong>${escapeHtmlAdmin(clean)}</strong></span>
+      ${phoneActions}
+    </div>
+  `;
+}
+
+function getAdminCatIcon(cat) {
+  const c = (cat || "").trim();
+  const map = {
+    'הסעה': '🚐',
+    'הופעות': '🎸',
+    'אוכל': '🍽️',
+    'סיור': '🧭',
+    'מפגש': '👥',
+    'הודעות': '📢',
+    'לוגיסטיקה': '📦',
+    'אפטר': '🍸'
+  };
+  return map[c] || '📌';
+}
+
+function initAdminProductionSchedule() {
+  const container = document.getElementById("admin-schedule-events-container");
+  const navContainer = document.getElementById("admin-schedule-days-nav");
+  const countBadge = document.getElementById("admin-schedule-count-badge");
+  if (!container || !navContainer) return;
+
+  if (!adminData || !adminData.productionSchedule) {
+    container.innerHTML = `<p style="text-align: center; color: var(--foreground-muted); padding: 20px;">אין נתוני לו"ז הפקה זמינים כרגע.</p>`;
+    return;
+  }
+
+  const parsed = parseAdminProductionSchedule(adminData.productionSchedule);
+  adminProductionScheduleData = parsed.byDate;
+  adminProductionScheduleAllEvents = parsed.all;
+
+  const dates = Object.keys(adminProductionScheduleData).sort();
+  if (dates.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--foreground-muted); padding: 20px;">גיליון לו"ז ההפקה ריק.</p>`;
+    return;
+  }
+
+  if (countBadge) {
+    countBadge.textContent = `${adminProductionScheduleAllEvents.length} משימות בלו"ז`;
+  }
+
+  // Determine active date
+  if (!currentAdminScheduleDate || !adminProductionScheduleData[currentAdminScheduleDate]) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (adminProductionScheduleData[todayStr]) {
+      currentAdminScheduleDate = todayStr;
+    } else {
+      currentAdminScheduleDate = dates[0];
+    }
+  }
+
+  // Render Day Pills
+  let pillsHtml = "";
+  dates.forEach(d => {
+    const events = adminProductionScheduleData[d] || [];
+    const firstEvent = events[0];
+    const dayHebrew = firstEvent ? firstEvent.day : "";
+    const parts = d.split("-");
+    const formattedDate = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
+    const isActive = (d === currentAdminScheduleDate);
+
+    pillsHtml += `
+      <button type="button" class="admin-schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')">
+        <span class="admin-pill-day">${escapeHtmlAdmin(dayHebrew)}</span>
+        <span class="admin-pill-date">${formattedDate}</span>
+        <span class="admin-pill-badge">${events.length}</span>
+      </button>
+    `;
+  });
+
+  navContainer.innerHTML = pillsHtml;
+  renderAdminScheduleForDate(currentAdminScheduleDate, adminScheduleSearchTerm);
+}
+
+function selectAdminScheduleDate(dateStr) {
+  currentAdminScheduleDate = dateStr;
+  const pills = document.querySelectorAll(".admin-schedule-pill");
+  pills.forEach(p => {
+    if (p.getAttribute("data-date") === dateStr) {
+      p.classList.add("active");
+    } else {
+      p.classList.remove("active");
+    }
+  });
+  renderAdminScheduleForDate(dateStr, adminScheduleSearchTerm);
+}
+
+function filterAdminProductionSchedule(query) {
+  adminScheduleSearchTerm = (query || "").trim();
+  renderAdminScheduleForDate(currentAdminScheduleDate, adminScheduleSearchTerm);
+}
+
+function renderAdminScheduleForDate(dateStr, filterTerm) {
+  const container = document.getElementById("admin-schedule-events-container");
+  if (!container) return;
+
+  let eventsToRender = [];
+  const isSearching = (filterTerm && filterTerm.length > 0);
+
+  if (isSearching) {
+    const q = filterTerm.toLowerCase();
+    eventsToRender = adminProductionScheduleAllEvents.filter(e => {
+      return (e.task && e.task.toLowerCase().includes(q)) ||
+             (e.notes && e.notes.toLowerCase().includes(q)) ||
+             (e.location && e.location.toLowerCase().includes(q)) ||
+             (e.contact && e.contact.toLowerCase().includes(q)) ||
+             (e.time && e.time.toLowerCase().includes(q)) ||
+             (e.category && e.category.toLowerCase().includes(q)) ||
+             (e.day && e.day.toLowerCase().includes(q));
+    });
+  } else {
+    eventsToRender = (adminProductionScheduleData && adminProductionScheduleData[dateStr]) ? adminProductionScheduleData[dateStr] : [];
+  }
+
+  if (eventsToRender.length === 0) {
+    if (isSearching) {
+      container.innerHTML = `<div style="text-align: center; padding: 25px; color: var(--foreground-muted);">לא נמצאו משימות שתואמות לחיפוש "${escapeHtmlAdmin(filterTerm)}".</div>`;
+    } else {
+      container.innerHTML = `<div style="text-align: center; padding: 25px; color: var(--foreground-muted);">אין משימות מתוזמנות ליום זה.</div>`;
+    }
+    return;
+  }
+
+  let html = "";
+  if (isSearching) {
+    html += `
+      <div style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px; font-weight: 600;">
+        נמצאו ${eventsToRender.length} תוצאות בלו"ז:
+      </div>
+    `;
+  }
+
+  eventsToRender.forEach(e => {
+    const catIcon = getAdminCatIcon(e.category);
+    const catHtml = e.category ? `<span class="admin-cat-badge" data-cat="${escapeHtmlAdmin(e.category)}">${catIcon} ${escapeHtmlAdmin(e.category)}</span>` : "";
+    
+    let locationHtml = "";
+    if (e.location && e.location.trim().length > 0) {
+      const locClean = e.location.trim();
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locClean + ', Israel')}`;
+      locationHtml = `
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="admin-schedule-loc" title="פתח ב-Google Maps">
+          📍 ${escapeHtmlAdmin(locClean)}
+        </a>
+      `;
+    }
+
+    const contactHtml = formatAdminContactInfo(e.contact);
+    const notesHtml = e.notes ? `<div class="admin-schedule-notes">${formatAdminScheduleNotes(e.notes)}</div>` : "";
+
+    let dayBadge = "";
+    if (isSearching) {
+      const parts = (e.date || "").split("-");
+      const dFormatted = parts.length === 3 ? `${parts[2]}.${parts[1]}` : e.date;
+      dayBadge = `<span style="font-size: 0.75rem; background: var(--accent); color: #000; padding: 2px 7px; border-radius: 4px; font-weight: 700; border: 1px solid #000;">${escapeHtmlAdmin(e.day)} ${dFormatted}</span>`;
+    }
+
+    html += `
+      <div class="admin-schedule-card">
+        <div class="admin-schedule-card-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="admin-schedule-time">⏰ ${escapeHtmlAdmin(e.time || '—')}</span>
+            ${dayBadge}
+          </div>
+          ${catHtml}
+        </div>
+        
+        <div class="admin-schedule-title">${escapeHtmlAdmin(e.task)}</div>
+        
+        ${(locationHtml || contactHtml) ? `
+          <div class="admin-schedule-meta-row">
+            ${locationHtml}
+            ${contactHtml}
+          </div>
+        ` : ''}
+        
+        ${notesHtml}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+window.selectAdminScheduleDate = selectAdminScheduleDate;
+window.filterAdminProductionSchedule = filterAdminProductionSchedule;
 
 function escapeHtmlAdmin(str) {
   if (!str) return '';
