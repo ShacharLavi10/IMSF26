@@ -6742,14 +6742,12 @@ function formatAdminScheduleNotes(text) {
   const urlRegex = /(https?:\/\/[^\s<]+)/g;
   escaped = escaped.replace(urlRegex, (url) => {
     let label = "פתח קישור ↗";
-    let extraClass = "";
     if (url.includes("google") || url.includes("maps") || url.includes("share.google")) {
       label = "📍 מיקום במפה ↗";
     } else if (url.includes("eventer") || url.includes("pay") || url.includes("checkout")) {
       label = "💳 לינק תשלום Eventer ↗";
-      extraClass = "pay-link";
     }
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="admin-inline-link ${extraClass}">${label}</a>`;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="schedule-inline-link">${label}</a>`;
   });
   return escaped;
 }
@@ -6771,13 +6769,13 @@ function formatAdminContactInfo(contactText) {
         waDigits = "972" + waDigits.slice(1);
       }
       phoneActions += `
-        <a href="tel:${digits}" class="admin-quick-action-btn call-btn" title="חייג אל ${phone}">
+        <a href="tel:${digits}" class="schedule-contact-btn call" title="חייג אל ${phone}">
           📞 חייג
         </a>
       `;
       if (digits.startsWith("05") || waDigits.startsWith("9725")) {
         phoneActions += `
-          <a href="https://wa.me/${waDigits}" target="_blank" rel="noopener noreferrer" class="admin-quick-action-btn wa-btn" title="שלח וואטסאפ אל ${phone}">
+          <a href="https://wa.me/${waDigits}" target="_blank" rel="noopener noreferrer" class="schedule-contact-btn wa" title="שלח וואטסאפ אל ${phone}">
             💬 וואטסאפ
           </a>
         `;
@@ -6786,10 +6784,10 @@ function formatAdminContactInfo(contactText) {
   }
 
   return `
-    <div class="admin-contact-pill">
-      <span>👤 <strong>${escapeHtmlAdmin(clean)}</strong></span>
-      ${phoneActions}
-    </div>
+    <span class="schedule-loc-link" style="color: var(--foreground-muted); cursor: default;">
+      👤 <span>${escapeHtmlAdmin(clean)}</span>
+    </span>
+    ${phoneActions}
   `;
 }
 
@@ -6815,7 +6813,7 @@ function initAdminProductionSchedule() {
   if (!container || !navContainer) return;
 
   if (!adminData || !adminData.productionSchedule) {
-    container.innerHTML = `<p style="text-align: center; color: var(--foreground-muted); padding: 20px;">אין נתוני לו"ז הפקה זמינים כרגע.</p>`;
+    container.innerHTML = `<p class="empty-state">אין נתוני לו"ז הפקה זמינים כרגע.</p>`;
     return;
   }
 
@@ -6825,7 +6823,7 @@ function initAdminProductionSchedule() {
 
   const dates = Object.keys(adminProductionScheduleData).sort();
   if (dates.length === 0) {
-    container.innerHTML = `<p style="text-align: center; color: var(--foreground-muted); padding: 20px;">גיליון לו"ז ההפקה ריק.</p>`;
+    container.innerHTML = `<p class="empty-state">גיליון לו"ז ההפקה ריק.</p>`;
     return;
   }
 
@@ -6843,21 +6841,20 @@ function initAdminProductionSchedule() {
     }
   }
 
-  // Render Day Pills
+  // Render Day Pills matching guest schedule exactly (.schedule-pill)
   let pillsHtml = "";
   dates.forEach(d => {
     const events = adminProductionScheduleData[d] || [];
     const firstEvent = events[0];
     const dayHebrew = firstEvent ? firstEvent.day : "";
     const parts = d.split("-");
-    const formattedDate = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
+    const dayNumStr = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
     const isActive = (d === currentAdminScheduleDate);
 
     pillsHtml += `
-      <button type="button" class="admin-schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')">
-        <span class="admin-pill-day">${escapeHtmlAdmin(dayHebrew)}</span>
-        <span class="admin-pill-date">${formattedDate}</span>
-        <span class="admin-pill-badge">${events.length}</span>
+      <button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')" title="${d}">
+        <span class="day-weekday">${escapeHtmlAdmin(dayHebrew || d)}</span>
+        <span class="day-num">${escapeHtmlAdmin(dayNumStr)}</span>
       </button>
     `;
   });
@@ -6868,10 +6865,13 @@ function initAdminProductionSchedule() {
 
 function selectAdminScheduleDate(dateStr) {
   currentAdminScheduleDate = dateStr;
-  const pills = document.querySelectorAll(".admin-schedule-pill");
+  const pills = document.querySelectorAll("#admin-schedule-days-nav .schedule-pill");
   pills.forEach(p => {
     if (p.getAttribute("data-date") === dateStr) {
       p.classList.add("active");
+      try {
+        p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } catch(e) {}
     } else {
       p.classList.remove("active");
     }
@@ -6908,9 +6908,9 @@ function renderAdminScheduleForDate(dateStr, filterTerm) {
 
   if (eventsToRender.length === 0) {
     if (isSearching) {
-      container.innerHTML = `<div style="text-align: center; padding: 25px; color: var(--foreground-muted);">לא נמצאו משימות שתואמות לחיפוש "${escapeHtmlAdmin(filterTerm)}".</div>`;
+      container.innerHTML = `<p class="empty-state">לא נמצאו משימות שתואמות לחיפוש "${escapeHtmlAdmin(filterTerm)}".</p>`;
     } else {
-      container.innerHTML = `<div style="text-align: center; padding: 25px; color: var(--foreground-muted);">אין משימות מתוזמנות ליום זה.</div>`;
+      container.innerHTML = `<p class="empty-state">אין משימות מתוזמנות ליום זה.</p>`;
     }
     return;
   }
@@ -6918,61 +6918,82 @@ function renderAdminScheduleForDate(dateStr, filterTerm) {
   let html = "";
   if (isSearching) {
     html += `
-      <div style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 12px; font-weight: 600;">
+      <div style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 10px; font-weight: 600;">
         נמצאו ${eventsToRender.length} תוצאות בלו"ז:
       </div>
     `;
   }
 
+  html += '<div class="schedule-events-list">';
+
   eventsToRender.forEach(e => {
-    const catIcon = getAdminCatIcon(e.category);
-    const catHtml = e.category ? `<span class="admin-cat-badge" data-cat="${escapeHtmlAdmin(e.category)}">${catIcon} ${escapeHtmlAdmin(e.category)}</span>` : "";
-    
-    let locationHtml = "";
+    // Time Badge matching guest schedule
+    const timeVal = (e.time || "").trim();
+    let timeHtml = "";
+    if (timeVal.includes("-")) {
+      const parts = timeVal.split("-");
+      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(parts[0].trim())}</span><span class="time-dash">-</span><span class="time-part">${escapeHtmlAdmin(parts[1].trim())}</span></span>`;
+    } else if (timeVal) {
+      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(timeVal)}</span></span>`;
+    } else {
+      timeHtml = `<span class="event-time"><span class="time-part">-</span></span>`;
+    }
+
+    // Category Badge matching guest schedule
+    let catBadge = "";
+    if (e.category) {
+      const catIcon = getAdminCatIcon(e.category);
+      catBadge = `<span class="schedule-cat-badge" data-category="${escapeHtmlAdmin(e.category)}">${catIcon} <span>${escapeHtmlAdmin(e.category)}</span></span>`;
+    }
+
+    // Location matching guest schedule
+    let locHtml = "";
     if (e.location && e.location.trim().length > 0) {
       const locClean = e.location.trim();
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locClean + ', Israel')}`;
-      locationHtml = `
-        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="admin-schedule-loc" title="פתח ב-Google Maps">
-          📍 ${escapeHtmlAdmin(locClean)}
+      locHtml = `
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="schedule-loc-link" title="פתח ב-Google Maps">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>${escapeHtmlAdmin(locClean)}</span>
         </a>
       `;
     }
 
+    // Contacts
     const contactHtml = formatAdminContactInfo(e.contact);
-    const notesHtml = e.notes ? `<div class="admin-schedule-notes">${formatAdminScheduleNotes(e.notes)}</div>` : "";
 
-    let dayBadge = "";
+    // Search day indicator
+    let dayIndicator = "";
     if (isSearching) {
       const parts = (e.date || "").split("-");
       const dFormatted = parts.length === 3 ? `${parts[2]}.${parts[1]}` : e.date;
-      dayBadge = `<span style="font-size: 0.75rem; background: var(--accent); color: #000; padding: 2px 7px; border-radius: 4px; font-weight: 700; border: 1px solid #000;">${escapeHtmlAdmin(e.day)} ${dFormatted}</span>`;
+      dayIndicator = `<span class="schedule-cat-badge" style="background: rgba(241,169,160,0.2); color: var(--accent); border-color: rgba(241,169,160,0.3);">${escapeHtmlAdmin(e.day)} ${dFormatted}</span>`;
     }
 
+    // Notes
+    const notesHtml = e.notes ? `<span class="event-desc">${formatAdminScheduleNotes(e.notes)}</span>` : "";
+
     html += `
-      <div class="admin-schedule-card">
-        <div class="admin-schedule-card-header">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="admin-schedule-time">⏰ ${escapeHtmlAdmin(e.time || '—')}</span>
-            ${dayBadge}
-          </div>
-          ${catHtml}
-        </div>
-        
-        <div class="admin-schedule-title">${escapeHtmlAdmin(e.task)}</div>
-        
-        ${(locationHtml || contactHtml) ? `
-          <div class="admin-schedule-meta-row">
-            ${locationHtml}
+      <div class="schedule-event-inline fade-up">
+        ${timeHtml}
+        <div class="schedule-event-details">
+          <div class="schedule-title-row">
+            <span class="event-title">${escapeHtmlAdmin(e.task)}</span>
+            ${dayIndicator}
+            ${catBadge}
+            ${locHtml}
             ${contactHtml}
           </div>
-        ` : ''}
-        
-        ${notesHtml}
+          ${notesHtml}
+        </div>
       </div>
     `;
   });
 
+  html += '</div>';
   container.innerHTML = html;
 }
 

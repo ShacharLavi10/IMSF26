@@ -1527,22 +1527,27 @@ body.light-mode .checkin-restore-link {
 /* SCHEDULE & ITINERARY - APP-LIKE FESTIVAL PORTAL DESIGN    */
 /* ========================================================= */
 
-#schedule-days-nav {
+#schedule-days-nav,
+#admin-schedule-days-nav {
   display: flex !important;
   gap: 6px;
   width: 100%;
   margin-bottom: 14px;
-  padding: 0;
-  overflow: hidden; /* No horizontal scrollbar! Fits phone width */
+  padding: 2px 0 6px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-#schedule-days-nav::-webkit-scrollbar {
+#schedule-days-nav::-webkit-scrollbar,
+#admin-schedule-days-nav::-webkit-scrollbar {
   display: none;
 }
 
-#schedule-days-nav .schedule-pill {
+#schedule-days-nav .schedule-pill,
+#admin-schedule-days-nav .schedule-pill {
   flex: 1 1 0;
-  min-width: 0;
+  min-width: 58px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1556,7 +1561,8 @@ body.light-mode .checkin-restore-link {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-#schedule-days-nav .schedule-pill .day-weekday {
+#schedule-days-nav .schedule-pill .day-weekday,
+#admin-schedule-days-nav .schedule-pill .day-weekday {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 0.68rem;
   font-weight: 700;
@@ -1953,21 +1959,26 @@ body.light-mode .schedule-loc-link:hover {
 
 /* MOBILE RESPONSIVE TWEAKS FOR SCHEDULE */
 @media (max-width: 520px) {
-  #schedule-days-nav {
+  #schedule-days-nav,
+  #admin-schedule-days-nav {
     gap: 4px;
     margin-bottom: 10px;
   }
 
-  #schedule-days-nav .schedule-pill {
+  #schedule-days-nav .schedule-pill,
+  #admin-schedule-days-nav .schedule-pill {
     padding: 6px 2px;
     border-radius: 8px;
+    min-width: 50px;
   }
 
-  #schedule-days-nav .schedule-pill .day-weekday {
+  #schedule-days-nav .schedule-pill .day-weekday,
+  #admin-schedule-days-nav .schedule-pill .day-weekday {
     font-size: 0.62rem;
   }
 
-  #schedule-days-nav .schedule-pill .day-num {
+  #schedule-days-nav .schedule-pill .day-num,
+  #admin-schedule-days-nav .schedule-pill .day-num {
     font-size: 1.05rem;
   }
 
