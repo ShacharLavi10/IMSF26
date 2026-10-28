@@ -169,3 +169,11 @@
   - בורר תאריך ושעה מותאם: `#sim-custom-date`, `#sim-custom-time`.
   - סרגל אינדיקטור צף פעיל: `#live-sim-active-bar` (`#live-sim-status-text`).
 
+* **לו"ז הפקה ותפעול פנימי (Admin Production Schedule):**
+  - אקורדיון ראשי: `#admin-sec-prod-schedule` (`.admin-section-accordion`).
+  - תגית כמות משימות: `#admin-schedule-count-badge` (`.admin-section-badge`).
+  - שדה חיפוש משימות: `#admin-schedule-search` (מסנן לפי משימה, מיקום, איש קשר, שעה וקטגוריה).
+  - רצועת ימי הפסטיבל: `#admin-schedule-days-nav` (מכיל `.schedule-pill` עם `.day-weekday` ו-`.day-num`).
+  - מיכל רשימת האירועים: `#admin-schedule-events-container` (`.schedule-events-list`).
+  - כרטיסיית משימה: `.schedule-event-inline` (`.event-time`, `.schedule-event-details`, `.schedule-title-row`, `.event-title`, `.schedule-cat-badge`, `.schedule-loc-link`, `.schedule-contact-btn`, `.event-desc`, `.schedule-inline-link`).
+

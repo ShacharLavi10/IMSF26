@@ -1511,32 +1511,18 @@ body.light-mode .checkin-restore-link {
 }
 
 /* ========================================================= */
-/* SCHEDULE TIMELINE & EVENT CARDS (NEO-BRUTALISM)           */
-/* ========================================================= */
-#schedule-days-nav {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 6px 2px 14px 2px;
-  margin-bottom: 16px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ========================================================= */
 /* SCHEDULE & ITINERARY - APP-LIKE FESTIVAL PORTAL DESIGN    */
 /* ========================================================= */
 
 #schedule-days-nav,
 #admin-schedule-days-nav {
   display: flex !important;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   margin-bottom: 14px;
-  padding: 2px 0 6px 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  padding: 0;
+  overflow: hidden !important; /* Fits entirely on screen without horizontal scroll */
+  box-sizing: border-box;
 }
 
 #schedule-days-nav::-webkit-scrollbar,
@@ -1547,18 +1533,20 @@ body.light-mode .checkin-restore-link {
 #schedule-days-nav .schedule-pill,
 #admin-schedule-days-nav .schedule-pill {
   flex: 1 1 0;
-  min-width: 58px;
+  min-width: 0 !important; /* Allow shrinking so all days fit on any screen */
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 7px 3px;
-  border-radius: 10px;
+  padding: 6px 2px;
+  border-radius: 8px;
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
   transition: all 0.18s ease;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
 }
 
 #schedule-days-nav .schedule-pill .day-weekday,
@@ -1570,14 +1558,23 @@ body.light-mode .checkin-restore-link {
   text-transform: uppercase;
   line-height: 1.1;
   opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-#schedule-days-nav .schedule-pill .day-num {
+#schedule-days-nav .schedule-pill .day-num,
+#admin-schedule-days-nav .schedule-pill .day-num {
   font-family: 'Oswald', sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.1;
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Day pills - Dark Mode (Default) */
@@ -1961,25 +1958,28 @@ body.light-mode .schedule-loc-link:hover {
 @media (max-width: 520px) {
   #schedule-days-nav,
   #admin-schedule-days-nav {
-    gap: 4px;
+    gap: 3px;
     margin-bottom: 10px;
+    overflow: hidden !important;
   }
 
   #schedule-days-nav .schedule-pill,
   #admin-schedule-days-nav .schedule-pill {
-    padding: 6px 2px;
-    border-radius: 8px;
-    min-width: 50px;
+    padding: 5px 1px;
+    border-radius: 6px;
+    min-width: 0 !important;
+    flex: 1 1 0;
   }
 
   #schedule-days-nav .schedule-pill .day-weekday,
   #admin-schedule-days-nav .schedule-pill .day-weekday {
-    font-size: 0.62rem;
+    font-size: 0.58rem;
+    letter-spacing: 0;
   }
 
   #schedule-days-nav .schedule-pill .day-num,
   #admin-schedule-days-nav .schedule-pill .day-num {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .schedule-events-list {

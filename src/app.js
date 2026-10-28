@@ -2277,10 +2277,21 @@ let isCurrentGuestAdmin = false;
         return;
       }
       
+      function cleanGuestTime(t) {
+        if (!t) return "";
+        let s = String(t).trim();
+        if (s.includes("T")) {
+          const afterT = s.split("T")[1];
+          if (afterT) s = afterT;
+        }
+        const m = s.match(/(\d{1,2}:\d{2})/);
+        return m ? m[1].padStart(5, '0') : s;
+      }
+
       let html = '<div class="schedule-events-list">';
       events.forEach(e => {
-        const sTime = e.startTime ? String(e.startTime).trim() : "";
-        const eTime = e.endTime ? String(e.endTime).trim() : "";
+        const sTime = cleanGuestTime(e.startTime);
+        const eTime = cleanGuestTime(e.endTime);
         let timeHtml = "";
         if (sTime && eTime) {
           timeHtml = `<span class="event-time"><span class="time-part">${escapeHtml(sTime)}</span><span class="time-dash">-</span><span class="time-part">${escapeHtml(eTime)}</span></span>`;
@@ -6739,11 +6750,47 @@ function parseAdminProductionSchedule(rawSchedule) {
 
     if (!dateVal) continue;
 
+    function cleanTimeString(val) {
+      if (!val) return "";
+      let s = String(val).trim();
+      if (!s) return "";
+      
+      // If contains ISO date or yyyy-mm-dd (e.g. 2026-11-17T12:00:00 or 2026-11-17 12:00)
+      if (s.includes("T")) {
+        const afterT = s.split("T")[1];
+        if (afterT) s = afterT;
+      }
+      // Check if starts with YYYY-MM-DD
+      const datePrefixMatch = s.match(/^\d{4}-\d{2}-\d{2}\s+(.*)$/);
+      if (datePrefixMatch) {
+        s = datePrefixMatch[1].trim();
+      }
+
+      // If range like "10:00-13:30" or "10:00 - 13:30"
+      if (s.includes("-")) {
+        const parts = s.split("-");
+        const cleanParts = parts.map(p => {
+          const match = p.match(/(\d{1,2}:\d{2})/);
+          return match ? match[1].padStart(5, '0') : p.trim();
+        });
+        return cleanParts.join("-");
+      }
+
+      // Single time like "12:00:00" or "12:00"
+      const singleMatch = s.match(/(\d{1,2}:\d{2})/);
+      if (singleMatch) {
+        return singleMatch[1].padStart(5, '0');
+      }
+
+      // If text like "כל היום" or "בוקר", return as is
+      return s;
+    }
+
     const event = {
       id: "prod_event_" + i,
       day: colDay !== -1 ? String(row[colDay] || "").trim() : "",
       date: dateVal,
-      time: colTime !== -1 ? String(row[colTime] || "").trim() : "",
+      time: colTime !== -1 ? cleanTimeString(row[colTime]) : "",
       task: colTask !== -1 ? String(row[colTask] || "").trim() : "",
       location: colLoc !== -1 ? String(row[colLoc] || "").trim() : "",
       contact: colContact !== -1 ? String(row[colContact] || "").trim() : "",
@@ -6873,13 +6920,15 @@ function initAdminProductionSchedule() {
     const firstEvent = events[0];
     const dayHebrew = firstEvent ? firstEvent.day : "";
     const parts = d.split("-");
-    const dayNumStr = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
+    // Show day number only (e.g. "16", "17", "18") matching guest schedule perfectly
+    const dayNumOnly = parts.length === 3 ? parseInt(parts[2], 10) : d;
+    const fullDateDisplay = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
     const isActive = (d === currentAdminScheduleDate);
 
     pillsHtml += `
-      <button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')" title="${d}">
+      <button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')" title="${dayHebrew} ${fullDateDisplay}">
         <span class="day-weekday">${escapeHtmlAdmin(dayHebrew || d)}</span>
-        <span class="day-num">${escapeHtmlAdmin(dayNumStr)}</span>
+        <span class="day-num">${escapeHtmlAdmin(String(dayNumOnly))}</span>
       </button>
     `;
   });
@@ -6953,13 +7002,26 @@ function renderAdminScheduleForDate(dateStr, filterTerm) {
 
   eventsToRender.forEach(e => {
     // Time Badge matching guest schedule
-    const timeVal = (e.time || "").trim();
+    let timeVal = (e.time || "").trim();
+    if (timeVal.includes("T")) {
+      const afterT = timeVal.split("T")[1];
+      if (afterT) timeVal = afterT;
+    }
+    const datePrefixMatch = timeVal.match(/^\d{4}-\d{2}-\d{2}\s+(.*)$/);
+    if (datePrefixMatch) {
+      timeVal = datePrefixMatch[1].trim();
+    }
+
     let timeHtml = "";
     if (timeVal.includes("-")) {
       const parts = timeVal.split("-");
-      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(parts[0].trim())}</span><span class="time-dash">-</span><span class="time-part">${escapeHtmlAdmin(parts[1].trim())}</span></span>`;
+      const p1 = parts[0].match(/(\d{1,2}:\d{2})/) ? parts[0].match(/(\d{1,2}:\d{2})/)[1].padStart(5, '0') : parts[0].trim();
+      const p2 = parts[1].match(/(\d{1,2}:\d{2})/) ? parts[1].match(/(\d{1,2}:\d{2})/)[1].padStart(5, '0') : parts[1].trim();
+      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(p1)}</span><span class="time-dash">-</span><span class="time-part">${escapeHtmlAdmin(p2)}</span></span>`;
     } else if (timeVal) {
-      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(timeVal)}</span></span>`;
+      const m = timeVal.match(/(\d{1,2}:\d{2})/);
+      const displayTime = m ? m[1].padStart(5, '0') : timeVal;
+      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(displayTime)}</span></span>`;
     } else {
       timeHtml = `<span class="event-time"><span class="time-part">-</span></span>`;
     }
