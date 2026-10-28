@@ -185,5 +185,16 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - The testing tool `🧪 Live Simulator` (`#timetable-sim-trigger-btn` and modal `#live-simulator-modal-overlay`) is exclusively enabled in the Sandbox environment (`imsf26sandbox.vercel.app` & localhost).
     - In Production (`imsf26portal.vercel.app`), the button is completely hidden from real festival delegates and guests (`display: none !important`), ensuring a clean, authentic festival experience.
 
+- **Schedule & Production Itinerary Mobile Design Standards (`#schedule-days-nav`, `#admin-schedule-days-nav`)**:
+  - **Zero Horizontal Scroll on Phone**:
+    - Both Guest Itinerary and Admin Production Schedule feature day strips (`.schedule-pill`) using `flex: 1 1 0`, `min-width: 0 !important`, and `overflow: hidden !important`.
+    - Day containers span exactly 100% of the mobile viewport with a compact 3px/4px gap, displaying all festival days on screen without requiring horizontal scrolling.
+  - **Day Number Single-Token Rule (`.day-num`)**:
+    - Day badges display only the numeric day (e.g. `16`, `17`, `18`, `19`, `20`, `21`, `22`, `23`) with `white-space: nowrap` and `overflow: hidden` to prevent numbers from wrapping or breaching card borders. Full formatted dates (e.g. `שני 16.11`) are available in the title attribute.
+  - **Strict `HH:MM` Time Formatting**:
+    - Event times are scrubbed of any date/year/ISO artifacts, rendering cleanly as `HH:MM` or `HH:MM-HH:MM` (`.event-time`, `.time-part`, `.time-dash`).
+  - **Visual Symmetry**:
+    - Admin Production Schedule mirrors the Guest Itinerary layout (`.schedule-events-list`, `.schedule-event-inline`), incorporating compact inline location links (`.schedule-loc-link`), quick contact actions (`.schedule-contact-btn.call`, `.schedule-contact-btn.wa`), and category badge styling (`.schedule-cat-badge`).
+
 
 
