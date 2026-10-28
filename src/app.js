@@ -321,6 +321,11 @@ let isCurrentGuestAdmin = false;
         
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
+
+        // Handle direct deep link params if navigated from Calendar or external link
+        if (typeof handleUrlDeepLinking === 'function') {
+          setTimeout(handleUrlDeepLinking, 200);
+        }
       } else {
         const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
 
@@ -3149,6 +3154,7 @@ let isCurrentGuestAdmin = false;
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.some(a => a.genre)) {
             globalArtistsData = parsed.sort((a, b) => a.name.localeCompare(b.name));
+            if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
           }
@@ -3173,6 +3179,7 @@ let isCurrentGuestAdmin = false;
           if (res && res.success && res.artists) {
             localStorage.setItem(cacheKey, JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
+            if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
           } else {
@@ -4870,8 +4877,16 @@ let isCurrentGuestAdmin = false;
       'piratas': 'Las Piratas Piratas'
     };
 
+    const matchedArtistCache = new Map();
+    window.matchedArtistCache = matchedArtistCache;
+
     function findMatchedArtist(artistName, aliases) {
       if (!artistName) return null;
+      const cacheKey = String(artistName).trim() + '__' + ((aliases && aliases.length) ? aliases.join('|') : '');
+      if (matchedArtistCache.has(cacheKey)) {
+        return matchedArtistCache.get(cacheKey);
+      }
+
       const queries = [artistName, ...(aliases || [])];
 
       // 1. Check known alias dictionary
@@ -4881,7 +4896,10 @@ let isCurrentGuestAdmin = false;
           const targetName = normalizeArtistString(ARTIST_NAME_ALIASES_DICT[normQ]);
           if (globalArtistsData && globalArtistsData.length > 0) {
             const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
-            if (match) return match;
+            if (match) {
+              matchedArtistCache.set(cacheKey, match);
+              return match;
+            }
           }
         }
         for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
@@ -4889,7 +4907,10 @@ let isCurrentGuestAdmin = false;
             const targetName = normalizeArtistString(val);
             if (globalArtistsData && globalArtistsData.length > 0) {
               const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
-              if (match) return match;
+              if (match) {
+                matchedArtistCache.set(cacheKey, match);
+                return match;
+              }
             }
           }
         }
@@ -4902,14 +4923,19 @@ let isCurrentGuestAdmin = false;
           const normA = normalizeArtistString(a.name);
           for (const q of cleanQueries) {
             if (!q) continue;
-            if (normA === q) return a;
+            if (normA === q) {
+              matchedArtistCache.set(cacheKey, a);
+              return a;
+            }
             if (q.length >= 4 && (normA.includes(q) || q.includes(normA))) {
+              matchedArtistCache.set(cacheKey, a);
               return a;
             }
           }
         }
       }
 
+      matchedArtistCache.set(cacheKey, null);
       return null;
     }
 
@@ -5130,8 +5156,14 @@ let isCurrentGuestAdmin = false;
           ttBtn.setAttribute('aria-selected', 'true');
           dirView.style.display = 'none';
           ttView.style.display = 'block';
-          initFestivalTimetableUI();
-          fetchDynamicTimetableSchedule(true);
+          
+          // Immediate render response for instant INP paint (<16ms)
+          requestAnimationFrame(function() {
+            setTimeout(function() {
+              initFestivalTimetableUI();
+              fetchDynamicTimetableSchedule(true);
+            }, 0);
+          });
         }
       }
     }
@@ -5664,6 +5696,24 @@ let isCurrentGuestAdmin = false;
     }
     window.isTimetableShowLive = isTimetableShowLive;
 
+    function jumpToLiveShow(dateStr, showId, artistId) {
+      if (typeof switchCategoryTab === 'function') {
+        switchCategoryTab('artists');
+      }
+      if (typeof jumpToTimetableShow === 'function') {
+        jumpToTimetableShow(dateStr, showId, artistId);
+      } else {
+        if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('timetable');
+        if (typeof selectTimetableDate === 'function') selectTimetableDate(dateStr);
+      }
+      if (artistId && typeof openArtistSheet === 'function') {
+        setTimeout(function() {
+          openArtistSheet(artistId);
+        }, 450);
+      }
+    }
+    window.jumpToLiveShow = jumpToLiveShow;
+
     function updateLiveBanner() {
       const banner = document.getElementById('artists-live-banner');
       const content = document.getElementById('live-banner-content');
@@ -5681,8 +5731,9 @@ let isCurrentGuestAdmin = false;
         const matched = findMatchedArtist(s.artistName, s.aliases);
         const isFav = matched ? !!favs[matched.id] : false;
         const displayName = matched ? matched.name : s.artistName;
+        const artistId = matched ? matched.id : '';
         html += `
-          <div class="live-show-item ${isFav ? 'is-fav' : ''}" onclick="selectTimetableDate('${s.date}'); switchArtistsSubTab('timetable');">
+          <div class="live-show-item ${isFav ? 'is-fav' : ''}" onclick="jumpToLiveShow('${s.date}', '${s.id || ''}', '${artistId}')">
             <span class="live-show-artist">${escapeHtml(displayName)}</span>
             <span class="live-show-stage">📍 ${escapeHtml(s.stage)}</span>
             <span class="live-show-time">${escapeHtml(s.startTime)}</span>
@@ -5745,6 +5796,44 @@ let isCurrentGuestAdmin = false;
     }
     window.updateCalendarSyncBadge = updateCalendarSyncBadge;
 
+    function getSpecificShowLocation(show) {
+      if (!show) return 'Israel Music Showcase Festival';
+      const date = show.date || '';
+      const stage = (show.stage || '').toLowerCase();
+
+      if (date === '2026-11-17') {
+        return 'Yellow Submarine, Jerusalem';
+      }
+      if (date === '2026-11-18') {
+        if (stage.includes('tower') || stage.includes('david') || stage.includes('מגדל') || stage.includes('דוד')) {
+          return 'Tower of David, Jerusalem';
+        }
+        return 'Yellow Submarine, Jerusalem';
+      }
+      if (date === '2026-11-19') {
+        if (stage.includes('nocturno') || stage.includes('נוקטורנו')) {
+          return 'Nocturno, Jerusalem';
+        }
+        return 'Museum of Tolerance, Jerusalem';
+      }
+      if (date === '2026-11-20') {
+        return 'Teder, Tel Aviv';
+      }
+      if (date === '2026-11-21') {
+        if (stage.includes('hameretz') || stage.includes('המרץ') || stage.includes('מרץ')) {
+          return 'Hameretz 2, Tel Aviv';
+        }
+        return 'Radical, Tel Aviv';
+      }
+      if (date === '2026-11-22') {
+        return 'Container House, Jaffa Port';
+      }
+
+      const dayObj = (typeof FESTIVAL_TIMETABLE_DAYS !== 'undefined') ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === date) : null;
+      return dayObj ? `${dayObj.venue}, ${dayObj.city}` : 'Israel Music Showcase Festival';
+    }
+    window.getSpecificShowLocation = getSpecificShowLocation;
+
     function escapeIcsText(str) {
       if (!str) return '';
       return String(str)
@@ -5761,6 +5850,7 @@ let isCurrentGuestAdmin = false;
       const formatUtc = (dt) => `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}${pad(dt.getUTCSeconds())}Z`;
       const formatLocal = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}${pad(dt.getSeconds())}`;
       const dtstamp = formatUtc(now);
+      const baseUrl = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'https://imsf26sandbox.vercel.app';
 
       const lines = [
         'BEGIN:VCALENDAR',
@@ -5793,7 +5883,6 @@ let isCurrentGuestAdmin = false;
       shows.forEach(show => {
         const artist = show.matchedArtist;
         const displayName = artist ? artist.name : show.artistName;
-        const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === show.date);
         
         let startH = 19, startM = 0;
         if (show.startTime) {
@@ -5828,16 +5917,25 @@ let isCurrentGuestAdmin = false;
           endDt.setDate(endDt.getDate() + 1);
         }
 
-        const locationStr = [show.stage, dayObj ? dayObj.venue : '', dayObj ? dayObj.city : ''].filter(Boolean).join(', ');
-        const desc = `Israel Music Showcase Festival 2026\\nArtist: ${escapeIcsText(displayName)}\\nStage: ${escapeIcsText(show.stage || 'Festival Stage')}\\nTime: ${escapeIcsText(show.startTime || 'TBA')} - ${escapeIcsText(show.endTime || '')}\\nVenue: ${escapeIcsText(dayObj ? dayObj.venue + ', ' + dayObj.city : '')}\\nReminder: Show starts in 5 minutes!\\nPortal: https://imsf26sandbox.vercel.app`;
+        let cleanStage = (show.stage || 'Festival Stage').trim();
+        if (!cleanStage.toLowerCase().endsWith('stage')) {
+          cleanStage = `${cleanStage} Stage`;
+        }
+        // Strict format requested: <Artist Name> > <Stage Name> Stage >
+        const eventSummary = `${displayName} > ${cleanStage} >`;
+        const exactLocation = getSpecificShowLocation(show);
+        const portalDeepLink = `${baseUrl}/?tab=artists&date=${encodeURIComponent(show.date)}&show=${encodeURIComponent(show.id)}${artist ? `&artist=${encodeURIComponent(artist.id)}` : ''}`;
+
+        const desc = `Israel Music Showcase Festival 2026\\nArtist: ${escapeIcsText(displayName)}\\nStage: ${escapeIcsText(cleanStage)}\\nTime: ${escapeIcsText(show.startTime || 'TBA')}${show.endTime ? ' - ' + escapeIcsText(show.endTime) : ''}\\nLocation: ${escapeIcsText(exactLocation)}\\nReminder: Starts in 5 minutes!\\n\\nView in Festival Portal:\\n${portalDeepLink}`;
 
         lines.push('BEGIN:VEVENT');
         lines.push(`UID:imsf2026-show-${show.id}@imsf-festival.com`);
         lines.push(`DTSTAMP:${dtstamp}`);
         lines.push(`DTSTART;TZID=Asia/Jerusalem:${formatLocal(startDt)}`);
         lines.push(`DTEND;TZID=Asia/Jerusalem:${formatLocal(endDt)}`);
-        lines.push(`SUMMARY:🎸 ${escapeIcsText(displayName)} (IMSF 2026)`);
-        lines.push(`LOCATION:${escapeIcsText(locationStr)}`);
+        lines.push(`SUMMARY:${escapeIcsText(eventSummary)}`);
+        lines.push(`LOCATION:${escapeIcsText(exactLocation)}`);
+        lines.push(`URL;VALUE=URI:${portalDeepLink}`);
         lines.push(`DESCRIPTION:${desc}`);
 
         if (isCancellation) {
@@ -5847,7 +5945,7 @@ let isCurrentGuestAdmin = false;
           lines.push('BEGIN:VALARM');
           lines.push('TRIGGER:-PT5M');
           lines.push('ACTION:DISPLAY');
-          lines.push(`DESCRIPTION:${escapeIcsText(displayName)} starts in 5 minutes at ${escapeIcsText(show.stage || 'the stage')}!`);
+          lines.push(`DESCRIPTION:${escapeIcsText(displayName)} starts in 5 minutes at ${escapeIcsText(cleanStage)}!`);
           lines.push('END:VALARM');
         }
 
@@ -5898,99 +5996,113 @@ let isCurrentGuestAdmin = false;
 
       const actionsDiv = document.getElementById('calendar-modal-actions');
       const statusDiv = document.getElementById('calendar-modal-status');
-      const statusText = document.getElementById('calendar-status-text');
       const successDiv = document.getElementById('calendar-modal-success');
       const successText = document.getElementById('calendar-success-text');
       const successDetail = document.getElementById('calendar-success-detail');
 
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
       if (actionType === 'download') {
         const icsString = generateIcsContent(shows, false);
-        const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'IMSF_2026_My_Shows.ics';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+
+        if (isIOS) {
+          // 1-Tap iOS native calendar sheet without download prompt
+          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
+        } else {
+          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'IMSF_2026_My_Shows.ics';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
 
         if (actionsDiv) actionsDiv.style.display = 'none';
+        if (statusDiv) statusDiv.style.display = 'none';
         if (successDiv) {
           successDiv.style.display = 'block';
-          if (successText) successText.innerText = 'Calendar File Downloaded!';
-          if (successDetail) successDetail.innerText = 'Tap or open the downloaded .ics file on your phone/computer to add all ' + shows.length + ' shows to your calendar with 5-min alerts.';
+          if (successText) successText.innerText = 'Calendar Ready!';
+          if (successDetail) {
+            successDetail.innerText = isIOS 
+              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.'
+              : 'Open the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
+          }
         }
       } else if (actionType === 'cancel') {
         const allKnownShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(shouldKeepTimetableItem);
         const icsString = generateIcsContent(shows.length > 0 ? shows : allKnownShows, true);
-        const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'IMSF_2026_Cancel_Shows.ics';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+
+        if (isIOS) {
+          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
+        } else {
+          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'IMSF_2026_Cancel_Shows.ics';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
 
         if (actionsDiv) actionsDiv.style.display = 'none';
+        if (statusDiv) statusDiv.style.display = 'none';
         if (successDiv) {
           successDiv.style.display = 'block';
-          if (successText) successText.innerText = 'Cancellation File Downloaded!';
-          if (successDetail) successDetail.innerText = 'Open the downloaded cancellation file to remove previously added festival shows from your calendar.';
+          if (successText) successText.innerText = 'Cancellation Ready!';
+          if (successDetail) successDetail.innerText = 'Open or confirm the cancellation file to remove previously added festival shows from your calendar.';
         }
-      } else if (actionType === 'email') {
-        if (!currentGuestEmail) {
-          alert("Please ensure you are signed in so we know which email address to send your calendar invite to.");
-          return;
-        }
-
-        if (actionsDiv) actionsDiv.style.display = 'none';
-        if (statusDiv) statusDiv.style.display = 'block';
-        if (statusText) statusText.innerText = 'Sending calendar invite to your email... ⏳';
-
-        isSyncingCalendar = true;
-        const icsString = generateIcsContent(shows, false);
-        const guestName = (currentGuestData && (currentGuestData.fullName || (currentGuestData.firstName ? (currentGuestData.firstName + ' ' + (currentGuestData.lastName || '')) : ''))) || '';
-
-        if (!window.google || !google.script || !google.script.run) {
-          isSyncingCalendar = false;
-          if (statusDiv) statusDiv.style.display = 'none';
-          if (actionsDiv) actionsDiv.style.display = 'flex';
-          alert("Service temporarily unavailable. Please try downloading the .ics file directly.");
-          return;
-        }
-
-        google.script.run
-          .withSuccessHandler(function(res) {
-            isSyncingCalendar = false;
-            if (statusDiv) statusDiv.style.display = 'none';
-            if (res && res.success) {
-              if (successDiv) {
-                successDiv.style.display = 'block';
-                if (successText) successText.innerText = 'Calendar Invite Sent!';
-                if (successDetail) successDetail.innerText = `We have sent your calendar invite (${shows.length} shows) to ${currentGuestEmail}. Check your inbox and tap "Add to Calendar"!`;
-              }
-            } else {
-              if (actionsDiv) actionsDiv.style.display = 'flex';
-              alert("Could not send calendar invite: " + ((res && res.message) || "Unknown error"));
-            }
-          })
-          .withFailureHandler(function(err) {
-            isSyncingCalendar = false;
-            if (statusDiv) statusDiv.style.display = 'none';
-            if (actionsDiv) actionsDiv.style.display = 'flex';
-            alert("Error sending calendar invite: " + (err.message || err.toString()));
-          })
-          .sendCalendarInviteEmail(currentGuestEmail, icsString, {
-            count: shows.length,
-            guestName: guestName,
-            isCancel: false
-          });
       }
     }
     window.executeCalendarSync = executeCalendarSync;
+
+    function handleUrlDeepLinking() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
+        const date = params.get('date');
+        const showId = params.get('show');
+        const artistId = params.get('artist');
+
+        if (tab === 'artists' || date || showId || artistId) {
+          if (typeof switchCategoryTab === 'function') {
+            switchCategoryTab('artists');
+          }
+          if (typeof switchArtistsSubTab === 'function') {
+            switchArtistsSubTab('timetable');
+          }
+          if (date && typeof selectTimetableDate === 'function') {
+            currentTimetableMode = 'all';
+            currentSelectedStage = 'All';
+            selectTimetableDate(date);
+          }
+          if (showId) {
+            setTimeout(function() {
+              const showCard = document.getElementById('timetable-card-' + showId);
+              if (showCard) {
+                showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showCard.classList.remove('highlight-pulse');
+                void showCard.offsetWidth;
+                showCard.classList.add('highlight-pulse');
+                setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 4000);
+              }
+            }, 600);
+          }
+          if (artistId && typeof openArtistSheet === 'function') {
+            setTimeout(function() {
+              openArtistSheet(artistId);
+            }, 850);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not handle URL deep linking:", err);
+      }
+    }
+    window.handleUrlDeepLinking = handleUrlDeepLinking;
 
     // Background interval to refresh live badges and banner every 30 seconds
     if (typeof window !== 'undefined') {
