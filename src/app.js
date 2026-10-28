@@ -5211,6 +5211,7 @@ let isCurrentGuestAdmin = false;
       renderTimetableShows();
       if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
       if (typeof updateLiveBanner === 'function') updateLiveBanner();
+      if (typeof initLiveSimulatorEnv === 'function') initLiveSimulatorEnv();
       fetchDynamicTimetableSchedule(true);
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
@@ -5813,7 +5814,31 @@ let isCurrentGuestAdmin = false;
       if (typeof updateLiveSimActiveBar === 'function') updateLiveSimActiveBar();
     };
 
+    function initLiveSimulatorEnv() {
+      const isSandbox = (typeof window !== 'undefined' && window.location && (
+        window.location.hostname.includes('sandbox') ||
+        window.location.hostname.includes('localhost') ||
+        window.location.hostname === '127.0.0.1'
+      ));
+      const simBtn = document.getElementById('timetable-sim-trigger-btn');
+      if (simBtn) {
+        simBtn.style.display = isSandbox ? 'inline-flex' : 'none';
+      }
+      if (!isSandbox) {
+        window.simulatedLiveFestivalTime = null;
+        const activeBar = document.getElementById('live-sim-active-bar');
+        if (activeBar) activeBar.style.display = 'none';
+      }
+    }
+    window.initLiveSimulatorEnv = initLiveSimulatorEnv;
+
     function openLiveSimulatorModal() {
+      const isSandbox = (typeof window !== 'undefined' && window.location && (
+        window.location.hostname.includes('sandbox') ||
+        window.location.hostname.includes('localhost') ||
+        window.location.hostname === '127.0.0.1'
+      ));
+      if (!isSandbox) return;
       const overlay = document.getElementById('live-simulator-modal-overlay');
       if (overlay) {
         overlay.style.display = 'flex';

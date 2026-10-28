@@ -170,5 +170,20 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - Terminology updated from "Band Members" to "Band / Team Members" across all briefcase export cards.
   - Includes a dedicated festival recommendation tip for delegates attending showcase concerts.
 
+- **Global Live Showcase Banner & Timetable Symmetry (`.live-banner`, `.live-show-card`, `.timetable-live-badge`)**:
+  - **Compact, Subtle & Elegant Banner**:
+    - Replaced heavy double borders and harsh black block shadows with a delicate `1px` border, subtle `3.5px` crimson side accent stripe, and soft drop shadow.
+    - Reduced vertical padding from 16px to 8px and card height to ~44px, eliminating visual shouting and freeing up screen space on mobile.
+    - Minimalist live indicator with a refined 7px pulsating dot (`.pulse`).
+    - Clean heart emoji `❤️` for favorited artists (no redundant text pills) and refined "View Artist →" action pill.
+  - **Zero Mid-Word Line Breaks & Safe Typography Rule**:
+    - Across all cards (`.timetable-artist-name`, `.live-card-artist`, `.schedule-event-inline .event-title`, `.artist-card-name`, `#sheet-artist-name`), text wrapping strictly enforces:
+      `word-break: normal; overflow-wrap: break-word; hyphens: none; -webkit-hyphens: none; min-width: 0;`
+    - Font size is responsive via `clamp(0.88rem, 3.2vw, 0.98rem)`.
+    - Guarantees artist names never chop words in half (e.g. `Dani-` / `el` or `Zam-` / `ir`) or break awkwardly across lines on narrow smartphone viewports.
+  - **Live Simulator Sandbox Gating**:
+    - The testing tool `🧪 Live Simulator` (`#timetable-sim-trigger-btn` and modal `#live-simulator-modal-overlay`) is exclusively enabled in the Sandbox environment (`imsf26sandbox.vercel.app` & localhost).
+    - In Production (`imsf26portal.vercel.app`), the button is completely hidden from real festival delegates and guests (`display: none !important`), ensuring a clean, authentic festival experience.
+
 
 
