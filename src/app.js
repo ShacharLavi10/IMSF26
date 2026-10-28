@@ -3587,6 +3587,26 @@ let isCurrentGuestAdmin = false;
       currentOpenArtistId = null;
       // Re-render grid to reflect any favorite changes from sheet
       filterArtists();
+
+      // If opened from timetable or deep link, ensure timetable is active and highlight the show card
+      const targetShowId = window.deepLinkedShowId || window.lastJumpedShowId;
+      if (artistOpenedFromSubTab === 'timetable' || window.deepLinkedShowId) {
+        if (typeof switchArtistsSubTab === 'function') {
+          switchArtistsSubTab('timetable');
+        }
+        if (targetShowId) {
+          setTimeout(function() {
+            const showCard = document.getElementById('timetable-card-' + targetShowId);
+            if (showCard) {
+              showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              showCard.classList.remove('highlight-pulse');
+              void showCard.offsetWidth;
+              showCard.classList.add('highlight-pulse');
+              setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 5000);
+            }
+          }, 150);
+        }
+      }
       
       // If we closed it manually via the X or overlay, we must clean up the hash
       if (isHashChange !== true && (window.location.hash === "#sheet" || window.location.hash === "#timetable")) {
@@ -5595,7 +5615,7 @@ let isCurrentGuestAdmin = false;
         const artist = s.matchedArtist;
         const isFav = s.isFav;
         const isLive = isTimetableShowLive(s);
-        const clickAttr = artist ? `onclick="openArtistSheet('${artist.id}')"` : '';
+        const clickAttr = artist ? `onclick="window.lastJumpedShowId='${s.id}'; artistOpenedFromSubTab='timetable'; openArtistSheet('${artist.id}')"` : '';
         const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''} ${isLive ? 'is-live-now' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
@@ -5758,7 +5778,77 @@ let isCurrentGuestAdmin = false;
       }
       renderTimetableShows();
       updateLiveBanner();
+      if (typeof updateLiveSimActiveBar === 'function') updateLiveSimActiveBar();
     };
+
+    function openLiveSimulatorModal() {
+      const overlay = document.getElementById('live-simulator-modal-overlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    window.openLiveSimulatorModal = openLiveSimulatorModal;
+
+    function closeLiveSimulatorModal() {
+      const overlay = document.getElementById('live-simulator-modal-overlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+    window.closeLiveSimulatorModal = closeLiveSimulatorModal;
+
+    function applyLiveSimulation(dateStr, timeStr) {
+      if (typeof window.simulateLiveFestivalTime === 'function') {
+        window.simulateLiveFestivalTime(dateStr, timeStr);
+      }
+      closeLiveSimulatorModal();
+      if (typeof switchCategoryTab === 'function') {
+        switchCategoryTab('artists');
+      }
+      if (typeof switchArtistsSubTab === 'function') {
+        switchArtistsSubTab('timetable');
+      }
+      if (typeof selectTimetableDate === 'function' && dateStr) {
+        selectTimetableDate(dateStr);
+      }
+    }
+    window.applyLiveSimulation = applyLiveSimulation;
+
+    function applyCustomLiveSimulation() {
+      const dateInput = document.getElementById('sim-custom-date');
+      const timeInput = document.getElementById('sim-custom-time');
+      const dateVal = dateInput ? dateInput.value : '2026-11-18';
+      const timeVal = timeInput ? timeInput.value : '20:30';
+      applyLiveSimulation(dateVal, timeVal);
+    }
+    window.applyCustomLiveSimulation = applyCustomLiveSimulation;
+
+    function resetLiveSimulation() {
+      if (typeof window.simulateLiveFestivalTime === 'function') {
+        window.simulateLiveFestivalTime(null, null);
+      }
+      closeLiveSimulatorModal();
+    }
+    window.resetLiveSimulation = resetLiveSimulation;
+
+    function updateLiveSimActiveBar() {
+      const bar = document.getElementById('live-sim-active-bar');
+      const text = document.getElementById('live-sim-status-text');
+      if (!bar) return;
+      if (window.simulatedLiveFestivalTime) {
+        const pad = n => String(n).padStart(2, '0');
+        const dt = window.simulatedLiveFestivalTime;
+        const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        const dateStr = `${dt.getDate()}.${dt.getMonth() + 1}`;
+        if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        bar.style.display = 'flex';
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+    window.updateLiveSimActiveBar = updateLiveSimActiveBar;
 
     function getFavoritedShowsList() {
       const favs = getFavorites();
@@ -5918,11 +6008,8 @@ let isCurrentGuestAdmin = false;
         }
 
         let cleanStage = (show.stage || 'Festival Stage').trim();
-        if (!cleanStage.toLowerCase().endsWith('stage')) {
-          cleanStage = `${cleanStage} Stage`;
-        }
-        // Strict format requested: <Artist Name> > <Stage Name> Stage >
-        const eventSummary = `${displayName} > ${cleanStage} >`;
+        // Format: <Artist Name> | <Stage Name>
+        const eventSummary = `${displayName} | ${cleanStage}`;
         const exactLocation = getSpecificShowLocation(show);
         const portalDeepLink = `${baseUrl}/?tab=artists&date=${encodeURIComponent(show.date)}&show=${encodeURIComponent(show.id)}${artist ? `&artist=${encodeURIComponent(artist.id)}` : ''}`;
 
@@ -6069,6 +6156,13 @@ let isCurrentGuestAdmin = false;
         const artistId = params.get('artist');
 
         if (tab === 'artists' || date || showId || artistId) {
+          if (showId) {
+            window.deepLinkedShowId = showId;
+            window.lastJumpedShowId = showId;
+          }
+          if (date) {
+            window.deepLinkedDate = date;
+          }
           if (typeof switchCategoryTab === 'function') {
             switchCategoryTab('artists');
           }
@@ -6088,14 +6182,15 @@ let isCurrentGuestAdmin = false;
                 showCard.classList.remove('highlight-pulse');
                 void showCard.offsetWidth;
                 showCard.classList.add('highlight-pulse');
-                setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 4000);
+                setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 5000);
               }
-            }, 600);
+            }, 500);
           }
           if (artistId && typeof openArtistSheet === 'function') {
+            artistOpenedFromSubTab = 'timetable';
             setTimeout(function() {
               openArtistSheet(artistId);
-            }, 850);
+            }, 750);
           }
         }
       } catch (err) {

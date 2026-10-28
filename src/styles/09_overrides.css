@@ -4391,6 +4391,120 @@ body.light-mode .timetable-calendar-sync-btn {
   letter-spacing: 0.5px;
 }
 
+/* LIVE SIMULATOR BAR & CONTROLS */
+.live-sim-active-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #ffffff;
+  border: 2px solid #dc2626;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5), 3px 3px 0px #000;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 999;
+  font-size: 0.85rem;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease;
+}
+body.light-mode .live-sim-active-bar {
+  background: #ffffff;
+  color: #111827;
+  border-color: #dc2626;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15), 3px 3px 0px #000;
+}
+.live-sim-active-bar .live-sim-dot {
+  animation: pulse-red 1.2s infinite;
+}
+.live-sim-active-bar button {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid #374151;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+body.light-mode .live-sim-active-bar button {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+  color: #111827;
+}
+.live-sim-active-bar .live-sim-reset-btn {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+.timetable-sim-trigger-btn {
+  background: transparent;
+  border: 1.5px dashed var(--foreground-muted);
+  color: var(--foreground-muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.timetable-sim-trigger-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(241, 169, 160, 0.08);
+}
+
+.sim-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.sim-preset-card {
+  background: var(--card-bg, #1e293b);
+  border: 1.5px solid var(--border-color, #334155);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+body.light-mode .sim-preset-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.sim-preset-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0px #000;
+}
+.sim-preset-date {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.sim-preset-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.sim-preset-desc {
+  font-size: 0.72rem;
+  color: var(--foreground-muted);
+}
+
 
 
 
