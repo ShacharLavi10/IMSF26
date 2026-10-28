@@ -502,6 +502,70 @@ The portal contains an internal Production Dashboard hidden from regular guests.
 3. **קידוד כותרות ושמות עבריים במייל (UTF-8 RFC 2047 Encoding):**
    * שורת הנושא במייל מקודדת תקנית בפורמט `=?UTF-8?B?...?=` כדי למנוע ג'יבריש בתוכנות דואר בעת שילוב עברית ואנגלית.
 
+### י. מנוע סנכרון יומן והתראות מופעים (Calendar Sync, ICS Generation & Pre-Show Alerts)
+הפורטל כולל מנגנון סנכרון ישיר ליומן האישי של האורח (Apple Calendar, Google Calendar, Outlook) עבור כל המופעים שסומנו במועדפים (❤️ Favorites):
+
+1. **זרימת העבודה (User Workflow):**
+   * **כפתור סנכרון מהיר בלוח ההופעות:** בלשונית ה-Timetable מוצג כפתור `📅 Sync My Shows to Calendar` עם תגית מונה חיה (`#calendar-sync-badge`) המציגה את כמות המופעים שנבחרו.
+   * **מודאל תזכורת והנחיה מקדים (`#calendar-sync-modal-overlay`):**
+     - לחיצה על הכפתור פותחת דיאלוג מעוצב שמסביר לאורח שהסנכרון יכלול את כל האומנים שסימן במועדפים.
+     - מציג הודעת תזכורת חכמה: "Tip: Make sure you've favorited all your top artists before syncing to get your complete festival schedule in one click."
+   * **הורדה ישירה ופתיחה ביומן:**
+     - לחיצה על `Add to Calendar` מחוללת מיידית קובץ `.ics` תקני ומורידה אותו למכשיר.
+     - **באייפון (iOS):** לחיצה על הקובץ פותחת ישירות את יומן המכשיר של Apple עם כפתור `Add All`.
+     - **באנדרואיד / מחשב:** הקובץ מיובא ישירות ל-Google Calendar או Outlook בלחיצה אחת.
+   * **כפתור הסרה / ביטול אירועים בלחיצה אחת (`Remove from Calendar`):**
+     - אם האורח סנכרן בטעות או שינה את בחירותיו, הוא יכול להוריד קובץ `.ics` לביטול אירועים (`STATUS:CANCELLED` עם אותם UIDs ייחודיים), המוחק את האירועים מהיומן באופן מיידי ומסודר.
+
+2. **מבנה קובץ ה-ICS והשדות התקניים (`generateIcsContent`):**
+   * **UID ייחודי ויציב:** כל אירוע מקבל מזהה חד-חד-ערכי קבוע בפורמט:
+     `UID:imsf2026-show-[date]-[id]@imsf26portal.vercel.app`
+     יציבות ה-UID היא שמאפשרת לתוכנת היומן לזהות עדכונים או לבטל את האירועים במדויק מבלי לשכפל אירועים.
+   * **כותרת האירוע (SUMMARY):**
+     `SUMMARY:[Artist Name] | [Stage Name] Stage`
+     (הפרדה נקייה עם תו הצינור `|` ותוספת המילה `Stage` לזיהוי ברור ביומן).
+   * **התראה מוקדמת 5 דקות לפני תחילת המופע (VALARM):**
+     קובץ ה-ICS כולל בלוק התראה מובנה:
+     ```ics
+     BEGIN:VALARM
+     ACTION:DISPLAY
+     DESCRIPTION:Showcase starting in 5 minutes!
+     TRIGGER:-PT5M
+     END:VALARM
+     ```
+     זה מבטיח שהטלפון של האורח יקפיץ התראה קולית וויזואלית 5 דקות בדיוק לפני שהאמן עולה לבמה.
+   * **קישור עמוק ישיר לפורטל (Deep Link back to Portal):**
+     בגוף התיאור (DESCRIPTION) מוטמע קישור ישיר לפורטל:
+     `https://imsf26portal.vercel.app#sheet-[artistId]`
+     לחיצה עליו מתוך פגישת היומן פותחת ישירות את האפליקציה ואת כרטיסיית האמן המלאה עם הלו"ז והשירים.
+   * **מיקום מדויק (LOCATION):**
+     מנגנון `getSpecificShowLocation` מחלץ את הכתובת והמתחם הפיזי המדויק לפי יום ובמה (למשל `Tower of David, Jerusalem`, `Yellow Submarine, Jerusalem`, `Teder, Tel Aviv`, `Container House, Jaffa Port`).
+
+---
+
+### יא. ארכיטקטורת שליחת מיילים והודעות מערכת (Email Delivery & Messaging Architecture)
+המערכת כוללת מספר ערוצי שליחה ייעודיים, כולם מנוהלים דרך `GmailApp` ב-Google Apps Script תוך שמירה על תקני אבטחה, UTF-8 ועבירות (Deliverability):
+
+1. **שליחת קוד אימות חד-פעמי (OTP Login):**
+   - **פונקציה בשרת:** `requestOTP(email)` ב-`PortalBackend-Vercel.gs`.
+   - **מנגנון:** יצירת קוד בן 6 ספרות אקראיות, שמירתו ב-`CacheService` עם תוקף של 10 דקות והצפנה/האש.
+   - **משלוח:** שליחת מייל מעוצב לכתובת האורח עם כותרת ברורה, קוד בולט, והנחיה לחזרה לפורטל.
+   - **אבטחה וסשן:** אימות מוצלח שומר Session פעיל לשבוע ימים ב-`localStorage`.
+
+2. **שליחת מזוודת אומנים אישית (Artist Briefcase PDF):**
+   - **פונקציה בשרת:** `sendBriefcaseToEmail(email, pdfBase64)` ב-`src/ArtistsAPI.gs`.
+   - **מנגנון:** השרת מקבל את פרטי האורח, מייצר מסמך PDF עשיר ואיכותי עם כל האמנים המועדפים, הלינקים, נתוני הקשר וההערות הפרטיות.
+   - **משלוח:** מייל ממותג יוצא מכתובת ההפקה הרשמית של הפסטיבל ישירות לתיבת המייל של האורח עם קובץ ה-PDF מצורף (`attachments`).
+   - **קידוד:** כותרת המייל מקודדת תקנית ב-`RFC 2047` (`=?UTF-8?B?...?=`) למניעת שיבושי שפה בין עברית לאנגלית.
+
+3. **שליחת זימוני יומן ועדכוני לו"ז במייל (Direct Email Calendar Invites):**
+   - אופציה מובנית במודאל ה-Sync המאפשרת לאורח לקבל את קובץ ה-`.ics` ישירות למייל הרשום שלו (לשימוש במחשבים שולחניים או מכשירים שבהם הורדה ישירה חסומה באבטחת ארגון).
+
+4. **אינטגרציית הודעות צוות והפקה (Production Communications):**
+   - בדשבורד ההפקה הפנימי (`#production-schedule-container`), כל איש קשר מחובר אוטומטית לשני ערוצים ישירים:
+     - **Click-to-Call (`tel:`):** חיוג סלולרי מיידי בלחיצה אחת מהטלפון.
+     - **WhatsApp Web / App (`https://wa.me/`):** פתיחה ישירה של צ'אט ווטסאפ עם קידומת בינלאומית מנורמלת (`972+`).
+
 ---
 
 ## 📱 10. ארכיטקטורת PWA, אופליין ומיזוג חכם דו-כיווני (PWA, Offline Mode & Two-Way Smart Merge)
