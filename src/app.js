@@ -5138,11 +5138,24 @@ let isCurrentGuestAdmin = false;
     window.switchArtistsSubTab = switchArtistsSubTab;
 
     function initFestivalTimetableUI() {
+      // Auto-select today if within festival dates
+      try {
+        const todayD = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const todayStr = `${todayD.getFullYear()}-${pad(todayD.getMonth() + 1)}-${pad(todayD.getDate())}`;
+        const isFestDay = FESTIVAL_TIMETABLE_DAYS.some(d => d.date === todayStr);
+        if (isFestDay && currentSelectedTimetableDate !== todayStr) {
+          currentSelectedTimetableDate = todayStr;
+        }
+      } catch (e) {}
+
       renderTimetableDaysNav();
       renderTimetableVenueBanner();
       renderTimetableMasterSwitcher();
       renderTimetableStageSelector();
       renderTimetableShows();
+      if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
+      if (typeof updateLiveBanner === 'function') updateLiveBanner();
       fetchDynamicTimetableSchedule(true);
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
@@ -5284,6 +5297,7 @@ let isCurrentGuestAdmin = false;
       renderTimetableMasterSwitcher();
       renderTimetableStageSelector();
       renderTimetableShows();
+      if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
     }
     window.updateTimetableFavCount = updateTimetableFavCount;
 
@@ -5548,8 +5562,9 @@ let isCurrentGuestAdmin = false;
       finalShows.forEach(s => {
         const artist = s.matchedArtist;
         const isFav = s.isFav;
+        const isLive = isTimetableShowLive(s);
         const clickAttr = artist ? `onclick="openArtistSheet('${artist.id}')"` : '';
-        const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''}`;
+        const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''} ${isLive ? 'is-live-now' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
           : ((s.artistName.includes('דלתות') || s.artistName.toLowerCase().includes('doors')) ? `<span class="timetable-avatar-fallback">🚪</span>` : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`));
@@ -5557,6 +5572,7 @@ let isCurrentGuestAdmin = false;
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
         const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
+        const liveBadge = isLive ? `<span class="timetable-live-badge ${isFav ? 'fav-live' : ''}">${isFav ? '🔥 LIVE NOW' : '🔴 LIVE NOW'}</span>` : '';
         let cleanName = s.artistName;
         if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
           cleanName = 'Doors Opening';
@@ -5578,6 +5594,7 @@ let isCurrentGuestAdmin = false;
               <div class="timetable-artist-header">
                 ${avatarHtml}
                 <span class="timetable-artist-name">${escapeHtml(displayName)}</span>
+                ${liveBadge}
                 ${favMiniBadge}
               </div>
               <div class="timetable-sub-details">
@@ -5596,8 +5613,397 @@ let isCurrentGuestAdmin = false;
       });
       
       container.innerHTML = html;
+      if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
+      if (typeof updateLiveBanner === 'function') updateLiveBanner();
     }
     window.renderTimetableShows = renderTimetableShows;
+
+    /* ==========================================================================
+       LIVE FESTIVAL SHOW ENGINE & CALENDAR SYNC CONTROLLER
+       ========================================================================== */
+    let simulatedLiveFestivalTime = null;
+    window.simulatedLiveFestivalTime = null;
+
+    function isTimetableShowLive(show, customNow) {
+      if (!show || !show.date || !show.startTime) return false;
+      const now = customNow || window.simulatedLiveFestivalTime || new Date();
+
+      const matchStart = String(show.startTime).match(/(\d{1,2}):(\d{2})/);
+      if (!matchStart) return false;
+      const startH = parseInt(matchStart[1], 10);
+      const startM = parseInt(matchStart[2], 10);
+
+      let endH, endM;
+      const matchEnd = show.endTime ? String(show.endTime).match(/(\d{1,2}):(\d{2})/) : null;
+      if (matchEnd) {
+        endH = parseInt(matchEnd[1], 10);
+        endM = parseInt(matchEnd[2], 10);
+      } else {
+        endH = startH;
+        endM = startM + 45;
+        if (endM >= 60) {
+          endH += Math.floor(endM / 60);
+          endM = endM % 60;
+        }
+      }
+
+      const parts = show.date.split('-').map(Number);
+      if (parts.length < 3) return false;
+      const [y, m, d] = parts;
+      const startDt = new Date(y, m - 1, d, startH, startM, 0);
+      let endDt = new Date(y, m - 1, d, endH, endM, 0);
+
+      if (startH < 6) {
+        startDt.setDate(startDt.getDate() + 1);
+      }
+      if (endH < 6 || endDt <= startDt) {
+        endDt.setDate(endDt.getDate() + 1);
+      }
+
+      return now >= startDt && now <= endDt;
+    }
+    window.isTimetableShowLive = isTimetableShowLive;
+
+    function updateLiveBanner() {
+      const banner = document.getElementById('artists-live-banner');
+      const content = document.getElementById('live-banner-content');
+      if (!banner || !content) return;
+
+      const liveShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(s => shouldKeepTimetableItem(s) && isTimetableShowLive(s));
+      if (liveShows.length === 0) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      const favs = getFavorites();
+      let html = '';
+      liveShows.forEach(s => {
+        const matched = findMatchedArtist(s.artistName, s.aliases);
+        const isFav = matched ? !!favs[matched.id] : false;
+        const displayName = matched ? matched.name : s.artistName;
+        html += `
+          <div class="live-show-item ${isFav ? 'is-fav' : ''}" onclick="selectTimetableDate('${s.date}'); switchArtistsSubTab('timetable');">
+            <span class="live-show-artist">${escapeHtml(displayName)}</span>
+            <span class="live-show-stage">📍 ${escapeHtml(s.stage)}</span>
+            <span class="live-show-time">${escapeHtml(s.startTime)}</span>
+            ${isFav ? '<span class="live-show-fav-tag">❤️ YOUR FAVORITE</span>' : ''}
+          </div>
+        `;
+      });
+      content.innerHTML = html;
+      banner.style.display = 'flex';
+    }
+    window.updateLiveBanner = updateLiveBanner;
+
+    window.simulateLiveFestivalTime = function(dateStr, timeStr) {
+      if (!dateStr || !timeStr) {
+        window.simulatedLiveFestivalTime = null;
+        console.log("Simulated live festival time cleared. Using real clock.");
+      } else {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const [h, min] = timeStr.split(':').map(Number);
+        window.simulatedLiveFestivalTime = new Date(y, m - 1, d, h, min, 0);
+        console.log("Simulated live festival time set to:", window.simulatedLiveFestivalTime.toString());
+      }
+      renderTimetableShows();
+      updateLiveBanner();
+    };
+
+    function getFavoritedShowsList() {
+      const favs = getFavorites();
+      const list = [];
+      const seen = new Set();
+      (FESTIVAL_SHOWS_SCHEDULE || []).forEach(s => {
+        if (!shouldKeepTimetableItem(s)) return;
+        const matched = findMatchedArtist(s.artistName, s.aliases);
+        if (matched && favs[matched.id]) {
+          if (!seen.has(s.id)) {
+            seen.add(s.id);
+            list.push({ ...s, matchedArtist: matched });
+          }
+        }
+      });
+      return list;
+    }
+    window.getFavoritedShowsList = getFavoritedShowsList;
+
+    function updateCalendarSyncBadge() {
+      const badge = document.getElementById('calendar-sync-badge');
+      const modalCount = document.getElementById('calendar-modal-shows-count');
+      const modalEmail = document.getElementById('calendar-modal-email');
+      const favShows = getFavoritedShowsList();
+      const count = favShows.length;
+      if (badge) {
+        badge.innerText = count;
+      }
+      if (modalCount) {
+        modalCount.innerText = `${count} Show${count === 1 ? '' : 's'} Selected`;
+      }
+      if (modalEmail) {
+        modalEmail.innerText = currentGuestEmail || 'guest@domain.com';
+      }
+    }
+    window.updateCalendarSyncBadge = updateCalendarSyncBadge;
+
+    function escapeIcsText(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,')
+        .replace(/\r?\n/g, '\\n')
+        .trim();
+    }
+
+    function generateIcsContent(shows, isCancellation) {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const formatUtc = (dt) => `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}${pad(dt.getUTCSeconds())}Z`;
+      const formatLocal = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}${pad(dt.getSeconds())}`;
+      const dtstamp = formatUtc(now);
+
+      const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Israel Music Showcase Festival 2026//Timetable//EN',
+        'CALSCALE:GREGORIAN',
+        `METHOD:${isCancellation ? 'CANCEL' : 'PUBLISH'}`,
+        'X-WR-CALNAME:IMSF 2026 - My Shows',
+        'X-WR-TIMEZONE:Asia/Jerusalem',
+        'BEGIN:VTIMEZONE',
+        'TZID:Asia/Jerusalem',
+        'X-LIC-LOCATION:Asia/Jerusalem',
+        'BEGIN:STANDARD',
+        'TZOFFSETFROM:+0300',
+        'TZOFFSETTO:+0200',
+        'TZNAME:IST',
+        'DTSTART:19701025T020000',
+        'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10',
+        'END:STANDARD',
+        'BEGIN:DAYLIGHT',
+        'TZOFFSETFROM:+0200',
+        'TZOFFSETTO:+0300',
+        'TZNAME:IDT',
+        'DTSTART:19700327T020000',
+        'RRULE:FREQ=YEARLY;BYDAY=-1FR;BYMONTH=3',
+        'END:DAYLIGHT',
+        'END:VTIMEZONE'
+      ];
+
+      shows.forEach(show => {
+        const artist = show.matchedArtist;
+        const displayName = artist ? artist.name : show.artistName;
+        const dayObj = FESTIVAL_TIMETABLE_DAYS.find(d => d.date === show.date);
+        
+        let startH = 19, startM = 0;
+        if (show.startTime) {
+          const match = String(show.startTime).match(/(\d{1,2}):(\d{2})/);
+          if (match) {
+            startH = parseInt(match[1], 10);
+            startM = parseInt(match[2], 10);
+          }
+        }
+        let endH = startH, endM = startM + 45;
+        if (show.endTime) {
+          const match = String(show.endTime).match(/(\d{1,2}):(\d{2})/);
+          if (match) {
+            endH = parseInt(match[1], 10);
+            endM = parseInt(match[2], 10);
+          }
+        } else {
+          if (endM >= 60) {
+            endH += Math.floor(endM / 60);
+            endM = endM % 60;
+          }
+        }
+
+        const parts = show.date.split('-').map(Number);
+        const startDt = new Date(parts[0], parts[1] - 1, parts[2], startH, startM, 0);
+        let endDt = new Date(parts[0], parts[1] - 1, parts[2], endH, endM, 0);
+
+        if (startH < 6) {
+          startDt.setDate(startDt.getDate() + 1);
+        }
+        if (endH < 6 || endDt <= startDt) {
+          endDt.setDate(endDt.getDate() + 1);
+        }
+
+        const locationStr = [show.stage, dayObj ? dayObj.venue : '', dayObj ? dayObj.city : ''].filter(Boolean).join(', ');
+        const desc = `Israel Music Showcase Festival 2026\\nArtist: ${escapeIcsText(displayName)}\\nStage: ${escapeIcsText(show.stage || 'Festival Stage')}\\nTime: ${escapeIcsText(show.startTime || 'TBA')} - ${escapeIcsText(show.endTime || '')}\\nVenue: ${escapeIcsText(dayObj ? dayObj.venue + ', ' + dayObj.city : '')}\\nReminder: Show starts in 5 minutes!\\nPortal: https://imsf26sandbox.vercel.app`;
+
+        lines.push('BEGIN:VEVENT');
+        lines.push(`UID:imsf2026-show-${show.id}@imsf-festival.com`);
+        lines.push(`DTSTAMP:${dtstamp}`);
+        lines.push(`DTSTART;TZID=Asia/Jerusalem:${formatLocal(startDt)}`);
+        lines.push(`DTEND;TZID=Asia/Jerusalem:${formatLocal(endDt)}`);
+        lines.push(`SUMMARY:🎸 ${escapeIcsText(displayName)} (IMSF 2026)`);
+        lines.push(`LOCATION:${escapeIcsText(locationStr)}`);
+        lines.push(`DESCRIPTION:${desc}`);
+
+        if (isCancellation) {
+          lines.push('STATUS:CANCELLED');
+        } else {
+          lines.push('STATUS:CONFIRMED');
+          lines.push('BEGIN:VALARM');
+          lines.push('TRIGGER:-PT5M');
+          lines.push('ACTION:DISPLAY');
+          lines.push(`DESCRIPTION:${escapeIcsText(displayName)} starts in 5 minutes at ${escapeIcsText(show.stage || 'the stage')}!`);
+          lines.push('END:VALARM');
+        }
+
+        lines.push('END:VEVENT');
+      });
+
+      lines.push('END:VCALENDAR');
+      return lines.join('\r\n');
+    }
+    window.generateIcsContent = generateIcsContent;
+
+    function openCalendarSyncModal() {
+      updateCalendarSyncBadge();
+      const overlay = document.getElementById('calendar-sync-modal-overlay');
+      const actionsDiv = document.getElementById('calendar-modal-actions');
+      const statusDiv = document.getElementById('calendar-modal-status');
+      const successDiv = document.getElementById('calendar-modal-success');
+      
+      if (actionsDiv) actionsDiv.style.display = 'flex';
+      if (statusDiv) statusDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+
+      if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    window.openCalendarSyncModal = openCalendarSyncModal;
+
+    function closeCalendarSyncModal() {
+      const overlay = document.getElementById('calendar-sync-modal-overlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+    window.closeCalendarSyncModal = closeCalendarSyncModal;
+
+    let isSyncingCalendar = false;
+    function executeCalendarSync(actionType) {
+      if (isSyncingCalendar) return;
+
+      const shows = getFavoritedShowsList();
+      if (actionType !== 'cancel' && shows.length === 0) {
+        alert("You haven't favorited any artists performing in the festival yet! Click ❤️ on the artists you want to see, then sync to your calendar.");
+        return;
+      }
+
+      const actionsDiv = document.getElementById('calendar-modal-actions');
+      const statusDiv = document.getElementById('calendar-modal-status');
+      const statusText = document.getElementById('calendar-status-text');
+      const successDiv = document.getElementById('calendar-modal-success');
+      const successText = document.getElementById('calendar-success-text');
+      const successDetail = document.getElementById('calendar-success-detail');
+
+      if (actionType === 'download') {
+        const icsString = generateIcsContent(shows, false);
+        const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'IMSF_2026_My_Shows.ics';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        if (successDiv) {
+          successDiv.style.display = 'block';
+          if (successText) successText.innerText = 'Calendar File Downloaded!';
+          if (successDetail) successDetail.innerText = 'Tap or open the downloaded .ics file on your phone/computer to add all ' + shows.length + ' shows to your calendar with 5-min alerts.';
+        }
+      } else if (actionType === 'cancel') {
+        const allKnownShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(shouldKeepTimetableItem);
+        const icsString = generateIcsContent(shows.length > 0 ? shows : allKnownShows, true);
+        const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'IMSF_2026_Cancel_Shows.ics';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        if (successDiv) {
+          successDiv.style.display = 'block';
+          if (successText) successText.innerText = 'Cancellation File Downloaded!';
+          if (successDetail) successDetail.innerText = 'Open the downloaded cancellation file to remove previously added festival shows from your calendar.';
+        }
+      } else if (actionType === 'email') {
+        if (!currentGuestEmail) {
+          alert("Please ensure you are signed in so we know which email address to send your calendar invite to.");
+          return;
+        }
+
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        if (statusDiv) statusDiv.style.display = 'block';
+        if (statusText) statusText.innerText = 'Sending calendar invite to your email... ⏳';
+
+        isSyncingCalendar = true;
+        const icsString = generateIcsContent(shows, false);
+        const guestName = (currentGuestData && (currentGuestData.fullName || (currentGuestData.firstName ? (currentGuestData.firstName + ' ' + (currentGuestData.lastName || '')) : ''))) || '';
+
+        if (!window.google || !google.script || !google.script.run) {
+          isSyncingCalendar = false;
+          if (statusDiv) statusDiv.style.display = 'none';
+          if (actionsDiv) actionsDiv.style.display = 'flex';
+          alert("Service temporarily unavailable. Please try downloading the .ics file directly.");
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function(res) {
+            isSyncingCalendar = false;
+            if (statusDiv) statusDiv.style.display = 'none';
+            if (res && res.success) {
+              if (successDiv) {
+                successDiv.style.display = 'block';
+                if (successText) successText.innerText = 'Calendar Invite Sent!';
+                if (successDetail) successDetail.innerText = `We have sent your calendar invite (${shows.length} shows) to ${currentGuestEmail}. Check your inbox and tap "Add to Calendar"!`;
+              }
+            } else {
+              if (actionsDiv) actionsDiv.style.display = 'flex';
+              alert("Could not send calendar invite: " + ((res && res.message) || "Unknown error"));
+            }
+          })
+          .withFailureHandler(function(err) {
+            isSyncingCalendar = false;
+            if (statusDiv) statusDiv.style.display = 'none';
+            if (actionsDiv) actionsDiv.style.display = 'flex';
+            alert("Error sending calendar invite: " + (err.message || err.toString()));
+          })
+          .sendCalendarInviteEmail(currentGuestEmail, icsString, {
+            count: shows.length,
+            guestName: guestName,
+            isCancel: false
+          });
+      }
+    }
+    window.executeCalendarSync = executeCalendarSync;
+
+    // Background interval to refresh live badges and banner every 30 seconds
+    if (typeof window !== 'undefined') {
+      setInterval(function() {
+        if (document.visibilityState === 'visible') {
+          if (currentArtistsSubTab === 'timetable' || (document.getElementById('artists-timetable-view') && document.getElementById('artists-timetable-view').style.display !== 'none')) {
+            renderTimetableShows();
+          }
+          updateLiveBanner();
+        }
+      }, 30000);
+    }
+
 
     // FULLSCREEN IMAGE VIEWER LOGIC
     function openImageViewerFromBg(event, el) {
@@ -8236,4 +8642,14 @@ window.handlePwaModalLater = handlePwaModalLater;
 window.checkAndPromptPwaInstall = checkAndPromptPwaInstall;
 window.dismissPwaBanner = dismissPwaBanner;
 window.closePwaIosModal = closePwaIosModal;
+window.isTimetableShowLive = isTimetableShowLive;
+window.updateLiveBanner = updateLiveBanner;
+window.simulateLiveFestivalTime = simulateLiveFestivalTime;
+window.getFavoritedShowsList = getFavoritedShowsList;
+window.updateCalendarSyncBadge = updateCalendarSyncBadge;
+window.generateIcsContent = generateIcsContent;
+window.openCalendarSyncModal = openCalendarSyncModal;
+window.closeCalendarSyncModal = closeCalendarSyncModal;
+window.executeCalendarSync = executeCalendarSync;
+
 
