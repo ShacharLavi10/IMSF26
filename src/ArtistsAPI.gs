@@ -1884,6 +1884,85 @@ function generateAndSendBriefcasePdf(email, clientPayload, options) {
   }
 }
 
+/**
+ * Sends a calendar invite (.ics) with favorited showcase performances to the guest's email.
+ * Includes automatic 5-minute reminder alarms and clean festival formatting.
+ */
+function sendCalendarInviteEmail(email, icsString, options) {
+  try {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      return { success: false, message: "Missing email address." };
+    }
+    if (!icsString) {
+      return { success: false, message: "Missing calendar invite data." };
+    }
+
+    options = options || {};
+    const guestName = options.guestName || "Festival Guest";
+    const count = options.count || 0;
+    const isCancel = !!options.isCancel;
+
+    const icsFileName = isCancel ? "IMSF_2026_Cancel_Shows.ics" : "IMSF_2026_My_Shows.ics";
+    const icsBlob = Utilities.newBlob(icsString, "text/calendar; charset=UTF-8; method=" + (isCancel ? "CANCEL" : "REQUEST"), icsFileName);
+
+    const emailSubject = isCancel 
+      ? "IMSF 2026 - Calendar Update: Shows Removed" 
+      : "IMSF 2026 - Your Personalized Festival Schedule (.ics Invite)";
+
+    const emailBodyHtml = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f7fafc; padding: 30px 15px;">
+        <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border: 2px solid #111827; border-radius: 8px; box-shadow: 4px 4px 0px #111827; overflow: hidden;">
+          <div style="background-color: #0a1626; padding: 24px 20px; text-align: center; border-bottom: 2px solid #111827;">
+            <h1 style="color: #F1A9A0; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 1px;">ISRAEL MUSIC SHOWCASE FESTIVAL 2026</h1>
+            <p style="color: #cbd5e1; margin: 6px 0 0 0; font-size: 13px;">${isCancel ? 'Calendar Shows Cancellation' : 'Personalized Shows Calendar Sync'}</p>
+          </div>
+          <div style="padding: 24px 20px;">
+            <p style="font-size: 16px; color: #1e293b; margin-top: 0;">Dear <strong>${guestName}</strong>,</p>
+            <p style="font-size: 14px; color: #475569; line-height: 1.6;">
+              ${isCancel 
+                ? 'Attached is the cancellation file to remove your previously exported festival shows from your calendar.'
+                : 'Attached is your official festival calendar invite with <strong>' + count + ' showcase performances</strong> that you favorited!'}
+            </p>
+            ${!isCancel ? `
+              <div style="background-color: #f8fafc; border-left: 4px solid #F1A9A0; padding: 12px 14px; margin: 18px 0; font-size: 13px; color: #334155; line-height: 1.5;">
+                <strong>🔔 Automatic 5-Minute Alerts:</strong> Each show includes a built-in alarm 5 minutes before stage time, so you won't miss your favorite artists.<br><br>
+                <strong>📱 How to add:</strong> Click the attached <code>.ics</code> file or tap "Add to Calendar" in your email app to import all events directly.
+              </div>
+            ` : ''}
+            <div style="border-top: 1px solid #edf2f7; padding-top: 18px; font-size: 13px; color: #718096;">
+              Warm regards,<br>
+              <strong>The IMSF 2026 Production Team</strong><br>
+              Yellow Submarine, Jerusalem
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    GmailApp.sendEmail(cleanEmail, emailSubject, "", {
+      htmlBody: emailBodyHtml,
+      from: "imsfhost@gmail.com",
+      name: "Israel Music Showcase Festival 2026",
+      bcc: "imsfhost@gmail.com",
+      attachments: [icsBlob]
+    });
+
+    return {
+      success: true,
+      emailSent: true,
+      count: count
+    };
+  } catch (err) {
+    console.error("Error in sendCalendarInviteEmail:", err);
+    return {
+      success: false,
+      message: err.message || err.toString()
+    };
+  }
+}
+
+
 
 
 

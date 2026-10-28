@@ -152,3 +152,20 @@
       - מעטפת כרטיס שאטל: `.flight-shuttle-card`.
       - פרטי מפגש וזמנים: `.shuttle-time-badge`, `.shuttle-meeting-point`.
       - שותפים לשאטל: `.shuttle-passengers-wrap`, `.shuttle-passenger-badge` (לחיץ לפתיחת פרופיל אורח).
+
+* **באנר מופעי לייב גלובלי (Global Live Showcase Banner):**
+  - מזהה באנר עליון: `#artists-live-banner` (מוצג בראש כל הלשוניות כשיש מופע חי ברגע זה).
+  - מעטפת ראשית: `.live-banner`.
+  - כותרת ואינדיקטור פועם: `.live-banner-header`, `.live-indicator`, `.pulse`.
+  - מיכל כרטיסי המופעים: `.live-content` (`#live-banner-content`).
+  - כרטיס מופע בודד: `.live-show-card` (עם הדגשת `.is-fav` לאמן מועדף).
+  - פרטי אמן בבאנר: `.live-card-left`, `.live-card-avatar`, `.live-card-text`, `.live-card-artist`, `.live-card-heart-icon` (`❤️`), `.live-card-meta`, `.live-card-stage`, `.live-card-time`.
+  - כפתור פעולה לכרטיס: `.live-card-action`, `.live-card-action-btn` ("View Artist →").
+
+* **סימולטור מופעי לייב לבדיקות (Live Festival Simulator):**
+  - כפתור פתיחת סימולטור: `#timetable-sim-trigger-btn` (`.timetable-sim-trigger-btn`, מוצג בלעדית בסביבת `sandbox`).
+  - מודאל הסימולציה: `#live-simulator-modal-overlay`.
+  - כרטיסי תרחישי בדיקה מהירים: `.sim-preset-grid`, `.sim-preset-card`.
+  - בורר תאריך ושעה מותאם: `#sim-custom-date`, `#sim-custom-time`.
+  - סרגל אינדיקטור צף פעיל: `#live-sim-active-bar` (`#live-sim-status-text`).
+

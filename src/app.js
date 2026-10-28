@@ -321,6 +321,11 @@ let isCurrentGuestAdmin = false;
         
         // Start live updates polling & fetch schedule
         startLiveUpdatesPolling();
+
+        // Handle direct deep link params if navigated from Calendar or external link
+        if (typeof handleUrlDeepLinking === 'function') {
+          setTimeout(handleUrlDeepLinking, 200);
+        }
       } else {
         const displayName = response.guestInfo.firstName || response.guestInfo.name || response.guestInfo["שם פרטי"] || "";
 
@@ -3149,6 +3154,7 @@ let isCurrentGuestAdmin = false;
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.some(a => a.genre)) {
             globalArtistsData = parsed.sort((a, b) => a.name.localeCompare(b.name));
+            if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
           }
@@ -3173,6 +3179,7 @@ let isCurrentGuestAdmin = false;
           if (res && res.success && res.artists) {
             localStorage.setItem(cacheKey, JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
+            if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
           } else {
@@ -3580,6 +3587,26 @@ let isCurrentGuestAdmin = false;
       currentOpenArtistId = null;
       // Re-render grid to reflect any favorite changes from sheet
       filterArtists();
+
+      // If opened from timetable or deep link, ensure timetable is active and highlight the show card
+      const targetShowId = window.deepLinkedShowId || window.lastJumpedShowId;
+      if (artistOpenedFromSubTab === 'timetable' || window.deepLinkedShowId) {
+        if (typeof switchArtistsSubTab === 'function') {
+          switchArtistsSubTab('timetable');
+        }
+        if (targetShowId) {
+          setTimeout(function() {
+            const showCard = document.getElementById('timetable-card-' + targetShowId);
+            if (showCard) {
+              showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              showCard.classList.remove('highlight-pulse');
+              void showCard.offsetWidth;
+              showCard.classList.add('highlight-pulse');
+              setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 5000);
+            }
+          }, 150);
+        }
+      }
       
       // If we closed it manually via the X or overlay, we must clean up the hash
       if (isHashChange !== true && (window.location.hash === "#sheet" || window.location.hash === "#timetable")) {
@@ -3587,7 +3614,7 @@ let isCurrentGuestAdmin = false;
       }
     }
 
-    window.addEventListener('hashchange', function() {
+    function handleNavHashChange() {
       // 1. If returning to #sheet (e.g. Back button pressed from #timetable)
       if (window.location.hash === "#sheet") {
         if (!document.getElementById('artist-bottom-sheet').classList.contains('active')) {
@@ -3605,15 +3632,15 @@ let isCurrentGuestAdmin = false;
       }
 
       // 2. If the hash is no longer #sheet, but the artist sheet is open, close it.
-      if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+      if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet') && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
         closeArtistSheet(true);
       }
       // If the hash is no longer #guestsheet, but the guest sheet is open, close it.
-      if (window.location.hash !== "#guestsheet" && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
+      if (window.location.hash !== "#guestsheet" && document.getElementById('guest-bottom-sheet') && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
         closeGuestSheet(true);
       }
       // If the hash is no longer #updates, but the updates panel is open, close it.
-      if (window.location.hash !== "#updates" && document.getElementById('updates-panel').style.left === "0px") {
+      if (window.location.hash !== "#updates" && document.getElementById('updates-panel') && document.getElementById('updates-panel').style.left === "0px") {
         toggleUpdatesPanel(true);
       }
       // If the hash is no longer #adminsheet, but the admin sheet is open, close it.
@@ -3626,7 +3653,10 @@ let isCurrentGuestAdmin = false;
           closeNetworkingDetailSheet(true);
         }
       }
-    });
+    }
+
+    window.addEventListener('hashchange', handleNavHashChange);
+    window.addEventListener('popstate', handleNavHashChange);
 
 
     function toggleSheetFav(event) {
@@ -4442,7 +4472,7 @@ let isCurrentGuestAdmin = false;
             "stage": "Plaza",
             "startTime": "22:20",
             "endTime": "22:50",
-            "artistName": "BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)",
+            "artistName": "BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)",
             "aliases": [
                   "BILTEEZ",
                   "בילטיז",
@@ -4840,8 +4870,8 @@ let isCurrentGuestAdmin = false;
       'deswa': 'Deswa',
       "ג'וזף אי שיין": 'Joseph E-Shine',
       'joseph e shine': 'Joseph E-Shine',
-      'בילטיז': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
-      'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
+      'בילטיז': 'BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)',
+      'bilteez': 'BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)',
       'עדן דרסו': 'Eden Derso',
       'eden derso': 'Eden Derso',
       'אנסמבל פיל ביית': 'FeelBeat Ensemble',
@@ -4870,8 +4900,16 @@ let isCurrentGuestAdmin = false;
       'piratas': 'Las Piratas Piratas'
     };
 
+    const matchedArtistCache = new Map();
+    window.matchedArtistCache = matchedArtistCache;
+
     function findMatchedArtist(artistName, aliases) {
       if (!artistName) return null;
+      const cacheKey = String(artistName).trim() + '__' + ((aliases && aliases.length) ? aliases.join('|') : '');
+      if (matchedArtistCache.has(cacheKey)) {
+        return matchedArtistCache.get(cacheKey);
+      }
+
       const queries = [artistName, ...(aliases || [])];
 
       // 1. Check known alias dictionary
@@ -4881,7 +4919,10 @@ let isCurrentGuestAdmin = false;
           const targetName = normalizeArtistString(ARTIST_NAME_ALIASES_DICT[normQ]);
           if (globalArtistsData && globalArtistsData.length > 0) {
             const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
-            if (match) return match;
+            if (match) {
+              matchedArtistCache.set(cacheKey, match);
+              return match;
+            }
           }
         }
         for (const [key, val] of Object.entries(ARTIST_NAME_ALIASES_DICT)) {
@@ -4889,7 +4930,10 @@ let isCurrentGuestAdmin = false;
             const targetName = normalizeArtistString(val);
             if (globalArtistsData && globalArtistsData.length > 0) {
               const match = globalArtistsData.find(a => normalizeArtistString(a.name) === targetName);
-              if (match) return match;
+              if (match) {
+                matchedArtistCache.set(cacheKey, match);
+                return match;
+              }
             }
           }
         }
@@ -4902,14 +4946,19 @@ let isCurrentGuestAdmin = false;
           const normA = normalizeArtistString(a.name);
           for (const q of cleanQueries) {
             if (!q) continue;
-            if (normA === q) return a;
+            if (normA === q) {
+              matchedArtistCache.set(cacheKey, a);
+              return a;
+            }
             if (q.length >= 4 && (normA.includes(q) || q.includes(normA))) {
+              matchedArtistCache.set(cacheKey, a);
               return a;
             }
           }
         }
       }
 
+      matchedArtistCache.set(cacheKey, null);
       return null;
     }
 
@@ -5130,19 +5179,39 @@ let isCurrentGuestAdmin = false;
           ttBtn.setAttribute('aria-selected', 'true');
           dirView.style.display = 'none';
           ttView.style.display = 'block';
-          initFestivalTimetableUI();
-          fetchDynamicTimetableSchedule(true);
+          
+          // Immediate render response for instant INP paint (<16ms)
+          requestAnimationFrame(function() {
+            setTimeout(function() {
+              initFestivalTimetableUI();
+              fetchDynamicTimetableSchedule(true);
+            }, 0);
+          });
         }
       }
     }
     window.switchArtistsSubTab = switchArtistsSubTab;
 
     function initFestivalTimetableUI() {
+      // Auto-select today if within festival dates
+      try {
+        const todayD = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const todayStr = `${todayD.getFullYear()}-${pad(todayD.getMonth() + 1)}-${pad(todayD.getDate())}`;
+        const isFestDay = FESTIVAL_TIMETABLE_DAYS.some(d => d.date === todayStr);
+        if (isFestDay && currentSelectedTimetableDate !== todayStr) {
+          currentSelectedTimetableDate = todayStr;
+        }
+      } catch (e) {}
+
       renderTimetableDaysNav();
       renderTimetableVenueBanner();
       renderTimetableMasterSwitcher();
       renderTimetableStageSelector();
       renderTimetableShows();
+      if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
+      if (typeof updateLiveBanner === 'function') updateLiveBanner();
+      if (typeof initLiveSimulatorEnv === 'function') initLiveSimulatorEnv();
       fetchDynamicTimetableSchedule(true);
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
@@ -5284,6 +5353,7 @@ let isCurrentGuestAdmin = false;
       renderTimetableMasterSwitcher();
       renderTimetableStageSelector();
       renderTimetableShows();
+      if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
     }
     window.updateTimetableFavCount = updateTimetableFavCount;
 
@@ -5548,8 +5618,9 @@ let isCurrentGuestAdmin = false;
       finalShows.forEach(s => {
         const artist = s.matchedArtist;
         const isFav = s.isFav;
-        const clickAttr = artist ? `onclick="openArtistSheet('${artist.id}')"` : '';
-        const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''}`;
+        const isLive = isTimetableShowLive(s);
+        const clickAttr = artist ? `onclick="window.lastJumpedShowId='${s.id}'; artistOpenedFromSubTab='timetable'; openArtistSheet('${artist.id}')"` : '';
+        const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''} ${isLive ? 'is-live-now' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
           : ((s.artistName.includes('דלתות') || s.artistName.toLowerCase().includes('doors')) ? `<span class="timetable-avatar-fallback">🚪</span>` : (s.isGeneralEvent ? `<span class="timetable-avatar-fallback">🎧</span>` : `<span class="timetable-avatar-fallback">🎸</span>`));
@@ -5557,11 +5628,13 @@ let isCurrentGuestAdmin = false;
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
         const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
-        let cleanName = s.artistName;
+        const liveBadge = isLive ? `<span class="timetable-live-badge ${isFav ? 'fav-live' : ''}">${isFav ? '🔥 LIVE' : '🔴 LIVE'}</span>` : '';
+        let cleanName = s.artistName || '';
         if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
           cleanName = 'Doors Opening';
         }
-        const displayName = artist ? artist.name : cleanName;
+        const rawDisplayName = (artist && artist.name) ? artist.name : cleanName;
+        const displayName = String(rawDisplayName || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
 
         html += `
           <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
@@ -5586,18 +5659,627 @@ let isCurrentGuestAdmin = false;
                 ${genreTag}
               </div>
             </div>
-            ${artist ? `
-              <div class="timetable-open-arrow">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-              </div>
-            ` : ''}
+            <div class="timetable-card-right-slot">
+              ${liveBadge}
+              ${artist ? `
+                <div class="timetable-open-arrow">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </div>
+              ` : ''}
+            </div>
           </div>
         `;
       });
       
       container.innerHTML = html;
+      if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
+      if (typeof updateLiveBanner === 'function') updateLiveBanner();
     }
     window.renderTimetableShows = renderTimetableShows;
+
+    /* ==========================================================================
+       LIVE FESTIVAL SHOW ENGINE & CALENDAR SYNC CONTROLLER
+       ========================================================================== */
+    let simulatedLiveFestivalTime = null;
+    window.simulatedLiveFestivalTime = null;
+
+    function isTimetableShowLive(show, customNow) {
+      if (!show || !show.date || !show.startTime) return false;
+      const now = customNow || window.simulatedLiveFestivalTime || new Date();
+
+      const matchStart = String(show.startTime).match(/(\d{1,2}):(\d{2})/);
+      if (!matchStart) return false;
+      const startH = parseInt(matchStart[1], 10);
+      const startM = parseInt(matchStart[2], 10);
+
+      let endH, endM;
+      const matchEnd = show.endTime ? String(show.endTime).match(/(\d{1,2}):(\d{2})/) : null;
+      if (matchEnd) {
+        endH = parseInt(matchEnd[1], 10);
+        endM = parseInt(matchEnd[2], 10);
+      } else {
+        endH = startH;
+        endM = startM + 45;
+        if (endM >= 60) {
+          endH += Math.floor(endM / 60);
+          endM = endM % 60;
+        }
+      }
+
+      const parts = show.date.split('-').map(Number);
+      if (parts.length < 3) return false;
+      const [y, m, d] = parts;
+      const startDt = new Date(y, m - 1, d, startH, startM, 0);
+      let endDt = new Date(y, m - 1, d, endH, endM, 0);
+
+      if (startH < 6) {
+        startDt.setDate(startDt.getDate() + 1);
+      }
+      if (endH < 6 || endDt <= startDt) {
+        endDt.setDate(endDt.getDate() + 1);
+      }
+
+      return now >= startDt && now <= endDt;
+    }
+    window.isTimetableShowLive = isTimetableShowLive;
+
+    function jumpToLiveShow(dateStr, showId, artistId) {
+      if (typeof switchCategoryTab === 'function') {
+        switchCategoryTab('artists');
+      }
+      if (typeof jumpToTimetableShow === 'function') {
+        jumpToTimetableShow(dateStr, showId, artistId);
+      } else {
+        if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('timetable');
+        if (typeof selectTimetableDate === 'function') selectTimetableDate(dateStr);
+      }
+      if (artistId && typeof openArtistSheet === 'function') {
+        setTimeout(function() {
+          openArtistSheet(artistId);
+        }, 450);
+      }
+    }
+    window.jumpToLiveShow = jumpToLiveShow;
+
+    function updateLiveBanner() {
+      const banner = document.getElementById('artists-live-banner');
+      const content = document.getElementById('live-banner-content');
+      if (!banner || !content) return;
+
+      const liveShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(s => shouldKeepTimetableItem(s) && isTimetableShowLive(s));
+      if (liveShows.length === 0) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      const favs = getFavorites();
+      let html = '';
+      liveShows.forEach(s => {
+        const matched = findMatchedArtist(s.artistName, s.aliases);
+        const isFav = matched ? !!favs[matched.id] : false;
+        let cleanName = s.artistName;
+        if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
+          cleanName = 'Doors Opening';
+        }
+        const rawDisplayName = String((matched && matched.name) ? matched.name : (cleanName || s.name || 'Live Showcase')).replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+        const displayName = escapeHtml(rawDisplayName);
+        const artistId = matched ? matched.id : '';
+        const timeStr = s.startTime ? `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}` : 'Live Now';
+
+        const avatarHtml = (matched && matched.image)
+          ? `<img src="${matched.image}" alt="${displayName}" class="live-card-avatar" />`
+          : `<span class="live-card-fallback-avatar">🎸</span>`;
+
+        html += `
+          <div class="live-show-card ${isFav ? 'is-fav' : ''}" onclick="jumpToLiveShow('${s.date}', '${s.id || ''}', '${artistId}')" title="Tap to view artist in Festival Timetable">
+            <div class="live-card-left">
+              ${avatarHtml}
+              <div class="live-card-text">
+                <div class="live-card-top-row">
+                  <span class="live-card-artist">${displayName}</span>
+                  ${isFav ? '<span class="live-card-heart-icon" title="Favorited">❤️</span>' : ''}
+                </div>
+                <div class="live-card-meta">
+                  <span class="live-card-stage">📍 ${escapeHtml(s.stage)}</span>
+                  <span class="live-card-time">⏰ ${escapeHtml(timeStr)}</span>
+                </div>
+              </div>
+            </div>
+            <div class="live-card-action">
+              <span class="live-card-action-btn">
+                <span>View Artist</span>
+                <span class="live-card-action-arrow">→</span>
+              </span>
+            </div>
+          </div>
+        `;
+      });
+      content.innerHTML = html;
+      banner.style.display = 'flex';
+    }
+    window.updateLiveBanner = updateLiveBanner;
+
+    window.simulateLiveFestivalTime = function(dateStr, timeStr) {
+      if (!dateStr || !timeStr) {
+        window.simulatedLiveFestivalTime = null;
+        console.log("Simulated live festival time cleared. Using real clock.");
+      } else {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const [h, min] = timeStr.split(':').map(Number);
+        window.simulatedLiveFestivalTime = new Date(y, m - 1, d, h, min, 0);
+        console.log("Simulated live festival time set to:", window.simulatedLiveFestivalTime.toString());
+      }
+      renderTimetableShows();
+      updateLiveBanner();
+      if (typeof updateLiveSimActiveBar === 'function') updateLiveSimActiveBar();
+    };
+
+    function initLiveSimulatorEnv() {
+      const isSandbox = (typeof window !== 'undefined' && window.location && (
+        window.location.hostname.includes('sandbox') ||
+        window.location.hostname.includes('localhost') ||
+        window.location.hostname === '127.0.0.1'
+      ));
+      const simBtn = document.getElementById('timetable-sim-trigger-btn');
+      if (simBtn) {
+        simBtn.style.display = isSandbox ? 'inline-flex' : 'none';
+      }
+      if (!isSandbox) {
+        window.simulatedLiveFestivalTime = null;
+        const activeBar = document.getElementById('live-sim-active-bar');
+        if (activeBar) activeBar.style.display = 'none';
+      }
+    }
+    window.initLiveSimulatorEnv = initLiveSimulatorEnv;
+
+    function openLiveSimulatorModal() {
+      const isSandbox = (typeof window !== 'undefined' && window.location && (
+        window.location.hostname.includes('sandbox') ||
+        window.location.hostname.includes('localhost') ||
+        window.location.hostname === '127.0.0.1'
+      ));
+      if (!isSandbox) return;
+      const overlay = document.getElementById('live-simulator-modal-overlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    window.openLiveSimulatorModal = openLiveSimulatorModal;
+
+    function closeLiveSimulatorModal() {
+      const overlay = document.getElementById('live-simulator-modal-overlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+    window.closeLiveSimulatorModal = closeLiveSimulatorModal;
+
+    function applyLiveSimulation(dateStr, timeStr) {
+      if (typeof window.simulateLiveFestivalTime === 'function') {
+        window.simulateLiveFestivalTime(dateStr, timeStr);
+      }
+      closeLiveSimulatorModal();
+      if (typeof switchCategoryTab === 'function') {
+        switchCategoryTab('artists');
+      }
+      if (typeof switchArtistsSubTab === 'function') {
+        switchArtistsSubTab('timetable');
+      }
+      if (typeof selectTimetableDate === 'function' && dateStr) {
+        selectTimetableDate(dateStr);
+      }
+    }
+    window.applyLiveSimulation = applyLiveSimulation;
+
+    function applyCustomLiveSimulation() {
+      const dateInput = document.getElementById('sim-custom-date');
+      const timeInput = document.getElementById('sim-custom-time');
+      const dateVal = dateInput ? dateInput.value : '2026-11-18';
+      const timeVal = timeInput ? timeInput.value : '20:30';
+      applyLiveSimulation(dateVal, timeVal);
+    }
+    window.applyCustomLiveSimulation = applyCustomLiveSimulation;
+
+    function resetLiveSimulation() {
+      if (typeof window.simulateLiveFestivalTime === 'function') {
+        window.simulateLiveFestivalTime(null, null);
+      }
+      closeLiveSimulatorModal();
+    }
+    window.resetLiveSimulation = resetLiveSimulation;
+
+    function updateLiveSimActiveBar() {
+      const bar = document.getElementById('live-sim-active-bar');
+      const text = document.getElementById('live-sim-status-text');
+      if (!bar) return;
+      if (window.simulatedLiveFestivalTime) {
+        const pad = n => String(n).padStart(2, '0');
+        const dt = window.simulatedLiveFestivalTime;
+        const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        const dateStr = `${dt.getDate()}.${dt.getMonth() + 1}`;
+        if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        bar.style.display = 'flex';
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+    window.updateLiveSimActiveBar = updateLiveSimActiveBar;
+
+    function getFavoritedShowsList() {
+      const favs = getFavorites();
+      const list = [];
+      const seen = new Set();
+      (FESTIVAL_SHOWS_SCHEDULE || []).forEach(s => {
+        if (!shouldKeepTimetableItem(s)) return;
+        const matched = findMatchedArtist(s.artistName, s.aliases);
+        if (matched && favs[matched.id]) {
+          if (!seen.has(s.id)) {
+            seen.add(s.id);
+            list.push({ ...s, matchedArtist: matched });
+          }
+        }
+      });
+      return list;
+    }
+    window.getFavoritedShowsList = getFavoritedShowsList;
+
+    function updateCalendarSyncBadge() {
+      const badge = document.getElementById('calendar-sync-badge');
+      const modalCount = document.getElementById('calendar-modal-shows-count');
+      const modalEmail = document.getElementById('calendar-modal-email');
+      const favShows = getFavoritedShowsList();
+      const count = favShows.length;
+      if (badge) {
+        badge.innerText = count;
+      }
+      if (modalCount) {
+        modalCount.innerText = `${count} Show${count === 1 ? '' : 's'} Selected`;
+      }
+      if (modalEmail) {
+        modalEmail.innerText = currentGuestEmail || 'guest@domain.com';
+      }
+    }
+    window.updateCalendarSyncBadge = updateCalendarSyncBadge;
+
+    function getSpecificShowLocation(show) {
+      if (!show) return 'Israel Music Showcase Festival';
+      const date = show.date || '';
+      const stage = (show.stage || '').toLowerCase();
+
+      if (date === '2026-11-17') {
+        return 'Yellow Submarine, Jerusalem';
+      }
+      if (date === '2026-11-18') {
+        if (stage.includes('tower') || stage.includes('david') || stage.includes('מגדל') || stage.includes('דוד')) {
+          return 'Tower of David, Jerusalem';
+        }
+        return 'Yellow Submarine, Jerusalem';
+      }
+      if (date === '2026-11-19') {
+        if (stage.includes('nocturno') || stage.includes('נוקטורנו')) {
+          return 'Nocturno, Jerusalem';
+        }
+        return 'Museum of Tolerance, Jerusalem';
+      }
+      if (date === '2026-11-20') {
+        return 'Teder, Tel Aviv';
+      }
+      if (date === '2026-11-21') {
+        if (stage.includes('hameretz') || stage.includes('המרץ') || stage.includes('מרץ')) {
+          return 'Hameretz 2, Tel Aviv';
+        }
+        return 'Radical, Tel Aviv';
+      }
+      if (date === '2026-11-22') {
+        return 'Container House, Jaffa Port';
+      }
+
+      const dayObj = (typeof FESTIVAL_TIMETABLE_DAYS !== 'undefined') ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === date) : null;
+      return dayObj ? `${dayObj.venue}, ${dayObj.city}` : 'Israel Music Showcase Festival';
+    }
+    window.getSpecificShowLocation = getSpecificShowLocation;
+
+    function escapeIcsText(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,')
+        .replace(/\r?\n/g, '\\n')
+        .trim();
+    }
+
+    function generateIcsContent(shows, isCancellation) {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const formatUtc = (dt) => `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}${pad(dt.getUTCSeconds())}Z`;
+      const formatLocal = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}${pad(dt.getSeconds())}`;
+      const dtstamp = formatUtc(now);
+      const baseUrl = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'https://imsf26sandbox.vercel.app';
+
+      const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Israel Music Showcase Festival 2026//Timetable//EN',
+        'CALSCALE:GREGORIAN',
+        `METHOD:${isCancellation ? 'CANCEL' : 'PUBLISH'}`,
+        'X-WR-CALNAME:IMSF 2026 - My Shows',
+        'X-WR-TIMEZONE:Asia/Jerusalem',
+        'BEGIN:VTIMEZONE',
+        'TZID:Asia/Jerusalem',
+        'X-LIC-LOCATION:Asia/Jerusalem',
+        'BEGIN:STANDARD',
+        'TZOFFSETFROM:+0300',
+        'TZOFFSETTO:+0200',
+        'TZNAME:IST',
+        'DTSTART:19701025T020000',
+        'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10',
+        'END:STANDARD',
+        'BEGIN:DAYLIGHT',
+        'TZOFFSETFROM:+0200',
+        'TZOFFSETTO:+0300',
+        'TZNAME:IDT',
+        'DTSTART:19700327T020000',
+        'RRULE:FREQ=YEARLY;BYDAY=-1FR;BYMONTH=3',
+        'END:DAYLIGHT',
+        'END:VTIMEZONE'
+      ];
+
+      shows.forEach(show => {
+        const artist = show.matchedArtist;
+        const displayName = artist ? artist.name : show.artistName;
+        
+        let startH = 19, startM = 0;
+        if (show.startTime) {
+          const match = String(show.startTime).match(/(\d{1,2}):(\d{2})/);
+          if (match) {
+            startH = parseInt(match[1], 10);
+            startM = parseInt(match[2], 10);
+          }
+        }
+        let endH = startH, endM = startM + 45;
+        if (show.endTime) {
+          const match = String(show.endTime).match(/(\d{1,2}):(\d{2})/);
+          if (match) {
+            endH = parseInt(match[1], 10);
+            endM = parseInt(match[2], 10);
+          }
+        } else {
+          if (endM >= 60) {
+            endH += Math.floor(endM / 60);
+            endM = endM % 60;
+          }
+        }
+
+        const parts = show.date.split('-').map(Number);
+        const startDt = new Date(parts[0], parts[1] - 1, parts[2], startH, startM, 0);
+        let endDt = new Date(parts[0], parts[1] - 1, parts[2], endH, endM, 0);
+
+        if (startH < 6) {
+          startDt.setDate(startDt.getDate() + 1);
+        }
+        if (endH < 6 || endDt <= startDt) {
+          endDt.setDate(endDt.getDate() + 1);
+        }
+
+        let cleanStage = (show.stage || 'Festival Stage').trim();
+        if (!cleanStage.toLowerCase().endsWith('stage')) {
+          cleanStage = `${cleanStage} Stage`;
+        }
+        // Format: <Artist Name> | <Stage Name> Stage
+        const eventSummary = `${displayName} | ${cleanStage}`;
+        const exactLocation = getSpecificShowLocation(show);
+        const portalDeepLink = `${baseUrl}/?tab=artists&date=${encodeURIComponent(show.date)}&show=${encodeURIComponent(show.id)}${artist ? `&artist=${encodeURIComponent(artist.id)}` : ''}`;
+
+        const desc = `Israel Music Showcase Festival 2026\\nArtist: ${escapeIcsText(displayName)}\\nStage: ${escapeIcsText(cleanStage)}\\nTime: ${escapeIcsText(show.startTime || 'TBA')}${show.endTime ? ' - ' + escapeIcsText(show.endTime) : ''}\\nLocation: ${escapeIcsText(exactLocation)}\\nReminder: Starts in 5 minutes!\\n\\nView in Festival Portal:\\n${portalDeepLink}`;
+
+        lines.push('BEGIN:VEVENT');
+        lines.push(`UID:imsf2026-show-${show.id}@imsf-festival.com`);
+        lines.push(`DTSTAMP:${dtstamp}`);
+        lines.push(`DTSTART;TZID=Asia/Jerusalem:${formatLocal(startDt)}`);
+        lines.push(`DTEND;TZID=Asia/Jerusalem:${formatLocal(endDt)}`);
+        lines.push(`SUMMARY:${escapeIcsText(eventSummary)}`);
+        lines.push(`LOCATION:${escapeIcsText(exactLocation)}`);
+        lines.push(`URL;VALUE=URI:${portalDeepLink}`);
+        lines.push(`DESCRIPTION:${desc}`);
+
+        if (isCancellation) {
+          lines.push('STATUS:CANCELLED');
+        } else {
+          lines.push('STATUS:CONFIRMED');
+          lines.push('BEGIN:VALARM');
+          lines.push('TRIGGER:-PT5M');
+          lines.push('ACTION:DISPLAY');
+          lines.push(`DESCRIPTION:${escapeIcsText(displayName)} starts in 5 minutes at ${escapeIcsText(cleanStage)}!`);
+          lines.push('END:VALARM');
+        }
+
+        lines.push('END:VEVENT');
+      });
+
+      lines.push('END:VCALENDAR');
+      return lines.join('\r\n');
+    }
+    window.generateIcsContent = generateIcsContent;
+
+    function openCalendarSyncModal() {
+      updateCalendarSyncBadge();
+      const overlay = document.getElementById('calendar-sync-modal-overlay');
+      const actionsDiv = document.getElementById('calendar-modal-actions');
+      const statusDiv = document.getElementById('calendar-modal-status');
+      const successDiv = document.getElementById('calendar-modal-success');
+      
+      if (actionsDiv) actionsDiv.style.display = 'flex';
+      if (statusDiv) statusDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+
+      if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    window.openCalendarSyncModal = openCalendarSyncModal;
+
+    function closeCalendarSyncModal() {
+      const overlay = document.getElementById('calendar-sync-modal-overlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+    window.closeCalendarSyncModal = closeCalendarSyncModal;
+
+    let isSyncingCalendar = false;
+    function executeCalendarSync(actionType) {
+      if (isSyncingCalendar) return;
+
+      const shows = getFavoritedShowsList();
+      if (actionType !== 'cancel' && shows.length === 0) {
+        alert("You haven't favorited any artists performing in the festival yet! Click ❤️ on the artists you want to see, then sync to your calendar.");
+        return;
+      }
+
+      const actionsDiv = document.getElementById('calendar-modal-actions');
+      const statusDiv = document.getElementById('calendar-modal-status');
+      const successDiv = document.getElementById('calendar-modal-success');
+      const successText = document.getElementById('calendar-success-text');
+      const successDetail = document.getElementById('calendar-success-detail');
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      if (actionType === 'download') {
+        const icsString = generateIcsContent(shows, false);
+
+        if (isIOS) {
+          // 1-Tap iOS native calendar sheet without download prompt
+          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
+        } else {
+          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'IMSF_2026_My_Shows.ics';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        if (statusDiv) statusDiv.style.display = 'none';
+        if (successDiv) {
+          successDiv.style.display = 'block';
+          if (successText) successText.innerText = 'Calendar Ready!';
+          if (successDetail) {
+            successDetail.innerText = isIOS 
+              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.'
+              : 'Open the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
+          }
+        }
+      } else if (actionType === 'cancel') {
+        const allKnownShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(shouldKeepTimetableItem);
+        const icsString = generateIcsContent(shows.length > 0 ? shows : allKnownShows, true);
+
+        if (isIOS) {
+          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
+        } else {
+          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'IMSF_2026_Cancel_Shows.ics';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        if (statusDiv) statusDiv.style.display = 'none';
+        if (successDiv) {
+          successDiv.style.display = 'block';
+          if (successText) successText.innerText = 'Cancellation Ready!';
+          if (successDetail) successDetail.innerText = 'Open or confirm the cancellation file to remove previously added festival shows from your calendar.';
+        }
+      }
+    }
+    window.executeCalendarSync = executeCalendarSync;
+
+    function handleUrlDeepLinking() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
+        const date = params.get('date');
+        const showId = params.get('show');
+        const artistId = params.get('artist');
+
+        if (tab === 'artists' || date || showId || artistId) {
+          if (showId) {
+            window.deepLinkedShowId = showId;
+            window.lastJumpedShowId = showId;
+          }
+          if (date) {
+            window.deepLinkedDate = date;
+          }
+          if (typeof switchCategoryTab === 'function') {
+            switchCategoryTab('artists');
+          }
+          if (typeof switchArtistsSubTab === 'function') {
+            switchArtistsSubTab('timetable');
+          }
+          if (date && typeof selectTimetableDate === 'function') {
+            currentTimetableMode = 'all';
+            currentSelectedStage = 'All';
+            selectTimetableDate(date);
+          }
+          if (showId) {
+            setTimeout(function() {
+              const showCard = document.getElementById('timetable-card-' + showId);
+              if (showCard) {
+                showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                showCard.classList.remove('highlight-pulse');
+                void showCard.offsetWidth;
+                showCard.classList.add('highlight-pulse');
+                setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 5000);
+              }
+            }, 500);
+          }
+          if (artistId && typeof openArtistSheet === 'function') {
+            artistOpenedFromSubTab = 'timetable';
+            
+            // Critical for mobile back button:
+            // Ensure timetable is recorded as previous history entry, and sheet is the current top entry
+            try {
+              const baseTimetableUrl = window.location.origin + window.location.pathname + `?tab=artists&date=${encodeURIComponent(date || '')}&show=${encodeURIComponent(showId || '')}`;
+              window.history.replaceState({ modal: null, view: 'timetable', date: date, showId: showId }, '', baseTimetableUrl);
+              window.history.pushState({ modal: 'sheet', artistId: artistId, date: date, showId: showId }, '', baseTimetableUrl + '#sheet');
+            } catch (e) {}
+
+            setTimeout(function() {
+              openArtistSheet(artistId, true);
+            }, 650);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not handle URL deep linking:", err);
+      }
+    }
+    window.handleUrlDeepLinking = handleUrlDeepLinking;
+
+    // Background interval to refresh live badges and banner every 30 seconds
+    if (typeof window !== 'undefined') {
+      setInterval(function() {
+        if (document.visibilityState === 'visible') {
+          if (currentArtistsSubTab === 'timetable' || (document.getElementById('artists-timetable-view') && document.getElementById('artists-timetable-view').style.display !== 'none')) {
+            renderTimetableShows();
+          }
+          updateLiveBanner();
+        }
+      }, 30000);
+    }
+
 
     // FULLSCREEN IMAGE VIEWER LOGIC
     function openImageViewerFromBg(event, el) {
@@ -5877,7 +6559,49 @@ function renderAdminDashboard() {
         </div>
       </details>
 
-      <!-- 2. LINEUP & NETWORKING LEADS ACCORDION -->
+      <!-- 2. INTERNAL PRODUCTION SCHEDULE ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-prod-schedule" open>
+        <summary class="admin-section-summary">
+          <div class="admin-section-info">
+            <span class="admin-section-icon">🗓️</span>
+            <span class="admin-section-title">Production Schedule (לו"ז הפקה פנימי)</span>
+          </div>
+          <div class="admin-section-meta">
+            <span id="admin-schedule-count-badge" class="admin-section-badge">לו"ז שבועי</span>
+            <span class="admin-section-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+        </summary>
+        <div class="admin-section-content" style="direction: rtl; text-align: right;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin: 0;">
+              לו"ז תפעול ומשימות פנימיות לצוות הפסטיבל בירושלים ובתל אביב
+            </p>
+            <button class="primary" style="padding: 6px 12px; font-size: 0.85rem; direction: ltr;" onclick="loadAdminDashboard(true)">
+              🔄 רענן לו"ז
+            </button>
+          </div>
+
+          <!-- Search input -->
+          <div style="margin-bottom: 14px; position: relative; direction: ltr;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; right: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="admin-schedule-search" placeholder="חיפוש משימה, מיקום, שעה או איש קשר..." style="width: 100%; padding: 10px 40px 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); box-sizing: border-box; direction: rtl; text-align: right;" onkeyup="filterAdminProductionSchedule(this.value)">
+          </div>
+
+          <!-- Day Pills Navigation -->
+          <div id="admin-schedule-days-nav" class="admin-schedule-pills-nav"></div>
+
+          <!-- Events Container -->
+          <div id="admin-schedule-events-container">
+            <p style="text-align: center; color: var(--foreground-muted); padding: 20px;">טוען לו"ז הפקה...</p>
+          </div>
+        </div>
+      </details>
+
+      <!-- 3. LINEUP & NETWORKING LEADS ACCORDION -->
       <details class="admin-section-accordion" id="admin-sec-networking">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
@@ -5964,7 +6688,342 @@ function renderAdminDashboard() {
   }
   filterAdminGuests("");
   loadAdminNetworkingData(false);
+  initAdminProductionSchedule();
 }
+
+let adminProductionScheduleData = null; // map of date -> array of events
+let adminProductionScheduleAllEvents = []; // flat array of all events
+let currentAdminScheduleDate = null;
+let adminScheduleSearchTerm = "";
+
+function parseAdminProductionSchedule(rawSchedule) {
+  if (!rawSchedule || !Array.isArray(rawSchedule) || rawSchedule.length < 2) {
+    return { byDate: {}, all: [] };
+  }
+
+  const headers = rawSchedule[0].map(h => String(h || "").trim().toLowerCase());
+  const colDay = headers.indexOf("יום");
+  let colDate = headers.indexOf("תאריך");
+  if (colDate === -1) colDate = headers.indexOf("date");
+  let colTime = headers.indexOf("שעה");
+  if (colTime === -1) colTime = headers.indexOf("time");
+  let colTask = headers.indexOf("אירוע / משימה");
+  if (colTask === -1) colTask = headers.indexOf("משימה");
+  if (colTask === -1) colTask = headers.indexOf("אירוע");
+  let colLoc = headers.indexOf("מיקום");
+  let colContact = headers.indexOf("איש קשר וטלפון");
+  if (colContact === -1) colContact = headers.indexOf("איש קשר");
+  let colNotes = headers.indexOf("דגשים והערות");
+  if (colNotes === -1) colNotes = headers.indexOf("הערות");
+  let colCat = headers.indexOf("קטגוריה");
+
+  const byDate = {};
+  const all = [];
+
+  for (let i = 1; i < rawSchedule.length; i++) {
+    const row = rawSchedule[i];
+    if (!row || row.every(c => String(c || "").trim() === "")) continue;
+
+    let dateVal = colDate !== -1 ? String(row[colDate] || "").trim() : "";
+    const dateMatch = dateVal.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      dateVal = dateMatch[1];
+    } else {
+      const altMatch = dateVal.match(/(\d{1,2})[\.\/](\d{1,2})/);
+      if (altMatch) {
+        const d = altMatch[1].padStart(2, '0');
+        const m = altMatch[2].padStart(2, '0');
+        dateVal = `2026-${m}-${d}`;
+      }
+    }
+
+    if (!dateVal) continue;
+
+    const event = {
+      id: "prod_event_" + i,
+      day: colDay !== -1 ? String(row[colDay] || "").trim() : "",
+      date: dateVal,
+      time: colTime !== -1 ? String(row[colTime] || "").trim() : "",
+      task: colTask !== -1 ? String(row[colTask] || "").trim() : "",
+      location: colLoc !== -1 ? String(row[colLoc] || "").trim() : "",
+      contact: colContact !== -1 ? String(row[colContact] || "").trim() : "",
+      notes: colNotes !== -1 ? String(row[colNotes] || "").trim() : "",
+      category: colCat !== -1 ? String(row[colCat] || "").trim() : ""
+    };
+
+    if (!byDate[dateVal]) {
+      byDate[dateVal] = [];
+    }
+    byDate[dateVal].push(event);
+    all.push(event);
+  }
+
+  return { byDate, all };
+}
+
+function formatAdminScheduleNotes(text) {
+  if (!text) return "";
+  let escaped = escapeHtmlAdmin(text);
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  escaped = escaped.replace(urlRegex, (url) => {
+    let label = "פתח קישור ↗";
+    if (url.includes("google") || url.includes("maps") || url.includes("share.google")) {
+      label = "📍 מיקום במפה ↗";
+    } else if (url.includes("eventer") || url.includes("pay") || url.includes("checkout")) {
+      label = "💳 לינק תשלום Eventer ↗";
+    }
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="schedule-inline-link">${label}</a>`;
+  });
+  return escaped;
+}
+
+function formatAdminContactInfo(contactText) {
+  if (!contactText) return "";
+  const clean = String(contactText).trim();
+  if (!clean) return "";
+
+  const phoneRegex = /(0\d{1,2}-?\d{7,8}|\+?972-?\d{1,2}-?\d{7,8})/g;
+  const matches = clean.match(phoneRegex);
+
+  let phoneActions = "";
+  if (matches && matches.length > 0) {
+    matches.forEach(phone => {
+      const digits = phone.replace(/\D/g, "");
+      let waDigits = digits;
+      if (waDigits.startsWith("0")) {
+        waDigits = "972" + waDigits.slice(1);
+      }
+      phoneActions += `
+        <a href="tel:${digits}" class="schedule-contact-btn call" title="חייג אל ${phone}">
+          📞 חייג
+        </a>
+      `;
+      if (digits.startsWith("05") || waDigits.startsWith("9725")) {
+        phoneActions += `
+          <a href="https://wa.me/${waDigits}" target="_blank" rel="noopener noreferrer" class="schedule-contact-btn wa" title="שלח וואטסאפ אל ${phone}">
+            💬 וואטסאפ
+          </a>
+        `;
+      }
+    });
+  }
+
+  return `
+    <span class="schedule-loc-link" style="color: var(--foreground-muted); cursor: default;">
+      👤 <span>${escapeHtmlAdmin(clean)}</span>
+    </span>
+    ${phoneActions}
+  `;
+}
+
+function getAdminCatIcon(cat) {
+  const c = (cat || "").trim();
+  const map = {
+    'הסעה': '🚐',
+    'הופעות': '🎸',
+    'אוכל': '🍽️',
+    'סיור': '🧭',
+    'מפגש': '👥',
+    'הודעות': '📢',
+    'לוגיסטיקה': '📦',
+    'אפטר': '🍸'
+  };
+  return map[c] || '📌';
+}
+
+function initAdminProductionSchedule() {
+  const container = document.getElementById("admin-schedule-events-container");
+  const navContainer = document.getElementById("admin-schedule-days-nav");
+  const countBadge = document.getElementById("admin-schedule-count-badge");
+  if (!container || !navContainer) return;
+
+  if (!adminData || !adminData.productionSchedule) {
+    container.innerHTML = `<p class="empty-state">אין נתוני לו"ז הפקה זמינים כרגע.</p>`;
+    return;
+  }
+
+  const parsed = parseAdminProductionSchedule(adminData.productionSchedule);
+  adminProductionScheduleData = parsed.byDate;
+  adminProductionScheduleAllEvents = parsed.all;
+
+  const dates = Object.keys(adminProductionScheduleData).sort();
+  if (dates.length === 0) {
+    container.innerHTML = `<p class="empty-state">גיליון לו"ז ההפקה ריק.</p>`;
+    return;
+  }
+
+  if (countBadge) {
+    countBadge.textContent = `${adminProductionScheduleAllEvents.length} משימות בלו"ז`;
+  }
+
+  // Determine active date
+  if (!currentAdminScheduleDate || !adminProductionScheduleData[currentAdminScheduleDate]) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (adminProductionScheduleData[todayStr]) {
+      currentAdminScheduleDate = todayStr;
+    } else {
+      currentAdminScheduleDate = dates[0];
+    }
+  }
+
+  // Render Day Pills matching guest schedule exactly (.schedule-pill)
+  let pillsHtml = "";
+  dates.forEach(d => {
+    const events = adminProductionScheduleData[d] || [];
+    const firstEvent = events[0];
+    const dayHebrew = firstEvent ? firstEvent.day : "";
+    const parts = d.split("-");
+    const dayNumStr = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
+    const isActive = (d === currentAdminScheduleDate);
+
+    pillsHtml += `
+      <button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')" title="${d}">
+        <span class="day-weekday">${escapeHtmlAdmin(dayHebrew || d)}</span>
+        <span class="day-num">${escapeHtmlAdmin(dayNumStr)}</span>
+      </button>
+    `;
+  });
+
+  navContainer.innerHTML = pillsHtml;
+  renderAdminScheduleForDate(currentAdminScheduleDate, adminScheduleSearchTerm);
+}
+
+function selectAdminScheduleDate(dateStr) {
+  currentAdminScheduleDate = dateStr;
+  const pills = document.querySelectorAll("#admin-schedule-days-nav .schedule-pill");
+  pills.forEach(p => {
+    if (p.getAttribute("data-date") === dateStr) {
+      p.classList.add("active");
+      try {
+        p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } catch(e) {}
+    } else {
+      p.classList.remove("active");
+    }
+  });
+  renderAdminScheduleForDate(dateStr, adminScheduleSearchTerm);
+}
+
+function filterAdminProductionSchedule(query) {
+  adminScheduleSearchTerm = (query || "").trim();
+  renderAdminScheduleForDate(currentAdminScheduleDate, adminScheduleSearchTerm);
+}
+
+function renderAdminScheduleForDate(dateStr, filterTerm) {
+  const container = document.getElementById("admin-schedule-events-container");
+  if (!container) return;
+
+  let eventsToRender = [];
+  const isSearching = (filterTerm && filterTerm.length > 0);
+
+  if (isSearching) {
+    const q = filterTerm.toLowerCase();
+    eventsToRender = adminProductionScheduleAllEvents.filter(e => {
+      return (e.task && e.task.toLowerCase().includes(q)) ||
+             (e.notes && e.notes.toLowerCase().includes(q)) ||
+             (e.location && e.location.toLowerCase().includes(q)) ||
+             (e.contact && e.contact.toLowerCase().includes(q)) ||
+             (e.time && e.time.toLowerCase().includes(q)) ||
+             (e.category && e.category.toLowerCase().includes(q)) ||
+             (e.day && e.day.toLowerCase().includes(q));
+    });
+  } else {
+    eventsToRender = (adminProductionScheduleData && adminProductionScheduleData[dateStr]) ? adminProductionScheduleData[dateStr] : [];
+  }
+
+  if (eventsToRender.length === 0) {
+    if (isSearching) {
+      container.innerHTML = `<p class="empty-state">לא נמצאו משימות שתואמות לחיפוש "${escapeHtmlAdmin(filterTerm)}".</p>`;
+    } else {
+      container.innerHTML = `<p class="empty-state">אין משימות מתוזמנות ליום זה.</p>`;
+    }
+    return;
+  }
+
+  let html = "";
+  if (isSearching) {
+    html += `
+      <div style="font-size: 0.85rem; color: var(--foreground-muted); margin-bottom: 10px; font-weight: 600;">
+        נמצאו ${eventsToRender.length} תוצאות בלו"ז:
+      </div>
+    `;
+  }
+
+  html += '<div class="schedule-events-list">';
+
+  eventsToRender.forEach(e => {
+    // Time Badge matching guest schedule
+    const timeVal = (e.time || "").trim();
+    let timeHtml = "";
+    if (timeVal.includes("-")) {
+      const parts = timeVal.split("-");
+      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(parts[0].trim())}</span><span class="time-dash">-</span><span class="time-part">${escapeHtmlAdmin(parts[1].trim())}</span></span>`;
+    } else if (timeVal) {
+      timeHtml = `<span class="event-time"><span class="time-part">${escapeHtmlAdmin(timeVal)}</span></span>`;
+    } else {
+      timeHtml = `<span class="event-time"><span class="time-part">-</span></span>`;
+    }
+
+    // Category Badge matching guest schedule
+    let catBadge = "";
+    if (e.category) {
+      const catIcon = getAdminCatIcon(e.category);
+      catBadge = `<span class="schedule-cat-badge" data-category="${escapeHtmlAdmin(e.category)}">${catIcon} <span>${escapeHtmlAdmin(e.category)}</span></span>`;
+    }
+
+    // Location matching guest schedule
+    let locHtml = "";
+    if (e.location && e.location.trim().length > 0) {
+      const locClean = e.location.trim();
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locClean + ', Israel')}`;
+      locHtml = `
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="schedule-loc-link" title="פתח ב-Google Maps">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>${escapeHtmlAdmin(locClean)}</span>
+        </a>
+      `;
+    }
+
+    // Contacts
+    const contactHtml = formatAdminContactInfo(e.contact);
+
+    // Search day indicator
+    let dayIndicator = "";
+    if (isSearching) {
+      const parts = (e.date || "").split("-");
+      const dFormatted = parts.length === 3 ? `${parts[2]}.${parts[1]}` : e.date;
+      dayIndicator = `<span class="schedule-cat-badge" style="background: rgba(241,169,160,0.2); color: var(--accent); border-color: rgba(241,169,160,0.3);">${escapeHtmlAdmin(e.day)} ${dFormatted}</span>`;
+    }
+
+    // Notes
+    const notesHtml = e.notes ? `<span class="event-desc">${formatAdminScheduleNotes(e.notes)}</span>` : "";
+
+    html += `
+      <div class="schedule-event-inline fade-up">
+        ${timeHtml}
+        <div class="schedule-event-details">
+          <div class="schedule-title-row">
+            <span class="event-title">${escapeHtmlAdmin(e.task)}</span>
+            ${dayIndicator}
+            ${catBadge}
+            ${locHtml}
+            ${contactHtml}
+          </div>
+          ${notesHtml}
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+window.selectAdminScheduleDate = selectAdminScheduleDate;
+window.filterAdminProductionSchedule = filterAdminProductionSchedule;
 
 function escapeHtmlAdmin(str) {
   if (!str) return '';
@@ -8236,4 +9295,14 @@ window.handlePwaModalLater = handlePwaModalLater;
 window.checkAndPromptPwaInstall = checkAndPromptPwaInstall;
 window.dismissPwaBanner = dismissPwaBanner;
 window.closePwaIosModal = closePwaIosModal;
+window.isTimetableShowLive = isTimetableShowLive;
+window.updateLiveBanner = updateLiveBanner;
+window.simulateLiveFestivalTime = simulateLiveFestivalTime;
+window.getFavoritedShowsList = getFavoritedShowsList;
+window.updateCalendarSyncBadge = updateCalendarSyncBadge;
+window.generateIcsContent = generateIcsContent;
+window.openCalendarSyncModal = openCalendarSyncModal;
+window.closeCalendarSyncModal = closeCalendarSyncModal;
+window.executeCalendarSync = executeCalendarSync;
+
 
