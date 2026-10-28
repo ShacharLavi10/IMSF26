@@ -3614,7 +3614,7 @@ let isCurrentGuestAdmin = false;
       }
     }
 
-    window.addEventListener('hashchange', function() {
+    function handleNavHashChange() {
       // 1. If returning to #sheet (e.g. Back button pressed from #timetable)
       if (window.location.hash === "#sheet") {
         if (!document.getElementById('artist-bottom-sheet').classList.contains('active')) {
@@ -3632,15 +3632,15 @@ let isCurrentGuestAdmin = false;
       }
 
       // 2. If the hash is no longer #sheet, but the artist sheet is open, close it.
-      if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
+      if (window.location.hash !== "#sheet" && document.getElementById('artist-bottom-sheet') && document.getElementById('artist-bottom-sheet').classList.contains('active')) {
         closeArtistSheet(true);
       }
       // If the hash is no longer #guestsheet, but the guest sheet is open, close it.
-      if (window.location.hash !== "#guestsheet" && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
+      if (window.location.hash !== "#guestsheet" && document.getElementById('guest-bottom-sheet') && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
         closeGuestSheet(true);
       }
       // If the hash is no longer #updates, but the updates panel is open, close it.
-      if (window.location.hash !== "#updates" && document.getElementById('updates-panel').style.left === "0px") {
+      if (window.location.hash !== "#updates" && document.getElementById('updates-panel') && document.getElementById('updates-panel').style.left === "0px") {
         toggleUpdatesPanel(true);
       }
       // If the hash is no longer #adminsheet, but the admin sheet is open, close it.
@@ -3653,7 +3653,10 @@ let isCurrentGuestAdmin = false;
           closeNetworkingDetailSheet(true);
         }
       }
-    });
+    }
+
+    window.addEventListener('hashchange', handleNavHashChange);
+    window.addEventListener('popstate', handleNavHashChange);
 
 
     function toggleSheetFav(event) {
@@ -5646,7 +5649,6 @@ let isCurrentGuestAdmin = false;
               <div class="timetable-artist-header">
                 ${avatarHtml}
                 <span class="timetable-artist-name">${escapeHtml(displayName)}</span>
-                ${liveBadge}
                 ${favMiniBadge}
               </div>
               <div class="timetable-sub-details">
@@ -5655,11 +5657,14 @@ let isCurrentGuestAdmin = false;
                 ${genreTag}
               </div>
             </div>
-            ${artist ? `
-              <div class="timetable-open-arrow">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-              </div>
-            ` : ''}
+            <div class="timetable-card-right-slot">
+              ${liveBadge}
+              ${artist ? `
+                <div class="timetable-open-arrow">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </div>
+              ` : ''}
+            </div>
           </div>
         `;
       });
@@ -5752,12 +5757,33 @@ let isCurrentGuestAdmin = false;
         const isFav = matched ? !!favs[matched.id] : false;
         const displayName = matched ? matched.name : s.artistName;
         const artistId = matched ? matched.id : '';
+        const timeStr = s.startTime ? `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}` : 'Live Now';
+
+        const avatarHtml = (matched && matched.image)
+          ? `<img src="${matched.image}" alt="${escapeHtml(displayName)}" class="live-card-avatar" />`
+          : `<span class="live-card-fallback-avatar">🎸</span>`;
+
         html += `
-          <div class="live-show-item ${isFav ? 'is-fav' : ''}" onclick="jumpToLiveShow('${s.date}', '${s.id || ''}', '${artistId}')">
-            <span class="live-show-artist">${escapeHtml(displayName)}</span>
-            <span class="live-show-stage">📍 ${escapeHtml(s.stage)}</span>
-            <span class="live-show-time">${escapeHtml(s.startTime)}</span>
-            ${isFav ? '<span class="live-show-fav-tag">❤️ YOUR FAVORITE</span>' : ''}
+          <div class="live-show-card ${isFav ? 'is-fav' : ''}" onclick="jumpToLiveShow('${s.date}', '${s.id || ''}', '${artistId}')" title="Tap to view show in Festival Timetable">
+            <div class="live-card-left">
+              ${avatarHtml}
+              <div class="live-card-text">
+                <div class="live-card-top-row">
+                  <span class="live-card-artist">${escapeHtml(displayName)}</span>
+                  ${isFav ? '<span class="live-card-fav-pill">❤️ MY FAV</span>' : ''}
+                </div>
+                <div class="live-card-meta">
+                  <span class="live-card-stage">📍 ${escapeHtml(s.stage)}</span>
+                  <span class="live-card-time">⏰ ${escapeHtml(timeStr)}</span>
+                </div>
+              </div>
+            </div>
+            <div class="live-card-action">
+              <span class="live-card-action-btn">
+                <span>View Show</span>
+                <span class="live-card-action-arrow">→</span>
+              </span>
+            </div>
           </div>
         `;
       });
@@ -6008,7 +6034,10 @@ let isCurrentGuestAdmin = false;
         }
 
         let cleanStage = (show.stage || 'Festival Stage').trim();
-        // Format: <Artist Name> | <Stage Name>
+        if (!cleanStage.toLowerCase().endsWith('stage')) {
+          cleanStage = `${cleanStage} Stage`;
+        }
+        // Format: <Artist Name> | <Stage Name> Stage
         const eventSummary = `${displayName} | ${cleanStage}`;
         const exactLocation = getSpecificShowLocation(show);
         const portalDeepLink = `${baseUrl}/?tab=artists&date=${encodeURIComponent(show.date)}&show=${encodeURIComponent(show.id)}${artist ? `&artist=${encodeURIComponent(artist.id)}` : ''}`;
@@ -6188,9 +6217,18 @@ let isCurrentGuestAdmin = false;
           }
           if (artistId && typeof openArtistSheet === 'function') {
             artistOpenedFromSubTab = 'timetable';
+            
+            // Critical for mobile back button:
+            // Ensure timetable is recorded as previous history entry, and sheet is the current top entry
+            try {
+              const baseTimetableUrl = window.location.origin + window.location.pathname + `?tab=artists&date=${encodeURIComponent(date || '')}&show=${encodeURIComponent(showId || '')}`;
+              window.history.replaceState({ modal: null, view: 'timetable', date: date, showId: showId }, '', baseTimetableUrl);
+              window.history.pushState({ modal: 'sheet', artistId: artistId, date: date, showId: showId }, '', baseTimetableUrl + '#sheet');
+            } catch (e) {}
+
             setTimeout(function() {
-              openArtistSheet(artistId);
-            }, 750);
+              openArtistSheet(artistId, true);
+            }, 650);
           }
         }
       } catch (err) {
