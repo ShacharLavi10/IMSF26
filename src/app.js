@@ -5755,22 +5755,27 @@ let isCurrentGuestAdmin = false;
       liveShows.forEach(s => {
         const matched = findMatchedArtist(s.artistName, s.aliases);
         const isFav = matched ? !!favs[matched.id] : false;
-        const displayName = matched ? matched.name : s.artistName;
+        let cleanName = s.artistName;
+        if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
+          cleanName = 'Doors Opening';
+        }
+        const rawDisplayName = (matched && matched.name) ? matched.name : (cleanName || s.name || 'Live Showcase');
+        const displayName = escapeHtml(rawDisplayName);
         const artistId = matched ? matched.id : '';
         const timeStr = s.startTime ? `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}` : 'Live Now';
 
         const avatarHtml = (matched && matched.image)
-          ? `<img src="${matched.image}" alt="${escapeHtml(displayName)}" class="live-card-avatar" />`
+          ? `<img src="${matched.image}" alt="${displayName}" class="live-card-avatar" />`
           : `<span class="live-card-fallback-avatar">🎸</span>`;
 
         html += `
-          <div class="live-show-card ${isFav ? 'is-fav' : ''}" onclick="jumpToLiveShow('${s.date}', '${s.id || ''}', '${artistId}')" title="Tap to view show in Festival Timetable">
+          <div class="live-show-card ${isFav ? 'is-fav' : ''}" onclick="jumpToLiveShow('${s.date}', '${s.id || ''}', '${artistId}')" title="Tap to view artist in Festival Timetable">
             <div class="live-card-left">
               ${avatarHtml}
               <div class="live-card-text">
                 <div class="live-card-top-row">
-                  <span class="live-card-artist">${escapeHtml(displayName)}</span>
-                  ${isFav ? '<span class="live-card-fav-pill">❤️ MY FAV</span>' : ''}
+                  <span class="live-card-artist">${displayName}</span>
+                  ${isFav ? '<span class="live-card-heart-icon" title="Favorited">❤️</span>' : ''}
                 </div>
                 <div class="live-card-meta">
                   <span class="live-card-stage">📍 ${escapeHtml(s.stage)}</span>
@@ -5780,7 +5785,7 @@ let isCurrentGuestAdmin = false;
             </div>
             <div class="live-card-action">
               <span class="live-card-action-btn">
-                <span>View Show</span>
+                <span>View Artist</span>
                 <span class="live-card-action-arrow">→</span>
               </span>
             </div>
