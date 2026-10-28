@@ -977,13 +977,25 @@ let isCurrentGuestAdmin = false;
 
       let html = '';
 
-      if (ticketLink || airportInvitationLink) {
-        html += renderTravelDocsButtonsHtml(ticketLink, airportInvitationLink);
-      }
-
       // Cache flight data for in-memory restore
       window.lastFlightsDataCache = dataArray;
       window.lastFlightsEmptyTextCache = emptyText;
+
+      // 1. RUBRIC: Travel & Border Documents
+      if (ticketLink || airportInvitationLink) {
+        html += `
+          <div class="flight-rubric-wrap">
+            <div class="rubric-subheading">
+              <div class="rubric-title">
+                <span>📄</span>
+                <span>Travel & Border Documents</span>
+              </div>
+              <span class="rubric-tag">PDF Passes</span>
+            </div>
+            ${renderTravelDocsButtonsHtml(ticketLink, airportInvitationLink)}
+          </div>
+        `;
+      }
 
       // Web Check-in & Booking Reference Rubric
       const cleanBookingCode = bookingCode ? String(bookingCode).trim() : '';
@@ -1019,12 +1031,21 @@ let isCurrentGuestAdmin = false;
         }
       }
 
-      // 2. Checkbox Dismissal State & Card Rendering
+      // 2. RUBRIC: Online Web Check-In
       if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes)) {
         const bookingKey = cleanBookingCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
         const isCheckInDone = localStorage.getItem('imsf_checkin_done_' + bookingKey) === 'true';
 
-        html += `<div id="flight-checkin-wrapper">`;
+        html += `
+          <div class="flight-rubric-wrap" id="flight-checkin-wrapper">
+            <div class="rubric-subheading">
+              <div class="rubric-title">
+                <span>🛫</span>
+                <span>Online Web Check-In</span>
+              </div>
+              <span class="rubric-tag">T-24H Prior</span>
+            </div>
+        `;
 
         if (isCheckInDone) {
           html += `
@@ -1095,48 +1116,59 @@ let isCurrentGuestAdmin = false;
         html += `</div>`;
       }
 
+      // 3. RUBRIC: Flight Schedule & Routes (Boarding Pass)
       html += `
-        <div class="boarding-pass" style="margin-bottom: 12px;">
-          <div class="bp-header">
-            <span>OFFICIAL ITINERARY</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
-          </div>
-          <div class="bp-body">
-            <div class="bp-flight">
-              <div class="bp-label" style="display: flex; justify-content: space-between;">
-                <span>INBOUND TO ISRAEL</span>
-                ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
-              </div>
-              <div class="bp-route">
-                <span class="bp-city">${origin}</span>
-                <span class="bp-arrow">→</span>
-                <span class="bp-city">TLV</span>
-              </div>
-              <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
-              </div>
+        <div class="flight-rubric-wrap">
+          <div class="rubric-subheading">
+            <div class="rubric-title">
+              <span>✈️</span>
+              <span>Flight Schedule & Routes</span>
             </div>
+            <span class="rubric-tag">Boarding Pass</span>
+          </div>
 
-            <div class="bp-divider"></div>
-            <div class="bp-flight">
-              <div class="bp-label" style="display: flex; justify-content: space-between;">
-                <span>OUTBOUND FROM ISRAEL</span>
-                ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
+          <div class="boarding-pass" style="margin-bottom: 0;">
+            <div class="bp-header">
+              <span>OFFICIAL FLIGHT ITINERARY</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
+            </div>
+            <div class="bp-body">
+              <div class="bp-flight">
+                <div class="bp-label" style="display: flex; justify-content: space-between;">
+                  <span>INBOUND TO ISRAEL</span>
+                  ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
+                </div>
+                <div class="bp-route">
+                  <span class="bp-city">${origin}</span>
+                  <span class="bp-arrow">→</span>
+                  <span class="bp-city">TLV</span>
+                </div>
+                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                  <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
+                </div>
               </div>
-              <div class="bp-route">
-                <span class="bp-city">TLV</span>
-                <span class="bp-arrow">→</span>
-                <span class="bp-city">${dest}</span>
-              </div>
-              <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
+
+              <div class="bp-divider"></div>
+              <div class="bp-flight">
+                <div class="bp-label" style="display: flex; justify-content: space-between;">
+                  <span>OUTBOUND FROM ISRAEL</span>
+                  ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
+                </div>
+                <div class="bp-route">
+                  <span class="bp-city">TLV</span>
+                  <span class="bp-arrow">→</span>
+                  <span class="bp-city">${dest}</span>
+                </div>
+                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                  <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       `;
 
-      // Shuttle Information Rubric (shown if shuttle is assigned or fellow passengers are scheduled)
+      // 4. RUBRIC: Airport Shuttle & Transfers (shown if shuttle is assigned or fellow passengers are scheduled)
       if (hasShuttle || togetherNames.length > 0) {
         const isTimeOnly = /^\d{2}:\d{2}$/.test(formattedShuttle);
         let shuttleTextHtml = '';
@@ -1165,15 +1197,25 @@ let isCurrentGuestAdmin = false;
         ` : '';
 
         html += `
-          <div class="shuttle-info-card">
-            <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-              Shuttle Information
-            </h4>
-            <p style="margin: 0; font-size: 0.95rem;">
-              ${shuttleTextHtml}
-            </p>
-            ${passengersHtml}
+          <div class="flight-rubric-wrap">
+            <div class="rubric-subheading">
+              <div class="rubric-title">
+                <span>🚐</span>
+                <span>Airport Shuttle & Transfers</span>
+              </div>
+              <span class="rubric-tag">Ground Transit</span>
+            </div>
+
+            <div class="shuttle-info-card" style="margin-top: 0;">
+              <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                Shuttle Information
+              </h4>
+              <p style="margin: 0; font-size: 0.95rem;">
+                ${shuttleTextHtml}
+              </p>
+              ${passengersHtml}
+            </div>
           </div>
         `;
       }
