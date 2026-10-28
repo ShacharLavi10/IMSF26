@@ -6920,13 +6920,15 @@ function initAdminProductionSchedule() {
     const firstEvent = events[0];
     const dayHebrew = firstEvent ? firstEvent.day : "";
     const parts = d.split("-");
-    const dayNumStr = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
+    // Show day number only (e.g. "16", "17", "18") matching guest schedule perfectly
+    const dayNumOnly = parts.length === 3 ? parseInt(parts[2], 10) : d;
+    const fullDateDisplay = parts.length === 3 ? `${parts[2]}.${parts[1]}` : d;
     const isActive = (d === currentAdminScheduleDate);
 
     pillsHtml += `
-      <button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')" title="${d}">
+      <button type="button" class="schedule-pill ${isActive ? 'active' : ''}" data-date="${d}" onclick="selectAdminScheduleDate('${d}')" title="${dayHebrew} ${fullDateDisplay}">
         <span class="day-weekday">${escapeHtmlAdmin(dayHebrew || d)}</span>
-        <span class="day-num">${escapeHtmlAdmin(dayNumStr)}</span>
+        <span class="day-num">${escapeHtmlAdmin(String(dayNumOnly))}</span>
       </button>
     `;
   });

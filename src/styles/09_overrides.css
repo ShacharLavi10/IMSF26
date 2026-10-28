@@ -1558,14 +1558,23 @@ body.light-mode .checkin-restore-link {
   text-transform: uppercase;
   line-height: 1.1;
   opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-#schedule-days-nav .schedule-pill .day-num {
+#schedule-days-nav .schedule-pill .day-num,
+#admin-schedule-days-nav .schedule-pill .day-num {
   font-family: 'Oswald', sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.1;
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Day pills - Dark Mode (Default) */
