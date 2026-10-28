@@ -1168,6 +1168,111 @@ body.light-mode .checkin-copy-btn {
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
 }
 
+/* CHECK-IN DONE CHECKBOX & COLLAPSED PILL */
+.checkin-done-row {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+body.light-mode .checkin-done-row {
+  border-top: 1px dashed #e2e8f0 !important;
+}
+
+.checkin-done-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  color: var(--foreground-muted);
+  transition: color 0.15s ease;
+}
+
+.checkin-done-label:hover {
+  color: var(--foreground);
+}
+
+body.light-mode .checkin-done-label {
+  color: #475569 !important;
+}
+
+body.light-mode .checkin-done-label:hover {
+  color: #0f172a !important;
+}
+
+.checkin-done-label input[type="checkbox"] {
+  appearance: auto;
+  -webkit-appearance: auto;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: #10b981;
+}
+
+.flight-checkin-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+  border-radius: var(--radius-lg, 10px);
+  margin-bottom: 16px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+}
+
+body.light-mode .flight-checkin-collapsed {
+  background: #f0fdf4 !important;
+  border: 1.5px solid #86efac !important;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1) !important;
+}
+
+.checkin-collapsed-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+body.light-mode .checkin-collapsed-text {
+  color: #047857 !important;
+}
+
+.checkin-collapsed-check {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.checkin-restore-link {
+  background: none;
+  border: none;
+  color: var(--accent, #f1a9a0);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: opacity 0.15s ease;
+}
+
+.checkin-restore-link:hover {
+  opacity: 0.8;
+}
+
+body.light-mode .checkin-restore-link {
+  color: #c2410c !important;
+}
+
 /* ========================================================= */
 /* SCHEDULE TIMELINE & EVENT CARDS (NEO-BRUTALISM)           */
 /* ========================================================= */

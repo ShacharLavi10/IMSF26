@@ -722,6 +722,88 @@ let isCurrentGuestAdmin = false;
       } catch(e) {}
     }
 
+    function parseFlightDateObject(rawVal) {
+      if (!rawVal) return null;
+      if (rawVal instanceof Date && !isNaN(rawVal.getTime())) {
+        return new Date(rawVal.getFullYear(), rawVal.getMonth(), rawVal.getDate());
+      }
+      const s = String(rawVal).trim();
+      if (!s || s === '-' || /^#|^=/i.test(s) || /^n\/?a$/i.test(s) || /^tbd$/i.test(s)) return null;
+
+      // 1. Try ISO or YYYY-MM-DD
+      const ymd = s.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})/);
+      if (ymd) {
+        return new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10));
+      }
+
+      // 2. Try DD/MM/YYYY or MM/DD/YYYY
+      const dmy = s.match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})/);
+      if (dmy) {
+        const p1 = parseInt(dmy[1], 10);
+        const p2 = parseInt(dmy[2], 10);
+        const year = parseInt(dmy[3], 10);
+        if (p1 > 12) {
+          return new Date(year, p2 - 1, p1);
+        }
+        if (p2 > 12) {
+          return new Date(year, p1 - 1, p2);
+        }
+        return new Date(year, p2 - 1, p1);
+      }
+
+      const fallback = new Date(s);
+      if (!isNaN(fallback.getTime())) {
+        return new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+      }
+
+      return null;
+    }
+
+    window.toggleCheckInDone = function(checked, bookingKey, containerId) {
+      if (checked) {
+        try {
+          localStorage.setItem('imsf_checkin_done_' + bookingKey, 'true');
+        } catch(e) {}
+        if (typeof showToast === 'function') {
+          showToast("Check-in marked as completed ✓");
+        }
+        const card = document.getElementById('flight-checkin-card');
+        if (card) {
+          card.style.transition = 'all 0.25s ease';
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(-6px)';
+          setTimeout(() => {
+            const wrap = document.getElementById('flight-checkin-wrapper');
+            if (wrap) {
+              wrap.innerHTML = `
+                <div class="flight-checkin-collapsed fade-up" id="flight-checkin-collapsed">
+                  <div class="checkin-collapsed-text">
+                    <span class="checkin-collapsed-check">✓</span>
+                    <span>Online Check-In Completed</span>
+                  </div>
+                  <button type="button" class="checkin-restore-link" onclick="window.restoreCheckInCard('${escapeHtml(bookingKey)}', '${escapeHtml(containerId || 'flights-container')}')">
+                    Show check-in details
+                  </button>
+                </div>
+              `;
+            }
+          }, 220);
+        }
+      }
+    };
+
+    window.restoreCheckInCard = function(bookingKey, containerId) {
+      try {
+        localStorage.removeItem('imsf_checkin_done_' + bookingKey);
+      } catch(e) {}
+      if (typeof showToast === 'function') {
+        showToast("Check-in details restored");
+      }
+      if (window.lastFlightsDataCache && containerId) {
+        renderBoardingPassData(containerId, window.lastFlightsDataCache, window.lastFlightsEmptyTextCache || "No flight information available.");
+      }
+    };
+
     function renderBoardingPassData(containerId, dataArray, emptyText) {
       const container = document.getElementById(containerId);
       if (!dataArray || dataArray.length === 0) {
@@ -731,6 +813,7 @@ let isCurrentGuestAdmin = false;
       
       let arrival = "TBD", arrivalTime = "", arrivalFlight = "", arrivalAirline = "", origin = "TBD";
       let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
+      let rawArrivalDate = null, rawDepartureDate = null;
       let ticketLink = null, shuttle = null, togetherWith = null, airportInvitationLink = null;
       let bookingCode = null, checkInLink = null, checkInNotes = null;
       
@@ -846,13 +929,19 @@ let isCurrentGuestAdmin = false;
       dataArray.forEach(item => {
         const lbl = String(item.label || "").trim().toLowerCase();
         
-        if (lbl === "arrival date") arrival = formatFlightDate(item.value);
+        if (lbl === "arrival date") {
+          rawArrivalDate = item.value;
+          arrival = formatFlightDate(item.value);
+        }
         if (lbl === "arrival time") arrivalTime = formatFlightTime(item.value);
         if (lbl === "arrival flight") arrivalFlight = item.value;
         if (lbl === "arrival airline") arrivalAirline = item.value;
         if (lbl === "origin / from" || lbl === "origin" || lbl.startsWith("origin") || lbl.includes("מוצא") || lbl.includes("הגעה")) origin = item.value;
         
-        if (lbl === "departure date") departure = formatFlightDate(item.value);
+        if (lbl === "departure date") {
+          rawDepartureDate = item.value;
+          departure = formatFlightDate(item.value);
+        }
         if (lbl === "departure time") departureTime = formatFlightTime(item.value);
         if (lbl === "departure flight") departureFlight = item.value;
         if (lbl === "departure airline") departureAirline = item.value;
@@ -892,6 +981,10 @@ let isCurrentGuestAdmin = false;
         html += renderTravelDocsButtonsHtml(ticketLink, airportInvitationLink);
       }
 
+      // Cache flight data for in-memory restore
+      window.lastFlightsDataCache = dataArray;
+      window.lastFlightsEmptyTextCache = emptyText;
+
       // Web Check-in & Booking Reference Rubric
       const cleanBookingCode = bookingCode ? String(bookingCode).trim() : '';
       const hasBookingCode = cleanBookingCode !== '' && 
@@ -913,50 +1006,93 @@ let isCurrentGuestAdmin = false;
                               !/^null$/i.test(cleanCheckInNotes) && 
                               cleanCheckInNotes !== '-';
 
-      if (hasBookingCode || checkInUrl || hasCheckInNotes) {
-        const defaultRec = "It is highly recommended to make web check in 24 hours prior to your flight.";
-        const isDuplicateRec = hasCheckInNotes && cleanCheckInNotes.toLowerCase().includes("web check in") && cleanCheckInNotes.toLowerCase().includes("24 hours");
-        
-        let tipContentHtml = '';
-        if (isDuplicateRec) {
-          tipContentHtml = `<div class="checkin-tip-text">${escapeHtml(cleanCheckInNotes)}</div>`;
+      // 1. Automatic Date Expiry: Hide if today is at least 1 day after the flight date (arrival flight into Israel)
+      const flightDateObj = parseFlightDateObject(rawArrivalDate) || parseFlightDateObject(rawDepartureDate);
+      let isFlightDatePassed = false;
+      if (flightDateObj) {
+        const now = new Date();
+        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const oneDayAfterFlight = new Date(flightDateObj.getFullYear(), flightDateObj.getMonth(), flightDateObj.getDate());
+        oneDayAfterFlight.setDate(oneDayAfterFlight.getDate() + 1);
+        if (todayMidnight >= oneDayAfterFlight) {
+          isFlightDatePassed = true;
+        }
+      }
+
+      // 2. Checkbox Dismissal State & Card Rendering
+      if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes)) {
+        const bookingKey = cleanBookingCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
+        const isCheckInDone = localStorage.getItem('imsf_checkin_done_' + bookingKey) === 'true';
+
+        html += `<div id="flight-checkin-wrapper">`;
+
+        if (isCheckInDone) {
+          html += `
+            <div class="flight-checkin-collapsed fade-up" id="flight-checkin-collapsed">
+              <div class="checkin-collapsed-text">
+                <span class="checkin-collapsed-check">✓</span>
+                <span>Online Check-In Completed</span>
+              </div>
+              <button type="button" class="checkin-restore-link" onclick="window.restoreCheckInCard('${escapeHtml(bookingKey)}', '${escapeHtml(containerId)}')">
+                Show check-in details
+              </button>
+            </div>
+          `;
         } else {
-          tipContentHtml = `
-            <div class="checkin-tip-text">${defaultRec}</div>
-            ${hasCheckInNotes ? `<div class="checkin-custom-note"><span>📌</span> <span><strong>Note:</strong> ${escapeHtml(cleanCheckInNotes)}</span></div>` : ''}
+          const defaultRec = "It is highly recommended to make web check in 24 hours prior to your flight.";
+          const isDuplicateRec = hasCheckInNotes && cleanCheckInNotes.toLowerCase().includes("web check in") && cleanCheckInNotes.toLowerCase().includes("24 hours");
+          
+          let tipContentHtml = '';
+          if (isDuplicateRec) {
+            tipContentHtml = `<div class="checkin-tip-text">${escapeHtml(cleanCheckInNotes)}</div>`;
+          } else {
+            tipContentHtml = `
+              <div class="checkin-tip-text">${defaultRec}</div>
+              ${hasCheckInNotes ? `<div class="checkin-custom-note"><span>📌</span> <span><strong>Note:</strong> ${escapeHtml(cleanCheckInNotes)}</span></div>` : ''}
+            `;
+          }
+
+          html += `
+            <div class="flight-checkin-card" id="flight-checkin-card">
+              <div class="checkin-tip-box">
+                <span class="checkin-tip-icon">💡</span>
+                <div class="checkin-tip-content">
+                  ${tipContentHtml}
+                </div>
+              </div>
+
+              ${hasBookingCode ? `
+                <div class="checkin-code-row">
+                  <span class="checkin-code-label">Booking Reference:</span>
+                  <div class="checkin-code-box">
+                    <span class="checkin-code-val">${escapeHtml(cleanBookingCode)}</span>
+                    <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(cleanBookingCode).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                      <span>Copy</span>
+                    </button>
+                  </div>
+                </div>
+              ` : ''}
+
+              ${checkInUrl ? `
+                <a href="${checkInUrl}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                  <span>🛫 Open Web Check-In</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+              ` : ''}
+
+              <div class="checkin-done-row">
+                <label class="checkin-done-label" for="checkin-done-checkbox">
+                  <input type="checkbox" id="checkin-done-checkbox" onchange="window.toggleCheckInDone(this.checked, '${escapeHtml(bookingKey)}', '${escapeHtml(containerId)}')">
+                  <span class="checkin-done-custom-box"></span>
+                  <span class="checkin-done-text">I've completed online check-in</span>
+                </label>
+              </div>
+            </div>
           `;
         }
 
-        html += `
-          <div class="flight-checkin-card">
-            <div class="checkin-tip-box">
-              <span class="checkin-tip-icon">💡</span>
-              <div class="checkin-tip-content">
-                ${tipContentHtml}
-              </div>
-            </div>
-
-            ${hasBookingCode ? `
-              <div class="checkin-code-row">
-                <span class="checkin-code-label">Booking Reference:</span>
-                <div class="checkin-code-box">
-                  <span class="checkin-code-val">${escapeHtml(cleanBookingCode)}</span>
-                  <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(cleanBookingCode).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
-                    <span>Copy</span>
-                  </button>
-                </div>
-              </div>
-            ` : ''}
-
-            ${checkInUrl ? `
-              <a href="${checkInUrl}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
-                <span>🛫 Open Web Check-In</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-              </a>
-            ` : ''}
-          </div>
-        `;
+        html += `</div>`;
       }
 
       html += `
