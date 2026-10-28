@@ -5626,6 +5626,7 @@ let isCurrentGuestAdmin = false;
         
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
+        const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
         const liveBadge = isLive ? `<span class="timetable-live-badge ${isFav ? 'fav-live' : ''}">${isFav ? '🔥 LIVE' : '🔴 LIVE'}</span>` : '';
         let cleanName = s.artistName || '';
         if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
