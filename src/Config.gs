@@ -84,7 +84,11 @@ const MAPPINGS = {
     { key: "יעד חזרה", altKeys: ["יעד חזרה", "לאיפה", "מדינת חזרה", "לאן"], label: "Destination / To" },
     { key: "שיוך לשאטל", altKeys: ["שיוך לשאטל", "שיוך שאטל", "שאטל", "שעת שאטל", "שעה שאטל", "שאטלים", "הסעה נדרשת", "הסעה", "שעת הסעה", "הסעות", "shuttle", "shuttle time"], label: "Shuttle" },
     { key: "ביחד עם", altKeys: ["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "Together with", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"], label: "Together With" },
-    { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי"], label: "Final Ticket Link" }
+    { key: "לינק כרטיס סופי", altKeys: ["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי"], label: "Final Ticket Link" },
+    { key: "הזמנה לנתב\"ג", altKeys: ["הזמנה לנתב\"ג", "הזמנה לנתבג", "הזמנה לנתב״ג", "מכתב הזמנה לנתב\"ג", "מכתב הזמנה", "הזמנה נתב\"ג", "הזמנה לנתב ג", "הזמנת נתב\"ג", "Airport Invitation", "Invitation Letter", "Airport Invitation Link", "TLV Invitation"], label: "Airport Invitation Link" },
+    { key: "מספר הזמנה", altKeys: ["מספר הזמנה", "קוד הזמנה", "קוד טיסה", "מספר הזמנת טיסה", "booking code", "booking reference", "pnr", "confirmation code"], label: "Booking Code" },
+    { key: "לינק לצק-אין", altKeys: ["לינק לצק-אין", "לינק לצ'ק-אין", "לינק לצ'ק אין", "לינק לצק אין", "לינק צ'ק אין", "לינק צק אין", "קישור לצ'ק אין", "קישור לצק אין", "קישור לצ'ק-אין", "צ'ק אין", "צק אין", "check-in link", "check in link", "web check-in", "checkin link", "check-in url"], label: "Check-in Link" },
+    { key: "הערות צק-אין", altKeys: ["הערות צק-אין", "הערות צ'ק-אין", "הערות צ'ק אין", "הערות צק אין", "הערות לצ'ק אין", "הערות לצק אין", "הערות צקאין", "הערות טיסה וצ'ק אין", "check-in notes", "check in notes", "checkin notes"], label: "Check-in Notes" }
   ],
   HOTELS: [
     { key: "כמות לילות", label: "Nights Count" },

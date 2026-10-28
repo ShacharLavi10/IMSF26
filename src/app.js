@@ -1,6 +1,7 @@
 let currentGuestEmail = "";
-    let globalDirectoryData = [];
-    let isCurrentGuestAdmin = false;
+let currentGuestData = null;
+let globalDirectoryData = [];
+let isCurrentGuestAdmin = false;
 
     function closeWelcomeModal() {
       document.getElementById("welcome-modal-overlay").style.display = "none";
@@ -234,6 +235,7 @@ let currentGuestEmail = "";
         return;
       }
       currentGuestEmail = response.guestInfo.email;
+      currentGuestData = response.guestInfo;
       
       isCurrentGuestAdmin = !!(response.guestInfo && (response.guestInfo.isAdmin === true || response.guestInfo.role === 'הפקה חשיפה'));
       
@@ -595,16 +597,53 @@ let currentGuestEmail = "";
       ];
     }
 
-    function renderTicketButtonsHtml(ticketLink) {
-      const tickets = parseTicketLinks(ticketLink);
-      if (!tickets || tickets.length === 0) return '';
+    function parseInvitationLink(rawVal) {
+      if (!rawVal) return null;
+      const text = String(rawVal).trim();
+      if (!text || text === '-' || /^#|^=/i.test(text) || /^n\/?a$/i.test(text) || /^none$/i.test(text) || /^null$/i.test(text)) {
+        return null;
+      }
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/gi;
+      const matches = text.match(urlRegex) || [];
+      if (matches.length > 0) {
+        return matches[0].replace(/[.,;)]+$/, '');
+      }
+      const driveIdMatch = text.match(/[-\w]{25,}/);
+      if (driveIdMatch) {
+        return `https://drive.google.com/file/d/${driveIdMatch[0]}/view`;
+      }
+      return null;
+    }
 
-      if (tickets.length === 1) {
+    function renderTravelDocsButtonsHtml(ticketLink, invitationLink) {
+      const tickets = parseTicketLinks(ticketLink);
+      const invUrl = parseInvitationLink(invitationLink);
+
+      const items = [];
+      if (tickets && tickets.length > 0) {
+        tickets.forEach(t => items.push({
+          url: t.url,
+          label: t.label,
+          icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>`
+        }));
+      }
+
+      if (invUrl) {
+        items.push({
+          url: invUrl,
+          label: 'Airport Invitation (PDF)',
+          icon: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+        });
+      }
+
+      if (items.length === 0) return '';
+
+      if (items.length === 1) {
         return `
           <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-            <a href="${tickets[0].url}" target="_blank" rel="noopener noreferrer" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              View E-Ticket (PDF)
+            <a href="${items[0].url}" target="_blank" rel="noopener noreferrer" class="primary" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; font-size: 1.05rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; box-sizing: border-box;">
+              ${items[0].icon}
+              <span>${items[0].label}</span>
             </a>
           </div>
         `;
@@ -612,15 +651,158 @@ let currentGuestEmail = "";
 
       return `
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
-          ${tickets.map(t => `
-            <a href="${t.url}" target="_blank" rel="noopener noreferrer" class="primary" style="flex: 1 1 calc(50% - 6px); min-width: 140px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 0.95rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; text-align: center; box-sizing: border-box;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              <span>${t.label}</span>
+          ${items.map(it => `
+            <a href="${it.url}" target="_blank" rel="noopener noreferrer" class="primary" style="flex: 1 1 calc(50% - 6px); min-width: 140px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 0.95rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: bold; text-align: center; box-sizing: border-box;">
+              ${it.icon}
+              <span>${it.label}</span>
             </a>
           `).join('')}
         </div>
       `;
     }
+
+    function renderTicketButtonsHtml(ticketLink, invitationLink) {
+      return renderTravelDocsButtonsHtml(ticketLink, invitationLink);
+    }
+
+    function extractFirstUrl(rawVal) {
+      if (!rawVal) return null;
+      const text = String(rawVal).trim();
+      if (!text || text === '-' || /^#|^=/i.test(text) || /^n\/?a$/i.test(text) || /^none$/i.test(text) || /^null$/i.test(text)) {
+        return null;
+      }
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/i;
+      const match = text.match(urlRegex);
+      if (match) {
+        return match[0].replace(/[.,;)]+$/, '');
+      }
+      if (/^www\./i.test(text)) {
+        return 'https://' + text;
+      }
+      return null;
+    }
+
+    window.copyBookingCode = function(code, btn) {
+      if (!code) return;
+      const handleSuccess = () => {
+        if (btn) {
+          const origHtml = btn.innerHTML;
+          btn.classList.add('copied');
+          btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Copied! ✓</span>
+          `;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = origHtml;
+          }, 2000);
+        }
+      };
+
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(handleSuccess).catch(() => {
+          fallbackCopyText(code, handleSuccess);
+        });
+      } else {
+        fallbackCopyText(code, handleSuccess);
+      }
+    };
+
+    function fallbackCopyText(text, cb) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (cb) cb();
+      } catch(e) {}
+    }
+
+    function parseFlightDateObject(rawVal) {
+      if (!rawVal) return null;
+      if (rawVal instanceof Date && !isNaN(rawVal.getTime())) {
+        return new Date(rawVal.getFullYear(), rawVal.getMonth(), rawVal.getDate());
+      }
+      const s = String(rawVal).trim();
+      if (!s || s === '-' || /^#|^=/i.test(s) || /^n\/?a$/i.test(s) || /^tbd$/i.test(s)) return null;
+
+      // 1. Try ISO or YYYY-MM-DD
+      const ymd = s.match(/^(\d{4})[-\/\.](\d{1,2})[-\/\.](\d{1,2})/);
+      if (ymd) {
+        return new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10));
+      }
+
+      // 2. Try DD/MM/YYYY or MM/DD/YYYY
+      const dmy = s.match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})/);
+      if (dmy) {
+        const p1 = parseInt(dmy[1], 10);
+        const p2 = parseInt(dmy[2], 10);
+        const year = parseInt(dmy[3], 10);
+        if (p1 > 12) {
+          return new Date(year, p2 - 1, p1);
+        }
+        if (p2 > 12) {
+          return new Date(year, p1 - 1, p2);
+        }
+        return new Date(year, p2 - 1, p1);
+      }
+
+      const fallback = new Date(s);
+      if (!isNaN(fallback.getTime())) {
+        return new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+      }
+
+      return null;
+    }
+
+    window.toggleCheckInDone = function(checked, bookingKey, containerId) {
+      if (checked) {
+        try {
+          localStorage.setItem('imsf_checkin_done_' + bookingKey, 'true');
+        } catch(e) {}
+        if (typeof showToast === 'function') {
+          showToast("Check-in marked as completed ✓");
+        }
+        const card = document.getElementById('flight-checkin-card');
+        if (card) {
+          card.style.transition = 'all 0.25s ease';
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(-6px)';
+          setTimeout(() => {
+            const wrap = document.getElementById('flight-checkin-wrapper');
+            if (wrap) {
+              wrap.innerHTML = `
+                <div class="flight-checkin-collapsed fade-up" id="flight-checkin-collapsed">
+                  <div class="checkin-collapsed-text">
+                    <span class="checkin-collapsed-check">✓</span>
+                    <span>Online Check-In Completed</span>
+                  </div>
+                  <button type="button" class="checkin-restore-link" onclick="window.restoreCheckInCard('${escapeHtml(bookingKey)}', '${escapeHtml(containerId || 'flights-container')}')">
+                    Show check-in details
+                  </button>
+                </div>
+              `;
+            }
+          }, 220);
+        }
+      }
+    };
+
+    window.restoreCheckInCard = function(bookingKey, containerId) {
+      try {
+        localStorage.removeItem('imsf_checkin_done_' + bookingKey);
+      } catch(e) {}
+      if (typeof showToast === 'function') {
+        showToast("Check-in details restored");
+      }
+      if (window.lastFlightsDataCache && containerId) {
+        renderBoardingPassData(containerId, window.lastFlightsDataCache, window.lastFlightsEmptyTextCache || "No flight information available.");
+      }
+    };
 
     function renderBoardingPassData(containerId, dataArray, emptyText) {
       const container = document.getElementById(containerId);
@@ -631,7 +813,9 @@ let currentGuestEmail = "";
       
       let arrival = "TBD", arrivalTime = "", arrivalFlight = "", arrivalAirline = "", origin = "TBD";
       let departure = "TBD", departureTime = "", departureFlight = "", departureAirline = "", dest = "TBD";
-      let ticketLink = null, shuttle = null, togetherWith = null;
+      let rawArrivalDate = null, rawDepartureDate = null;
+      let ticketLink = null, shuttle = null, togetherWith = null, airportInvitationLink = null;
+      let bookingCode = null, checkInLink = null, checkInNotes = null;
       
       function formatFlightDate(dStr) {
         if (!dStr) return '';
@@ -745,13 +929,19 @@ let currentGuestEmail = "";
       dataArray.forEach(item => {
         const lbl = String(item.label || "").trim().toLowerCase();
         
-        if (lbl === "arrival date") arrival = formatFlightDate(item.value);
+        if (lbl === "arrival date") {
+          rawArrivalDate = item.value;
+          arrival = formatFlightDate(item.value);
+        }
         if (lbl === "arrival time") arrivalTime = formatFlightTime(item.value);
         if (lbl === "arrival flight") arrivalFlight = item.value;
         if (lbl === "arrival airline") arrivalAirline = item.value;
         if (lbl === "origin / from" || lbl === "origin" || lbl.startsWith("origin") || lbl.includes("מוצא") || lbl.includes("הגעה")) origin = item.value;
         
-        if (lbl === "departure date") departure = formatFlightDate(item.value);
+        if (lbl === "departure date") {
+          rawDepartureDate = item.value;
+          departure = formatFlightDate(item.value);
+        }
         if (lbl === "departure time") departureTime = formatFlightTime(item.value);
         if (lbl === "departure flight") departureFlight = item.value;
         if (lbl === "departure airline") departureAirline = item.value;
@@ -760,6 +950,10 @@ let currentGuestEmail = "";
         if (lbl === "shuttle" || lbl.includes("shuttle") || lbl.includes("שאטל") || lbl.includes("הסעה")) shuttle = item.value;
         if (lbl === "together with" || lbl.startsWith("together") || lbl.includes("ביחד") || lbl.includes("יחד") || lbl.includes("נוסע") || lbl.includes("שותפ") || lbl.includes("passengers")) togetherWith = item.value;
         if (lbl === "final ticket link" || lbl.includes("ticket link") || lbl.includes("כרטיס")) ticketLink = item.value;
+        if (lbl === "airport invitation link" || lbl.includes("airport invitation") || lbl.includes("הזמנה לנתב") || lbl.includes("הזמנה")) airportInvitationLink = item.value;
+        if (lbl === "booking code" || lbl.includes("booking code") || lbl.includes("מספר הזמנה") || lbl.includes("קוד הזמנה") || lbl === "pnr" || lbl.includes("booking ref")) bookingCode = item.value;
+        if (lbl === "check-in link" || lbl.includes("check-in link") || lbl.includes("צק-אין") || lbl.includes("צ'ק-אין") || lbl.includes("checkin")) checkInLink = item.value;
+        if (lbl === "check-in notes" || lbl.includes("check-in notes") || lbl.includes("הערות צק") || lbl.includes("הערות צ'ק")) checkInNotes = item.value;
       });
 
       const formattedShuttle = formatShuttleTime(shuttle);
@@ -783,52 +977,198 @@ let currentGuestEmail = "";
 
       let html = '';
 
-      if (ticketLink) {
-        html += renderTicketButtonsHtml(ticketLink);
+      // Cache flight data for in-memory restore
+      window.lastFlightsDataCache = dataArray;
+      window.lastFlightsEmptyTextCache = emptyText;
+
+      // 1. RUBRIC: Travel & Border Documents
+      if (ticketLink || airportInvitationLink) {
+        html += `
+          <div class="flight-rubric-wrap">
+            <div class="rubric-subheading">
+              <div class="rubric-title">
+                <span>📄</span>
+                <span>Travel & Border Documents</span>
+              </div>
+              <span class="rubric-tag">PDF Passes</span>
+            </div>
+            ${renderTravelDocsButtonsHtml(ticketLink, airportInvitationLink)}
+          </div>
+        `;
       }
 
-      html += `
-        <div class="boarding-pass" style="margin-bottom: 12px;">
-          <div class="bp-header">
-            <span>OFFICIAL ITINERARY</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
-          </div>
-          <div class="bp-body">
-            <div class="bp-flight">
-              <div class="bp-label" style="display: flex; justify-content: space-between;">
-                <span>INBOUND TO ISRAEL</span>
-                ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
+      // Web Check-in & Booking Reference Rubric
+      const cleanBookingCode = bookingCode ? String(bookingCode).trim() : '';
+      const hasBookingCode = cleanBookingCode !== '' && 
+                             !cleanBookingCode.startsWith('#') && 
+                             !cleanBookingCode.startsWith('=') && 
+                             !/^n\/?a$/i.test(cleanBookingCode) && 
+                             !/^none$/i.test(cleanBookingCode) && 
+                             !/^null$/i.test(cleanBookingCode) && 
+                             cleanBookingCode !== '-';
+
+      const checkInUrl = extractFirstUrl(checkInLink);
+
+      const cleanCheckInNotes = checkInNotes ? String(checkInNotes).trim() : '';
+      const hasCheckInNotes = cleanCheckInNotes !== '' && 
+                              !cleanCheckInNotes.startsWith('#') && 
+                              !cleanCheckInNotes.startsWith('=') && 
+                              !/^n\/?a$/i.test(cleanCheckInNotes) && 
+                              !/^none$/i.test(cleanCheckInNotes) && 
+                              !/^null$/i.test(cleanCheckInNotes) && 
+                              cleanCheckInNotes !== '-';
+
+      // 1. Automatic Date Expiry: Hide if today is at least 1 day after the flight date (arrival flight into Israel)
+      const flightDateObj = parseFlightDateObject(rawArrivalDate) || parseFlightDateObject(rawDepartureDate);
+      let isFlightDatePassed = false;
+      if (flightDateObj) {
+        const now = new Date();
+        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const oneDayAfterFlight = new Date(flightDateObj.getFullYear(), flightDateObj.getMonth(), flightDateObj.getDate());
+        oneDayAfterFlight.setDate(oneDayAfterFlight.getDate() + 1);
+        if (todayMidnight >= oneDayAfterFlight) {
+          isFlightDatePassed = true;
+        }
+      }
+
+      // 2. RUBRIC: Online Web Check-In
+      if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes)) {
+        const bookingKey = cleanBookingCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
+        const isCheckInDone = localStorage.getItem('imsf_checkin_done_' + bookingKey) === 'true';
+
+        html += `
+          <div class="flight-rubric-wrap" id="flight-checkin-wrapper">
+            <div class="rubric-subheading">
+              <div class="rubric-title">
+                <span>🛫</span>
+                <span>Online Web Check-In</span>
               </div>
-              <div class="bp-route">
-                <span class="bp-city">${origin}</span>
-                <span class="bp-arrow">→</span>
-                <span class="bp-city">TLV</span>
+              <span class="rubric-tag">T-24H Prior</span>
+            </div>
+        `;
+
+        if (isCheckInDone) {
+          html += `
+            <div class="flight-checkin-collapsed fade-up" id="flight-checkin-collapsed">
+              <div class="checkin-collapsed-text">
+                <span class="checkin-collapsed-check">✓</span>
+                <span>Online Check-In Completed</span>
               </div>
-              <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
+              <button type="button" class="checkin-restore-link" onclick="window.restoreCheckInCard('${escapeHtml(bookingKey)}', '${escapeHtml(containerId)}')">
+                Show check-in details
+              </button>
+            </div>
+          `;
+        } else {
+          const defaultRec = "It is highly recommended to make web check in 24 hours prior to your flight.";
+          const isDuplicateRec = hasCheckInNotes && cleanCheckInNotes.toLowerCase().includes("web check in") && cleanCheckInNotes.toLowerCase().includes("24 hours");
+          
+          let tipContentHtml = '';
+          if (isDuplicateRec) {
+            tipContentHtml = `<div class="checkin-tip-text">${escapeHtml(cleanCheckInNotes)}</div>`;
+          } else {
+            tipContentHtml = `
+              <div class="checkin-tip-text">${defaultRec}</div>
+              ${hasCheckInNotes ? `<div class="checkin-custom-note"><span>📌</span> <span><strong>Note:</strong> ${escapeHtml(cleanCheckInNotes)}</span></div>` : ''}
+            `;
+          }
+
+          html += `
+            <div class="flight-checkin-card" id="flight-checkin-card">
+              <div class="checkin-tip-box">
+                <span class="checkin-tip-icon">💡</span>
+                <div class="checkin-tip-content">
+                  ${tipContentHtml}
+                </div>
+              </div>
+
+              ${hasBookingCode ? `
+                <div class="checkin-code-row">
+                  <span class="checkin-code-label">Booking Reference:</span>
+                  <div class="checkin-code-box">
+                    <span class="checkin-code-val">${escapeHtml(cleanBookingCode)}</span>
+                    <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(cleanBookingCode).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                      <span>Copy</span>
+                    </button>
+                  </div>
+                </div>
+              ` : ''}
+
+              ${checkInUrl ? `
+                <a href="${checkInUrl}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                  <span>🛫 Open Web Check-In</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+              ` : ''}
+
+              <div class="checkin-done-row">
+                <label class="checkin-done-label" for="checkin-done-checkbox">
+                  <input type="checkbox" id="checkin-done-checkbox" onchange="window.toggleCheckInDone(this.checked, '${escapeHtml(bookingKey)}', '${escapeHtml(containerId)}')">
+                  <span class="checkin-done-custom-box"></span>
+                  <span class="checkin-done-text">I've completed online check-in</span>
+                </label>
               </div>
             </div>
+          `;
+        }
 
-            <div class="bp-divider"></div>
-            <div class="bp-flight">
-              <div class="bp-label" style="display: flex; justify-content: space-between;">
-                <span>OUTBOUND FROM ISRAEL</span>
-                ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
+        html += `</div>`;
+      }
+
+      // 3. RUBRIC: Flight Schedule & Routes (Boarding Pass)
+      html += `
+        <div class="flight-rubric-wrap">
+          <div class="rubric-subheading">
+            <div class="rubric-title">
+              <span>✈️</span>
+              <span>Flight Schedule & Routes</span>
+            </div>
+            <span class="rubric-tag">Boarding Pass</span>
+          </div>
+
+          <div class="boarding-pass" style="margin-bottom: 0;">
+            <div class="bp-header">
+              <span>OFFICIAL FLIGHT ITINERARY</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
+            </div>
+            <div class="bp-body">
+              <div class="bp-flight">
+                <div class="bp-label" style="display: flex; justify-content: space-between;">
+                  <span>INBOUND TO ISRAEL</span>
+                  ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
+                </div>
+                <div class="bp-route">
+                  <span class="bp-city">${origin}</span>
+                  <span class="bp-arrow">→</span>
+                  <span class="bp-city">TLV</span>
+                </div>
+                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                  <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
+                </div>
               </div>
-              <div class="bp-route">
-                <span class="bp-city">TLV</span>
-                <span class="bp-arrow">→</span>
-                <span class="bp-city">${dest}</span>
-              </div>
-              <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
+
+              <div class="bp-divider"></div>
+              <div class="bp-flight">
+                <div class="bp-label" style="display: flex; justify-content: space-between;">
+                  <span>OUTBOUND FROM ISRAEL</span>
+                  ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
+                </div>
+                <div class="bp-route">
+                  <span class="bp-city">TLV</span>
+                  <span class="bp-arrow">→</span>
+                  <span class="bp-city">${dest}</span>
+                </div>
+                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                  <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       `;
 
-      // Shuttle Information Rubric (shown if shuttle is assigned or fellow passengers are scheduled)
+      // 4. RUBRIC: Airport Shuttle & Transfers (shown if shuttle is assigned or fellow passengers are scheduled)
       if (hasShuttle || togetherNames.length > 0) {
         const isTimeOnly = /^\d{2}:\d{2}$/.test(formattedShuttle);
         let shuttleTextHtml = '';
@@ -857,15 +1197,25 @@ let currentGuestEmail = "";
         ` : '';
 
         html += `
-          <div class="shuttle-info-card">
-            <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-              Shuttle Information
-            </h4>
-            <p style="margin: 0; font-size: 0.95rem;">
-              ${shuttleTextHtml}
-            </p>
-            ${passengersHtml}
+          <div class="flight-rubric-wrap">
+            <div class="rubric-subheading">
+              <div class="rubric-title">
+                <span>🚐</span>
+                <span>Airport Shuttle & Transfers</span>
+              </div>
+              <span class="rubric-tag">Ground Transit</span>
+            </div>
+
+            <div class="shuttle-info-card" style="margin-top: 0;">
+              <h4 style="margin: 0 0 10px 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 1.05rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                Shuttle Information
+              </h4>
+              <p style="margin: 0; font-size: 0.95rem;">
+                ${shuttleTextHtml}
+              </p>
+              ${passengersHtml}
+            </div>
           </div>
         `;
       }
@@ -2902,8 +3252,7 @@ let currentGuestEmail = "";
       grid.innerHTML = html;
 
       // Handle Export Briefcase visibility
-      const hasFavs = Object.keys(favs).length > 0;
-      document.getElementById('export-briefcase-container').style.display = hasFavs ? 'block' : 'none';
+      updateExportBriefcaseVisibility();
     }
 
     function toggleCardFav(event, artistId) {
@@ -2939,9 +3288,7 @@ let currentGuestEmail = "";
       }
 
       // Handle Export Briefcase visibility
-      const hasFavs = Object.keys(favs).length > 0;
-      const exportContainer = document.getElementById('export-briefcase-container');
-      if (exportContainer) exportContainer.style.display = hasFavs ? 'block' : 'none';
+      updateExportBriefcaseVisibility();
     }
 
     function filterArtists() {
@@ -3300,6 +3647,7 @@ let currentGuestEmail = "";
       saveFavorites(favs);
       triggerFeedbackAutoSave(1500);
       if (typeof updateTimetableFavCount === 'function') updateTimetableFavCount();
+      updateExportBriefcaseVisibility();
     }
 
     function savePrivateNote() {
@@ -3307,10 +3655,276 @@ let currentGuestEmail = "";
       const note = document.getElementById('sheet-private-note').value;
       savePrivateNoteLocally(currentOpenArtistId, note);
       triggerFeedbackAutoSave(3500);
+      updateExportBriefcaseVisibility();
+    }
+
+    function updateExportBriefcaseVisibility() {
+      const exportContainer = document.getElementById('export-briefcase-container');
+      if (!exportContainer) return;
+      const favs = getFavorites();
+      const hasFavs = Object.keys(favs).some(k => !!favs[k]);
+      
+      let hasNotes = false;
+      let notesCount = 0;
+      if (currentGuestEmail) {
+        const notePrefix = `artist_note_${currentGuestEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) {
+              hasNotes = true;
+              notesCount++;
+            }
+          }
+        }
+      }
+
+      const shouldShow = hasFavs || hasNotes;
+      exportContainer.style.display = shouldShow ? 'block' : 'none';
+
+      const btn = document.getElementById('export-briefcase-btn');
+      if (btn) {
+        const span = btn.querySelector('span');
+        if (span) {
+          const favCount = Object.keys(favs).filter(k => !!favs[k]).length;
+          span.innerText = favCount > 0 ? `Export My Briefcase (${favCount})` : 'Export My Briefcase';
+        }
+      }
+    }
+
+    function getBriefcaseExportPayload() {
+      const favs = getFavorites();
+      const allNotes = {};
+      const allTags = {};
+      if (currentGuestEmail) {
+        const notePrefix = `artist_note_${currentGuestEmail}_`;
+        const tagPrefix = `artist_tags_${currentGuestEmail}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(notePrefix)) {
+            const aId = k.replace(notePrefix, '');
+            const val = localStorage.getItem(k);
+            if (val && val.trim()) allNotes[aId] = val.trim();
+          } else if (k && k.startsWith(tagPrefix)) {
+            const aId = k.replace(tagPrefix, '');
+            const val = localStorage.getItem(k);
+            if (val) {
+              try {
+                const parsed = JSON.parse(val);
+                if (Array.isArray(parsed) && parsed.length > 0) allTags[aId] = parsed;
+              } catch(e) {}
+            }
+          }
+        }
+      }
+
+      // Ensure open artist is synced
+      if (currentOpenArtistId) {
+        const currentInput = document.getElementById('sheet-private-note');
+        if (currentInput && currentInput.value.trim()) {
+          allNotes[currentOpenArtistId] = currentInput.value.trim();
+        }
+        const currentTags = getArtistTags(currentOpenArtistId);
+        if (currentTags && currentTags.length > 0) {
+          allTags[currentOpenArtistId] = currentTags;
+        }
+      }
+
+      return {
+        favorites: favs,
+        notes: allNotes,
+        tags: allTags
+      };
     }
 
     function exportBriefcase() {
-      alert("This will generate and download a PDF summarizing your liked artists and private notes!");
+      flushFeedbackAutoSave();
+      const payload = getBriefcaseExportPayload();
+      const favIds = Object.keys(payload.favorites).filter(k => !!payload.favorites[k]);
+      const noteIds = Object.keys(payload.notes);
+      const tagIds = Object.keys(payload.tags);
+      const allExportIds = new Set([...favIds, ...noteIds, ...tagIds]);
+
+      if (allExportIds.size === 0) {
+        alert("You haven't added any favorite artists or private notes yet! Mark some artists with ❤️ or write a note to export your personal briefcase.");
+        return;
+      }
+
+      // Update modal stats
+      const modal = document.getElementById('briefcase-modal-overlay');
+      if (!modal) return;
+
+      const artistsCountElem = document.getElementById('briefcase-modal-artists-count');
+      const notesCountElem = document.getElementById('briefcase-modal-notes-count');
+      const emailElem = document.getElementById('briefcase-modal-email');
+      const statusDiv = document.getElementById('briefcase-modal-status');
+      const successDiv = document.getElementById('briefcase-modal-success');
+      const actionsDiv = document.getElementById('briefcase-modal-actions');
+
+      if (artistsCountElem) artistsCountElem.innerText = `${allExportIds.size} Artist${allExportIds.size !== 1 ? 's' : ''}`;
+      if (notesCountElem) notesCountElem.innerText = `${noteIds.length} Note${noteIds.length !== 1 ? 's' : ''}`;
+      if (emailElem) emailElem.innerText = currentGuestEmail || 'your email';
+
+      if (statusDiv) statusDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+      if (actionsDiv) actionsDiv.style.display = 'flex';
+
+      modal.style.display = 'flex';
+    }
+
+    function closeBriefcaseModal() {
+      const modal = document.getElementById('briefcase-modal-overlay');
+      if (modal) modal.style.display = 'none';
+    }
+
+    let isExportingBriefcase = false;
+    function executeBriefcaseExport(actionType) {
+      if (isExportingBriefcase) return;
+      if (!currentGuestEmail) {
+        alert("Please make sure you are logged in to export your briefcase.");
+        return;
+      }
+
+      const actionsDiv = document.getElementById('briefcase-modal-actions');
+      const statusDiv = document.getElementById('briefcase-modal-status');
+      const statusText = document.getElementById('briefcase-status-text');
+      const successDiv = document.getElementById('briefcase-modal-success');
+      const successText = document.getElementById('briefcase-success-text');
+      const successDetail = document.getElementById('briefcase-success-detail');
+
+      if (actionsDiv) actionsDiv.style.display = 'none';
+      if (statusDiv) statusDiv.style.display = 'block';
+      if (successDiv) successDiv.style.display = 'none';
+
+      let previewWindow = null;
+      if (actionType === 'preview') {
+        if (statusText) statusText.innerText = 'Preparing your PDF preview... ⏳';
+        try {
+          previewWindow = window.open('', '_blank');
+          if (previewWindow) {
+            previewWindow.document.write('<html><head><title>Loading Briefcase...</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#0a1626;color:#ffffff;"><div style="text-align:center;"><h2>Loading your Briefcase PDF... ⏳</h2><p>Please wait a moment while the document renders.</p></div></body></html>');
+          }
+        } catch(e) {}
+      } else if (actionType === 'download') {
+        if (statusText) statusText.innerText = 'Generating your PDF file... ⏳';
+      } else {
+        if (statusText) statusText.innerText = 'Generating & emailing your Briefcase PDF... ⏳';
+      }
+
+      isExportingBriefcase = true;
+      const payload = getBriefcaseExportPayload();
+      const guestName = (currentGuestData && (currentGuestData.fullName || (currentGuestData.firstName ? (currentGuestData.firstName + ' ' + (currentGuestData.lastName || '')) : ''))) || '';
+
+      const options = {
+        sendEmail: (actionType === 'email'),
+        returnBase64: true,
+        guestName: guestName
+      };
+
+      if (!window.google || !google.script || !google.script.run) {
+        isExportingBriefcase = false;
+        if (statusDiv) statusDiv.style.display = 'none';
+        if (actionsDiv) actionsDiv.style.display = 'flex';
+        if (previewWindow) previewWindow.close();
+        alert("Connection unavailable. Please try again shortly.");
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          isExportingBriefcase = false;
+          if (statusDiv) statusDiv.style.display = 'none';
+
+          if (!res || !res.success) {
+            if (actionsDiv) actionsDiv.style.display = 'flex';
+            if (previewWindow) previewWindow.close();
+            alert("Could not export briefcase: " + ((res && res.message) || "Unknown error"));
+            return;
+          }
+
+          if (actionType === 'preview' && res.pdfBase64) {
+            let blobUrl = '';
+            try {
+              const byteCharacters = atob(res.pdfBase64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              blobUrl = URL.createObjectURL(blob);
+              if (previewWindow && !previewWindow.closed) {
+                previewWindow.location.href = blobUrl;
+              } else {
+                window.open(blobUrl, '_blank');
+              }
+            } catch(e) {
+              console.warn("Direct blob preview error, falling back to data URI:", e);
+              blobUrl = 'data:application/pdf;base64,' + res.pdfBase64;
+              if (previewWindow && !previewWindow.closed) {
+                previewWindow.location.href = blobUrl;
+              } else {
+                window.open(blobUrl, '_blank');
+              }
+            }
+
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'PDF Preview Ready!';
+              if (successDetail) {
+                successDetail.innerHTML = `Your briefcase PDF has opened in a new tab.<br><a href="${blobUrl}" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: bold; margin-top: 6px; display: inline-block;">Click here if your browser blocked the tab</a>`;
+              }
+            }
+          } else if (actionType === 'download' && res.pdfBase64) {
+            try {
+              const byteCharacters = atob(res.pdfBase64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              const blobUrl = URL.createObjectURL(blob);
+
+              const downloadLink = document.createElement('a');
+              downloadLink.href = blobUrl;
+              downloadLink.download = res.filename || 'IMSF26_Personal_Briefcase.pdf';
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            } catch(e) {
+              console.warn("Direct blob download error, falling back to data URI:", e);
+              const downloadLink = document.createElement('a');
+              downloadLink.href = 'data:application/pdf;base64,' + res.pdfBase64;
+              downloadLink.download = res.filename || 'IMSF26_Personal_Briefcase.pdf';
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            }
+
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'PDF Downloaded Successfully!';
+              if (successDetail) successDetail.innerText = 'Your briefcase PDF has been downloaded to your device files.';
+            }
+          } else {
+            // Email sent successfully
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'Briefcase Sent to Your Email!';
+              if (successDetail) successDetail.innerText = `We have sent your PDF to ${currentGuestEmail}. Check your inbox and spam folder.`;
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          isExportingBriefcase = false;
+          if (statusDiv) statusDiv.style.display = 'none';
+          if (actionsDiv) actionsDiv.style.display = 'flex';
+          if (previewWindow) previewWindow.close();
+          alert("Error exporting briefcase: " + (err.message || err.toString()));
+        })
+        .generateAndSendBriefcasePdf(currentGuestEmail, payload, options);
     }
 
     /* ==========================================================================
@@ -5051,6 +5665,8 @@ window.filterArtists = filterArtists;
 window.clearArtistSearch = clearArtistSearch;
 window.toggleFavFilter = toggleFavFilter;
 window.exportBriefcase = exportBriefcase;
+window.closeBriefcaseModal = closeBriefcaseModal;
+window.executeBriefcaseExport = executeBriefcaseExport;
 window.closeArtistSheet = closeArtistSheet;
 window.toggleSheetFav = toggleSheetFav;
 window.toggleCardFav = toggleCardFav;
@@ -6396,7 +7012,11 @@ function viewAdminGuestDetails(rowIndex) {
     let shuttle = getFlightVal(["שיוך לשאטל", "הסעה נדרשת", "הסעה", "שאטל"]);
     let togetherWith = getFlightVal(["ביחד עם", "עם מי", "יחד עם", "נוסעים נוספים", "together with", "שותפים לשאטל", "נוסעים ביחד", "ביחד", "שותף לשאטל", "נוסע/ת עם", "נוסע עם", "נוסעים איתו", "שותפים", "נוסעים יחד", "co-passengers", "together", "passengers"]);
     let ticketLink = getFlightVal(["לינק כרטיס סופי", "לינק לכרטיס סופי", "קישור לכרטיס טיסה", "קישור לכרטיס", "כרטיס טיסה", "לינק לכרטיס", "כרטיס סופי", "final ticket link"]);
+    let invitationLink = getFlightVal(["הזמנה לנתב\"ג", "הזמנה לנתבג", "הזמנה לנתב״ג", "מכתב הזמנה לנתב\"ג", "מכתב הזמנה", "הזמנה נתב\"ג", "airport invitation", "invitation letter", "airport invitation link"]);
     let flightNotes = fData['הערות טיסות'] || '';
+    let bookingCode = getFlightVal(["מספר הזמנה", "קוד הזמנה", "קוד טיסה", "מספר הזמנת טיסה", "booking code", "booking reference", "pnr"]);
+    let checkInLink = getFlightVal(["לינק לצק-אין", "לינק לצ'ק-אין", "לינק לצ'ק אין", "לינק לצק אין", "לינק צ'ק אין", "קישור לצ'ק אין", "check-in link", "check in link"]);
+    let checkInNotes = getFlightVal(["הערות צק-אין", "הערות צ'ק-אין", "הערות צ'ק אין", "הערות צק אין", "check-in notes", "check in notes"]);
 
     function formatFlightDate(dStr) {
       if (!dStr) return '';
@@ -6502,8 +7122,8 @@ function viewAdminGuestDetails(rowIndex) {
 
     flightHtml = '';
 
-    if (ticketLink) {
-      flightHtml += renderTicketButtonsHtml(ticketLink);
+    if (ticketLink || invitationLink) {
+      flightHtml += renderTravelDocsButtonsHtml(ticketLink, invitationLink);
     }
 
     flightHtml += `
@@ -6589,6 +7209,18 @@ function viewAdminGuestDetails(rowIndex) {
     }
     if (flightNotes) {
       flightHtml += `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${flightNotes}</div>`;
+    }
+    if (bookingCode || checkInLink || checkInNotes) {
+      flightHtml += `
+        <div style="margin-top:8px; padding:10px; background:rgba(241, 169, 160, 0.1); border:1.5px solid rgba(241, 169, 160, 0.35); border-radius:6px; font-size:0.85rem;">
+          <div style="font-weight:bold; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
+            <span>🛫</span><span>Web Check-In & Booking:</span>
+          </div>
+          ${bookingCode ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent); background:rgba(0,0,0,0.15); padding:2px 6px; border-radius:4px;">${escapeHtml(bookingCode)}</code></div>` : ''}
+          ${checkInLink ? `<div style="margin-top:3px;"><strong>Link:</strong> <a href="${escapeHtml(checkInLink)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(checkInLink.length > 45 ? checkInLink.slice(0, 45) + '...' : checkInLink)}</a></div>` : ''}
+          ${checkInNotes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(checkInNotes)}</div>` : ''}
+        </div>
+      `;
     }
   }
 

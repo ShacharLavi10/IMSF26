@@ -119,6 +119,23 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Opening an artist modal sets `window.location.hash = "sheet"`.
     - Tapping "View in Timetable" sets `window.location.hash = "timetable"` without popping history, establishing a forward history entry.
     - Tapping the physical/browser **Back button** from the Timetable returns the delegate directly to the Artists Lineup tab and automatically re-opens the artist modal for `lastOpenedArtistId`.
+  - **Timetable Artist Search Bar with Pulse Jump (`#timetable-artist-search`, `#timetable-search-results`)**:
+    - Floating search bar positioned right below the venue banner in the Timetable view.
+    - Matches artist names and aliases in real time as the user types.
+    - Keyboard-friendly: pressing `Enter` selects the top result; `Escape` clears the search.
+    - Clicking any result jumps immediately to that performance's day, selects it, scrolls smoothly to the concert card, and triggers the Multi-Wave Pulse highlight.
+  - **Named DJs Without Hours (`.timetable-time-box`)**:
+    - Named DJs without an assigned hour in the spreadsheet (e.g. `DJ Adi Bareket`, `DJ Ram Malca`) are preserved and sorted to the very end of their respective day.
+    - Rendered with an elegant vertical badge: `<span class="start-time">DJ SET</span><span class="end-time">TBA</span>`.
+    - In the Artist Sheet and Search dropdown, formatted cleanly as `DJ Set (Time TBA)`.
+  - **Strict English Copy for All Timetable Items**:
+    - All timetable events, stage names, formats, and notes must be 100% in English with zero Hebrew text (e.g. `Doors Opening` instead of `דלתות`, `DJ Set`, `Welcome Reception`, `Opening Showcase`, `Panel & Talk Session`, `Official Delegation Networking Event`).
+
+- **Modal & Bottom Sheet Scroll Reset Rule (Mandatory)**:
+  - Whenever ANY popup sheet or modal (`#artist-bottom-sheet`, `#guest-bottom-sheet`, `#admin-bottom-sheet`, `#networking-bottom-sheet`) is opened or closed, its scroll position AND the scroll position of its inner container (`.sheet-content` / `#admin-modal-content`) **MUST** be explicitly reset to the top (`scrollTop = 0`).
+  - A secondary reset inside `requestAnimationFrame` must be executed to prevent mobile browsers (especially iOS Safari and Chrome Android) from retaining or restoring the previous scroll offset.
+  - **Rationale**: If a user scrolls down inside an artist or guest profile and closes it, opening a subsequent profile must always start from the top (hero image, artist/guest name, and bio) rather than jumping to the scrolled bottom.
+
 - **PWA & Offline Indicator UX (`#offline-status-pill`, `#pwa-prompt-modal-overlay`, `.pwa-action-install-btn`)**:
   - **Discrete Floating Pill (`#offline-status-pill`)**:
     - Zero vertical footprint while online (`display: none`).
