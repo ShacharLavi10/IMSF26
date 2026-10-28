@@ -364,6 +364,28 @@ The portal contains an internal Production Dashboard hidden from regular guests.
   - סדר הלינקים נקבע לפי מילות מפתח בתא ("הלוך"/"חזור", "inbound"/"outbound", "arrival"/"departure"), וברירת המחדל היא שהראשון הוא הלוך והשני חזור.
   - התצוגה הכפולה נתמכת גם בלשונית האורח וגם ב-Modal פרטי האורח בדשבורד ההפקה.
 
+### ה. ארגון אזור הטיסות ב-4 רובריקות ברורות ומנוע צ'ק-אין (4 Structured Rubrics & Web Check-In Engine)
+כדי למנוע עומס ויזואלי ולארגן את המידע הרב של הטיסות בלשונית `My Trip`, אזור הטיסות מחולק ל-4 רובריקות מובחנות עם מיני-כותרות מעוצבות:
+1. **📄 Travel & Border Documents (תגית: Documents):**
+   * ריכוז כלל מסמכי המעבר של האורח להורדה ישירה: כרטיסי טיסה אלקטרוניים (כרטיס יחיד או פיצול הלוך/חזור) ומכתב ההזמנה הרשמי למעבר גבול בנתב"ג (`Border Invitation Letter`).
+2. **🛫 Online Web Check-In (תגית: Important):**
+   * **עמודות מקור בגיליון:** נשלף מגיליון ענת `עדכוני טיסות` (ושיקוף `טיסות - שיקוף`):
+     - עמודה AF: `מספר הזמנה` (Booking Code)
+     - עמודה AG: `לינק לצק-אין` (Check-in Link - כולל פענוח אוטומטי של נוסחאות HYPERLINK, Rich Text URL, וקישורי Markdown)
+     - עמודה AH: `הערות צק-אין` (Check-in Notes - הנחיות מותאמות אישית, לדוגמה פטור מצ'ק-אין בארקיע)
+   * **העתקת קוד בלחיצה אחת:** כפתור העתקה מהירה של ה-Booking Code ללוח (Clipboard) עם חיווי ויזואלי `Copied!`.
+   * **כפתור פעולה ישיר:** כפתור `🛫 Open Web Check-In` הפותח ישירות את עמוד הצ'ק-אין של חברת התעופה הרלוונטית.
+   * **תיבת סימון סיום צ'ק-אין ומצב מכווץ (Smart Collapse):**
+     - האורח יכול לסמן תיבת סימון "I've completed check-in".
+     - סימון התיבה שומר את המצב ב-`localStorage` (`imsf_checkin_done_<bookingKey>`) ומכווץ מיידית את הכרטיסייה לפיל קומפקטי ("Check-in completed ✓") עם קישור שחזור עדין ("Show check-in details").
+   * **מנגנון תפוגה והסתרה אוטומטית (Auto-Expiration):**
+     - המערכת בודקת את תאריך טיסת ההגעה של האורח.
+     - החל מיום לאחר תאריך הנחיתה (`today >= arrivalFlightDate + 1 day` בחצות), כל רובריקת הצ'ק-אין מוסתרת אוטומטית לחלוטין מהממשק, כך שהתזכורת אינה מעמיסה על האורח במהלך ימי הפסטיבל.
+3. **✈️ Flight Schedule & Routes (תגית: Itinerary):**
+   * כרטיסיית העלייה למטוס (Boarding Pass Card) המציגה את זמני הטיסות, מספרי הטיסה, חברות התעופה ויעדי המוצא והחזרה.
+4. **🚐 Airport Shuttle & Transfers (תגית: Transfer):**
+   * פרטי השאטל מנתב"ג, שעת יציאה, נקודת מפגש ותגיות אינטראקטיביות של שותפים לנסיעה הפותחות את פרופילי האורחים.
+
 ---
 
 ## 🎸 9. מנוע נטוורקינג, פידבק אומנים וסנכרון לידים (Artist Networking & Live Leads Engine)
@@ -465,6 +487,20 @@ The portal contains an internal Production Dashboard hidden from regular guests.
      - **אירועים רשמיים:** `Welcome Reception`, `Intermission`, `Panel & Talk Session`, `Official Delegation Networking Event`.
 4. **הגנה דו-שכבתית (Dual-Layer Shield):**
    * מנגנון הסינון מיושם הן בצד השרת (`ArtistsAPI.gs`) טרם השמירה במטמון `CacheService`, והן בצד הלקוח (`app.js`) בכל פעולות הסינון והרינדור (`renderTimetableShows`, `renderTimetableMasterSwitcher`, `renderTimetableStageSelector`).
+
+### ט. מנוע ייצוא מזוודת אומנים אישית (Artist Briefcase PDF & Email Delivery Engine)
+בלשונית האומנים מוצגת תיבת ייצוא אישית (`#export-briefcase-container`) המאפשרת לאורח לקבל את כל האומנים שאהב (❤️ Favorites):
+1. **מודאל אפשרויות ייצוא (3 Delivery Options):**
+   * **📧 Send to My Email:** שליחת מזוודת ה-PDF ישירות לכתובת המייל הרשומה של האורח ברקע דרך `GmailApp`.
+   * **📥 Download PDF:** הורדה ישירה של קובץ ה-PDF למכשיר של האורח.
+   * **👁️ Preview in Browser:** פתיחת ה-PDF בלשונית חדשה לצפייה מיידית.
+2. **מבנה מסמך ה-PDF שנוצר בשרת (`src/ArtistsAPI.gs`):**
+   * שער מעוצב בסגנון הניאו-ברוטליזם של IMSF 26.
+   * פרטי האורח (שם, חברה, תפקיד, מדינה, תאריך ייצוא).
+   * כרטיסיות מפורטות לכל אמן מועדף: תמונת יח"צ, ז'אנר, חברי הרכב (`Band / Team Members`), ביוגרפיה מלאה, קישורי מדיה, ותגיות הכוונות וההערות האישיות שהאורח רשם.
+   * טיפ המלצה רשמי של הפסטיבל לחוויית צפייה מיטבית בהופעות.
+3. **קידוד כותרות ושמות עבריים במייל (UTF-8 RFC 2047 Encoding):**
+   * שורת הנושא במייל מקודדת תקנית בפורמט `=?UTF-8?B?...?=` כדי למנוע ג'יבריש בתוכנות דואר בעת שילוב עברית ואנגלית.
 
 ---
 
