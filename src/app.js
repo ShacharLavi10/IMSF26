@@ -4472,7 +4472,7 @@ let isCurrentGuestAdmin = false;
             "stage": "Plaza",
             "startTime": "22:20",
             "endTime": "22:50",
-            "artistName": "BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)",
+            "artistName": "BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)",
             "aliases": [
                   "BILTEEZ",
                   "בילטיז",
@@ -4870,8 +4870,8 @@ let isCurrentGuestAdmin = false;
       'deswa': 'Deswa',
       "ג'וזף אי שיין": 'Joseph E-Shine',
       'joseph e shine': 'Joseph E-Shine',
-      'בילטיז': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
-      'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
+      'בילטיז': 'BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)',
+      'bilteez': 'BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)',
       'עדן דרסו': 'Eden Derso',
       'eden derso': 'Eden Derso',
       'אנסמבל פיל ביית': 'FeelBeat Ensemble',
@@ -5626,13 +5626,13 @@ let isCurrentGuestAdmin = false;
         
         const genreTag = (artist && artist.genre) ? `<span class="timetable-genre-tag">${escapeHtml(artist.genre)}</span>` : '';
         const formatTag = s.format ? `<span class="timetable-format-tag">${escapeHtml(s.format)}</span>` : '';
-        const favMiniBadge = isFav ? `<span class="timetable-fav-mini-badge" title="Favorited">❤️</span>` : '';
-        const liveBadge = isLive ? `<span class="timetable-live-badge ${isFav ? 'fav-live' : ''}">${isFav ? '🔥 LIVE NOW' : '🔴 LIVE NOW'}</span>` : '';
-        let cleanName = s.artistName;
+        const liveBadge = isLive ? `<span class="timetable-live-badge ${isFav ? 'fav-live' : ''}">${isFav ? '🔥 LIVE' : '🔴 LIVE'}</span>` : '';
+        let cleanName = s.artistName || '';
         if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
           cleanName = 'Doors Opening';
         }
-        const displayName = artist ? artist.name : cleanName;
+        const rawDisplayName = (artist && artist.name) ? artist.name : cleanName;
+        const displayName = String(rawDisplayName || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
 
         html += `
           <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
@@ -5759,7 +5759,7 @@ let isCurrentGuestAdmin = false;
         if (cleanName === 'דלתות' || cleanName === 'Doors (דלתות)') {
           cleanName = 'Doors Opening';
         }
-        const rawDisplayName = (matched && matched.name) ? matched.name : (cleanName || s.name || 'Live Showcase');
+        const rawDisplayName = String((matched && matched.name) ? matched.name : (cleanName || s.name || 'Live Showcase')).replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
         const displayName = escapeHtml(rawDisplayName);
         const artistId = matched ? matched.id : '';
         const timeStr = s.startTime ? `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}` : 'Live Now';

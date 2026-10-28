@@ -213,6 +213,10 @@ img {
   margin-bottom: 2px;
   line-height: 1.2;
   text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 .artist-card-genre {
   color: var(--accent-bright);
@@ -257,6 +261,13 @@ img {
 .sheet-fav-btn-inline.active svg {
   fill: #ef4444;
   stroke: #ef4444;
+}
+
+#sheet-artist-name {
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 /* LIVE BANNER & SYMMETRIC CARDS */
@@ -402,12 +413,16 @@ body.light-mode .live-show-card.is-fav {
 
 .live-card-artist {
   font-family: 'Oswald', sans-serif;
-  font-size: 0.96rem;
+  font-size: clamp(0.88rem, 3.2vw, 0.96rem);
   font-weight: 700;
   color: var(--foreground);
-  line-height: 1.2;
+  line-height: 1.22;
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
+  min-width: 0;
 }
 
 .live-card-heart-icon {
@@ -1749,6 +1764,10 @@ body.light-mode .schedule-event-inline .event-time {
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: 0.01em;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 body.light-mode .schedule-event-inline .event-title {
@@ -4145,6 +4164,7 @@ body.light-mode .timetable-show-card.is-favorite {
   align-items: center;
   gap: 6px;
   width: 100%;
+  min-width: 0;
 }
 
 .timetable-artist-avatar {
@@ -4165,13 +4185,17 @@ body.light-mode .timetable-show-card.is-favorite {
 
 .timetable-artist-name {
   font-family: 'Oswald', sans-serif;
-  font-size: 1.02rem;
+  font-size: clamp(0.88rem, 3.2vw, 0.98rem);
   font-weight: 700;
   color: var(--foreground);
-  line-height: 1.2;
-  white-space: normal; /* NEVER CUT OFF! */
-  word-break: break-word;
+  line-height: 1.22;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
   flex: 1;
+  min-width: 0;
 }
 
 .timetable-fav-mini-badge {
@@ -4403,7 +4427,7 @@ body.light-mode .timetable-search-item-time {
 .timetable-card-right-slot {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
   margin-left: auto;
 }
@@ -4412,17 +4436,17 @@ body.light-mode .timetable-search-item-time {
 .timetable-live-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background: #dc2626;
   color: #ffffff !important;
   font-family: 'Oswald', sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  padding: 2px 7px;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
   border-radius: 4px;
   border: 1.5px solid #000000;
-  box-shadow: 2px 2px 0px #000000;
+  box-shadow: 1.5px 1.5px 0px #000000;
   animation: liveBadgePulse 1.8s infinite ease-in-out;
   margin-left: 0;
   vertical-align: middle;
