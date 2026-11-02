@@ -3,11 +3,191 @@ let currentGuestData = null;
 let globalDirectoryData = [];
 let isCurrentGuestAdmin = false;
 
-    function closeWelcomeModal() {
-      document.getElementById("welcome-modal-overlay").style.display = "none";
-      localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
-      setTimeout(checkAndPromptPwaInstall, 400);
-    }
+let currentTourStep = 0;
+const TOUR_STEPS = [
+  {
+    step: 1,
+    title: "Your 5 Main Tabs",
+    icon: "📱",
+    desc: "Everything you need is split into 5 simple tabs: <strong>Itinerary</strong> (daily schedule), <strong>Artists</strong> (shows & discovery), <strong>My Trip</strong> (flights & hotels), <strong>Delegates</strong> (networking directory), and <strong>City Guide</strong> (local tips).",
+    mockup: `
+      <div class="tour-mockup-tabs">
+        <div class="tour-mockup-tab-pill active"><span>📅</span><span>Itinerary</span></div>
+        <div class="tour-mockup-tab-pill"><span>🎸</span><span>Artists</span></div>
+        <div class="tour-mockup-tab-pill"><span>🧳</span><span>My Trip</span></div>
+        <div class="tour-mockup-tab-pill"><span>🤝</span><span>Delegates</span></div>
+        <div class="tour-mockup-tab-pill"><span>🧭</span><span>Guide</span></div>
+      </div>
+    `
+  },
+  {
+    step: 2,
+    title: "Master Itinerary & 1-Tap Maps",
+    icon: "📅",
+    desc: "Check daily timelines for receptions, bus departures, panels, and dinners. Tap the <strong>Maps</strong> button on any event card for instant 1-tap Google Maps navigation right to the venue entrance.",
+    mockup: `
+      <div class="tour-mockup-event">
+        <span class="tour-mockup-time">19:30</span>
+        <div style="font-size: 0.82rem; font-weight: 700; color: #ffffff;">Welcome Reception & Showcase</div>
+        <div class="tour-mockup-map-btn">📍 Maps</div>
+      </div>
+    `
+  },
+  {
+    step: 3,
+    title: "Shows Timetable & Smart Views",
+    icon: "🎸",
+    desc: "Browse live concerts across all festival stages. Use the top switch to toggle between <strong>Full Timetable</strong> and <strong>❤️ My Schedule</strong>, or pick a specific stage from the dropdown to focus on your favorite club.",
+    mockup: `
+      <div class="tour-mockup-switcher">
+        <div class="tour-mockup-switch-btn all">⚡ Full Timetable (38)</div>
+        <div class="tour-mockup-switch-btn favs">❤️ My Schedule (5)</div>
+      </div>
+      <div class="tour-mockup-stage-select">🏟️ All Stages & Clubs (8 Venues) ▼</div>
+    `
+  },
+  {
+    step: 4,
+    title: "Heart Acts & Save Instant Notes",
+    icon: "❤️",
+    desc: "Tap ❤️ on any artist card to star them before you arrive. Right after each gig, open their profile to tag your collaboration intent (<em>Booking, Connect, Press</em>) and jot private impressions. Everything auto-saves instantly!",
+    mockup: `
+      <div class="tour-mockup-intent-grid">
+        <div class="tour-mockup-intent-tag active">🎯 Live Booking</div>
+        <div class="tour-mockup-intent-tag inactive">🤝 Connect</div>
+        <div class="tour-mockup-intent-tag inactive">📰 Press & Media</div>
+        <div class="tour-mockup-intent-tag inactive">📝 General Note</div>
+      </div>
+      <div class="tour-mockup-note-box">
+        <span>"Incredible stage energy, great for summer tour..."</span>
+        <span class="tour-mockup-saved-tag">Saved ✓</span>
+      </div>
+    `
+  },
+  {
+    step: 5,
+    title: "Your Export Briefcase",
+    icon: "💼",
+    desc: "At the end of the festival, tap <strong>Export Briefcase</strong> to generate a clean, consolidated working summary of all your favorited acts, tagged intents, and personal notes ready for effortless post-festival follow-ups.",
+    mockup: `
+      <div class="tour-mockup-briefcase">
+        <div style="font-size: 0.8rem; font-weight: 700;">💼 Your Favorited Artists (5)</div>
+        <div class="tour-mockup-bc-btn">Export PDF / Email</div>
+      </div>
+    `
+  },
+  {
+    step: 6,
+    title: "Live Alerts & Shuttles",
+    icon: "🔔",
+    desc: "Keep an eye on the top-left bell icon. A pulsing red badge indicates urgent real-time shuttle departures, weather/schedule adjustments, or direct personal messages sent to you by the production team.",
+    mockup: `
+      <div class="tour-mockup-alert">
+        <span style="font-size: 1.2rem;">🔔</span>
+        <div style="flex: 1; font-size: 0.78rem;">
+          <div style="font-weight: 700; color: #ef4444; margin-bottom: 2px;">Shuttle Departure Update <span class="tour-mockup-bell-badge">NEW</span></div>
+          <div style="color: #cbd5e1;">Bus to Tel Aviv leaves the hotel lobby in 15 mins.</div>
+        </div>
+      </div>
+    `
+  },
+  {
+    step: 7,
+    title: "Offline Ready & Add to Home Screen",
+    icon: "⚡",
+    desc: "Music venues often have spotty reception. The portal works smoothly offline! For the best experience, tap <strong>'Add to Home Screen'</strong> on your mobile browser so you can launch it like a native app anytime.",
+    mockup: `
+      <div class="tour-mockup-offline">
+        <div style="font-size: 0.78rem; font-weight: 700; color: #f59e0b;">⚡ Offline Mode • Timetable & Notes Ready</div>
+        <div style="background: var(--accent); color: #0f172a; font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 4px; border: 1px solid #000;">📲 Install</div>
+      </div>
+    `
+  }
+];
+
+function openPortalTour(startStep = 0) {
+  currentTourStep = Math.max(0, Math.min(startStep, TOUR_STEPS.length - 1));
+  const overlay = document.getElementById("portal-tour-modal-overlay");
+  if (overlay) {
+    overlay.style.display = "flex";
+    renderTourStep(currentTourStep);
+  }
+}
+
+function closePortalTour() {
+  const overlay = document.getElementById("portal-tour-modal-overlay");
+  if (overlay) overlay.style.display = "none";
+  if (currentGuestEmail) {
+    localStorage.setItem('imsf_tour_completed_' + currentGuestEmail, 'true');
+  }
+}
+
+function nextTourStep() {
+  if (currentTourStep < TOUR_STEPS.length - 1) {
+    currentTourStep++;
+    renderTourStep(currentTourStep);
+  } else {
+    closePortalTour();
+  }
+}
+
+function prevTourStep() {
+  if (currentTourStep > 0) {
+    currentTourStep--;
+    renderTourStep(currentTourStep);
+  }
+}
+
+function renderTourStep(index) {
+  const step = TOUR_STEPS[index];
+  if (!step) return;
+
+  const badge = document.getElementById("tour-step-badge");
+  if (badge) badge.innerText = `STEP ${index + 1} OF ${TOUR_STEPS.length}`;
+
+  const body = document.getElementById("tour-modal-body");
+  if (body) {
+    body.innerHTML = `
+      <h3 class="tour-step-title"><span>${step.icon}</span> ${step.title}</h3>
+      <div class="tour-mockup-stage">${step.mockup}</div>
+      <p class="tour-step-desc">${step.desc}</p>
+    `;
+  }
+
+  // Render dots
+  const dotsContainer = document.getElementById("tour-dots");
+  if (dotsContainer) {
+    dotsContainer.innerHTML = TOUR_STEPS.map((s, i) => `
+      <div class="tour-dot ${i === index ? 'active' : ''}" onclick="openPortalTour(${i})" title="Go to step ${i + 1}"></div>
+    `).join('');
+  }
+
+  // Update buttons
+  const prevBtn = document.getElementById("tour-prev-btn");
+  if (prevBtn) {
+    prevBtn.style.visibility = index === 0 ? "hidden" : "visible";
+  }
+
+  const nextBtn = document.getElementById("tour-next-btn");
+  if (nextBtn) {
+    nextBtn.innerText = index === TOUR_STEPS.length - 1 ? "Got It! Let's Go 🚀" : "Next →";
+  }
+}
+
+function startTourFromWelcome() {
+  closeWelcomeModal();
+  setTimeout(() => {
+    openPortalTour(0);
+  }, 200);
+}
+
+function closeWelcomeModal() {
+  document.getElementById("welcome-modal-overlay").style.display = "none";
+  if (currentGuestEmail) {
+    localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
+  }
+  setTimeout(checkAndPromptPwaInstall, 400);
+}
 
     function checkSessionOnLoad() {
       const tabAdminInit = document.getElementById("tab-admin");
@@ -258,6 +438,9 @@ let isCurrentGuestAdmin = false;
       
       const portalContent = document.getElementById("portal-content");
       portalContent.style.display = "block";
+      
+      const tourTriggerBtn = document.getElementById("portal-tour-trigger-btn");
+      if (tourTriggerBtn) tourTriggerBtn.style.display = "inline-flex";
       
       const isComplete = response.isComplete;
       
@@ -9366,5 +9549,9 @@ window.generateIcsContent = generateIcsContent;
 window.openCalendarSyncModal = openCalendarSyncModal;
 window.closeCalendarSyncModal = closeCalendarSyncModal;
 window.executeCalendarSync = executeCalendarSync;
-
-
+window.openPortalTour = openPortalTour;
+window.closePortalTour = closePortalTour;
+window.nextTourStep = nextTourStep;
+window.prevTourStep = prevTourStep;
+window.startTourFromWelcome = startTourFromWelcome;
+window.closeWelcomeModal = closeWelcomeModal;
