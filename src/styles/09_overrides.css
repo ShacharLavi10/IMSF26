@@ -4921,10 +4921,18 @@ body.light-mode .tab-quick-guide-btn:active {
   transition: all 0.3s ease;
 }
 
+body.tour-active-sheet #artist-sheet-overlay {
+  z-index: 10004 !important;
+}
+
+body.tour-active-sheet #artist-bottom-sheet {
+  z-index: 10006 !important;
+}
+
 .tour-spotlight-cutout {
   position: fixed;
   pointer-events: none;
-  z-index: 10006;
+  z-index: 10008;
   border-radius: 12px;
   box-shadow: 0 0 0 9999px rgba(10, 22, 38, 0.82), 0 0 20px rgba(241, 169, 160, 0.9);
   border: 3px solid var(--accent);

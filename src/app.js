@@ -8,6 +8,14 @@ let currentTabStepIndex = 0;
 let currentTabSteps = [];
 let currentHighlightedEl = null;
 
+function isTourTargetVisible(el) {
+  if (!el || !(el instanceof Element)) return false;
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
+  const rect = el.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
 const TAB_TOUR_CONFIGS = {
   itinerary: {
     name: "Itinerary",
@@ -18,32 +26,11 @@ const TAB_TOUR_CONFIGS = {
         desc: "Tap any day to view receptions, panels, shuttle departures, and dinners with zero horizontal scrolling."
       },
       {
-        target: ".schedule-loc-link, .schedule-loc-link svg",
+        target: ".schedule-loc-link",
         title: "1-Tap Maps Navigation",
         desc: "Tap the Map Pin button on any event to open direct walking or taxi navigation right to the venue entrance."
       }
     ]
-  },
-  mytrip: {
-    name: "My Trip",
-    getSteps: () => {
-      const steps = [
-        {
-          target: "#mytrip-card .mytrip-section:first-of-type, #mytrip-card h3",
-          title: "Travel & Hotel Logistics",
-          desc: "Your confirmed flights, e-tickets, and hotel reservations in Jerusalem and Tel Aviv all consolidated in one place."
-        }
-      ];
-      const shuttleBadge = document.querySelector(".shuttle-passenger-badge, .shuttle-passengers-wrap");
-      if (shuttleBadge) {
-        steps.push({
-          target: ".shuttle-passenger-badge, .shuttle-passengers-wrap",
-          title: "Shuttle & Fellow Passengers",
-          desc: "Taking an airport shuttle? Tap any passenger badge to view their bio and connect before heading out."
-        });
-      }
-      return steps;
-    }
   },
   directory: {
     name: "Delegates",
@@ -73,31 +60,67 @@ const TAB_TOUR_CONFIGS = {
         title: "Artists Lineup & Star Acts",
         desc: "Browse showcasing artists, listen to their music, and tap ❤️ to star acts you want to catch live.",
         onEnter: () => {
-          if (typeof closeArtistSheet === 'function') closeArtistSheet();
-          if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('directory');
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
+          if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
         }
       },
       {
-        target: ".private-notes-section, #sheet-intent-tags",
-        title: "Intent Tags & Private Notes",
-        desc: "Tap any artist to mark your intent (Live Booking, Connect, Press) and write private notes. Everything auto-saves instantly, even offline!",
+        target: ".private-notes-section",
+        title: "Private Notes & Intent Tags",
+        desc: "Tap any artist to mark your collaboration intent (Live Booking, Deals, Press) and write private notes. Everything auto-saves instantly, even offline!",
         onEnter: () => {
-          if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('directory');
+          if (typeof window.switchArtistsSubTab === 'function') {
+            window.switchArtistsSubTab('directory');
+          }
           try {
             let artistId = null;
-            if (window.globalArtistsData && window.globalArtistsData.length > 0) {
-              artistId = window.globalArtistsData[0].id;
+            const allArtists = (typeof window.getGlobalArtistsData === 'function' ? window.getGlobalArtistsData() : null) || window.globalArtistsData || [];
+            if (allArtists && allArtists.length > 0) {
+              artistId = allArtists[0].id;
             } else {
-              const firstCard = document.querySelector(".artist-card");
-              if (firstCard) artistId = firstCard.getAttribute("data-artist-id");
+              const card = document.querySelector(".artist-card[data-artist-id]");
+              if (card) {
+                artistId = card.getAttribute("data-artist-id");
+              } else {
+                try {
+                  const cached = JSON.parse(localStorage.getItem('swr_artistsData_v4') || '[]');
+                  if (cached && cached.length > 0) {
+                    artistId = cached[0].id;
+                    const g = typeof window.getGlobalArtistsData === 'function' ? window.getGlobalArtistsData() : null;
+                    if (g && g.length === 0) cached.forEach(c => g.push(c));
+                  }
+                } catch (e) {}
+              }
             }
-            if (artistId && typeof openArtistSheet === 'function') {
-              openArtistSheet(artistId);
+
+            // Guaranteed fallback artist object so sheet can always render
+            if (!artistId) {
+              const sample = {
+                id: "tour_demo_artist",
+                name: "Showcase Artist",
+                genre: "Indie Rock / Showcase",
+                image: "",
+                bio: "Official showcase performance at IMSF 2026."
+              };
+              const g = typeof window.getGlobalArtistsData === 'function' ? window.getGlobalArtistsData() : null;
+              if (g && !g.find(a => a.id === sample.id)) {
+                g.unshift(sample);
+              }
+              artistId = sample.id;
             }
-          } catch (e) {}
+
+            document.body.classList.add('tour-active-sheet');
+            if (artistId && typeof window.openArtistSheet === 'function') {
+              window.openArtistSheet(artistId);
+            }
+          } catch (e) {
+            console.warn("Tour artist sheet open error:", e);
+          }
         },
         onLeave: () => {
-          if (typeof closeArtistSheet === 'function') closeArtistSheet();
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
         }
       },
       {
@@ -105,18 +128,34 @@ const TAB_TOUR_CONFIGS = {
         title: "Shows Timetable & Smart Views",
         desc: "Switch to Shows Timetable to view concerts across stages, filter by specific venues, or switch to 'My Schedule' for your personal clash-free line-up.",
         onEnter: () => {
-          if (typeof closeArtistSheet === 'function') closeArtistSheet();
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
         }
       },
       {
-        target: "#export-briefcase-btn, #export-briefcase-container, .artists-subnav-container",
+        target: "#export-briefcase-btn",
         title: "Your Export Briefcase",
         desc: "At the end of the festival, download a complete working summary of all your favorited artists, tags, and notes for easy post-festival follow-ups.",
         onEnter: () => {
-          if (typeof closeArtistSheet === 'function') closeArtistSheet();
-          if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('directory');
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
+          if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
           const bcContainer = document.getElementById("export-briefcase-container");
-          if (bcContainer) bcContainer.style.display = "block";
+          if (bcContainer) {
+            bcContainer.style.display = "block";
+            bcContainer.setAttribute("data-tour-visible", "true");
+          }
+          const btn = document.getElementById("export-briefcase-btn");
+          if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
+        onLeave: () => {
+          const bcContainer = document.getElementById("export-briefcase-container");
+          if (bcContainer && bcContainer.getAttribute("data-tour-visible") === "true") {
+            bcContainer.removeAttribute("data-tour-visible");
+            if (typeof window.updateExportBriefcaseVisibility === 'function') {
+              window.updateExportBriefcaseVisibility();
+            }
+          }
         }
       }
     ]
@@ -148,7 +187,7 @@ function startTabTour(tabKey) {
         repositionCutoutAndPopover(currentHighlightedEl);
       }
     };
-    window.addEventListener('scroll', tourScrollListener, { passive: true });
+    window.addEventListener('scroll', tourScrollListener, { capture: true, passive: true });
     window.addEventListener('resize', tourScrollListener, { passive: true });
   }
 
@@ -161,7 +200,7 @@ function closeTabTour() {
   }
 
   if (tourScrollListener) {
-    window.removeEventListener('scroll', tourScrollListener);
+    window.removeEventListener('scroll', tourScrollListener, { capture: true });
     window.removeEventListener('resize', tourScrollListener);
     tourScrollListener = null;
   }
@@ -172,6 +211,22 @@ function closeTabTour() {
   if (backdrop) backdrop.style.display = "none";
   if (cutout) cutout.style.display = "none";
   if (popover) popover.style.display = "none";
+
+  document.body.classList.remove('tour-active-sheet');
+  if (typeof window.closeArtistSheet === 'function') {
+    const sheet = document.getElementById('artist-bottom-sheet');
+    if (sheet && sheet.classList.contains('active')) {
+      window.closeArtistSheet();
+    }
+  }
+
+  const bcContainer = document.getElementById("export-briefcase-container");
+  if (bcContainer && bcContainer.getAttribute("data-tour-visible") === "true") {
+    bcContainer.removeAttribute("data-tour-visible");
+    if (typeof window.updateExportBriefcaseVisibility === 'function') {
+      window.updateExportBriefcaseVisibility();
+    }
+  }
 
   currentTourTab = null;
   currentTabStepIndex = 0;
@@ -235,18 +290,18 @@ function renderTabTourStep(stepIdx) {
   }
 
   // Allow DOM to settle (especially for sheet transition)
-  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 380 : 120;
+  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 420 : 120;
   setTimeout(() => {
     let targetEl = null;
     if (step.target) {
       targetEl = document.querySelector(step.target);
     }
 
-    if (targetEl && targetEl.offsetParent !== null) {
+    if (isTourTargetVisible(targetEl)) {
       updateCutoutAndPopover(targetEl);
     } else {
       const fallbackEl = document.querySelector("#subtab-artists-directory, #subtab-artists-timetable, .artist-card, #schedule-days-nav");
-      if (fallbackEl && fallbackEl.offsetParent !== null) {
+      if (isTourTargetVisible(fallbackEl)) {
         updateCutoutAndPopover(fallbackEl);
       } else {
         centerTourPopoverOnly();
@@ -265,11 +320,11 @@ function updateCutoutAndPopover(targetEl) {
 
   setTimeout(() => {
     repositionCutoutAndPopover(targetEl);
-  }, 160);
+  }, 180);
 }
 
 function repositionCutoutAndPopover(targetEl) {
-  if (!targetEl || targetEl.offsetParent === null) return;
+  if (!isTourTargetVisible(targetEl)) return;
   const rect = targetEl.getBoundingClientRect();
   const cutout = document.getElementById("tour-spotlight-cutout");
   const popover = document.getElementById("tour-spotlight-popover");
@@ -1351,7 +1406,9 @@ function closeWelcomeModal() {
       const checkInUrl = extractFirstUrl(checkInLink);
 
       const cleanCheckInNotes = checkInNotes ? String(checkInNotes).trim() : '';
+      const isParserStatus = /פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(cleanCheckInNotes);
       const hasCheckInNotes = cleanCheckInNotes !== '' && 
+                              !isParserStatus &&
                               !cleanCheckInNotes.startsWith('#') && 
                               !cleanCheckInNotes.startsWith('=') && 
                               !/^n\/?a$/i.test(cleanCheckInNotes) && 
@@ -1372,8 +1429,9 @@ function closeWelcomeModal() {
         }
       }
 
-      // 2. RUBRIC: Online Web Check-In
-      if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes)) {
+      // 2. RUBRIC: Online Web Check-In (display if not passed and either booking code, link, custom notes, or flight schedule exists)
+      const hasFlightSchedule = (arrival && arrival !== 'TBD') || (departure && departure !== 'TBD');
+      if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes || hasFlightSchedule)) {
         const bookingKey = cleanBookingCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
         const isCheckInDone = localStorage.getItem('imsf_checkin_done_' + bookingKey) === 'true';
 
@@ -3062,6 +3120,8 @@ function closeWelcomeModal() {
     /* ARTISTS UI LOGIC                                          */
     /* ========================================================= */
     let globalArtistsData = [];
+    window.globalArtistsData = globalArtistsData;
+    window.getGlobalArtistsData = () => globalArtistsData;
     let showFavsOnly = false;
     let currentOpenArtistId = null;
     let lastOpenedArtistId = null;
@@ -3501,6 +3561,7 @@ function closeWelcomeModal() {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.some(a => a.genre)) {
             globalArtistsData = parsed.sort((a, b) => a.name.localeCompare(b.name));
+            window.globalArtistsData = globalArtistsData;
             if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
@@ -3526,6 +3587,7 @@ function closeWelcomeModal() {
           if (res && res.success && res.artists) {
             localStorage.setItem(cacheKey, JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
+            window.globalArtistsData = globalArtistsData;
             if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
@@ -3592,7 +3654,7 @@ function closeWelcomeModal() {
             </button>`;
 
         html += `
-          <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
+          <div class="artist-card" data-artist-id="${artist.id}" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
             <div class="artist-card-overlay">
               <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 2px;">
                 <div class="artist-card-name" style="margin-bottom: 0;">${artist.name}</div>
@@ -6695,6 +6757,7 @@ window.openImageViewerFromBg = openImageViewerFromBg;
 window.closeImageViewer = closeImageViewer;
 window.openGuestSheet = openGuestSheet;
 window.openArtistSheet = openArtistSheet;
+window.updateExportBriefcaseVisibility = updateExportBriefcaseVisibility;
 
 
 let adminDataLoaded = false;
@@ -8654,7 +8717,8 @@ function viewAdminGuestDetails(rowIndex) {
     if (flightNotes) {
       flightHtml += `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${flightNotes}</div>`;
     }
-    if (bookingCode || checkInLink || checkInNotes) {
+    const cleanAdminCheckInNotes = (checkInNotes && !/פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(checkInNotes)) ? String(checkInNotes).trim() : '';
+    if (bookingCode || checkInLink || cleanAdminCheckInNotes) {
       flightHtml += `
         <div style="margin-top:8px; padding:10px; background:rgba(241, 169, 160, 0.1); border:1.5px solid rgba(241, 169, 160, 0.35); border-radius:6px; font-size:0.85rem;">
           <div style="font-weight:bold; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
@@ -8662,7 +8726,7 @@ function viewAdminGuestDetails(rowIndex) {
           </div>
           ${bookingCode ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent); background:rgba(0,0,0,0.15); padding:2px 6px; border-radius:4px;">${escapeHtml(bookingCode)}</code></div>` : ''}
           ${checkInLink ? `<div style="margin-top:3px;"><strong>Link:</strong> <a href="${escapeHtml(checkInLink)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(checkInLink.length > 45 ? checkInLink.slice(0, 45) + '...' : checkInLink)}</a></div>` : ''}
-          ${checkInNotes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(checkInNotes)}</div>` : ''}
+          ${cleanAdminCheckInNotes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(cleanAdminCheckInNotes)}</div>` : ''}
         </div>
       `;
     }
