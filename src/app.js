@@ -60,7 +60,7 @@ const TAB_TOUR_CONFIGS = {
         title: "Artists Lineup & Star Acts",
         desc: "Browse showcasing artists, listen to their music, and tap ❤️ to star acts you want to catch live.",
         onEnter: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet(true);
           document.body.classList.remove('tour-active-sheet');
           if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
         }
@@ -112,14 +112,14 @@ const TAB_TOUR_CONFIGS = {
 
             document.body.classList.add('tour-active-sheet');
             if (artistId && typeof window.openArtistSheet === 'function') {
-              window.openArtistSheet(artistId);
+              window.openArtistSheet(artistId, true);
             }
           } catch (e) {
             console.warn("Tour artist sheet open error:", e);
           }
         },
         onLeave: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet(true);
           document.body.classList.remove('tour-active-sheet');
         }
       },
@@ -128,8 +128,11 @@ const TAB_TOUR_CONFIGS = {
         title: "Shows Timetable & Smart Views",
         desc: "Switch to Shows Timetable to view concerts across stages, filter by specific venues, or switch to 'My Schedule' for your personal clash-free line-up.",
         onEnter: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
           document.body.classList.remove('tour-active-sheet');
+          const sheet = document.getElementById('artist-bottom-sheet');
+          if (sheet && sheet.classList.contains('active') && typeof window.closeArtistSheet === 'function') {
+            window.closeArtistSheet(true);
+          }
         }
       },
       {
@@ -137,8 +140,11 @@ const TAB_TOUR_CONFIGS = {
         title: "1-Tap Calendar Sync",
         desc: "Sync your favorited shows directly into Apple Calendar, Google Calendar, or Outlook to get automatic alerts 5 minutes before each showcase starts!",
         onEnter: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
           document.body.classList.remove('tour-active-sheet');
+          const sheet = document.getElementById('artist-bottom-sheet');
+          if (sheet && sheet.classList.contains('active') && typeof window.closeArtistSheet === 'function') {
+            window.closeArtistSheet(true);
+          }
           if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('timetable');
           const syncBtn = document.querySelector(".timetable-calendar-sync-btn");
           if (syncBtn) syncBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -149,8 +155,11 @@ const TAB_TOUR_CONFIGS = {
         title: "Your Export Briefcase",
         desc: "At the end of the festival, download a complete working summary of all your favorited artists, tags, and notes for easy post-festival follow-ups.",
         onEnter: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
           document.body.classList.remove('tour-active-sheet');
+          const sheet = document.getElementById('artist-bottom-sheet');
+          if (sheet && sheet.classList.contains('active') && typeof window.closeArtistSheet === 'function') {
+            window.closeArtistSheet(true);
+          }
           if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
           const bcContainer = document.getElementById("export-briefcase-container");
           if (bcContainer) {
@@ -233,7 +242,7 @@ function closeTabTour() {
   if (typeof window.closeArtistSheet === 'function') {
     const sheet = document.getElementById('artist-bottom-sheet');
     if (sheet && sheet.classList.contains('active')) {
-      window.closeArtistSheet();
+      window.closeArtistSheet(true);
     }
   }
 
@@ -4073,8 +4082,15 @@ function closeWelcomeModal() {
       }
       
       // If we closed it manually via the X or overlay, we must clean up the hash
-      if (isHashChange !== true && (window.location.hash === "#sheet" || window.location.hash === "#timetable")) {
-        history.back();
+      const isTourActive = !!(currentTourTab || document.body.classList.contains('tour-active-sheet'));
+      if (isHashChange !== true && !isTourActive && (window.location.hash === "#sheet" || window.location.hash === "#timetable")) {
+        try {
+          history.back();
+        } catch(e) {}
+      } else if (window.location.hash === "#sheet") {
+        try {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        } catch(e) {}
       }
     }
 
