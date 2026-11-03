@@ -1,4 +1,4 @@
-const CACHE_NAME = 'imsf-portal-shell-v1';
+const CACHE_NAME = 'imsf-portal-shell-v2';
 const IMAGE_CACHE_NAME = 'imsf-portal-images-v1';
 
 const STATIC_SHELL_ASSETS = [

@@ -6508,9 +6508,14 @@ function closeWelcomeModal() {
       ];
 
       function getIcsAlarmUuid(id) {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          try {
+            return crypto.randomUUID().toUpperCase();
+          } catch (e) {}
+        }
         const clean = String(id || '').replace(/[^a-zA-Z0-9]/g, '');
         let hash = 0x811c9dc5;
-        const seed = `imsf-alarm-5m-${clean}`;
+        const seed = `imsf-alarm-5m-${clean}-${Date.now()}`;
         for (let i = 0; i < seed.length; i++) {
           hash ^= seed.charCodeAt(i);
           hash = Math.imul(hash, 0x01000193);
@@ -6519,7 +6524,7 @@ function closeWelcomeModal() {
         const h2 = ((Math.abs(hash) >>> 4) & 0xffff).toString(16).padStart(4, '0');
         const h3 = '4' + ((Math.abs(hash) >>> 8) & 0x0fff).toString(16).padStart(3, '0');
         const h4 = 'a' + ((Math.abs(hash) >>> 12) & 0x0fff).toString(16).padStart(3, '0');
-        const h5 = (h1 + clean.padEnd(8, '0')).slice(0, 12);
+        const h5 = (h1 + h1).slice(0, 12);
         return `${h1}-${h2}-${h3}-${h4}-${h5}`.toUpperCase();
       }
 
@@ -6580,6 +6585,7 @@ function closeWelcomeModal() {
         lines.push(`LOCATION:${escapeIcsText(exactLocation)}`);
         lines.push(`URL;VALUE=URI:${portalDeepLink}`);
         lines.push(`DESCRIPTION:${desc}`);
+        lines.push(`SEQUENCE:${isCancellation ? 99 : Math.max(1, Math.floor(now.getTime() / 10000))}`);
         lines.push('TRANSP:OPAQUE');
         lines.push('X-MICROSOFT-CDO-BUSYSTATUS:BUSY');
 
