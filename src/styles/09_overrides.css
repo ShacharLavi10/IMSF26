@@ -4861,3 +4861,281 @@ body.light-mode .schedule-inline-link {
   color: #c25244 !important;
 }
 
+/* ==========================================================================
+   TAB-SPECIFIC LIVE SPOTLIGHT QUICK GUIDES - NEO-BRUTALISM
+   ========================================================================== */
+
+/* Quick Guide Button in each Tab Header */
+.tab-quick-guide-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  color: var(--foreground);
+  padding: 4px 11px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.tab-quick-guide-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.tab-quick-guide-btn:active {
+  transform: translateY(1px);
+}
+.tab-quick-guide-btn .guide-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+body.light-mode .tab-quick-guide-btn {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1.5px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+}
+body.light-mode .tab-quick-guide-btn:hover {
+  background: #f8fafc;
+  border-color: #000000;
+  box-shadow: 3px 3px 0px #000000;
+}
+body.light-mode .tab-quick-guide-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000000;
+}
+
+/* Spotlight Backdrop Cutout - Real Cutout Window */
+.tour-spotlight-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  z-index: 10005;
+  transition: all 0.3s ease;
+}
+
+body.tour-active-sheet #artist-sheet-overlay {
+  z-index: 10004 !important;
+}
+
+body.tour-active-sheet #artist-bottom-sheet {
+  z-index: 10006 !important;
+}
+
+.tour-spotlight-cutout {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10008;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(10, 22, 38, 0.82), 0 0 20px rgba(241, 169, 160, 0.9);
+  border: 3px solid var(--accent);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-sizing: border-box;
+}
+body.light-mode .tour-spotlight-cutout {
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.72), 0 0 20px rgba(241, 169, 160, 0.9);
+  border: 3px solid var(--accent);
+}
+
+/* Floating Popover as Speech Bubble */
+.tour-spotlight-popover {
+  position: fixed;
+  z-index: 10010;
+  width: min(320px, calc(100vw - 28px));
+  background: #0d1b2a;
+  color: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.95);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+body.light-mode .tour-spotlight-popover {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+/* Speech Bubble Arrow */
+.tour-spotlight-popover::before,
+.tour-spotlight-popover::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  pointer-events: none;
+}
+
+/* Arrow when Popover is below target */
+.tour-spotlight-popover.arrow-top::before {
+  top: -9px;
+  left: var(--arrow-left, 30px);
+  border-width: 0 8px 9px 8px;
+  border-color: transparent transparent #000000 transparent;
+}
+.tour-spotlight-popover.arrow-top::after {
+  top: -6px;
+  left: calc(var(--arrow-left, 30px) + 1px);
+  border-width: 0 7px 7px 7px;
+  border-color: transparent transparent #0d1b2a transparent;
+}
+body.light-mode .tour-spotlight-popover.arrow-top::after {
+  border-color: transparent transparent #ffffff transparent;
+}
+
+/* Arrow when Popover is above target */
+.tour-spotlight-popover.arrow-bottom::before {
+  bottom: -9px;
+  left: var(--arrow-left, 30px);
+  border-width: 9px 8px 0 8px;
+  border-color: #000000 transparent transparent transparent;
+}
+.tour-spotlight-popover.arrow-bottom::after {
+  bottom: -6px;
+  left: calc(var(--arrow-left, 30px) + 1px);
+  border-width: 7px 7px 0 7px;
+  border-color: #0d1b2a transparent transparent transparent;
+}
+body.light-mode .tour-spotlight-popover.arrow-bottom::after {
+  border-color: #ffffff transparent transparent transparent;
+}
+
+.popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.popover-badge {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(241, 169, 160, 0.15);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  border: 1px solid rgba(241, 169, 160, 0.4);
+  font-weight: 700;
+}
+body.light-mode .popover-badge {
+  color: #c25244;
+  background: rgba(241, 169, 160, 0.2);
+}
+.popover-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.popover-close-btn:hover {
+  color: #ffffff;
+}
+body.light-mode .popover-close-btn:hover {
+  color: #000000;
+}
+
+.popover-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.08rem;
+  margin: 0 0 3px 0;
+  color: #ffffff;
+  letter-spacing: 0.2px;
+}
+body.light-mode .popover-title {
+  color: #0f172a;
+}
+.popover-desc {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #cbd5e1;
+  margin: 0;
+}
+body.light-mode .popover-desc {
+  color: #334155;
+}
+
+.popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+body.light-mode .popover-footer {
+  border-top: 1px solid #e2e8f0;
+}
+
+.popover-dots {
+  display: flex;
+  gap: 4px;
+}
+.popover-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transition: all 0.2s;
+}
+body.light-mode .popover-dot {
+  background: #cbd5e1;
+}
+.popover-dot.active {
+  width: 12px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+body.light-mode .popover-dot.active {
+  background: #0f172a;
+}
+
+.popover-actions {
+  display: flex;
+  gap: 6px;
+}
+.popover-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.popover-btn.secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #cbd5e1;
+}
+body.light-mode .popover-btn.secondary {
+  border: 1.5px solid #000000;
+  color: #0f172a;
+  background: #ffffff;
+}
+.popover-btn.primary {
+  background: var(--accent);
+  color: #0f172a;
+  border: 1.5px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+}
+.popover-btn.primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000000;
+}
+
+
+

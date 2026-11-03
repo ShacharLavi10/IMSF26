@@ -250,7 +250,13 @@
         <div id="schedule-card" class="card col-span-3 fade-up" style="animation-delay: 0.15s; display: block;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Itinerary</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h3 style="margin: 0;">Itinerary</h3>
+              <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('itinerary')" title="How this tab works">
+                <span class="guide-icon">💡</span>
+                <span class="guide-text">Quick Guide</span>
+              </button>
+            </div>
             <div id="schedule-days-nav" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none;">
               <!-- Day Pills injected here -->
             </div>
@@ -281,7 +287,7 @@
         <div id="mytrip-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.2s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>My Trip</h3>
+            <h3 style="margin-bottom: 8px;">My Trip</h3>
             <p class="desc" style="margin-bottom: 1.5rem;">Your personal travel itinerary, flights, and accommodations in Jerusalem and Tel Aviv.</p>
 
             <!-- SECTION: FLIGHT DETAILS -->
@@ -359,7 +365,13 @@
         <div id="guide-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.25s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Guide & Recommendations</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <h3 style="margin: 0;">Guide & Recommendations</h3>
+              <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('guide')" title="How this tab works">
+                <span class="guide-icon">💡</span>
+                <span class="guide-text">Quick Guide</span>
+              </button>
+            </div>
             <p class="desc" style="margin-bottom: 1.25rem;">Curated spots, festival venues, essential apps, and local tips.</p>
 
             <!-- GUIDE PILLS (City Switcher) -->
@@ -398,7 +410,13 @@
         <div id="directory-card" class="card col-span-3 fade-up" style="animation-delay: 0.4s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3>Delegates</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h3 style="margin: 0;">Delegates</h3>
+              <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('directory')" title="How this tab works">
+                <span class="guide-icon">💡</span>
+                <span class="guide-text">Quick Guide</span>
+              </button>
+            </div>
             
             <div id="directory-main-container">
               <!-- DIRECTORY FILTERS -->
@@ -448,6 +466,13 @@
         <div id="artists-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.5s;">
           <div class="spotlight"></div>
           <div class="card-content">
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h3 style="margin: 0;">Artists</h3>
+              <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('artists')" title="How this tab works">
+                <span class="guide-icon">💡</span>
+                <span class="guide-text">Quick Guide</span>
+              </button>
+            </div>
             <!-- ARTISTS SUB-NAVIGATION (Segmented Switcher) -->
             <div class="artists-subnav-container" role="tablist">
               <button type="button" id="subtab-artists-directory" class="artists-subnav-btn active" onclick="switchArtistsSubTab('directory')" role="tab" aria-selected="true">
@@ -796,6 +821,27 @@
           This portal was designed for you, to make all the information you need easily accessible in one place. Moving forward, it will also simplify your connections with artists and fellow delegates, ensuring seamless communication even after the festival. Enjoy (:
         </p>
         <button class="primary" onclick="closeWelcomeModal()" style="margin-top: 20px;">Let's Go</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB-SPECIFIC LIVE SPOTLIGHT OVERLAY & POPOVER -->
+  <div id="tour-spotlight-backdrop" class="tour-spotlight-backdrop" onclick="closeTabTour()" style="display: none;"></div>
+  <div id="tour-spotlight-cutout" class="tour-spotlight-cutout" style="display: none;"></div>
+  <div id="tour-spotlight-popover" class="tour-spotlight-popover" style="display: none;">
+    <div class="popover-header">
+      <span class="popover-badge" id="tour-popover-badge">STEP 1/3</span>
+      <button class="popover-close-btn" onclick="closeTabTour()" aria-label="Close guide">✕</button>
+    </div>
+    <div class="popover-content">
+      <h4 class="popover-title" id="tour-popover-title">Title</h4>
+      <p class="popover-desc" id="tour-popover-desc">Description text...</p>
+    </div>
+    <div class="popover-footer">
+      <div class="popover-dots" id="tour-popover-dots"></div>
+      <div class="popover-actions">
+        <button id="tour-popover-prev" class="popover-btn secondary" onclick="prevTabTourStep()">Back</button>
+        <button id="tour-popover-next" class="popover-btn primary" onclick="nextTabTourStep()">Next →</button>
       </div>
     </div>
   </div>

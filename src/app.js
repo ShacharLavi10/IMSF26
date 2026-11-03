@@ -3,11 +3,402 @@ let currentGuestData = null;
 let globalDirectoryData = [];
 let isCurrentGuestAdmin = false;
 
-    function closeWelcomeModal() {
-      document.getElementById("welcome-modal-overlay").style.display = "none";
-      localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
-      setTimeout(checkAndPromptPwaInstall, 400);
+let currentTourTab = null;
+let currentTabStepIndex = 0;
+let currentTabSteps = [];
+let currentHighlightedEl = null;
+
+function isTourTargetVisible(el) {
+  if (!el || !(el instanceof Element)) return false;
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
+  const rect = el.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
+const TAB_TOUR_CONFIGS = {
+  itinerary: {
+    name: "Itinerary",
+    getSteps: () => [
+      {
+        target: "#schedule-days-nav",
+        title: "Calendar Day Strip",
+        desc: "Tap any day to view receptions, panels, shuttle departures, and dinners with zero horizontal scrolling."
+      },
+      {
+        target: ".schedule-loc-link",
+        title: "1-Tap Maps Navigation",
+        desc: "Tap the Map Pin button on any event to open direct walking or taxi navigation right to the venue entrance."
+      }
+    ]
+  },
+  directory: {
+    name: "Delegates",
+    getSteps: () => [
+      {
+        target: "#directory-filters",
+        title: "Search by Country & Genre",
+        desc: "Search delegates or filter by country and music genre, then tap any profile to view their background and connect."
+      }
+    ]
+  },
+  guide: {
+    name: "Guide & Essentials",
+    getSteps: () => [
+      {
+        target: "#guide-pills-nav",
+        title: "City Switcher & Essential Info",
+        desc: "Switch between Jerusalem and Tel Aviv for curated food and drink recommendations, or tap Essentials for key festival info."
+      }
+    ]
+  },
+  artists: {
+    name: "Artists",
+    getSteps: () => [
+      {
+        target: "#subtab-artists-directory",
+        title: "Artists Lineup & Star Acts",
+        desc: "Browse showcasing artists, listen to their music, and tap ❤️ to star acts you want to catch live.",
+        onEnter: () => {
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
+          if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
+        }
+      },
+      {
+        target: ".private-notes-section",
+        title: "Private Notes & Intent Tags",
+        desc: "Tap any artist to mark your collaboration intent (Live Booking, Deals, Press) and write private notes. Everything auto-saves instantly, even offline!",
+        onEnter: () => {
+          if (typeof window.switchArtistsSubTab === 'function') {
+            window.switchArtistsSubTab('directory');
+          }
+          try {
+            let artistId = null;
+            const allArtists = (typeof window.getGlobalArtistsData === 'function' ? window.getGlobalArtistsData() : null) || window.globalArtistsData || [];
+            if (allArtists && allArtists.length > 0) {
+              artistId = allArtists[0].id;
+            } else {
+              const card = document.querySelector(".artist-card[data-artist-id]");
+              if (card) {
+                artistId = card.getAttribute("data-artist-id");
+              } else {
+                try {
+                  const cached = JSON.parse(localStorage.getItem('swr_artistsData_v4') || '[]');
+                  if (cached && cached.length > 0) {
+                    artistId = cached[0].id;
+                    const g = typeof window.getGlobalArtistsData === 'function' ? window.getGlobalArtistsData() : null;
+                    if (g && g.length === 0) cached.forEach(c => g.push(c));
+                  }
+                } catch (e) {}
+              }
+            }
+
+            // Guaranteed fallback artist object so sheet can always render
+            if (!artistId) {
+              const sample = {
+                id: "tour_demo_artist",
+                name: "Showcase Artist",
+                genre: "Indie Rock / Showcase",
+                image: "",
+                bio: "Official showcase performance at IMSF 2026."
+              };
+              const g = typeof window.getGlobalArtistsData === 'function' ? window.getGlobalArtistsData() : null;
+              if (g && !g.find(a => a.id === sample.id)) {
+                g.unshift(sample);
+              }
+              artistId = sample.id;
+            }
+
+            document.body.classList.add('tour-active-sheet');
+            if (artistId && typeof window.openArtistSheet === 'function') {
+              window.openArtistSheet(artistId);
+            }
+          } catch (e) {
+            console.warn("Tour artist sheet open error:", e);
+          }
+        },
+        onLeave: () => {
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
+        }
+      },
+      {
+        target: "#subtab-artists-timetable",
+        title: "Shows Timetable & Smart Views",
+        desc: "Switch to Shows Timetable to view concerts across stages, filter by specific venues, or switch to 'My Schedule' for your personal clash-free line-up.",
+        onEnter: () => {
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
+        }
+      },
+      {
+        target: "#export-briefcase-btn",
+        title: "Your Export Briefcase",
+        desc: "At the end of the festival, download a complete working summary of all your favorited artists, tags, and notes for easy post-festival follow-ups.",
+        onEnter: () => {
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
+          if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
+          const bcContainer = document.getElementById("export-briefcase-container");
+          if (bcContainer) {
+            bcContainer.style.display = "block";
+            bcContainer.setAttribute("data-tour-visible", "true");
+          }
+          const btn = document.getElementById("export-briefcase-btn");
+          if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
+        onLeave: () => {
+          const bcContainer = document.getElementById("export-briefcase-container");
+          if (bcContainer && bcContainer.getAttribute("data-tour-visible") === "true") {
+            bcContainer.removeAttribute("data-tour-visible");
+            if (typeof window.updateExportBriefcaseVisibility === 'function') {
+              window.updateExportBriefcaseVisibility();
+            }
+          }
+        }
+      }
+    ]
+  }
+};
+
+let tourScrollListener = null;
+
+function startTabTour(tabKey) {
+  const config = TAB_TOUR_CONFIGS[tabKey];
+  if (!config) return;
+
+  currentTourTab = tabKey;
+  currentTabStepIndex = 0;
+  currentTabSteps = config.getSteps();
+
+  if (!currentTabSteps || currentTabSteps.length === 0) return;
+
+  const backdrop = document.getElementById("tour-spotlight-backdrop");
+  const cutout = document.getElementById("tour-spotlight-cutout");
+  const popover = document.getElementById("tour-spotlight-popover");
+  if (backdrop) backdrop.style.display = "block";
+  if (cutout) cutout.style.display = "block";
+  if (popover) popover.style.display = "flex";
+
+  if (!tourScrollListener) {
+    tourScrollListener = () => {
+      if (currentHighlightedEl) {
+        repositionCutoutAndPopover(currentHighlightedEl);
+      }
+    };
+    window.addEventListener('scroll', tourScrollListener, { capture: true, passive: true });
+    window.addEventListener('resize', tourScrollListener, { passive: true });
+  }
+
+  renderTabTourStep(currentTabStepIndex);
+}
+
+function closeTabTour() {
+  if (currentTabSteps && currentTabSteps[currentTabStepIndex] && typeof currentTabSteps[currentTabStepIndex].onLeave === 'function') {
+    try { currentTabSteps[currentTabStepIndex].onLeave(); } catch (e) {}
+  }
+
+  if (tourScrollListener) {
+    window.removeEventListener('scroll', tourScrollListener, { capture: true });
+    window.removeEventListener('resize', tourScrollListener);
+    tourScrollListener = null;
+  }
+
+  const backdrop = document.getElementById("tour-spotlight-backdrop");
+  const cutout = document.getElementById("tour-spotlight-cutout");
+  const popover = document.getElementById("tour-spotlight-popover");
+  if (backdrop) backdrop.style.display = "none";
+  if (cutout) cutout.style.display = "none";
+  if (popover) popover.style.display = "none";
+
+  document.body.classList.remove('tour-active-sheet');
+  if (typeof window.closeArtistSheet === 'function') {
+    const sheet = document.getElementById('artist-bottom-sheet');
+    if (sheet && sheet.classList.contains('active')) {
+      window.closeArtistSheet();
     }
+  }
+
+  const bcContainer = document.getElementById("export-briefcase-container");
+  if (bcContainer && bcContainer.getAttribute("data-tour-visible") === "true") {
+    bcContainer.removeAttribute("data-tour-visible");
+    if (typeof window.updateExportBriefcaseVisibility === 'function') {
+      window.updateExportBriefcaseVisibility();
+    }
+  }
+
+  currentTourTab = null;
+  currentTabStepIndex = 0;
+  currentTabSteps = [];
+  currentHighlightedEl = null;
+}
+
+function nextTabTourStep() {
+  if (currentTabStepIndex < currentTabSteps.length - 1) {
+    if (typeof currentTabSteps[currentTabStepIndex].onLeave === 'function') {
+      try { currentTabSteps[currentTabStepIndex].onLeave(); } catch (e) {}
+    }
+    currentTabStepIndex++;
+    renderTabTourStep(currentTabStepIndex);
+  } else {
+    closeTabTour();
+  }
+}
+
+function prevTabTourStep() {
+  if (currentTabStepIndex > 0) {
+    if (typeof currentTabSteps[currentTabStepIndex].onLeave === 'function') {
+      try { currentTabSteps[currentTabStepIndex].onLeave(); } catch (e) {}
+    }
+    currentTabStepIndex--;
+    renderTabTourStep(currentTabStepIndex);
+  }
+}
+
+function renderTabTourStep(stepIdx) {
+  const step = currentTabSteps[stepIdx];
+  if (!step) return;
+
+  const badge = document.getElementById("tour-popover-badge");
+  const title = document.getElementById("tour-popover-title");
+  const desc = document.getElementById("tour-popover-desc");
+  const dots = document.getElementById("tour-popover-dots");
+  const prevBtn = document.getElementById("tour-popover-prev");
+  const nextBtn = document.getElementById("tour-popover-next");
+
+  if (badge) badge.innerText = `STEP ${stepIdx + 1}/${currentTabSteps.length}`;
+  if (title) title.innerText = step.title;
+  if (desc) desc.innerText = step.desc;
+
+  if (dots) {
+    dots.innerHTML = currentTabSteps.map((s, i) => `
+      <div class="popover-dot ${i === stepIdx ? 'active' : ''}"></div>
+    `).join('');
+  }
+
+  if (prevBtn) {
+    prevBtn.style.visibility = stepIdx === 0 ? "hidden" : "visible";
+  }
+  if (nextBtn) {
+    nextBtn.innerText = stepIdx === currentTabSteps.length - 1 ? "Got It ✓" : "Next →";
+  }
+
+  // Execute onEnter lifecycle hook
+  if (typeof step.onEnter === 'function') {
+    try { step.onEnter(); } catch (e) {}
+  }
+
+  // Allow DOM to settle (especially for sheet transition)
+  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 420 : 120;
+  setTimeout(() => {
+    let targetEl = null;
+    if (step.target) {
+      targetEl = document.querySelector(step.target);
+    }
+
+    if (isTourTargetVisible(targetEl)) {
+      updateCutoutAndPopover(targetEl);
+    } else {
+      const fallbackEl = document.querySelector("#subtab-artists-directory, #subtab-artists-timetable, .artist-card, #schedule-days-nav");
+      if (isTourTargetVisible(fallbackEl)) {
+        updateCutoutAndPopover(fallbackEl);
+      } else {
+        centerTourPopoverOnly();
+      }
+    }
+  }, delayMs);
+}
+
+function updateCutoutAndPopover(targetEl) {
+  currentHighlightedEl = targetEl;
+
+  // Align target into view
+  try {
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {}
+
+  setTimeout(() => {
+    repositionCutoutAndPopover(targetEl);
+  }, 180);
+}
+
+function repositionCutoutAndPopover(targetEl) {
+  if (!isTourTargetVisible(targetEl)) return;
+  const rect = targetEl.getBoundingClientRect();
+  const cutout = document.getElementById("tour-spotlight-cutout");
+  const popover = document.getElementById("tour-spotlight-popover");
+  if (!cutout || !popover) return;
+
+  // Add padding around target
+  const pad = 6;
+  const cutoutLeft = Math.max(0, rect.left - pad);
+  const cutoutTop = Math.max(0, rect.top - pad);
+  const cutoutWidth = Math.min(window.innerWidth - cutoutLeft, rect.width + (pad * 2));
+  const cutoutHeight = Math.min(window.innerHeight - cutoutTop, rect.height + (pad * 2));
+
+  cutout.style.left = `${cutoutLeft}px`;
+  cutout.style.top = `${cutoutTop}px`;
+  cutout.style.width = `${cutoutWidth}px`;
+  cutout.style.height = `${cutoutHeight}px`;
+  cutout.style.display = 'block';
+
+  // Position Popover as Speech Bubble
+  const popoverWidth = Math.min(320, window.innerWidth - 28);
+  const popoverHeight = popover.offsetHeight || 135;
+
+  let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+  left = Math.max(14, Math.min(left, window.innerWidth - popoverWidth - 14));
+
+  let top;
+  let isArrowTop = true;
+
+  if (rect.bottom + popoverHeight + 20 < window.innerHeight) {
+    // Below target
+    top = rect.bottom + 14;
+    isArrowTop = true;
+  } else if (rect.top - popoverHeight - 20 > 0) {
+    // Above target
+    top = rect.top - popoverHeight - 14;
+    isArrowTop = false;
+  } else {
+    // Fallback: inside viewport center
+    top = Math.max(16, (window.innerHeight - popoverHeight) / 2);
+    isArrowTop = true;
+  }
+
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+
+  // Calculate arrow horizontal offset pointing directly to target center
+  const targetCenterX = rect.left + (rect.width / 2);
+  const arrowLeft = Math.max(16, Math.min(targetCenterX - left - 8, popoverWidth - 28));
+  popover.style.setProperty('--arrow-left', `${arrowLeft}px`);
+
+  popover.classList.remove('arrow-top', 'arrow-bottom');
+  popover.classList.add(isArrowTop ? 'arrow-top' : 'arrow-bottom');
+}
+
+function centerTourPopoverOnly() {
+  const cutout = document.getElementById("tour-spotlight-cutout");
+  const popover = document.getElementById("tour-spotlight-popover");
+  if (cutout) cutout.style.display = 'none';
+  if (!popover) return;
+
+  const popoverWidth = Math.min(340, window.innerWidth - 32);
+  const left = Math.max(16, (window.innerWidth - popoverWidth) / 2);
+  const top = Math.max(60, (window.innerHeight - 180) / 2);
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+}
+
+function closeWelcomeModal() {
+  document.getElementById("welcome-modal-overlay").style.display = "none";
+  if (currentGuestEmail) {
+    localStorage.setItem('welcomeModalSeen_' + currentGuestEmail, 'true');
+  }
+  setTimeout(checkAndPromptPwaInstall, 400);
+}
 
     function checkSessionOnLoad() {
       const tabAdminInit = document.getElementById("tab-admin");
@@ -1015,7 +1406,9 @@ let isCurrentGuestAdmin = false;
       const checkInUrl = extractFirstUrl(checkInLink);
 
       const cleanCheckInNotes = checkInNotes ? String(checkInNotes).trim() : '';
+      const isParserStatus = /פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(cleanCheckInNotes);
       const hasCheckInNotes = cleanCheckInNotes !== '' && 
+                              !isParserStatus &&
                               !cleanCheckInNotes.startsWith('#') && 
                               !cleanCheckInNotes.startsWith('=') && 
                               !/^n\/?a$/i.test(cleanCheckInNotes) && 
@@ -1036,8 +1429,9 @@ let isCurrentGuestAdmin = false;
         }
       }
 
-      // 2. RUBRIC: Online Web Check-In
-      if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes)) {
+      // 2. RUBRIC: Online Web Check-In (display if not passed and either booking code, link, custom notes, or flight schedule exists)
+      const hasFlightSchedule = (arrival && arrival !== 'TBD') || (departure && departure !== 'TBD');
+      if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes || hasFlightSchedule)) {
         const bookingKey = cleanBookingCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
         const isCheckInDone = localStorage.getItem('imsf_checkin_done_' + bookingKey) === 'true';
 
@@ -2726,6 +3120,8 @@ let isCurrentGuestAdmin = false;
     /* ARTISTS UI LOGIC                                          */
     /* ========================================================= */
     let globalArtistsData = [];
+    window.globalArtistsData = globalArtistsData;
+    window.getGlobalArtistsData = () => globalArtistsData;
     let showFavsOnly = false;
     let currentOpenArtistId = null;
     let lastOpenedArtistId = null;
@@ -3165,6 +3561,7 @@ let isCurrentGuestAdmin = false;
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.some(a => a.genre)) {
             globalArtistsData = parsed.sort((a, b) => a.name.localeCompare(b.name));
+            window.globalArtistsData = globalArtistsData;
             if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
@@ -3190,6 +3587,7 @@ let isCurrentGuestAdmin = false;
           if (res && res.success && res.artists) {
             localStorage.setItem(cacheKey, JSON.stringify(res.artists));
             globalArtistsData = res.artists.sort((a, b) => a.name.localeCompare(b.name));
+            window.globalArtistsData = globalArtistsData;
             if (window.matchedArtistCache) window.matchedArtistCache.clear();
             initArtistsUI();
             fetchGuestArtistFeedback();
@@ -3256,7 +3654,7 @@ let isCurrentGuestAdmin = false;
             </button>`;
 
         html += `
-          <div class="artist-card" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
+          <div class="artist-card" data-artist-id="${artist.id}" style="background-image: url('${artist.image}')" onclick="openArtistSheet('${artist.id}')">
             <div class="artist-card-overlay">
               <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 2px;">
                 <div class="artist-card-name" style="margin-bottom: 0;">${artist.name}</div>
@@ -3599,23 +3997,10 @@ let isCurrentGuestAdmin = false;
       // Re-render grid to reflect any favorite changes from sheet
       filterArtists();
 
-      // If opened from timetable or deep link, ensure timetable is active and highlight the show card
-      const targetShowId = window.deepLinkedShowId || window.lastJumpedShowId;
+      // If opened from timetable or deep link, ensure timetable is active
       if (artistOpenedFromSubTab === 'timetable' || window.deepLinkedShowId) {
         if (typeof switchArtistsSubTab === 'function') {
           switchArtistsSubTab('timetable');
-        }
-        if (targetShowId) {
-          setTimeout(function() {
-            const showCard = document.getElementById('timetable-card-' + targetShowId);
-            if (showCard) {
-              showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              showCard.classList.remove('highlight-pulse');
-              void showCard.offsetWidth;
-              showCard.classList.add('highlight-pulse');
-              setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 5000);
-            }
-          }, 150);
         }
       }
       
@@ -5630,7 +6015,7 @@ let isCurrentGuestAdmin = false;
         const artist = s.matchedArtist;
         const isFav = s.isFav;
         const isLive = isTimetableShowLive(s);
-        const clickAttr = artist ? `onclick="window.lastJumpedShowId='${s.id}'; artistOpenedFromSubTab='timetable'; openArtistSheet('${artist.id}')"` : '';
+        const clickAttr = artist ? `onclick="artistOpenedFromSubTab='timetable'; openArtistSheet('${artist.id}')"` : '';
         const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''} ${isLive ? 'is-live-now' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
@@ -6372,6 +6757,7 @@ window.openImageViewerFromBg = openImageViewerFromBg;
 window.closeImageViewer = closeImageViewer;
 window.openGuestSheet = openGuestSheet;
 window.openArtistSheet = openArtistSheet;
+window.updateExportBriefcaseVisibility = updateExportBriefcaseVisibility;
 
 
 let adminDataLoaded = false;
@@ -8331,7 +8717,8 @@ function viewAdminGuestDetails(rowIndex) {
     if (flightNotes) {
       flightHtml += `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${flightNotes}</div>`;
     }
-    if (bookingCode || checkInLink || checkInNotes) {
+    const cleanAdminCheckInNotes = (checkInNotes && !/פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(checkInNotes)) ? String(checkInNotes).trim() : '';
+    if (bookingCode || checkInLink || cleanAdminCheckInNotes) {
       flightHtml += `
         <div style="margin-top:8px; padding:10px; background:rgba(241, 169, 160, 0.1); border:1.5px solid rgba(241, 169, 160, 0.35); border-radius:6px; font-size:0.85rem;">
           <div style="font-weight:bold; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
@@ -8339,7 +8726,7 @@ function viewAdminGuestDetails(rowIndex) {
           </div>
           ${bookingCode ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent); background:rgba(0,0,0,0.15); padding:2px 6px; border-radius:4px;">${escapeHtml(bookingCode)}</code></div>` : ''}
           ${checkInLink ? `<div style="margin-top:3px;"><strong>Link:</strong> <a href="${escapeHtml(checkInLink)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(checkInLink.length > 45 ? checkInLink.slice(0, 45) + '...' : checkInLink)}</a></div>` : ''}
-          ${checkInNotes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(checkInNotes)}</div>` : ''}
+          ${cleanAdminCheckInNotes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(cleanAdminCheckInNotes)}</div>` : ''}
         </div>
       `;
     }
@@ -9366,5 +9753,8 @@ window.generateIcsContent = generateIcsContent;
 window.openCalendarSyncModal = openCalendarSyncModal;
 window.closeCalendarSyncModal = closeCalendarSyncModal;
 window.executeCalendarSync = executeCalendarSync;
-
-
+window.startTabTour = startTabTour;
+window.closeTabTour = closeTabTour;
+window.nextTabTourStep = nextTabTourStep;
+window.prevTabTourStep = prevTabTourStep;
+window.closeWelcomeModal = closeWelcomeModal;

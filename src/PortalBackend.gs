@@ -268,6 +268,11 @@ function getGuestPortalData(sessionToken) {
           }
         }
       }
+      if (item.label === "Check-in Notes") {
+        if (/פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(valStr)) {
+          return;
+        }
+      }
       flightsDataMap[item.label] = valStr;
     };
 
@@ -421,7 +426,7 @@ function fetchMappedData(sheet, email, mappingArray) {
             const cleanKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
             let foundIdx = headers.findIndex(h => h === cleanKey);
             if (foundIdx === -1) {
-              foundIdx = headers.findIndex(h => h && h.length > 1 && (h.includes(cleanKey) || (cleanKey.length > 1 && cleanKey.includes(h))));
+              foundIdx = headers.findIndex(h => h && h.length > 1 && h.includes(cleanKey));
             }
             if (foundIdx !== -1) { cIdx = foundIdx; break; }
           }

@@ -49,7 +49,7 @@ function processAllTicketsBulk() {
     depTime: getColIdx(targetHeaders, ["שעת המראה", "שעת המראה מנתבג", "שעת המראה מנתב\"ג"]) + 1,
     depFlight: getColIdx(targetHeaders, ["מספר טיסה המראה", "מספר טיסת המראה"]) + 1,
     depAirline: getColIdx(targetHeaders, ["חברת תעופה המראה"]) + 1,
-    notes: getColIdx(targetHeaders, ["הערות סריקה", "סטטוס", "הערות"]) + 1 || 14
+    notes: getColIdx(targetHeaders, ["הערות סריקה", "סטטוס סריקה", "סטטוס"]) + 1
   };
   
   let processedCount = 0;
@@ -90,13 +90,13 @@ function processAllTicketsBulk() {
                 if (extractedData.departureTime && colTarget.depTime > 0) targetSheet.getRange(targetRow, colTarget.depTime).setValue(extractedData.departureTime);
                 if (extractedData.departureFlight && colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight);
                 if (extractedData.departureAirline && colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline);
-                targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
+                if (colTarget.notes > 0) targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
                 processedCount++;
                 Utilities.sleep(5000); // Respect 15 RPM
               }
             }
           } catch (e) {
-            targetSheet.getRange(targetRow, colTarget.notes).setValue("שגיאה בסריקה: " + e.message);
+            if (colTarget.notes > 0) targetSheet.getRange(targetRow, colTarget.notes).setValue("שגיאה בסריקה: " + e.message);
           }
         }
       }
@@ -180,7 +180,7 @@ function triggerFlightParsing(e, isManual = false) {
           depTime: getColIdx(targetHeaders, ["שעת המראה", "שעת המראה מנתבג", "שעת המראה מנתב\"ג"]) + 1,
           depFlight: getColIdx(targetHeaders, ["מספר טיסה המראה", "מספר טיסת המראה"]) + 1,
           depAirline: getColIdx(targetHeaders, ["חברת תעופה המראה"]) + 1,
-          notes: getColIdx(targetHeaders, ["הערות סריקה", "סטטוס", "הערות"]) + 1 || 14
+          notes: getColIdx(targetHeaders, ["הערות סריקה", "סטטוס סריקה", "סטטוס"]) + 1
         };
         
         if (extractedData.arrivalDate && colTarget.arrDate > 0) targetSheet.getRange(targetRow, colTarget.arrDate).setValue(extractedData.arrivalDate);
@@ -192,7 +192,7 @@ function triggerFlightParsing(e, isManual = false) {
         if (extractedData.departureFlight && colTarget.depFlight > 0) targetSheet.getRange(targetRow, colTarget.depFlight).setValue(extractedData.departureFlight);
         if (extractedData.departureAirline && colTarget.depAirline > 0) targetSheet.getRange(targetRow, colTarget.depAirline).setValue(extractedData.departureAirline);
         
-        targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
+        if (colTarget.notes > 0) targetSheet.getRange(targetRow, colTarget.notes).setValue("פוענח בהצלחה ✅");
         sheet.getParent().toast("הפענוח הושלם בהצלחה והוזן לטבלת טיסות!", "הצלחה", 5);
         
       } else {
