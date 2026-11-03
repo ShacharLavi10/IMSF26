@@ -133,6 +133,18 @@ const TAB_TOUR_CONFIGS = {
         }
       },
       {
+        target: ".timetable-calendar-sync-btn",
+        title: "1-Tap Calendar Sync",
+        desc: "Sync your favorited shows directly into Apple Calendar, Google Calendar, or Outlook to get automatic alerts 5 minutes before each showcase starts!",
+        onEnter: () => {
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          document.body.classList.remove('tour-active-sheet');
+          if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('timetable');
+          const syncBtn = document.querySelector(".timetable-calendar-sync-btn");
+          if (syncBtn) syncBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      },
+      {
         target: "#export-briefcase-btn",
         title: "Your Export Briefcase",
         desc: "At the end of the festival, download a complete working summary of all your favorited artists, tags, and notes for easy post-festival follow-ups.",
@@ -315,8 +327,8 @@ function renderTabTourStep(stepIdx) {
     try { step.onEnter(); } catch (e) {}
   }
 
-  // Allow DOM & transitions to settle (sheet slides take ~300ms)
-  const delayMs = currentTourTab === 'artists' && (stepIdx === 1 || stepIdx === 2) ? 320 : 80;
+  // Allow DOM & transitions to settle (sheet slides take ~300ms, subtab view switches take ~180ms)
+  const delayMs = currentTourTab === 'artists' && (stepIdx === 1 || stepIdx === 2) ? 320 : (currentTourTab === 'artists' && (stepIdx === 3 || stepIdx === 4) ? 180 : 80);
   setTimeout(() => {
     let targetEl = null;
     if (step.target) {
