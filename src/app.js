@@ -3914,23 +3914,10 @@ function closeWelcomeModal() {
       // Re-render grid to reflect any favorite changes from sheet
       filterArtists();
 
-      // If opened from timetable or deep link, ensure timetable is active and highlight the show card
-      const targetShowId = window.deepLinkedShowId || window.lastJumpedShowId;
+      // If opened from timetable or deep link, ensure timetable is active
       if (artistOpenedFromSubTab === 'timetable' || window.deepLinkedShowId) {
         if (typeof switchArtistsSubTab === 'function') {
           switchArtistsSubTab('timetable');
-        }
-        if (targetShowId) {
-          setTimeout(function() {
-            const showCard = document.getElementById('timetable-card-' + targetShowId);
-            if (showCard) {
-              showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              showCard.classList.remove('highlight-pulse');
-              void showCard.offsetWidth;
-              showCard.classList.add('highlight-pulse');
-              setTimeout(function() { showCard.classList.remove('highlight-pulse'); }, 5000);
-            }
-          }, 150);
         }
       }
       
@@ -5945,7 +5932,7 @@ function closeWelcomeModal() {
         const artist = s.matchedArtist;
         const isFav = s.isFav;
         const isLive = isTimetableShowLive(s);
-        const clickAttr = artist ? `onclick="window.lastJumpedShowId='${s.id}'; artistOpenedFromSubTab='timetable'; openArtistSheet('${artist.id}')"` : '';
+        const clickAttr = artist ? `onclick="artistOpenedFromSubTab='timetable'; openArtistSheet('${artist.id}')"` : '';
         const cardClass = `timetable-show-card ${isFav ? 'is-favorite' : ''} ${isLive ? 'is-live-now' : ''}`;
         const avatarHtml = (artist && artist.image) 
           ? `<img src="${artist.image}" alt="${escapeHtml(s.artistName)}" class="timetable-artist-avatar" />`
