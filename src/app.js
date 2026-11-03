@@ -6479,6 +6479,22 @@ function closeWelcomeModal() {
         'END:VTIMEZONE'
       ];
 
+      function getIcsAlarmUuid(id) {
+        const clean = String(id || '').replace(/[^a-zA-Z0-9]/g, '');
+        let hash = 0x811c9dc5;
+        const seed = `imsf-alarm-5m-${clean}`;
+        for (let i = 0; i < seed.length; i++) {
+          hash ^= seed.charCodeAt(i);
+          hash = Math.imul(hash, 0x01000193);
+        }
+        const h1 = (Math.abs(hash) & 0xffffffff).toString(16).padStart(8, '0');
+        const h2 = ((Math.abs(hash) >>> 4) & 0xffff).toString(16).padStart(4, '0');
+        const h3 = '4' + ((Math.abs(hash) >>> 8) & 0x0fff).toString(16).padStart(3, '0');
+        const h4 = 'a' + ((Math.abs(hash) >>> 12) & 0x0fff).toString(16).padStart(3, '0');
+        const h5 = (h1 + clean.padEnd(8, '0')).slice(0, 12);
+        return `${h1}-${h2}-${h3}-${h4}-${h5}`.toUpperCase();
+      }
+
       shows.forEach(show => {
         const artist = show.matchedArtist;
         const displayName = artist ? artist.name : show.artistName;
@@ -6536,15 +6552,22 @@ function closeWelcomeModal() {
         lines.push(`LOCATION:${escapeIcsText(exactLocation)}`);
         lines.push(`URL;VALUE=URI:${portalDeepLink}`);
         lines.push(`DESCRIPTION:${desc}`);
+        lines.push('TRANSP:OPAQUE');
+        lines.push('X-MICROSOFT-CDO-BUSYSTATUS:BUSY');
 
         if (isCancellation) {
           lines.push('STATUS:CANCELLED');
         } else {
           lines.push('STATUS:CONFIRMED');
+          const alarmUuid = getIcsAlarmUuid(show.id);
           lines.push('BEGIN:VALARM');
-          lines.push('TRIGGER:-PT5M');
           lines.push('ACTION:DISPLAY');
           lines.push(`DESCRIPTION:${escapeIcsText(displayName)} starts in 5 minutes at ${escapeIcsText(cleanStage)}!`);
+          lines.push('SUMMARY:Showcase Starts in 5 Minutes');
+          lines.push('TRIGGER:-PT5M');
+          lines.push(`UID:${alarmUuid}`);
+          lines.push(`X-WR-ALARMUID:${alarmUuid}`);
+          lines.push('X-APPLE-DEFAULT-ALARM:FALSE');
           lines.push('END:VALARM');
         }
 
