@@ -71,44 +71,55 @@ const TAB_TOUR_CONFIGS = {
       {
         target: ".artist-card, #artists-grid",
         title: "Artists Lineup & Star Acts",
-        desc: "Browse showcasing artists, listen to their music, and tap ❤️ to star acts you want to catch live."
-      },
-      {
-        target: "#artists-card",
-        title: "Intent Tags & Private Notes",
-        desc: "Tap any artist to mark your intent (Live Booking, Connect, Press) and write private notes. Everything auto-saves instantly, even offline!",
+        desc: "Browse showcasing artists, listen to their music, and tap ❤️ to star acts you want to catch live.",
         onEnter: () => {
-          // Open first artist profile for live demo if exists
-          try {
-            const firstCard = document.querySelector(".artist-card");
-            if (firstCard) {
-              const artistId = firstCard.getAttribute("data-artist-id") || (window.currentArtistsList && window.currentArtistsList[0] && (window.currentArtistsList[0].id || window.currentArtistsList[0].name));
-              if (artistId && typeof window.openArtistDetail === 'function') {
-                window.openArtistDetail(artistId);
-                setTimeout(() => {
-                  const intentGrid = document.getElementById("sheet-intent-tags");
-                  if (intentGrid) {
-                    highlightTourTarget(intentGrid);
-                    positionTourPopover(intentGrid);
-                  }
-                }, 300);
-              }
-            }
-          } catch (e) {}
-        },
-        onLeave: () => {
-          if (typeof window.closeArtistDetail === 'function') {
-            window.closeArtistDetail();
+          if (typeof switchArtistsSubTab === 'function') {
+            switchArtistsSubTab('directory');
+          }
+          if (typeof closeArtistSheet === 'function') {
+            closeArtistSheet();
           }
         }
       },
       {
-        target: "#artists-timetable-view, .artists-subnav-container",
+        target: "#sheet-intent-tags, .private-notes-section, #artist-bottom-sheet",
+        title: "Intent Tags & Private Notes",
+        desc: "Open any artist to tag your collaboration intent (Live Booking, Connect, Press) and write private notes. Everything auto-saves instantly, even offline!",
+        onEnter: () => {
+          if (typeof switchArtistsSubTab === 'function') {
+            switchArtistsSubTab('directory');
+          }
+          try {
+            let artistId = null;
+            if (window.globalArtistsData && window.globalArtistsData.length > 0) {
+              artistId = window.globalArtistsData[0].id;
+            } else {
+              const firstCard = document.querySelector(".artist-card");
+              if (firstCard) {
+                artistId = firstCard.getAttribute("data-artist-id");
+              }
+            }
+            if (artistId && typeof openArtistSheet === 'function') {
+              openArtistSheet(artistId);
+            }
+          } catch (e) {}
+        },
+        onLeave: () => {
+          if (typeof closeArtistSheet === 'function') {
+            closeArtistSheet();
+          }
+        }
+      },
+      {
+        target: "#timetable-master-switcher, #artists-timetable-view",
         title: "Shows Timetable & Smart Views",
         desc: "Switch to Shows Timetable to view concerts across stages, filter by specific venues, or switch to 'My Schedule' for your personal clash-free line-up.",
         onEnter: () => {
-          if (typeof window.switchArtistsSubTab === 'function') {
-            window.switchArtistsSubTab('timetable');
+          if (typeof closeArtistSheet === 'function') {
+            closeArtistSheet();
+          }
+          if (typeof switchArtistsSubTab === 'function') {
+            switchArtistsSubTab('timetable');
           }
         }
       },
@@ -117,9 +128,11 @@ const TAB_TOUR_CONFIGS = {
         title: "Your Export Briefcase",
         desc: "At the end of the festival, download a complete working summary of all your favorited artists, tags, and notes for easy post-festival follow-ups.",
         onEnter: () => {
-          if (typeof window.switchArtistsSubTab === 'function') {
-            window.switchArtistsSubTab('directory');
+          if (typeof switchArtistsSubTab === 'function') {
+            switchArtistsSubTab('directory');
           }
+          const bcContainer = document.getElementById("export-briefcase-container");
+          if (bcContainer) bcContainer.style.display = "block";
         }
       }
     ]
@@ -137,32 +150,31 @@ function startTabTour(tabKey) {
   if (!currentTabSteps || currentTabSteps.length === 0) return;
 
   const backdrop = document.getElementById("tour-spotlight-backdrop");
+  const cutout = document.getElementById("tour-spotlight-cutout");
   const popover = document.getElementById("tour-spotlight-popover");
   if (backdrop) backdrop.style.display = "block";
+  if (cutout) cutout.style.display = "block";
   if (popover) popover.style.display = "flex";
 
   renderTabTourStep(currentTabStepIndex);
 }
 
 function closeTabTour() {
-  if (currentHighlightedEl) {
-    currentHighlightedEl.classList.remove("tour-spotlight-target");
-    currentHighlightedEl = null;
-  }
-
-  // Run onLeave handler if present
   if (currentTabSteps && currentTabSteps[currentTabStepIndex] && typeof currentTabSteps[currentTabStepIndex].onLeave === 'function') {
     try { currentTabSteps[currentTabStepIndex].onLeave(); } catch (e) {}
   }
 
   const backdrop = document.getElementById("tour-spotlight-backdrop");
+  const cutout = document.getElementById("tour-spotlight-cutout");
   const popover = document.getElementById("tour-spotlight-popover");
   if (backdrop) backdrop.style.display = "none";
+  if (cutout) cutout.style.display = "none";
   if (popover) popover.style.display = "none";
 
   currentTourTab = null;
   currentTabStepIndex = 0;
   currentTabSteps = [];
+  currentHighlightedEl = null;
 }
 
 function nextTabTourStep() {
@@ -191,11 +203,6 @@ function renderTabTourStep(stepIdx) {
   const step = currentTabSteps[stepIdx];
   if (!step) return;
 
-  if (currentHighlightedEl) {
-    currentHighlightedEl.classList.remove("tour-spotlight-target");
-    currentHighlightedEl = null;
-  }
-
   const badge = document.getElementById("tour-popover-badge");
   const title = document.getElementById("tour-popover-title");
   const desc = document.getElementById("tour-popover-desc");
@@ -220,74 +227,93 @@ function renderTabTourStep(stepIdx) {
     nextBtn.innerText = stepIdx === currentTabSteps.length - 1 ? "Got It ✓" : "Next →";
   }
 
-  // Run onEnter hook if provided
+  // Execute onEnter lifecycle hook
   if (typeof step.onEnter === 'function') {
     try { step.onEnter(); } catch (e) {}
   }
 
-  // Highlight element
-  let targetEl = null;
-  if (step.target) {
-    targetEl = document.querySelector(step.target);
-  }
+  // Allow DOM to settle (especially for sheet transition or subtab switch)
+  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 320 : 120;
+  setTimeout(() => {
+    let targetEl = null;
+    if (step.target) {
+      targetEl = document.querySelector(step.target);
+    }
 
-  if (targetEl) {
-    highlightTourTarget(targetEl);
-    positionTourPopover(targetEl);
-  } else {
-    centerTourPopover();
-  }
+    if (targetEl && targetEl.offsetParent !== null) {
+      updateCutoutAndPopover(targetEl);
+    } else {
+      // Fallback: check if target is inside bottom sheet or timetable
+      const fallbackEl = document.querySelector("#sheet-intent-tags, .private-notes-section, .timetable-master-tabs, .artist-card, #schedule-days-nav");
+      if (fallbackEl && fallbackEl.offsetParent !== null) {
+        updateCutoutAndPopover(fallbackEl);
+      } else {
+        centerTourPopoverOnly();
+      }
+    }
+  }, delayMs);
 }
 
-function highlightTourTarget(targetEl) {
-  if (currentHighlightedEl) {
-    currentHighlightedEl.classList.remove("tour-spotlight-target");
-  }
-  targetEl.classList.add("tour-spotlight-target");
+function updateCutoutAndPopover(targetEl) {
   currentHighlightedEl = targetEl;
 
+  // Smoothly align target into view
   try {
     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (e) {}
-}
-
-function positionTourPopover(targetEl) {
-  const popover = document.getElementById("tour-spotlight-popover");
-  if (!popover) return;
 
   setTimeout(() => {
     const rect = targetEl.getBoundingClientRect();
+    const cutout = document.getElementById("tour-spotlight-cutout");
+    const popover = document.getElementById("tour-spotlight-popover");
+    if (!cutout || !popover) return;
+
+    // Expand cutout padding slightly
+    const pad = 8;
+    const cutoutLeft = Math.max(0, rect.left - pad);
+    const cutoutTop = Math.max(0, rect.top - pad);
+    const cutoutWidth = Math.min(window.innerWidth - cutoutLeft, rect.width + (pad * 2));
+    const cutoutHeight = Math.min(window.innerHeight - cutoutTop, rect.height + (pad * 2));
+
+    cutout.style.left = `${cutoutLeft}px`;
+    cutout.style.top = `${cutoutTop}px`;
+    cutout.style.width = `${cutoutWidth}px`;
+    cutout.style.height = `${cutoutHeight}px`;
+    cutout.style.display = 'block';
+
+    // Position Popover intelligently
     const popoverWidth = Math.min(340, window.innerWidth - 32);
-    const popoverHeight = 160;
+    const popoverHeight = 150;
 
     let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
     left = Math.max(16, Math.min(left, window.innerWidth - popoverWidth - 16));
 
     let top;
-    // Prefer placing below target if space permits, else above
-    if (rect.bottom + popoverHeight + 16 < window.innerHeight) {
-      top = rect.bottom + 12;
-    } else if (rect.top - popoverHeight - 16 > 0) {
-      top = rect.top - popoverHeight - 12;
+    // Prefer below the element, else above, else center
+    if (rect.bottom + popoverHeight + 20 < window.innerHeight) {
+      top = rect.bottom + 14;
+    } else if (rect.top - popoverHeight - 20 > 0) {
+      top = rect.top - popoverHeight - 14;
     } else {
       top = Math.max(20, (window.innerHeight - popoverHeight) / 2);
     }
 
     popover.style.left = `${left}px`;
     popover.style.top = `${top}px`;
-    popover.style.bottom = 'auto';
-  }, 100);
+  }, 180);
 }
 
-function centerTourPopover() {
+function centerTourPopoverOnly() {
+  const cutout = document.getElementById("tour-spotlight-cutout");
   const popover = document.getElementById("tour-spotlight-popover");
+  if (cutout) cutout.style.display = 'none';
   if (!popover) return;
+
   const popoverWidth = Math.min(340, window.innerWidth - 32);
   const left = Math.max(16, (window.innerWidth - popoverWidth) / 2);
   const top = Math.max(60, (window.innerHeight - 180) / 2);
   popover.style.left = `${left}px`;
   popover.style.top = `${top}px`;
-  popover.style.bottom = 'auto';
 }
 
 function closeWelcomeModal() {
