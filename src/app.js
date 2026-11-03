@@ -18,9 +18,9 @@ const TAB_TOUR_CONFIGS = {
         desc: "Tap any day to view receptions, panels, shuttle departures, and dinners with zero horizontal scrolling."
       },
       {
-        target: ".schedule-loc-link, .schedule-event-inline",
+        target: ".schedule-loc-link, .schedule-loc-link svg",
         title: "1-Tap Maps Navigation",
-        desc: "Tap the Maps button on any event card for direct 1-tap walking or taxi directions right to the venue entrance."
+        desc: "Tap the Map Pin button on any event to open direct walking or taxi navigation right to the venue entrance."
       }
     ]
   },
@@ -69,35 +69,27 @@ const TAB_TOUR_CONFIGS = {
     name: "Artists",
     getSteps: () => [
       {
-        target: ".artist-card, #artists-grid",
+        target: "#subtab-artists-directory",
         title: "Artists Lineup & Star Acts",
         desc: "Browse showcasing artists, listen to their music, and tap ❤️ to star acts you want to catch live.",
         onEnter: () => {
-          if (typeof switchArtistsSubTab === 'function') {
-            switchArtistsSubTab('directory');
-          }
-          if (typeof closeArtistSheet === 'function') {
-            closeArtistSheet();
-          }
+          if (typeof closeArtistSheet === 'function') closeArtistSheet();
+          if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('directory');
         }
       },
       {
-        target: "#sheet-intent-tags, .private-notes-section, #artist-bottom-sheet",
+        target: ".private-notes-section, #sheet-intent-tags",
         title: "Intent Tags & Private Notes",
-        desc: "Open any artist to tag your collaboration intent (Live Booking, Connect, Press) and write private notes. Everything auto-saves instantly, even offline!",
+        desc: "Tap any artist to mark your intent (Live Booking, Connect, Press) and write private notes. Everything auto-saves instantly, even offline!",
         onEnter: () => {
-          if (typeof switchArtistsSubTab === 'function') {
-            switchArtistsSubTab('directory');
-          }
+          if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('directory');
           try {
             let artistId = null;
             if (window.globalArtistsData && window.globalArtistsData.length > 0) {
               artistId = window.globalArtistsData[0].id;
             } else {
               const firstCard = document.querySelector(".artist-card");
-              if (firstCard) {
-                artistId = firstCard.getAttribute("data-artist-id");
-              }
+              if (firstCard) artistId = firstCard.getAttribute("data-artist-id");
             }
             if (artistId && typeof openArtistSheet === 'function') {
               openArtistSheet(artistId);
@@ -105,22 +97,15 @@ const TAB_TOUR_CONFIGS = {
           } catch (e) {}
         },
         onLeave: () => {
-          if (typeof closeArtistSheet === 'function') {
-            closeArtistSheet();
-          }
+          if (typeof closeArtistSheet === 'function') closeArtistSheet();
         }
       },
       {
-        target: "#timetable-master-switcher, #artists-timetable-view",
+        target: "#subtab-artists-timetable",
         title: "Shows Timetable & Smart Views",
         desc: "Switch to Shows Timetable to view concerts across stages, filter by specific venues, or switch to 'My Schedule' for your personal clash-free line-up.",
         onEnter: () => {
-          if (typeof closeArtistSheet === 'function') {
-            closeArtistSheet();
-          }
-          if (typeof switchArtistsSubTab === 'function') {
-            switchArtistsSubTab('timetable');
-          }
+          if (typeof closeArtistSheet === 'function') closeArtistSheet();
         }
       },
       {
@@ -128,9 +113,8 @@ const TAB_TOUR_CONFIGS = {
         title: "Your Export Briefcase",
         desc: "At the end of the festival, download a complete working summary of all your favorited artists, tags, and notes for easy post-festival follow-ups.",
         onEnter: () => {
-          if (typeof switchArtistsSubTab === 'function') {
-            switchArtistsSubTab('directory');
-          }
+          if (typeof closeArtistSheet === 'function') closeArtistSheet();
+          if (typeof switchArtistsSubTab === 'function') switchArtistsSubTab('directory');
           const bcContainer = document.getElementById("export-briefcase-container");
           if (bcContainer) bcContainer.style.display = "block";
         }
@@ -138,6 +122,8 @@ const TAB_TOUR_CONFIGS = {
     ]
   }
 };
+
+let tourScrollListener = null;
 
 function startTabTour(tabKey) {
   const config = TAB_TOUR_CONFIGS[tabKey];
@@ -156,12 +142,28 @@ function startTabTour(tabKey) {
   if (cutout) cutout.style.display = "block";
   if (popover) popover.style.display = "flex";
 
+  if (!tourScrollListener) {
+    tourScrollListener = () => {
+      if (currentHighlightedEl) {
+        repositionCutoutAndPopover(currentHighlightedEl);
+      }
+    };
+    window.addEventListener('scroll', tourScrollListener, { passive: true });
+    window.addEventListener('resize', tourScrollListener, { passive: true });
+  }
+
   renderTabTourStep(currentTabStepIndex);
 }
 
 function closeTabTour() {
   if (currentTabSteps && currentTabSteps[currentTabStepIndex] && typeof currentTabSteps[currentTabStepIndex].onLeave === 'function') {
     try { currentTabSteps[currentTabStepIndex].onLeave(); } catch (e) {}
+  }
+
+  if (tourScrollListener) {
+    window.removeEventListener('scroll', tourScrollListener);
+    window.removeEventListener('resize', tourScrollListener);
+    tourScrollListener = null;
   }
 
   const backdrop = document.getElementById("tour-spotlight-backdrop");
@@ -232,8 +234,8 @@ function renderTabTourStep(stepIdx) {
     try { step.onEnter(); } catch (e) {}
   }
 
-  // Allow DOM to settle (especially for sheet transition or subtab switch)
-  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 320 : 120;
+  // Allow DOM to settle (especially for sheet transition)
+  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 380 : 120;
   setTimeout(() => {
     let targetEl = null;
     if (step.target) {
@@ -243,8 +245,7 @@ function renderTabTourStep(stepIdx) {
     if (targetEl && targetEl.offsetParent !== null) {
       updateCutoutAndPopover(targetEl);
     } else {
-      // Fallback: check if target is inside bottom sheet or timetable
-      const fallbackEl = document.querySelector("#sheet-intent-tags, .private-notes-section, .timetable-master-tabs, .artist-card, #schedule-days-nav");
+      const fallbackEl = document.querySelector("#subtab-artists-directory, #subtab-artists-timetable, .artist-card, #schedule-days-nav");
       if (fallbackEl && fallbackEl.offsetParent !== null) {
         updateCutoutAndPopover(fallbackEl);
       } else {
@@ -257,50 +258,70 @@ function renderTabTourStep(stepIdx) {
 function updateCutoutAndPopover(targetEl) {
   currentHighlightedEl = targetEl;
 
-  // Smoothly align target into view
+  // Align target into view
   try {
     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch (e) {}
 
   setTimeout(() => {
-    const rect = targetEl.getBoundingClientRect();
-    const cutout = document.getElementById("tour-spotlight-cutout");
-    const popover = document.getElementById("tour-spotlight-popover");
-    if (!cutout || !popover) return;
+    repositionCutoutAndPopover(targetEl);
+  }, 160);
+}
 
-    // Expand cutout padding slightly
-    const pad = 8;
-    const cutoutLeft = Math.max(0, rect.left - pad);
-    const cutoutTop = Math.max(0, rect.top - pad);
-    const cutoutWidth = Math.min(window.innerWidth - cutoutLeft, rect.width + (pad * 2));
-    const cutoutHeight = Math.min(window.innerHeight - cutoutTop, rect.height + (pad * 2));
+function repositionCutoutAndPopover(targetEl) {
+  if (!targetEl || targetEl.offsetParent === null) return;
+  const rect = targetEl.getBoundingClientRect();
+  const cutout = document.getElementById("tour-spotlight-cutout");
+  const popover = document.getElementById("tour-spotlight-popover");
+  if (!cutout || !popover) return;
 
-    cutout.style.left = `${cutoutLeft}px`;
-    cutout.style.top = `${cutoutTop}px`;
-    cutout.style.width = `${cutoutWidth}px`;
-    cutout.style.height = `${cutoutHeight}px`;
-    cutout.style.display = 'block';
+  // Add padding around target
+  const pad = 6;
+  const cutoutLeft = Math.max(0, rect.left - pad);
+  const cutoutTop = Math.max(0, rect.top - pad);
+  const cutoutWidth = Math.min(window.innerWidth - cutoutLeft, rect.width + (pad * 2));
+  const cutoutHeight = Math.min(window.innerHeight - cutoutTop, rect.height + (pad * 2));
 
-    // Position Popover intelligently
-    const popoverWidth = Math.min(340, window.innerWidth - 32);
-    const popoverHeight = 150;
+  cutout.style.left = `${cutoutLeft}px`;
+  cutout.style.top = `${cutoutTop}px`;
+  cutout.style.width = `${cutoutWidth}px`;
+  cutout.style.height = `${cutoutHeight}px`;
+  cutout.style.display = 'block';
 
-    let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
-    left = Math.max(16, Math.min(left, window.innerWidth - popoverWidth - 16));
+  // Position Popover as Speech Bubble
+  const popoverWidth = Math.min(320, window.innerWidth - 28);
+  const popoverHeight = popover.offsetHeight || 135;
 
-    let top;
-    // Prefer below the element, else above, else center
-    if (rect.bottom + popoverHeight + 20 < window.innerHeight) {
-      top = rect.bottom + 14;
-    } else if (rect.top - popoverHeight - 20 > 0) {
-      top = rect.top - popoverHeight - 14;
-    } else {
-      top = Math.max(20, (window.innerHeight - popoverHeight) / 2);
-    }
+  let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+  left = Math.max(14, Math.min(left, window.innerWidth - popoverWidth - 14));
 
-    popover.style.left = `${left}px`;
-    popover.style.top = `${top}px`;
-  }, 180);
+  let top;
+  let isArrowTop = true;
+
+  if (rect.bottom + popoverHeight + 20 < window.innerHeight) {
+    // Below target
+    top = rect.bottom + 14;
+    isArrowTop = true;
+  } else if (rect.top - popoverHeight - 20 > 0) {
+    // Above target
+    top = rect.top - popoverHeight - 14;
+    isArrowTop = false;
+  } else {
+    // Fallback: inside viewport center
+    top = Math.max(16, (window.innerHeight - popoverHeight) / 2);
+    isArrowTop = true;
+  }
+
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+
+  // Calculate arrow horizontal offset pointing directly to target center
+  const targetCenterX = rect.left + (rect.width / 2);
+  const arrowLeft = Math.max(16, Math.min(targetCenterX - left - 8, popoverWidth - 28));
+  popover.style.setProperty('--arrow-left', `${arrowLeft}px`);
+
+  popover.classList.remove('arrow-top', 'arrow-bottom');
+  popover.classList.add(isArrowTop ? 'arrow-top' : 'arrow-bottom');
 }
 
 function centerTourPopoverOnly() {
