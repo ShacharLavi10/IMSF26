@@ -205,6 +205,11 @@ function closeTabTour() {
     tourScrollListener = null;
   }
 
+  if (activeTourTransitionRaf) {
+    cancelAnimationFrame(activeTourTransitionRaf);
+    activeTourTransitionRaf = null;
+  }
+
   const backdrop = document.getElementById("tour-spotlight-backdrop");
   const cutout = document.getElementById("tour-spotlight-cutout");
   const popover = document.getElementById("tour-spotlight-popover");
@@ -256,6 +261,27 @@ function prevTabTourStep() {
   }
 }
 
+let activeTourTransitionRaf = null;
+
+function trackTargetTransition(targetEl, durationMs = 650) {
+  if (activeTourTransitionRaf) {
+    cancelAnimationFrame(activeTourTransitionRaf);
+    activeTourTransitionRaf = null;
+  }
+  const startTime = performance.now();
+  function frame(now) {
+    if (!currentHighlightedEl || currentHighlightedEl !== targetEl) return;
+    repositionCutoutAndPopover(targetEl);
+    if (now - startTime < durationMs) {
+      activeTourTransitionRaf = requestAnimationFrame(frame);
+    } else {
+      activeTourTransitionRaf = null;
+      repositionCutoutAndPopover(targetEl);
+    }
+  }
+  activeTourTransitionRaf = requestAnimationFrame(frame);
+}
+
 function renderTabTourStep(stepIdx) {
   const step = currentTabSteps[stepIdx];
   if (!step) return;
@@ -289,8 +315,8 @@ function renderTabTourStep(stepIdx) {
     try { step.onEnter(); } catch (e) {}
   }
 
-  // Allow DOM to settle (especially for sheet transition)
-  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 420 : 120;
+  // Allow DOM & transitions to settle (sheet slides take ~300ms)
+  const delayMs = currentTourTab === 'artists' && (stepIdx === 1 || stepIdx === 2) ? 320 : 80;
   setTimeout(() => {
     let targetEl = null;
     if (step.target) {
@@ -313,14 +339,24 @@ function renderTabTourStep(stepIdx) {
 function updateCutoutAndPopover(targetEl) {
   currentHighlightedEl = targetEl;
 
-  // Align target into view
-  try {
-    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  } catch (e) {}
+  // Align target into view smoothly
+  const sheet = document.getElementById("artist-bottom-sheet");
+  const sheetContent = sheet?.querySelector(".sheet-content");
+  if (sheet && sheet.classList.contains("active") && sheetContent && sheet.contains(targetEl)) {
+    // Provide plenty of headroom above targetEl so speech bubble sits cleanly above without overlap
+    const targetOffsetTop = targetEl.offsetTop;
+    sheetContent.scrollTo({
+      top: Math.max(0, targetOffsetTop - 100),
+      behavior: 'smooth'
+    });
+  } else {
+    try {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) {}
+  }
 
-  setTimeout(() => {
-    repositionCutoutAndPopover(targetEl);
-  }, 180);
+  // Frame-by-frame 60fps continuous tracking through the entire scroll & animation
+  trackTargetTransition(targetEl, 650);
 }
 
 function repositionCutoutAndPopover(targetEl) {
@@ -343,34 +379,54 @@ function repositionCutoutAndPopover(targetEl) {
   cutout.style.height = `${cutoutHeight}px`;
   cutout.style.display = 'block';
 
-  // Position Popover as Speech Bubble
-  const popoverWidth = Math.min(320, window.innerWidth - 28);
-  const popoverHeight = popover.offsetHeight || 135;
+  // Compact Popover Dimensions
+  const popoverWidth = Math.min(290, window.innerWidth - 24);
+  const popoverHeight = popover.offsetHeight || 90;
 
+  // Horizontal position: center on target, clamped within screen margins
   let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
-  left = Math.max(14, Math.min(left, window.innerWidth - popoverWidth - 14));
+  left = Math.max(12, Math.min(left, window.innerWidth - popoverWidth - 12));
+
+  // Vertical placement: calculate clearance
+  const spaceAbove = cutoutTop;
+  const spaceBelow = window.innerHeight - (cutoutTop + cutoutHeight);
 
   let top;
   let isArrowTop = true;
 
-  if (rect.bottom + popoverHeight + 20 < window.innerHeight) {
-    // Below target
-    top = rect.bottom + 14;
+  // Prefer the side that has sufficient clearance
+  if (spaceBelow >= popoverHeight + 8) {
+    top = cutoutTop + cutoutHeight + 7;
     isArrowTop = true;
-  } else if (rect.top - popoverHeight - 20 > 0) {
-    // Above target
-    top = rect.top - popoverHeight - 14;
+  } else if (spaceAbove >= popoverHeight + 8) {
+    top = cutoutTop - popoverHeight - 7;
     isArrowTop = false;
   } else {
-    // Fallback: inside viewport center
-    top = Math.max(16, (window.innerHeight - popoverHeight) / 2);
-    isArrowTop = true;
+    // If element is tall, choose whichever side has more room and place completely outside cutout
+    if (spaceAbove >= spaceBelow) {
+      top = Math.max(4, cutoutTop - popoverHeight - 4);
+      isArrowTop = false;
+    } else {
+      top = Math.min(window.innerHeight - popoverHeight - 4, cutoutTop + cutoutHeight + 4);
+      isArrowTop = true;
+    }
+  }
+
+  // Absolute guarantee against covering cutout area
+  if (top < cutoutTop + cutoutHeight && top + popoverHeight > cutoutTop) {
+    if (spaceAbove >= spaceBelow) {
+      top = Math.max(2, cutoutTop - popoverHeight - 3);
+      isArrowTop = false;
+    } else {
+      top = Math.min(window.innerHeight - popoverHeight - 3, cutoutTop + cutoutHeight + 3);
+      isArrowTop = true;
+    }
   }
 
   popover.style.left = `${left}px`;
   popover.style.top = `${top}px`;
 
-  // Calculate arrow horizontal offset pointing directly to target center
+  // Arrow points to target center X
   const targetCenterX = rect.left + (rect.width / 2);
   const arrowLeft = Math.max(16, Math.min(targetCenterX - left - 8, popoverWidth - 28));
   popover.style.setProperty('--arrow-left', `${arrowLeft}px`);
