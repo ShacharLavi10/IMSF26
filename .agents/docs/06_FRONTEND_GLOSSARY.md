@@ -136,11 +136,16 @@
       - כפתור מכתב הזמנה רשמי לנתב"ג: `.border-invitation-btn` ("📄 Ben Gurion Invitation (PDF)").
     * **רובריקה 2 - צ'ק-אין מקוון וקוד הזמנה:**
       - מעטפת כרטיסיית צ'ק-אין: `.flight-checkin-card`.
-      - תגית קוד הזמנה: `.checkin-code-pill` וקוד מודגש `.checkin-code-value`.
-      - כפתור העתקה מהירה: `.btn-copy-booking` (כולל חיווי `Copied!`).
-      - כפתור פתיחת צ'ק-אין ישיר: `.checkin-cta-btn` ("🛫 Open Web Check-In").
+      - **מיכל מקטעים מפוצל לשתי טיסות (Dual Check-In):** `.checkin-segments-container`.
+      - **כרטיסיית מקטע טיסה ייעודית:** `.checkin-segment-box` (Inbound או Outbound).
+      - **שורת כותרת מקטע:** `.checkin-segment-header`, כותרת כיוון הטיסה `.checkin-segment-title` (`🛬 Inbound to Israel` / `🛫 Outbound from Israel`).
+      - **תגית חברת תעופה וטיסה:** `.checkin-airline-tag` (למשל `Wizz Air · W6 1234`).
+      - שורת קוד הזמנה: `.checkin-code-row`, תווית `.checkin-code-label`, תיבה `.checkin-code-box`, וערך הקוד `.checkin-code-val`.
+      - כפתור העתקה מהירה: `.checkin-copy-btn` (כולל חיווי `Copied! ✓`).
+      - כפתור פתיחת צ'ק-אין ישיר: `.checkin-action-btn` (לדוגמה `🛫 Open Inbound Check-In (Wizz Air)` או `🛫 Open Web Check-In`).
+      - הערת צ'ק-אין ייעודית למקטע: `.checkin-custom-note`.
       - שורת אישור סיום: `.checkin-done-row`.
-      - תיבת סימון צ'ק-אין: `.checkin-done-checkbox` (`#flight-checkin-completed-toggle`).
+      - תיבת סימון צ'ק-אין: `#checkin-done-checkbox`, `.checkin-done-label`, `.checkin-done-text`.
       - כרטיס מקופל ומכווץ: `.flight-checkin-collapsed` (מוצג כשהצ'ק-אין בוצע).
       - קישור שחזור פרטים: `.checkin-restore-link` ("Show check-in details").
       - מפתח שמירה ב-`localStorage`: `imsf_checkin_done_<bookingKey>`.

@@ -157,9 +157,17 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Accompanying `.rubric-tag` badge on the right displaying semantic context.
   - **Interactive Web Check-In Card (`.flight-checkin-card`)**:
     - High-visibility banner with custom notes (e.g. "For the return flight with Arkia, no web check in required").
-    - **One-Tap Booking Code Copy (`.btn-copy-booking`)**: Code badge accompanied by a copy button with instant "Copied!" visual feedback.
-    - **Direct CTA Button (`.checkin-cta-btn`)**: Prominent action button styled with "🛫 Open Web Check-In" linking straight to the airline check-in portal.
-    - **Completion Toggle & Smart Collapse (`.checkin-done-checkbox`, `.flight-checkin-collapsed`)**: Checking "I've completed check-in" collapses the bulky card into a compact 32px pill ("Check-in completed ✓") with a discreet "Show details" restore button. State is preserved in `localStorage` under `imsf_checkin_done_<bookingKey>`.
+    - **Dual Flight Segmented Cards (`.checkin-segments-container`, `.checkin-segment-box`)**:
+      - When an guest has two flights (Inbound and Outbound), the card dynamically splits into 2 distinct Neo-Brutalist boxes:
+        - **🛬 Inbound to Israel** and **🛫 Outbound from Israel** headers (`.checkin-segment-header`, `.checkin-segment-title`).
+        - Airline & flight badge (`.checkin-airline-tag`, e.g., `Wizz Air · W6 1234`).
+        - Distinct Booking Reference with dedicated one-tap copy button (`.checkin-copy-btn`).
+        - Direct Leg CTAs: `🛫 Open Inbound Check-In ([Airline])` / `🛫 Open Outbound Check-In ([Airline])`.
+        - Leg-specific note integration (`.checkin-custom-note`).
+    - **Single Flight Layout (Backward-Compatible)**: Single booking code and single CTA button rendered cleanly if only 1 flight exists.
+    - **One-Tap Booking Code Copy (`.checkin-copy-btn`)**: Code badge accompanied by a copy button with instant "Copied! ✓" visual feedback.
+    - **Direct CTA Button (`.checkin-action-btn`)**: Prominent action button styled with "🛫 Open Web Check-In" linking straight to the airline check-in portal.
+    - **Completion Toggle & Smart Collapse (`#checkin-done-checkbox`, `.flight-checkin-collapsed`)**: Checking "I've completed online check-in" collapses the bulky card into a compact 32px pill ("Online Check-In Completed ✓") with a discreet "Show check-in details" restore button. State is preserved in `localStorage` under `imsf_checkin_done_<bookingKey>`.
     - **Auto-Expiration Rule**: When `today >= arrivalFlightDate + 1 day`, the entire check-in card is automatically hidden from the DOM to avoid cluttering the guest's view after arrival and throughout festival days.
 
 - **Artist Briefcase Export Modal (`#artist-briefcase-modal`, `.briefcase-action-btn`)**:
