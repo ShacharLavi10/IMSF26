@@ -337,6 +337,9 @@ function syncAnatSheetWithMasterOrder() {
     const targetSS = SpreadsheetApp.openById(CONFIG.ANAT_SPREADSHEET_ID);
     const sheetsToSync = [CONFIG.ANAT_SHEET_NAME, "טבלת טיסות"];
     
+    const mirrorSheetName = (targetSS.getSheetByName("שיקוף_אורחים") ? "שיקוף_אורחים" : 
+                            (targetSS.getSheetByName("אורחים_סנכרון") ? "אורחים_סנכרון" : null));
+
     sheetsToSync.forEach(sheetName => {
       const targetSheet = targetSS.getSheetByName(sheetName);
       if (!targetSheet) return;
@@ -442,10 +445,27 @@ function syncAnatSheetWithMasterOrder() {
           if (cIdx === targetEmailColIdx) {
             fStr = "";
             cellVal = row.email || cellVal;
-          } else if (fStr === "XLOOKUP_ANAT_COL1" || (cIdx === 1 && fStr.includes("XLOOKUP") && fStr.includes("IMPORTRANGE"))) {
-            fStr = `=IF(ISBLANK(${targetEmailColLetter}${currentRowNum}), "", XLOOKUP(${targetEmailColLetter}${currentRowNum}, IMPORTRANGE("${masterID}", "'אורחים'!$${masterEmailCol}:$${masterEmailCol}"), IMPORTRANGE("${masterID}", "'אורחים'!$${col1MasterCol}:$${col1MasterCol}"), ""))`;
-          } else if (fStr === "XLOOKUP_ANAT_COL2" || (cIdx === 2 && fStr.includes("XLOOKUP") && fStr.includes("IMPORTRANGE"))) {
-            fStr = `=IF(ISBLANK(${targetEmailColLetter}${currentRowNum}), "", XLOOKUP(${targetEmailColLetter}${currentRowNum}, IMPORTRANGE("${masterID}", "'אורחים'!$${masterEmailCol}:$${masterEmailCol}"), IMPORTRANGE("${masterID}", "'אורחים'!$${col2MasterCol}:$${col2MasterCol}"), ""))`;
+          } else if (fStr === "XLOOKUP_ANAT_COL1" || (cIdx === 1 && fStr.includes("XLOOKUP") && (fStr.includes("IMPORTRANGE") || (mirrorSheetName && fStr.includes(mirrorSheetName))))) {
+            if (mirrorSheetName) {
+              fStr = `=IF(ISBLANK(${targetEmailColLetter}${currentRowNum}), "", IFERROR(XLOOKUP(${targetEmailColLetter}${currentRowNum}, '${mirrorSheetName}'!$${masterEmailCol}:$${masterEmailCol}, '${mirrorSheetName}'!$${col1MasterCol}:$${col1MasterCol}, ""), ""))`;
+            } else {
+              fStr = `=IF(ISBLANK(${targetEmailColLetter}${currentRowNum}), "", XLOOKUP(${targetEmailColLetter}${currentRowNum}, IMPORTRANGE("${masterID}", "'אורחים'!$${masterEmailCol}:$${masterEmailCol}"), IMPORTRANGE("${masterID}", "'אורחים'!$${col1MasterCol}:$${col1MasterCol}"), ""))`;
+            }
+          } else if (fStr === "XLOOKUP_ANAT_COL2" || (cIdx === 2 && fStr.includes("XLOOKUP") && (fStr.includes("IMPORTRANGE") || (mirrorSheetName && fStr.includes(mirrorSheetName))))) {
+            if (mirrorSheetName) {
+              fStr = `=IF(ISBLANK(${targetEmailColLetter}${currentRowNum}), "", IFERROR(XLOOKUP(${targetEmailColLetter}${currentRowNum}, '${mirrorSheetName}'!$${masterEmailCol}:$${masterEmailCol}, '${mirrorSheetName}'!$${col2MasterCol}:$${col2MasterCol}, ""), ""))`;
+            } else {
+              fStr = `=IF(ISBLANK(${targetEmailColLetter}${currentRowNum}), "", XLOOKUP(${targetEmailColLetter}${currentRowNum}, IMPORTRANGE("${masterID}", "'אורחים'!$${masterEmailCol}:$${masterEmailCol}"), IMPORTRANGE("${masterID}", "'אורחים'!$${col2MasterCol}:$${col2MasterCol}"), ""))`;
+            }
+          } else if (mirrorSheetName && fStr.includes("IMPORTRANGE") && (fStr.includes("אורחים") || fStr.includes("XLOOKUP"))) {
+            // Auto-heal any IMPORTRANGE formula pointing to Master אורחים by switching to local mirror sheet
+            let healed = fStr.replace(/IMPORTRANGE\([^,]+,\s*["']'?אורחים'?!\$?([A-Za-z]{1,2})\$?:\$?([A-Za-z]{1,2})["']\)/gi, (m, p1, p2) => `'${mirrorSheetName}'!$${p1}:$${p2}`);
+            const oldRow = cell.oldRow;
+            if (oldRow && oldRow !== currentRowNum) {
+              const refRegex = new RegExp(`(?<![A-Za-z0-9_'\"])(\\$?[A-Za-z]{1,2}\\$?)(${oldRow})(?![0-9])`, 'g');
+              healed = healed.replace(refRegex, `$1${currentRowNum}`);
+            }
+            fStr = healed;
           } else if (fStr) {
             const oldRow = cell.oldRow;
             if (oldRow && oldRow !== currentRowNum) {
@@ -453,6 +473,7 @@ function syncAnatSheetWithMasterOrder() {
               fStr = fStr.replace(refRegex, `$1${currentRowNum}`);
             }
           }
+
 
           if (fStr !== "") {
             rowOut.push(fStr); // In GAS, strings starting with '=' are treated as formulas by setValues
