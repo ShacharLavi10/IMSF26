@@ -169,6 +169,7 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - **Direct CTA Button (`.checkin-action-btn`)**: Prominent action button styled with "🛫 Open Web Check-In" linking straight to the airline check-in portal.
     - **Completion Toggle & Smart Collapse (`#checkin-done-checkbox`, `.flight-checkin-collapsed`)**: Checking "I've completed online check-in" collapses the bulky card into a compact 32px pill ("Online Check-In Completed ✓") with a discreet "Show check-in details" restore button. State is preserved in `localStorage` under `imsf_checkin_done_<bookingKey>`.
     - **Auto-Expiration Rule**: When `today >= arrivalFlightDate + 1 day`, the entire check-in card is automatically hidden from the DOM to avoid cluttering the guest's view after arrival and throughout festival days.
+    - **Conditional Visibility Rule**: The check-in rubric (`#flight-checkin-wrapper`) is displayed **only** if a booking reference (`bookingCode`) or a check-in link (`checkInLink`) is present for the delegate. If neither exists, the rubric is completely omitted from the DOM to avoid rendering an empty card.
 
 - **Artist Briefcase Export Modal (`#artist-briefcase-modal`, `.briefcase-action-btn`)**:
   - Neo-Brutalist export dialog offering 3 discrete delivery methods for favorited artists:
@@ -228,8 +229,8 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Guards `closeArtistSheet()` to suppress `history.back()` calls during tours, eliminating history ejection crashes.
   - **1-Tap Calendar Sync Reminder**:
     - Step 4 of the Artists tour explicitly reminds delegates to verify their calendar alerts are set to 5 minutes before showtime (or adjust default calendar alert settings).
-  - **Conditional Shuttle Step**:
-    - In My Trip, Step 3 (Airport Shuttle & Transfers) is strictly conditional (`isTourTargetVisible(shuttleEl)`). Only delegates with scheduled shuttles see this step; others have it omitted automatically.
+  - **Conditional Check-In & Shuttle Steps**:
+    - In My Trip, Step 2 (Online Web Check-In) and Step 3 (Airport Shuttle & Transfers) are strictly conditional (`isTourTargetVisible(checkinEl)`, `isTourTargetVisible(shuttleEl)`). Only delegates with actual check-in data or scheduled shuttles see these steps; otherwise they are omitted automatically.
   - **Checkbox Gating & Locked Tab Visibility**:
     - The Quick Guide button is strictly gated by the tab's approval checkbox from Google Sheets (`response.checklist`).
     - If a tab is locked / unapproved (`approvalSchedule`, `approvalFlights`/`approvalHotels`, `approvalGuide`, `approvalDirectory`, `approvalArtists` is `false`), its Quick Guide button header (`#card-header-...`) is completely hidden (`display: none`).
