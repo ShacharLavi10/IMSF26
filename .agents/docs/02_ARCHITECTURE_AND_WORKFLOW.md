@@ -398,10 +398,9 @@ The portal contains an internal Production Dashboard hidden from regular guests.
    * **מנגנון תפוגה והסתרה אוטומטית (Auto-Expiration):**
      - המערכת בודקת את תאריך טיסת ההגעה של האורח.
      - החל מיום לאחר תאריך הנחיתה (`today >= arrivalFlightDate + 1 day` בחצות), כל רובריקת הצ'ק-אין מוסתרת אוטומטית לחלוטין מהממשק, כך שהתזכורת אינה מעמיסה על האורח במהלך ימי הפסטיבל.
-3. **✈️ Flight Schedule & Routes (תגית: Itinerary):**
-   * כרטיסיית העלייה למטוס (Boarding Pass Card) המציגה את זמני הטיסות, מספרי הטיסה, חברות התעופה ויעדי המוצא והחזרה.
-4. **🚐 Airport Shuttle & Transfers (תגית: Transfer):**
+3. **🚐 Airport Shuttle & Transfers (תגית: Transfer):**
    * פרטי השאטל מנתב"ג, שעת יציאה, נקודת מפגש ותגיות אינטראקטיביות של שותפים לנסיעה הפותחות את פרופילי האורחים.
+*(הערה: כרטיסיית Flight Schedule & Routes הוסרה מלשונית 'טיול שלי' בהתאם לבקשת ההפקה, שכן האורחים ניגשים לפרטי הטיסה המלאים ישירות דרך כרטיס הטיסה האלקטרוני E-Ticket).*
 
 ---
 

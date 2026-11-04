@@ -145,12 +145,12 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Permanent button `#pwa-action-install-btn` (`📲 Add Portal to Home Screen`) and recurring welcome popup modal `#pwa-prompt-modal-overlay` are strictly limited to mobile devices (`isMobileDevice()`).
     - Desktop screens (>900px) completely hide all install buttons, banners, and overlays via `@media (min-width: 901px) { display: none !important; }`.
 - **Flights Rubrics & Web Check-In UX (`.flight-rubric-wrap`, `.rubric-subheading`, `.flight-checkin-card`)**:
-  - **4 Structured Rubrics with Mini-Headings**:
-    To eliminate visual clutter in the Flights section of the "My Trip" tab, all content is strictly organized into 4 standardized rubrics:
+  - **Structured Rubrics with Mini-Headings**:
+    To eliminate visual clutter in the Flights section of the "My Trip" tab, all content is organized into standardized rubrics:
     1. `📄 Travel & Border Documents` (Tag: `Documents`): Flight e-tickets and the official Ben Gurion Airport border invitation letter.
     2. `🛫 Online Web Check-In` (Tag: `Important`): Check-in banner, airline notes, booking code copy, airline CTA, and interactive dismissal.
-    3. `✈️ Flight Schedule & Routes` (Tag: `Itinerary`): Official flight itinerary / Boarding pass card with inbound and outbound legs.
-    4. `🚐 Airport Shuttle & Transfers` (Tag: `Transfer`): Airport shuttle times, meeting points, and fellow passenger badges.
+    3. `🚐 Airport Shuttle & Transfers` (Tag: `Transfer`): Airport shuttle times, meeting points, and fellow passenger badges.
+    *(Note: The Flight Schedule & Routes boarding pass card was removed from the tab to keep the interface clean; guests open their official E-Ticket PDF directly for flight legs).*
   - **Mini-Heading Visual Specification (`.rubric-subheading`)**:
     - Oswald font, uppercase, letter-spacing `0.5px`, size `0.85rem` to `0.9rem`.
     - Salmon Pink accent bar (`border-left: 4px solid var(--accent)`) anchoring the left edge.

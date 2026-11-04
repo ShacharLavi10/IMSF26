@@ -1592,57 +1592,6 @@ function closeWelcomeModal() {
         html += `</div>`;
       }
 
-      // 3. RUBRIC: Flight Schedule & Routes (Boarding Pass)
-      html += `
-        <div class="flight-rubric-wrap">
-          <div class="rubric-subheading">
-            <div class="rubric-title">
-              <span>✈️</span>
-              <span>Flight Schedule & Routes</span>
-            </div>
-            <span class="rubric-tag">Boarding Pass</span>
-          </div>
-
-          <div class="boarding-pass" style="margin-bottom: 0;">
-            <div class="bp-header">
-              <span>OFFICIAL FLIGHT ITINERARY</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
-            </div>
-            <div class="bp-body">
-              <div class="bp-flight">
-                <div class="bp-label" style="display: flex; justify-content: space-between;">
-                  <span>INBOUND TO ISRAEL</span>
-                  ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
-                </div>
-                <div class="bp-route">
-                  <span class="bp-city">${origin}</span>
-                  <span class="bp-arrow">→</span>
-                  <span class="bp-city">TLV</span>
-                </div>
-                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                  <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
-                </div>
-              </div>
-
-              <div class="bp-divider"></div>
-              <div class="bp-flight">
-                <div class="bp-label" style="display: flex; justify-content: space-between;">
-                  <span>OUTBOUND FROM ISRAEL</span>
-                  ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
-                </div>
-                <div class="bp-route">
-                  <span class="bp-city">TLV</span>
-                  <span class="bp-arrow">→</span>
-                  <span class="bp-city">${dest}</span>
-                </div>
-                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                  <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
 
       // 4. RUBRIC: Airport Shuttle & Transfers (shown if shuttle is assigned or fellow passengers are scheduled)
       if (hasShuttle || togetherNames.length > 0) {
