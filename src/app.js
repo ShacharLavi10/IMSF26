@@ -6484,6 +6484,7 @@ function closeWelcomeModal() {
         'VERSION:2.0',
         'PRODID:-//Israel Music Showcase Festival 2026//Timetable//EN',
         'CALSCALE:GREGORIAN',
+        `METHOD:${isCancellation ? 'CANCEL' : 'PUBLISH'}`,
         'X-WR-CALNAME:IMSF 2026 - My Shows',
         'X-WR-TIMEZONE:Asia/Jerusalem',
         'BEGIN:VTIMEZONE',
@@ -6506,19 +6507,10 @@ function closeWelcomeModal() {
         'END:VTIMEZONE'
       ];
 
-      if (isCancellation) {
-        lines.splice(4, 0, 'METHOD:CANCEL');
-      }
-
       function getIcsAlarmUuid(id) {
-        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-          try {
-            return crypto.randomUUID().toUpperCase();
-          } catch (e) {}
-        }
         const clean = String(id || '').replace(/[^a-zA-Z0-9]/g, '');
         let hash = 0x811c9dc5;
-        const seed = `imsf-alarm-5m-${clean}-${Date.now()}`;
+        const seed = `imsf-alarm-5m-${clean}`;
         for (let i = 0; i < seed.length; i++) {
           hash ^= seed.charCodeAt(i);
           hash = Math.imul(hash, 0x01000193);
@@ -6588,9 +6580,6 @@ function closeWelcomeModal() {
         lines.push(`LOCATION:${escapeIcsText(exactLocation)}`);
         lines.push(`URL;VALUE=URI:${portalDeepLink}`);
         lines.push(`DESCRIPTION:${desc}`);
-        lines.push(`SEQUENCE:${isCancellation ? 99 : Math.max(1, Math.floor(now.getTime() / 10000))}`);
-        lines.push('TRANSP:OPAQUE');
-        lines.push('X-MICROSOFT-CDO-BUSYSTATUS:BUSY');
 
         if (isCancellation) {
           lines.push('STATUS:CANCELLED');
@@ -6598,13 +6587,11 @@ function closeWelcomeModal() {
           lines.push('STATUS:CONFIRMED');
           const alarmUuid = getIcsAlarmUuid(show.id);
           lines.push('BEGIN:VALARM');
-          lines.push('ACTION:DISPLAY');
-          lines.push(`DESCRIPTION:${escapeIcsText(displayName)} starts in 5 minutes at ${escapeIcsText(cleanStage)}!`);
-          lines.push('SUMMARY:Showcase Starts in 5 Minutes');
-          lines.push('TRIGGER:-PT5M');
-          lines.push(`UID:${alarmUuid}`);
           lines.push(`X-WR-ALARMUID:${alarmUuid}`);
-          lines.push('X-APPLE-DEFAULT-ALARM:FALSE');
+          lines.push(`UID:${alarmUuid}`);
+          lines.push('TRIGGER:-PT5M');
+          lines.push('ACTION:DISPLAY');
+          lines.push('DESCRIPTION:Reminder');
           lines.push('END:VALARM');
         }
 
@@ -6648,90 +6635,73 @@ function closeWelcomeModal() {
       if (isSyncingCalendar) return;
 
       const shows = getFavoritedShowsList();
-      if (shows.length === 0) {
+      if (actionType !== 'cancel' && shows.length === 0) {
         alert("You haven't favorited any artists performing in the festival yet! Click ❤️ on the artists you want to see, then sync to your calendar.");
         return;
       }
 
       const actionsDiv = document.getElementById('calendar-modal-actions');
       const statusDiv = document.getElementById('calendar-modal-status');
-      const statusText = document.getElementById('calendar-status-text');
       const successDiv = document.getElementById('calendar-modal-success');
       const successText = document.getElementById('calendar-success-text');
       const successDetail = document.getElementById('calendar-success-detail');
 
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
       if (actionType === 'download') {
         const icsString = generateIcsContent(shows, false);
-        const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'IMSF_2026_My_Shows.ics';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+        if (isIOS) {
+          // 1-Tap iOS native calendar sheet without download prompt
+          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
+        } else {
+          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'IMSF_2026_My_Shows.ics';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
 
         if (actionsDiv) actionsDiv.style.display = 'none';
         if (statusDiv) statusDiv.style.display = 'none';
         if (successDiv) {
           successDiv.style.display = 'block';
-          if (successText) successText.innerText = 'Calendar File Downloaded!';
+          if (successText) successText.innerText = 'Calendar Ready!';
           if (successDetail) {
-            successDetail.innerText = 'Open or tap the downloaded calendar file to add all ' + shows.length + ' shows with 5-minute alerts.';
+            successDetail.innerText = isIOS 
+              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.'
+              : 'Open the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
           }
         }
-      } else if (actionType === 'email') {
-        const email = (typeof currentGuestEmail !== 'undefined' && currentGuestEmail) ? currentGuestEmail : '';
-        if (!email) {
-          alert("Please sign in or provide your email address first.");
-          return;
+      } else if (actionType === 'cancel') {
+        const allKnownShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(shouldKeepTimetableItem);
+        const icsString = generateIcsContent(shows.length > 0 ? shows : allKnownShows, true);
+
+        if (isIOS) {
+          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
+        } else {
+          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'IMSF_2026_Cancel_Shows.ics';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
         }
 
         if (actionsDiv) actionsDiv.style.display = 'none';
-        if (statusDiv) statusDiv.style.display = 'block';
-        if (statusText) statusText.innerText = 'Sending calendar invite to ' + email + '... ⏳';
-
-        isSyncingCalendar = true;
-        const icsString = generateIcsContent(shows, false);
-        const guestName = (typeof currentGuestData !== 'undefined' && currentGuestData && (currentGuestData.fullName || (currentGuestData.firstName ? (currentGuestData.firstName + ' ' + (currentGuestData.lastName || '')) : ''))) || 'Festival Guest';
-
-        if (!window.google || !google.script || !google.script.run) {
-          isSyncingCalendar = false;
-          if (statusDiv) statusDiv.style.display = 'none';
-          if (actionsDiv) actionsDiv.style.display = 'flex';
-          alert("Email service temporarily unavailable. Please use 'Add to Calendar' to download directly.");
-          return;
+        if (statusDiv) statusDiv.style.display = 'none';
+        if (successDiv) {
+          successDiv.style.display = 'block';
+          if (successText) successText.innerText = 'Cancellation Ready!';
+          if (successDetail) successDetail.innerText = 'Open or confirm the cancellation file to remove previously added festival shows from your calendar.';
         }
-
-        google.script.run
-          .withSuccessHandler(function(res) {
-            isSyncingCalendar = false;
-            if (statusDiv) statusDiv.style.display = 'none';
-            if (res && res.success) {
-              if (successDiv) {
-                successDiv.style.display = 'block';
-                if (successText) successText.innerText = 'Calendar Invite Sent!';
-                if (successDetail) {
-                  successDetail.innerText = 'We have sent your calendar invite (' + shows.length + ' shows) to ' + email + '. Check your inbox and tap "Add to Calendar" to save with 5-minute alerts!';
-                }
-              }
-            } else {
-              if (actionsDiv) actionsDiv.style.display = 'flex';
-              alert("Could not send calendar invite: " + ((res && res.message) || "Unknown error"));
-            }
-          })
-          .withFailureHandler(function(err) {
-            isSyncingCalendar = false;
-            if (statusDiv) statusDiv.style.display = 'none';
-            if (actionsDiv) actionsDiv.style.display = 'flex';
-            alert("Error sending calendar invite: " + (err.message || err.toString()));
-          })
-          .sendCalendarInviteEmail(email, icsString, {
-            count: shows.length,
-            guestName: guestName,
-            isCancel: false
-          });
       }
     }
     window.executeCalendarSync = executeCalendarSync;
