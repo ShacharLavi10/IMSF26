@@ -157,10 +157,19 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Accompanying `.rubric-tag` badge on the right displaying semantic context.
   - **Interactive Web Check-In Card (`.flight-checkin-card`)**:
     - High-visibility banner with custom notes (e.g. "For the return flight with Arkia, no web check in required").
-    - **One-Tap Booking Code Copy (`.btn-copy-booking`)**: Code badge accompanied by a copy button with instant "Copied!" visual feedback.
-    - **Direct CTA Button (`.checkin-cta-btn`)**: Prominent action button styled with "🛫 Open Web Check-In" linking straight to the airline check-in portal.
-    - **Completion Toggle & Smart Collapse (`.checkin-done-checkbox`, `.flight-checkin-collapsed`)**: Checking "I've completed check-in" collapses the bulky card into a compact 32px pill ("Check-in completed ✓") with a discreet "Show details" restore button. State is preserved in `localStorage` under `imsf_checkin_done_<bookingKey>`.
+    - **Dual Flight Segmented Cards (`.checkin-segments-container`, `.checkin-segment-box`)**:
+      - When an guest has two flights (Inbound and Outbound), the card dynamically splits into 2 distinct Neo-Brutalist boxes:
+        - **🛬 Inbound to Israel** and **🛫 Outbound from Israel** headers (`.checkin-segment-header`, `.checkin-segment-title`).
+        - Airline & flight badge (`.checkin-airline-tag`, e.g., `Wizz Air · W6 1234`).
+        - Distinct Booking Reference with dedicated one-tap copy button (`.checkin-copy-btn`).
+        - Direct Leg CTAs: `🛫 Open Inbound Check-In ([Airline])` / `🛫 Open Outbound Check-In ([Airline])`.
+        - Leg-specific note integration (`.checkin-custom-note`).
+    - **Single Flight Layout (Backward-Compatible)**: Single booking code and single CTA button rendered cleanly if only 1 flight exists.
+    - **One-Tap Booking Code Copy (`.checkin-copy-btn`)**: Code badge accompanied by a copy button with instant "Copied! ✓" visual feedback.
+    - **Direct CTA Button (`.checkin-action-btn`)**: Prominent action button styled with "🛫 Open Web Check-In" linking straight to the airline check-in portal.
+    - **Completion Toggle & Smart Collapse (`#checkin-done-checkbox`, `.flight-checkin-collapsed`)**: Checking "I've completed online check-in" collapses the bulky card into a compact 32px pill ("Online Check-In Completed ✓") with a discreet "Show check-in details" restore button. State is preserved in `localStorage` under `imsf_checkin_done_<bookingKey>`.
     - **Auto-Expiration Rule**: When `today >= arrivalFlightDate + 1 day`, the entire check-in card is automatically hidden from the DOM to avoid cluttering the guest's view after arrival and throughout festival days.
+    - **Conditional Visibility Rule**: The check-in rubric (`#flight-checkin-wrapper`) is displayed **only** if a booking reference (`bookingCode`) or a check-in link (`checkInLink`) is present for the delegate. If neither exists, the rubric is completely omitted from the DOM to avoid rendering an empty card.
 
 - **Artist Briefcase Export Modal (`#artist-briefcase-modal`, `.briefcase-action-btn`)**:
   - Neo-Brutalist export dialog offering 3 discrete delivery methods for favorited artists:
@@ -195,6 +204,38 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Event times are scrubbed of any date/year/ISO artifacts, rendering cleanly as `HH:MM` or `HH:MM-HH:MM` (`.event-time`, `.time-part`, `.time-dash`).
   - **Visual Symmetry**:
     - Admin Production Schedule mirrors the Guest Itinerary layout (`.schedule-events-list`, `.schedule-event-inline`), incorporating compact inline location links (`.schedule-loc-link`), quick contact actions (`.schedule-contact-btn.call`, `.schedule-contact-btn.wa`), and category badge styling (`.schedule-cat-badge`).
+
+- **Interactive Tab Quick Guides & Live Spotlight (`.tab-quick-guide-btn`, `#tour-spotlight-backdrop`, `#tour-spotlight-cutout`, `#tour-spotlight-popover`)**:
+  - **Pill Button Design & Header Alignment**:
+    - Positioned at the top of each of the 5 main tab cards (`.card-header-row`) with `justify-content: flex-end`.
+    - Tab `<h3>` headings removed from next to the button to avoid duplication with the main bottom navigation and button label.
+    - Explicit tab labelling for clarity:
+      - `💡 Quick Guide for Itinerary`
+      - `💡 Quick Guide for My Trip`
+      - `💡 Quick Guide for Guide`
+      - `💡 Quick Guide for Delegates`
+      - `💡 Quick Guide for Artist`
+    - Neo-Brutalist pill styling with subtle border, 2px block shadow, and active tactile press-down.
+  - **Live Cutout Window & Backdrop**:
+    - `#tour-spotlight-backdrop` (`background: rgba(4, 9, 18, 0.72)`) darkens surrounding interface.
+    - Dynamic cutout window `#tour-spotlight-cutout` surrounds target elements with 8px-12px padding and 12px rounded corners.
+  - **Continuous 60fps rAF Tracking**:
+    - Continuous frame-by-frame `requestAnimationFrame` tracking (`trackTargetTransition(targetEl, 650)`) during smooth scrolling, layout reflows, and sheet transitions to ensure popover and cutout never detach.
+  - **Non-Overlapping Compact Popover**:
+    - Speech-bubble popover (`#tour-spotlight-popover`, max-width 290px, height ~85-95px) with directional arrow (`.arrow-top` / `.arrow-bottom`).
+    - Mathematical clearance ensures popover never overlaps or obscures the highlighted target.
+  - **Hash & History Safety (Crash Prevention)**:
+    - Step 2 in Artists tour opens the Artist Bottom Sheet with `isFromHash = true` and `body.tour-active-sheet`.
+    - Guards `closeArtistSheet()` to suppress `history.back()` calls during tours, eliminating history ejection crashes.
+  - **1-Tap Calendar Sync Reminder**:
+    - Step 4 of the Artists tour explicitly reminds delegates to verify their calendar alerts are set to 5 minutes before showtime (or adjust default calendar alert settings).
+  - **Conditional Check-In & Shuttle Steps**:
+    - In My Trip, Step 2 (Online Web Check-In) and Step 3 (Airport Shuttle & Transfers) are strictly conditional (`isTourTargetVisible(checkinEl)`, `isTourTargetVisible(shuttleEl)`). Only delegates with actual check-in data or scheduled shuttles see these steps; otherwise they are omitted automatically.
+  - **Checkbox Gating & Locked Tab Visibility**:
+    - The Quick Guide button is strictly gated by the tab's approval checkbox from Google Sheets (`response.checklist`).
+    - If a tab is locked / unapproved (`approvalSchedule`, `approvalFlights`/`approvalHotels`, `approvalGuide`, `approvalDirectory`, `approvalArtists` is `false`), its Quick Guide button header (`#card-header-...`) is completely hidden (`display: none`).
+    - The button is only displayed (`display: flex`) when the corresponding content has been approved and unlocked for the delegate.
+    - `startTabTour` includes an internal `isTourTabLocked(tabKey)` guard ensuring no tour can be initiated on locked tabs.
 
 
 

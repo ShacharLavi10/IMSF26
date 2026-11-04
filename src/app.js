@@ -202,17 +202,11 @@ const TAB_TOUR_CONFIGS = {
         });
       }
 
-      // Step 2: Online Web Check-In
+      // Step 2: Online Web Check-In (Only if check-in exists & is visible)
       const checkinEl = document.getElementById("flight-checkin-wrapper");
       if (checkinEl && isTourTargetVisible(checkinEl)) {
         steps.push({
           target: "#flight-checkin-wrapper",
-          title: "Online Web Check-In",
-          desc: "Copy your airline booking reference with one tap, open the check-in portal, and complete web check-in 24 hours prior to departure."
-        });
-      } else {
-        steps.push({
-          target: "#mytrip-flight-section, #flights-container",
           title: "Online Web Check-In",
           desc: "Copy your airline booking reference with one tap, open the check-in portal, and complete web check-in 24 hours prior to departure."
         });
@@ -242,9 +236,36 @@ const TAB_TOUR_CONFIGS = {
 
 let tourScrollListener = null;
 
+function isTourTabLocked(tabKey) {
+  if (tabKey === 'itinerary') {
+    const pending = document.getElementById("schedule-pending-container");
+    return pending && pending.style.display !== 'none';
+  }
+  if (tabKey === 'mytrip') {
+    const flightPending = document.getElementById("flights-pending-container");
+    const hotelPending = document.getElementById("hotels-pending-container");
+    return (flightPending && flightPending.style.display !== 'none') && 
+           (hotelPending && hotelPending.style.display !== 'none');
+  }
+  if (tabKey === 'guide') {
+    const pending = document.getElementById("guide-pending-container");
+    return pending && pending.style.display !== 'none';
+  }
+  if (tabKey === 'directory') {
+    const pending = document.getElementById("directory-pending-container");
+    return pending && pending.style.display !== 'none';
+  }
+  if (tabKey === 'artists') {
+    const pending = document.getElementById("artists-pending-container");
+    return pending && pending.style.display !== 'none';
+  }
+  return false;
+}
+
 function startTabTour(tabKey) {
   const config = TAB_TOUR_CONFIGS[tabKey];
   if (!config) return;
+  if (isTourTabLocked(tabKey)) return;
 
   currentTourTab = tabKey;
   currentTabStepIndex = 0;
@@ -942,7 +963,9 @@ function closeWelcomeModal() {
           }
         }
       }
+      const headerSchedule = document.getElementById("card-header-itinerary");
       if (response.checklist.approvalSchedule) {
+        if (headerSchedule) headerSchedule.style.display = "flex";
         if (response.scheduleData) {
           scheduleDataCache = response.scheduleData;
           const loader = document.getElementById('schedule-loader-container');
@@ -957,9 +980,16 @@ function closeWelcomeModal() {
         document.getElementById("schedule-container").style.display = "block";
         document.getElementById("schedule-pending-container").style.display = "none";
       } else {
+        if (headerSchedule) headerSchedule.style.display = "none";
         document.getElementById("schedule-days-nav").style.display = "none";
         document.getElementById("schedule-container").style.display = "none";
         document.getElementById("schedule-pending-container").style.display = "block";
+      }
+
+      const headerMyTrip = document.getElementById("card-header-mytrip");
+      const isMyTripApproved = !!(response.checklist.approvalFlights || response.checklist.approvalHotels);
+      if (headerMyTrip) {
+        headerMyTrip.style.display = isMyTripApproved ? "flex" : "none";
       }
 
       if (response.checklist.approvalFlights) {
@@ -980,21 +1010,32 @@ function closeWelcomeModal() {
         document.getElementById("hotels-pending-container").style.display = "block";
       }
 
+      const headerDirectory = document.getElementById("card-header-directory");
       if (response.checklist.approvalDirectory) {
+        if (headerDirectory) headerDirectory.style.display = "flex";
         document.getElementById("directory-main-container").style.display = "block";
         document.getElementById("directory-pending-container").style.display = "none";
         renderDirectory(response.allGuestsDirectory);
       } else {
+        if (headerDirectory) headerDirectory.style.display = "none";
         document.getElementById("directory-main-container").style.display = "none";
         document.getElementById("directory-pending-container").style.display = "block";
       }
 
+      const headerArtists = document.getElementById("card-header-artists");
+      const artistsSubnav = document.querySelector(".artists-subnav-container");
+      const artistsTimetableView = document.getElementById("artists-timetable-view");
       if (response.checklist.approvalArtists) {
+        if (headerArtists) headerArtists.style.display = "flex";
+        if (artistsSubnav) artistsSubnav.style.display = "flex";
         document.getElementById("artists-container").style.display = "block";
         document.getElementById("artists-pending-container").style.display = "none";
         // Fetch only if approved to avoid unnecessary requests and endless loading if the tab is hidden
         fetchArtistsData();
       } else {
+        if (headerArtists) headerArtists.style.display = "none";
+        if (artistsSubnav) artistsSubnav.style.display = "none";
+        if (artistsTimetableView) artistsTimetableView.style.display = "none";
         document.getElementById("artists-container").style.display = "none";
         document.getElementById("artists-pending-container").style.display = "block";
       }
@@ -1003,8 +1044,10 @@ function closeWelcomeModal() {
       const guidePills = document.getElementById("guide-pills-nav");
       const guideContainer = document.getElementById("guide-container");
       const guidePending = document.getElementById("guide-pending-container");
+      const headerGuide = document.getElementById("card-header-guide");
 
       if (response.checklist.approvalGuide) {
+        if (headerGuide) headerGuide.style.display = "flex";
         if (guidePills) guidePills.style.display = "flex";
         if (guideContainer) guideContainer.style.display = "block";
         if (guidePending) guidePending.style.display = "none";
@@ -1024,6 +1067,7 @@ function closeWelcomeModal() {
           fetchGuideData();
         }
       } else {
+        if (headerGuide) headerGuide.style.display = "none";
         if (guidePills) guidePills.style.display = "none";
         if (guideContainer) guideContainer.style.display = "none";
         if (guidePending) guidePending.style.display = "block";
@@ -1689,9 +1733,9 @@ function closeWelcomeModal() {
         }
       }
 
-      // 2. RUBRIC: Online Web Check-In (display if not passed and either booking code, link, custom notes, or flight schedule exists)
-      const hasFlightSchedule = (arrival && arrival !== 'TBD') || (departure && departure !== 'TBD');
-      if (!isFlightDatePassed && (hasBookingCode || hasCheckInUrl || hasCheckInNotes || hasFlightSchedule)) {
+      // 2. RUBRIC: Online Web Check-In (display only if not passed and either booking code or check-in link exists)
+      const hasCheckInDetails = Boolean(hasBookingCode || hasCheckInUrl);
+      if (!isFlightDatePassed && hasCheckInDetails) {
         const primaryCode = parsedCheckIn.inbound.code || parsedCheckIn.outbound.code || parsedCheckIn.single.code;
         const bookingKey = primaryCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
         const isCheckInDone = localStorage.getItem('imsf_checkin_done_' + bookingKey) === 'true';
@@ -1748,84 +1792,90 @@ function closeWelcomeModal() {
             html += `<div class="checkin-segments-container">`;
 
             // Segment 1: Inbound
-            const inAirlineTag = [parsedCheckIn.inbound.airline, parsedCheckIn.inbound.flight].filter(Boolean).join(' · ');
-            html += `
-              <div class="checkin-segment-box">
-                <div class="checkin-segment-header">
-                  <div class="checkin-segment-title">
-                    <span>🛬</span>
-                    <span>Inbound to Israel</span>
-                  </div>
-                  ${inAirlineTag ? `<span class="checkin-airline-tag">${escapeHtml(inAirlineTag)}</span>` : ''}
-                </div>
-
-                ${parsedCheckIn.inbound.code ? `
-                  <div class="checkin-code-row">
-                    <span class="checkin-code-label">Booking Reference:</span>
-                    <div class="checkin-code-box">
-                      <span class="checkin-code-val">${escapeHtml(parsedCheckIn.inbound.code)}</span>
-                      <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(parsedCheckIn.inbound.code).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
-                        <span>Copy</span>
-                      </button>
+            const hasInbound = Boolean(parsedCheckIn.inbound.code || parsedCheckIn.inbound.url || parsedCheckIn.inbound.notes);
+            if (hasInbound) {
+              const inAirlineTag = [parsedCheckIn.inbound.airline, parsedCheckIn.inbound.flight].filter(Boolean).join(' · ');
+              html += `
+                <div class="checkin-segment-box">
+                  <div class="checkin-segment-header">
+                    <div class="checkin-segment-title">
+                      <span>🛬</span>
+                      <span>Inbound to Israel</span>
                     </div>
+                    ${inAirlineTag ? `<span class="checkin-airline-tag">${escapeHtml(inAirlineTag)}</span>` : ''}
                   </div>
-                ` : ''}
 
-                ${parsedCheckIn.inbound.url ? `
-                  <a href="${parsedCheckIn.inbound.url}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
-                    <span>🛫 Open Inbound Check-In${parsedCheckIn.inbound.airline ? ' (' + escapeHtml(parsedCheckIn.inbound.airline) + ')' : ''}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                ` : ''}
+                  ${parsedCheckIn.inbound.code ? `
+                    <div class="checkin-code-row">
+                      <span class="checkin-code-label">Booking Reference:</span>
+                      <div class="checkin-code-box">
+                        <span class="checkin-code-val">${escapeHtml(parsedCheckIn.inbound.code)}</span>
+                        <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(parsedCheckIn.inbound.code).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                          <span>Copy</span>
+                        </button>
+                      </div>
+                    </div>
+                  ` : ''}
 
-                ${parsedCheckIn.inbound.notes ? `
-                  <div class="checkin-custom-note">
-                    <span>📌</span> <span><strong>Note:</strong> ${escapeHtml(parsedCheckIn.inbound.notes)}</span>
-                  </div>
-                ` : ''}
-              </div>
-            `;
+                  ${parsedCheckIn.inbound.url ? `
+                    <a href="${parsedCheckIn.inbound.url}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                      <span>🛫 Open Inbound Check-In${parsedCheckIn.inbound.airline ? ' (' + escapeHtml(parsedCheckIn.inbound.airline) + ')' : ''}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                  ` : ''}
+
+                  ${parsedCheckIn.inbound.notes ? `
+                    <div class="checkin-custom-note">
+                      <span>📌</span> <span><strong>Note:</strong> ${escapeHtml(parsedCheckIn.inbound.notes)}</span>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }
 
             // Segment 2: Outbound
-            const outAirlineTag = [parsedCheckIn.outbound.airline, parsedCheckIn.outbound.flight].filter(Boolean).join(' · ');
-            html += `
-              <div class="checkin-segment-box">
-                <div class="checkin-segment-header">
-                  <div class="checkin-segment-title">
-                    <span>🛫</span>
-                    <span>Outbound from Israel</span>
-                  </div>
-                  ${outAirlineTag ? `<span class="checkin-airline-tag">${escapeHtml(outAirlineTag)}</span>` : ''}
-                </div>
-
-                ${parsedCheckIn.outbound.code ? `
-                  <div class="checkin-code-row">
-                    <span class="checkin-code-label">Booking Reference:</span>
-                    <div class="checkin-code-box">
-                      <span class="checkin-code-val">${escapeHtml(parsedCheckIn.outbound.code)}</span>
-                      <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(parsedCheckIn.outbound.code).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
-                        <span>Copy</span>
-                      </button>
+            const hasOutbound = Boolean(parsedCheckIn.outbound.code || parsedCheckIn.outbound.url || parsedCheckIn.outbound.notes);
+            if (hasOutbound) {
+              const outAirlineTag = [parsedCheckIn.outbound.airline, parsedCheckIn.outbound.flight].filter(Boolean).join(' · ');
+              html += `
+                <div class="checkin-segment-box">
+                  <div class="checkin-segment-header">
+                    <div class="checkin-segment-title">
+                      <span>🛫</span>
+                      <span>Outbound from Israel</span>
                     </div>
+                    ${outAirlineTag ? `<span class="checkin-airline-tag">${escapeHtml(outAirlineTag)}</span>` : ''}
                   </div>
-                ` : ''}
 
-                ${parsedCheckIn.outbound.url ? `
-                  <a href="${parsedCheckIn.outbound.url}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
-                    <span>🛫 Open Outbound Check-In${parsedCheckIn.outbound.airline ? ' (' + escapeHtml(parsedCheckIn.outbound.airline) + ')' : ''}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                ` : ''}
+                  ${parsedCheckIn.outbound.code ? `
+                    <div class="checkin-code-row">
+                      <span class="checkin-code-label">Booking Reference:</span>
+                      <div class="checkin-code-box">
+                        <span class="checkin-code-val">${escapeHtml(parsedCheckIn.outbound.code)}</span>
+                        <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(parsedCheckIn.outbound.code).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                          <span>Copy</span>
+                        </button>
+                      </div>
+                    </div>
+                  ` : ''}
 
-                ${parsedCheckIn.outbound.notes ? `
-                  <div class="checkin-custom-note">
-                    <span>📌</span> <span><strong>Note:</strong> ${escapeHtml(parsedCheckIn.outbound.notes)}</span>
-                  </div>
-                ` : ''}
-              </div>
-            `;
+                  ${parsedCheckIn.outbound.url ? `
+                    <a href="${parsedCheckIn.outbound.url}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                      <span>🛫 Open Outbound Check-In${parsedCheckIn.outbound.airline ? ' (' + escapeHtml(parsedCheckIn.outbound.airline) + ')' : ''}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                  ` : ''}
+
+                  ${parsedCheckIn.outbound.notes ? `
+                    <div class="checkin-custom-note">
+                      <span>📌</span> <span><strong>Note:</strong> ${escapeHtml(parsedCheckIn.outbound.notes)}</span>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }
 
             html += `</div>`; // end checkin-segments-container
           } else {

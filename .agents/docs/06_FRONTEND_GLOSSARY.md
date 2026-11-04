@@ -126,7 +126,7 @@
     * **הגנת דסקטופ כפולה:** הגנה ב-JS (`isMobileDevice()`) וב-CSS (`@media (min-width: 901px) { display: none !important; }`).
 
 14. **✈️ רכיבי טיסות, צ'ק-אין מקוון ומסמכי מעבר (Flights, Web Check-In & Travel Rubrics Components):**
-    * **מעטפת רובריקה תקנית:** `.flight-rubric-wrap` (עוטפת כל אחת מ-4 רובריקות הטיסה במרווח אנכי תקני ומבנה נקי).
+    * **מעטפת רובריקה תקנית:** `.flight-rubric-wrap` (עוטפת כל אחת מרובריקות הטיסה במרווח אנכי תקני ומבנה נקי).
     * **מיני-כותרת רובריקה מעוצבת:** `.rubric-subheading` (גופן Oswald, אותיות גדולות, פס הדגשה סלמון שמאלי).
     * **כותרת הרובריקה:** `.rubric-title` (למשל `Travel & Border Documents`, `Online Web Check-In`, `Airport Shuttle & Transfers`).
     * **תגית קטגוריה ברובריקה:** `.rubric-tag` (תגית מינימליסטית לצד הכותרת, כגון `Documents`, `Important`, `Transfer`).
@@ -136,22 +136,26 @@
       - כפתור מכתב הזמנה רשמי לנתב"ג: `.border-invitation-btn` ("📄 Ben Gurion Invitation (PDF)").
     * **רובריקה 2 - צ'ק-אין מקוון וקוד הזמנה:**
       - מעטפת כרטיסיית צ'ק-אין: `.flight-checkin-card`.
-      - תגית קוד הזמנה: `.checkin-code-pill` וקוד מודגש `.checkin-code-value`.
-      - כפתור העתקה מהירה: `.btn-copy-booking` (כולל חיווי `Copied!`).
-      - כפתור פתיחת צ'ק-אין ישיר: `.checkin-cta-btn` ("🛫 Open Web Check-In").
+      - **מיכל מקטעים מפוצל לשתי טיסות (Dual Check-In):** `.checkin-segments-container`.
+      - **כרטיסיית מקטע טיסה ייעודית:** `.checkin-segment-box` (Inbound או Outbound).
+      - **שורת כותרת מקטע:** `.checkin-segment-header`, כותרת כיוון הטיסה `.checkin-segment-title` (`🛬 Inbound to Israel` / `🛫 Outbound from Israel`).
+      - **תגית חברת תעופה וטיסה:** `.checkin-airline-tag` (למשל `Wizz Air · W6 1234`).
+      - שורת קוד הזמנה: `.checkin-code-row`, תווית `.checkin-code-label`, תיבה `.checkin-code-box`, וערך הקוד `.checkin-code-val`.
+      - כפתור העתקה מהירה: `.checkin-copy-btn` (כולל חיווי `Copied! ✓`).
+      - כפתור פתיחת צ'ק-אין ישיר: `.checkin-action-btn` (לדוגמה `🛫 Open Inbound Check-In (Wizz Air)` או `🛫 Open Web Check-In`).
+      - הערת צ'ק-אין ייעודית למקטע: `.checkin-custom-note`.
       - שורת אישור סיום: `.checkin-done-row`.
-      - תיבת סימון צ'ק-אין: `.checkin-done-checkbox` (`#flight-checkin-completed-toggle`).
+      - תיבת סימון צ'ק-אין: `#checkin-done-checkbox`, `.checkin-done-label`, `.checkin-done-text`.
       - כרטיס מקופל ומכווץ: `.flight-checkin-collapsed` (מוצג כשהצ'ק-אין בוצע).
       - קישור שחזור פרטים: `.checkin-restore-link` ("Show check-in details").
       - מפתח שמירה ב-`localStorage`: `imsf_checkin_done_<bookingKey>`.
       - מנגנון תפוגה אוטומטי: הסתרה מלאה כאשר `today >= arrivalFlightDate + 1 day`.
-    * **רובריקה 3 - לו"ז טיסות וכרטיס עליה למטוס:**
-      - מעטפת כרטיס עליה למטוס: `.flight-pass-card`, `.ticket-cutout-top`, `.ticket-cutout-bottom`.
-      - מקטעי טיסה הלוך וחזור: `.flight-legs-container`, `.flight-leg-row`.
-    * **רובריקה 4 - שאטלים והסעות מנתב"ג:**
-      - מעטפת כרטיס שאטל: `.flight-shuttle-card`.
-      - פרטי מפגש וזמנים: `.shuttle-time-badge`, `.shuttle-meeting-point`.
+      - התניית תצוגה: הרובריקה מוצגת אך ורק כאשר קיים קוד הזמנה (Booking Reference) או קישור צ'ק-אין מקוון (Web Check-In Link). במידה ואין לאורח קוד הזמנה או לינק המשויכים למייל, הרובריקה מוסתרת לחלוטין למניעת כרטיסייה ריקה.
+    * **רובריקה 3 - שאטלים והסעות מנתב"ג:**
+      - מעטפת כרטיס שאטל: `.shuttle-info-card`.
+      - פרטי מפגש וזמנים: הצגת שעת יציאה מנתב"ג.
       - שותפים לשאטל: `.shuttle-passengers-wrap`, `.shuttle-passenger-badge` (לחיץ לפתיחת פרופיל אורח).
+    * *(הערת תיעוד: כרטיסיית העלייה למטוס / Flight Schedule & Routes הוסרה מלשונית My Trip ומופיעה כעת רק במודאל פרופיל האורח של ההפקה `.boarding-pass`)*.
 
 * **באנר מופעי לייב גלובלי (Global Live Showcase Banner):**
   - מזהה באנר עליון: `#artists-live-banner` (מוצג בראש כל הלשוניות כשיש מופע חי ברגע זה).
@@ -176,4 +180,46 @@
   - רצועת ימי הפסטיבל: `#admin-schedule-days-nav` (מכיל `.schedule-pill` עם `.day-weekday` ו-`.day-num`).
   - מיכל רשימת האירועים: `#admin-schedule-events-container` (`.schedule-events-list`).
   - כרטיסיית משימה: `.schedule-event-inline` (`.event-time`, `.schedule-event-details`, `.schedule-title-row`, `.event-title`, `.schedule-cat-badge`, `.schedule-loc-link`, `.schedule-contact-btn`, `.event-desc`, `.schedule-inline-link`).
+
+    * **שורת כותרת הכרטיס המנוהלת לפי צ'קבוקס אישור (Approval-Gated Headers):**
+      - `.card-header-row` (מיושרת ימינה `justify-content: flex-end`, ברירת מחדל מוסתרת `display: none`).
+      - `#card-header-itinerary`: כותרת כפתור לו"ז (מוצג רק כש-`approvalSchedule` מסומן).
+      - `#card-header-mytrip`: כותרת כפתור הטיול שלי (מוצג רק כש-`approvalFlights` או `approvalHotels` מסומנים).
+      - `#card-header-guide`: כותרת כפתור מדריך והמלצות (מוצג רק כש-`approvalGuide` מסומן).
+      - `#card-header-directory`: כותרת כפתור ספר אורחים (מוצג רק כש-`approvalDirectory` מסומן).
+      - `#card-header-artists`: כותרת כפתור אומנים (מוצג רק כש-`approvalArtists` מסומן; בהיעדר אישור מוסתרים גם מתגי הליינאפ והטיימטייבל `.artists-subnav-container`).
+    * **כפתור פתיחת מדריך בלשונית (Tab Quick Guide Button):** `.tab-quick-guide-btn`, אייקון `.guide-icon` (💡), טקסט `.guide-text`.
+    * **טקסט הכפתור לפי לשונית:**
+      - `💡 Quick Guide for Itinerary` (לו"ז אירועים)
+      - `💡 Quick Guide for My Trip` (הטיול שלי, טיסות ומלונות)
+      - `💡 Quick Guide for Guide` (מדריך והמלצות)
+      - `💡 Quick Guide for Delegates` (ספר אורחים)
+      - `💡 Quick Guide for Artist` (אומנים וליינאפ)
+    * **רכיבי ה-DOM של הספוטלייט:**
+      - `#tour-spotlight-backdrop`: מסך האפלה סביבתי.
+      - `#tour-spotlight-cutout`: חלון חיתוך חי סביב האלמנט המודגש.
+      - `#tour-spotlight-popover`: בועית הסבר חכמה (כולל חץ דינמי `.arrow-top` / `.arrow-bottom`).
+      - `#tour-popover-badge`: תגית מספר שלב (`STEP X/Y`).
+      - `.popover-close-btn`: כפתור סגירה מהירה (`closeTabTour()`).
+      - `#tour-popover-title`: כותרת השלב.
+      - `#tour-popover-desc`: תיאור קצר והנחיות באנגלית.
+      - `#tour-popover-dots`: נקודות התקדמות (`.popover-dot.active`).
+      - `#tour-popover-prev`: כפתור שלב קודם (`prevTabTourStep()`).
+      - `#tour-popover-next`: כפתור שלב הבא (`nextTabTourStep()`, משתנה ל-`Got It ✓` בסיום).
+    * **מזהי DOM ייעודיים לספוטלייט:**
+      - `#travel-border-docs-rubric`: רובריקת מסמכי טיסה ומעבר גבול.
+      - `#flight-checkin-wrapper`: רובריקת צ'ק-אין מקוון (מוצגת בסיור מותנה בלבד כאשר קיים קוד/לינק צ'ק-אין).
+      - `#flight-shuttle-wrapper`: רובריקת שאטלים והסעות (מוצג בסיור מותנה בלבד).
+      - `#mytrip-flight-section`: מקטע פרטי טיסות ומסמכים.
+      - `#mytrip-accommodations-section`: מקטע מלונות וניווט למפות.
+    * **פונקציות ליבה בקוד (`src/app.js`):**
+      - `startTabTour(tabKey)`: אתחול והפעלת הסיור לפי שם הלשונית (מוגן ב-`isTourTabLocked(tabKey)`).
+      - `isTourTabLocked(tabKey)`: בדיקת נעילת לשונית לפי תיבת ה-Pending הפעילה.
+      - `closeTabTour()`: סגירה נקייה וביטול מאזיני גלילה/אנימציה.
+      - `nextTabTourStep()`, `prevTabTourStep()`: מעבר שלבים.
+      - `renderTabTourStep(stepIdx)`: עדכון תוכן הבועית ומציאת אלמנט המטרה.
+      - `updateCutoutAndPopover(targetEl)`: גלילה חלקה של המטרה למרכז המסך.
+      - `trackTargetTransition(targetEl, durationMs)`: מעקב רציף ב-60fps למניעת ניתוק הבועית בזמן גלילה או פתיחת חלוניות.
+      - `isTourTargetVisible(el)`: בדיקת נראות ממשית של אלמנט ב-DOM.
+      - `TAB_TOUR_CONFIGS`: אובייקט הגדרת הצעדים, טקסטים, מטרות ו-lifecycle hooks (`onEnter`, `onLeave`).
 
