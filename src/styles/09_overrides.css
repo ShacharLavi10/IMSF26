@@ -1405,6 +1405,76 @@ body.light-mode .checkin-copy-btn {
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
 }
 
+/* DUAL CHECK-IN SEGMENTS */
+.checkin-segments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.checkin-segment-box {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4);
+}
+
+body.light-mode .checkin-segment-box {
+  background: #f8fafc !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1) !important;
+}
+
+.checkin-segment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+body.light-mode .checkin-segment-header {
+  border-bottom: 1px dashed #cbd5e1 !important;
+}
+
+.checkin-segment-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent, #f1a9a0);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+body.light-mode .checkin-segment-title {
+  color: #0f172a !important;
+}
+
+.checkin-airline-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(241, 169, 160, 0.15);
+  color: var(--accent-bright, #f1a9a0);
+  border: 1px solid rgba(241, 169, 160, 0.35);
+}
+
+body.light-mode .checkin-airline-tag {
+  background: #fff1f2 !important;
+  color: #be123c !important;
+  border-color: #fecdd3 !important;
+}
+
 /* CHECK-IN DONE CHECKBOX & COLLAPSED PILL */
 .checkin-done-row {
   margin-top: 4px;
