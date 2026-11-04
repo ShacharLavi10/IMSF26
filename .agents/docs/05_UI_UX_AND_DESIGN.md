@@ -204,5 +204,32 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - **Visual Symmetry**:
     - Admin Production Schedule mirrors the Guest Itinerary layout (`.schedule-events-list`, `.schedule-event-inline`), incorporating compact inline location links (`.schedule-loc-link`), quick contact actions (`.schedule-contact-btn.call`, `.schedule-contact-btn.wa`), and category badge styling (`.schedule-cat-badge`).
 
+- **Interactive Tab Quick Guides & Live Spotlight (`.tab-quick-guide-btn`, `#tour-spotlight-backdrop`, `#tour-spotlight-cutout`, `#tour-spotlight-popover`)**:
+  - **Pill Button Design & Header Alignment**:
+    - Positioned at the top of each of the 5 main tab cards (`.card-header-row`) with `justify-content: flex-end`.
+    - Tab `<h3>` headings removed from next to the button to avoid duplication with the main bottom navigation and button label.
+    - Explicit tab labelling for clarity:
+      - `💡 Quick Guide for Itinerary`
+      - `💡 Quick Guide for My Trip`
+      - `💡 Quick Guide for Guide`
+      - `💡 Quick Guide for Delegates`
+      - `💡 Quick Guide for Artist`
+    - Neo-Brutalist pill styling with subtle border, 2px block shadow, and active tactile press-down.
+  - **Live Cutout Window & Backdrop**:
+    - `#tour-spotlight-backdrop` (`background: rgba(4, 9, 18, 0.72)`) darkens surrounding interface.
+    - Dynamic cutout window `#tour-spotlight-cutout` surrounds target elements with 8px-12px padding and 12px rounded corners.
+  - **Continuous 60fps rAF Tracking**:
+    - Continuous frame-by-frame `requestAnimationFrame` tracking (`trackTargetTransition(targetEl, 650)`) during smooth scrolling, layout reflows, and sheet transitions to ensure popover and cutout never detach.
+  - **Non-Overlapping Compact Popover**:
+    - Speech-bubble popover (`#tour-spotlight-popover`, max-width 290px, height ~85-95px) with directional arrow (`.arrow-top` / `.arrow-bottom`).
+    - Mathematical clearance ensures popover never overlaps or obscures the highlighted target.
+  - **Hash & History Safety (Crash Prevention)**:
+    - Step 2 in Artists tour opens the Artist Bottom Sheet with `isFromHash = true` and `body.tour-active-sheet`.
+    - Guards `closeArtistSheet()` to suppress `history.back()` calls during tours, eliminating history ejection crashes.
+  - **1-Tap Calendar Sync Reminder**:
+    - Step 4 of the Artists tour explicitly reminds delegates to verify their calendar alerts are set to 5 minutes before showtime (or adjust default calendar alert settings).
+  - **Conditional Shuttle Step**:
+    - In My Trip, Step 3 (Airport Shuttle & Transfers) is strictly conditional (`isTourTargetVisible(shuttleEl)`). Only delegates with scheduled shuttles see this step; others have it omitted automatically.
+
 
 

@@ -126,7 +126,7 @@
     * **הגנת דסקטופ כפולה:** הגנה ב-JS (`isMobileDevice()`) וב-CSS (`@media (min-width: 901px) { display: none !important; }`).
 
 14. **✈️ רכיבי טיסות, צ'ק-אין מקוון ומסמכי מעבר (Flights, Web Check-In & Travel Rubrics Components):**
-    * **מעטפת רובריקה תקנית:** `.flight-rubric-wrap` (עוטפת כל אחת מ-4 רובריקות הטיסה במרווח אנכי תקני ומבנה נקי).
+    * **מעטפת רובריקה תקנית:** `.flight-rubric-wrap` (עוטפת כל אחת מרובריקות הטיסה במרווח אנכי תקני ומבנה נקי).
     * **מיני-כותרת רובריקה מעוצבת:** `.rubric-subheading` (גופן Oswald, אותיות גדולות, פס הדגשה סלמון שמאלי).
     * **כותרת הרובריקה:** `.rubric-title` (למשל `Travel & Border Documents`, `Online Web Check-In`, `Airport Shuttle & Transfers`).
     * **תגית קטגוריה ברובריקה:** `.rubric-tag` (תגית מינימליסטית לצד הכותרת, כגון `Documents`, `Important`, `Transfer`).
@@ -150,13 +150,11 @@
       - קישור שחזור פרטים: `.checkin-restore-link` ("Show check-in details").
       - מפתח שמירה ב-`localStorage`: `imsf_checkin_done_<bookingKey>`.
       - מנגנון תפוגה אוטומטי: הסתרה מלאה כאשר `today >= arrivalFlightDate + 1 day`.
-    * **רובריקה 3 - לו"ז טיסות וכרטיס עליה למטוס:**
-      - מעטפת כרטיס עליה למטוס: `.flight-pass-card`, `.ticket-cutout-top`, `.ticket-cutout-bottom`.
-      - מקטעי טיסה הלוך וחזור: `.flight-legs-container`, `.flight-leg-row`.
-    * **רובריקה 4 - שאטלים והסעות מנתב"ג:**
-      - מעטפת כרטיס שאטל: `.flight-shuttle-card`.
-      - פרטי מפגש וזמנים: `.shuttle-time-badge`, `.shuttle-meeting-point`.
+    * **רובריקה 3 - שאטלים והסעות מנתב"ג:**
+      - מעטפת כרטיס שאטל: `.shuttle-info-card`.
+      - פרטי מפגש וזמנים: הצגת שעת יציאה מנתב"ג.
       - שותפים לשאטל: `.shuttle-passengers-wrap`, `.shuttle-passenger-badge` (לחיץ לפתיחת פרופיל אורח).
+    * *(הערת תיעוד: כרטיסיית העלייה למטוס / Flight Schedule & Routes הוסרה מלשונית My Trip ומופיעה כעת רק במודאל פרופיל האורח של ההפקה `.boarding-pass`)*.
 
 * **באנר מופעי לייב גלובלי (Global Live Showcase Banner):**
   - מזהה באנר עליון: `#artists-live-banner` (מוצג בראש כל הלשוניות כשיש מופע חי ברגע זה).
@@ -181,4 +179,40 @@
   - רצועת ימי הפסטיבל: `#admin-schedule-days-nav` (מכיל `.schedule-pill` עם `.day-weekday` ו-`.day-num`).
   - מיכל רשימת האירועים: `#admin-schedule-events-container` (`.schedule-events-list`).
   - כרטיסיית משימה: `.schedule-event-inline` (`.event-time`, `.schedule-event-details`, `.schedule-title-row`, `.event-title`, `.schedule-cat-badge`, `.schedule-loc-link`, `.schedule-contact-btn`, `.event-desc`, `.schedule-inline-link`).
+
+15. **💡 מערכת סיורים מודרכים וספוטלייט חי בלשוניות (Tab Quick Guides & Live Spotlight):**
+    * **שורת כותרת הכרטיס:** `.card-header-row` (מיושרת ימינה `justify-content: flex-end`, ללא כותרת טאב כפולה).
+    * **כפתור פתיחת מדריך בלשונית (Tab Quick Guide Button):** `.tab-quick-guide-btn`, אייקון `.guide-icon` (💡), טקסט `.guide-text`.
+    * **טקסט הכפתור לפי לשונית:**
+      - `💡 Quick Guide for Itinerary` (לו"ז אירועים)
+      - `💡 Quick Guide for My Trip` (הטיול שלי, טיסות ומלונות)
+      - `💡 Quick Guide for Guide` (מדריך והמלצות)
+      - `💡 Quick Guide for Delegates` (ספר אורחים)
+      - `💡 Quick Guide for Artist` (אומנים וליינאפ)
+    * **רכיבי ה-DOM של הספוטלייט:**
+      - `#tour-spotlight-backdrop`: מסך האפלה סביבתי.
+      - `#tour-spotlight-cutout`: חלון חיתוך חי סביב האלמנט המודגש.
+      - `#tour-spotlight-popover`: בועית הסבר חכמה (כולל חץ דינמי `.arrow-top` / `.arrow-bottom`).
+      - `#tour-popover-badge`: תגית מספר שלב (`STEP X/Y`).
+      - `.popover-close-btn`: כפתור סגירה מהירה (`closeTabTour()`).
+      - `#tour-popover-title`: כותרת השלב.
+      - `#tour-popover-desc`: תיאור קצר והנחיות באנגלית.
+      - `#tour-popover-dots`: נקודות התקדמות (`.popover-dot.active`).
+      - `#tour-popover-prev`: כפתור שלב קודם (`prevTabTourStep()`).
+      - `#tour-popover-next`: כפתור שלב הבא (`nextTabTourStep()`, משתנה ל-`Got It ✓` בסיום).
+    * **מזהי DOM ייעודיים לספוטלייט:**
+      - `#travel-border-docs-rubric`: רובריקת מסמכי טיסה ומעבר גבול.
+      - `#flight-checkin-wrapper`: רובריקת צ'ק-אין מקוון.
+      - `#flight-shuttle-wrapper`: רובריקת שאטלים והסעות (מוצג בסיור מותנה בלבד).
+      - `#mytrip-flight-section`: מקטע פרטי טיסות ומסמכים.
+      - `#mytrip-accommodations-section`: מקטע מלונות וניווט למפות.
+    * **פונקציות ליבה בקוד (`src/app.js`):**
+      - `startTabTour(tabKey)`: אתחול והפעלת הסיור לפי שם הלשונית.
+      - `closeTabTour()`: סגירה נקייה וביטול מאזיני גלילה/אנימציה.
+      - `nextTabTourStep()`, `prevTabTourStep()`: מעבר שלבים.
+      - `renderTabTourStep(stepIdx)`: עדכון תוכן הבועית ומציאת אלמנט המטרה.
+      - `updateCutoutAndPopover(targetEl)`: גלילה חלקה של המטרה למרכז המסך.
+      - `trackTargetTransition(targetEl, durationMs)`: מעקב רציף ב-60fps למניעת ניתוק הבועית בזמן גלילה או פתיחת חלוניות.
+      - `isTourTargetVisible(el)`: בדיקת נראות ממשית של אלמנט ב-DOM.
+      - `TAB_TOUR_CONFIGS`: אובייקט הגדרת הצעדים, טקסטים, מטרות ו-lifecycle hooks (`onEnter`, `onLeave`).
 
