@@ -1405,6 +1405,76 @@ body.light-mode .checkin-copy-btn {
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
 }
 
+/* DUAL CHECK-IN SEGMENTS */
+.checkin-segments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.checkin-segment-box {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4);
+}
+
+body.light-mode .checkin-segment-box {
+  background: #f8fafc !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 1) !important;
+}
+
+.checkin-segment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+body.light-mode .checkin-segment-header {
+  border-bottom: 1px dashed #cbd5e1 !important;
+}
+
+.checkin-segment-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent, #f1a9a0);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+body.light-mode .checkin-segment-title {
+  color: #0f172a !important;
+}
+
+.checkin-airline-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(241, 169, 160, 0.15);
+  color: var(--accent-bright, #f1a9a0);
+  border: 1px solid rgba(241, 169, 160, 0.35);
+}
+
+body.light-mode .checkin-airline-tag {
+  background: #fff1f2 !important;
+  color: #be123c !important;
+  border-color: #fecdd3 !important;
+}
+
 /* CHECK-IN DONE CHECKBOX & COLLAPSED PILL */
 .checkin-done-row {
   margin-top: 4px;
@@ -4933,37 +5003,37 @@ body.tour-active-sheet #artist-bottom-sheet {
   position: fixed;
   pointer-events: none;
   z-index: 10008;
-  border-radius: 12px;
-  box-shadow: 0 0 0 9999px rgba(10, 22, 38, 0.82), 0 0 20px rgba(241, 169, 160, 0.9);
-  border: 3px solid var(--accent);
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(10, 22, 38, 0.82), 0 0 16px rgba(241, 169, 160, 0.85);
+  border: 2.5px solid var(--accent);
+  transition: box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 body.light-mode .tour-spotlight-cutout {
-  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.72), 0 0 20px rgba(241, 169, 160, 0.9);
-  border: 3px solid var(--accent);
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.72), 0 0 16px rgba(241, 169, 160, 0.85);
+  border: 2.5px solid var(--accent);
 }
 
-/* Floating Popover as Speech Bubble */
+/* Floating Popover as Speech Bubble - Compact & Sleek */
 .tour-spotlight-popover {
   position: fixed;
   z-index: 10010;
-  width: min(320px, calc(100vw - 28px));
+  width: min(290px, calc(100vw - 24px));
   background: #0d1b2a;
   color: #ffffff;
   border: 2px solid #000000;
-  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.95);
-  border-radius: 12px;
-  padding: 12px 14px;
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.95);
+  border-radius: 10px;
+  padding: 8px 11px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   box-sizing: border-box;
 }
 body.light-mode .tour-spotlight-popover {
   background: #ffffff;
   color: #0f172a;
-  box-shadow: 4px 4px 0px #000000;
+  box-shadow: 3px 3px 0px #000000;
 }
 
 /* Speech Bubble Arrow */
@@ -4979,15 +5049,15 @@ body.light-mode .tour-spotlight-popover {
 
 /* Arrow when Popover is below target */
 .tour-spotlight-popover.arrow-top::before {
-  top: -9px;
+  top: -8px;
   left: var(--arrow-left, 30px);
-  border-width: 0 8px 9px 8px;
+  border-width: 0 7px 8px 7px;
   border-color: transparent transparent #000000 transparent;
 }
 .tour-spotlight-popover.arrow-top::after {
-  top: -6px;
+  top: -5px;
   left: calc(var(--arrow-left, 30px) + 1px);
-  border-width: 0 7px 7px 7px;
+  border-width: 0 6px 6px 6px;
   border-color: transparent transparent #0d1b2a transparent;
 }
 body.light-mode .tour-spotlight-popover.arrow-top::after {
@@ -4996,15 +5066,15 @@ body.light-mode .tour-spotlight-popover.arrow-top::after {
 
 /* Arrow when Popover is above target */
 .tour-spotlight-popover.arrow-bottom::before {
-  bottom: -9px;
+  bottom: -8px;
   left: var(--arrow-left, 30px);
-  border-width: 9px 8px 0 8px;
+  border-width: 8px 7px 0 7px;
   border-color: #000000 transparent transparent transparent;
 }
 .tour-spotlight-popover.arrow-bottom::after {
-  bottom: -6px;
+  bottom: -5px;
   left: calc(var(--arrow-left, 30px) + 1px);
-  border-width: 7px 7px 0 7px;
+  border-width: 6px 6px 0 6px;
   border-color: #0d1b2a transparent transparent transparent;
 }
 body.light-mode .tour-spotlight-popover.arrow-bottom::after {
@@ -5018,12 +5088,12 @@ body.light-mode .tour-spotlight-popover.arrow-bottom::after {
 }
 .popover-badge {
   font-family: 'Oswald', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.8px;
+  font-size: 0.65rem;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--accent);
   background: rgba(241, 169, 160, 0.15);
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 9999px;
   border: 1px solid rgba(241, 169, 160, 0.4);
   font-weight: 700;
@@ -5035,10 +5105,10 @@ body.light-mode .popover-badge {
 .popover-close-btn {
   background: transparent;
   border: none;
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #94a3b8;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 1px 4px;
   line-height: 1;
   transition: color 0.15s;
 }
@@ -5051,17 +5121,18 @@ body.light-mode .popover-close-btn:hover {
 
 .popover-title {
   font-family: 'Oswald', sans-serif;
-  font-size: 1.08rem;
-  margin: 0 0 3px 0;
+  font-size: 0.95rem;
+  margin: 0;
   color: #ffffff;
   letter-spacing: 0.2px;
+  line-height: 1.2;
 }
 body.light-mode .popover-title {
   color: #0f172a;
 }
 .popover-desc {
-  font-size: 0.85rem;
-  line-height: 1.4;
+  font-size: 0.78rem;
+  line-height: 1.32;
   color: #cbd5e1;
   margin: 0;
 }
@@ -5073,8 +5144,8 @@ body.light-mode .popover-desc {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 2px;
-  padding-top: 8px;
+  margin-top: 1px;
+  padding-top: 5px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 body.light-mode .popover-footer {
@@ -5106,12 +5177,12 @@ body.light-mode .popover-dot.active {
 
 .popover-actions {
   display: flex;
-  gap: 6px;
+  gap: 5px;
 }
 .popover-btn {
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;

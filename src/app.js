@@ -60,7 +60,7 @@ const TAB_TOUR_CONFIGS = {
         title: "Artists Lineup & Star Acts",
         desc: "Browse showcasing artists, listen to their music, and tap ❤️ to star acts you want to catch live.",
         onEnter: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet(true);
           document.body.classList.remove('tour-active-sheet');
           if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
         }
@@ -112,14 +112,14 @@ const TAB_TOUR_CONFIGS = {
 
             document.body.classList.add('tour-active-sheet');
             if (artistId && typeof window.openArtistSheet === 'function') {
-              window.openArtistSheet(artistId);
+              window.openArtistSheet(artistId, true);
             }
           } catch (e) {
             console.warn("Tour artist sheet open error:", e);
           }
         },
         onLeave: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
+          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet(true);
           document.body.classList.remove('tour-active-sheet');
         }
       },
@@ -128,8 +128,26 @@ const TAB_TOUR_CONFIGS = {
         title: "Shows Timetable & Smart Views",
         desc: "Switch to Shows Timetable to view concerts across stages, filter by specific venues, or switch to 'My Schedule' for your personal clash-free line-up.",
         onEnter: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
           document.body.classList.remove('tour-active-sheet');
+          const sheet = document.getElementById('artist-bottom-sheet');
+          if (sheet && sheet.classList.contains('active') && typeof window.closeArtistSheet === 'function') {
+            window.closeArtistSheet(true);
+          }
+        }
+      },
+      {
+        target: ".timetable-calendar-sync-btn",
+        title: "1-Tap Calendar Sync",
+        desc: "Sync your favorited shows directly into Apple Calendar, Google Calendar, or Outlook. After syncing, please check that alerts are set to 5 minutes before (or adjust your calendar's default notification setting).",
+        onEnter: () => {
+          document.body.classList.remove('tour-active-sheet');
+          const sheet = document.getElementById('artist-bottom-sheet');
+          if (sheet && sheet.classList.contains('active') && typeof window.closeArtistSheet === 'function') {
+            window.closeArtistSheet(true);
+          }
+          if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('timetable');
+          const syncBtn = document.querySelector(".timetable-calendar-sync-btn");
+          if (syncBtn) syncBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       },
       {
@@ -137,8 +155,11 @@ const TAB_TOUR_CONFIGS = {
         title: "Your Export Briefcase",
         desc: "At the end of the festival, download a complete working summary of all your favorited artists, tags, and notes for easy post-festival follow-ups.",
         onEnter: () => {
-          if (typeof window.closeArtistSheet === 'function') window.closeArtistSheet();
           document.body.classList.remove('tour-active-sheet');
+          const sheet = document.getElementById('artist-bottom-sheet');
+          if (sheet && sheet.classList.contains('active') && typeof window.closeArtistSheet === 'function') {
+            window.closeArtistSheet(true);
+          }
           if (typeof window.switchArtistsSubTab === 'function') window.switchArtistsSubTab('directory');
           const bcContainer = document.getElementById("export-briefcase-container");
           if (bcContainer) {
@@ -159,6 +180,63 @@ const TAB_TOUR_CONFIGS = {
         }
       }
     ]
+  },
+  mytrip: {
+    name: "My Trip",
+    getSteps: () => {
+      const steps = [];
+
+      // Step 1: Travel & Border Documents
+      const borderDocsEl = document.getElementById("travel-border-docs-rubric");
+      if (borderDocsEl && isTourTargetVisible(borderDocsEl)) {
+        steps.push({
+          target: "#travel-border-docs-rubric",
+          title: "Travel & Border Documents",
+          desc: "Access your confirmed E-Ticket and official Israeli airport entry invitation letter to easily present upon arrival at border control."
+        });
+      } else {
+        steps.push({
+          target: "#mytrip-flight-section, #flights-container",
+          title: "Flight Details & E-Ticket",
+          desc: "Your confirmed flights, e-tickets, and arrival details into Israel all consolidated in one place."
+        });
+      }
+
+      // Step 2: Online Web Check-In
+      const checkinEl = document.getElementById("flight-checkin-wrapper");
+      if (checkinEl && isTourTargetVisible(checkinEl)) {
+        steps.push({
+          target: "#flight-checkin-wrapper",
+          title: "Online Web Check-In",
+          desc: "Copy your airline booking reference with one tap, open the check-in portal, and complete web check-in 24 hours prior to departure."
+        });
+      } else {
+        steps.push({
+          target: "#mytrip-flight-section, #flights-container",
+          title: "Online Web Check-In",
+          desc: "Copy your airline booking reference with one tap, open the check-in portal, and complete web check-in 24 hours prior to departure."
+        });
+      }
+
+      // Step 3: Airport Shuttle (Only if shuttle exists & is visible)
+      const shuttleEl = document.getElementById("flight-shuttle-wrapper") || document.querySelector(".shuttle-info-card");
+      if (shuttleEl && isTourTargetVisible(shuttleEl)) {
+        steps.push({
+          target: "#flight-shuttle-wrapper, .shuttle-info-card",
+          title: "Airport Shuttle & Transfers",
+          desc: "Check your confirmed airport shuttle pickup time and see fellow delegates sharing your ride from Ben Gurion airport."
+        });
+      }
+
+      // Step 4: Accommodations & Locations
+      steps.push({
+        target: "#mytrip-accommodations-section, #hotels-container",
+        title: "Accommodations & Locations",
+        desc: "View your hotel details in Jerusalem and Tel Aviv, and tap 'Location' on any card to launch direct Google Maps navigation."
+      });
+
+      return steps;
+    }
   }
 };
 
@@ -205,6 +283,11 @@ function closeTabTour() {
     tourScrollListener = null;
   }
 
+  if (activeTourTransitionRaf) {
+    cancelAnimationFrame(activeTourTransitionRaf);
+    activeTourTransitionRaf = null;
+  }
+
   const backdrop = document.getElementById("tour-spotlight-backdrop");
   const cutout = document.getElementById("tour-spotlight-cutout");
   const popover = document.getElementById("tour-spotlight-popover");
@@ -216,7 +299,7 @@ function closeTabTour() {
   if (typeof window.closeArtistSheet === 'function') {
     const sheet = document.getElementById('artist-bottom-sheet');
     if (sheet && sheet.classList.contains('active')) {
-      window.closeArtistSheet();
+      window.closeArtistSheet(true);
     }
   }
 
@@ -256,6 +339,27 @@ function prevTabTourStep() {
   }
 }
 
+let activeTourTransitionRaf = null;
+
+function trackTargetTransition(targetEl, durationMs = 650) {
+  if (activeTourTransitionRaf) {
+    cancelAnimationFrame(activeTourTransitionRaf);
+    activeTourTransitionRaf = null;
+  }
+  const startTime = performance.now();
+  function frame(now) {
+    if (!currentHighlightedEl || currentHighlightedEl !== targetEl) return;
+    repositionCutoutAndPopover(targetEl);
+    if (now - startTime < durationMs) {
+      activeTourTransitionRaf = requestAnimationFrame(frame);
+    } else {
+      activeTourTransitionRaf = null;
+      repositionCutoutAndPopover(targetEl);
+    }
+  }
+  activeTourTransitionRaf = requestAnimationFrame(frame);
+}
+
 function renderTabTourStep(stepIdx) {
   const step = currentTabSteps[stepIdx];
   if (!step) return;
@@ -289,8 +393,8 @@ function renderTabTourStep(stepIdx) {
     try { step.onEnter(); } catch (e) {}
   }
 
-  // Allow DOM to settle (especially for sheet transition)
-  const delayMs = stepIdx === 1 && currentTourTab === 'artists' ? 420 : 120;
+  // Allow DOM & transitions to settle (sheet slides take ~300ms, subtab view switches take ~180ms)
+  const delayMs = currentTourTab === 'artists' && (stepIdx === 1 || stepIdx === 2) ? 320 : (currentTourTab === 'artists' && (stepIdx === 3 || stepIdx === 4) ? 180 : 80);
   setTimeout(() => {
     let targetEl = null;
     if (step.target) {
@@ -300,7 +404,7 @@ function renderTabTourStep(stepIdx) {
     if (isTourTargetVisible(targetEl)) {
       updateCutoutAndPopover(targetEl);
     } else {
-      const fallbackEl = document.querySelector("#subtab-artists-directory, #subtab-artists-timetable, .artist-card, #schedule-days-nav");
+      const fallbackEl = document.querySelector("#mytrip-card, #subtab-artists-directory, #subtab-artists-timetable, .artist-card, #schedule-days-nav");
       if (isTourTargetVisible(fallbackEl)) {
         updateCutoutAndPopover(fallbackEl);
       } else {
@@ -313,14 +417,24 @@ function renderTabTourStep(stepIdx) {
 function updateCutoutAndPopover(targetEl) {
   currentHighlightedEl = targetEl;
 
-  // Align target into view
-  try {
-    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  } catch (e) {}
+  // Align target into view smoothly
+  const sheet = document.getElementById("artist-bottom-sheet");
+  const sheetContent = sheet?.querySelector(".sheet-content");
+  if (sheet && sheet.classList.contains("active") && sheetContent && sheet.contains(targetEl)) {
+    // Provide plenty of headroom above targetEl so speech bubble sits cleanly above without overlap
+    const targetOffsetTop = targetEl.offsetTop;
+    sheetContent.scrollTo({
+      top: Math.max(0, targetOffsetTop - 100),
+      behavior: 'smooth'
+    });
+  } else {
+    try {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) {}
+  }
 
-  setTimeout(() => {
-    repositionCutoutAndPopover(targetEl);
-  }, 180);
+  // Frame-by-frame 60fps continuous tracking through the entire scroll & animation
+  trackTargetTransition(targetEl, 650);
 }
 
 function repositionCutoutAndPopover(targetEl) {
@@ -343,34 +457,54 @@ function repositionCutoutAndPopover(targetEl) {
   cutout.style.height = `${cutoutHeight}px`;
   cutout.style.display = 'block';
 
-  // Position Popover as Speech Bubble
-  const popoverWidth = Math.min(320, window.innerWidth - 28);
-  const popoverHeight = popover.offsetHeight || 135;
+  // Compact Popover Dimensions
+  const popoverWidth = Math.min(290, window.innerWidth - 24);
+  const popoverHeight = popover.offsetHeight || 90;
 
+  // Horizontal position: center on target, clamped within screen margins
   let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
-  left = Math.max(14, Math.min(left, window.innerWidth - popoverWidth - 14));
+  left = Math.max(12, Math.min(left, window.innerWidth - popoverWidth - 12));
+
+  // Vertical placement: calculate clearance
+  const spaceAbove = cutoutTop;
+  const spaceBelow = window.innerHeight - (cutoutTop + cutoutHeight);
 
   let top;
   let isArrowTop = true;
 
-  if (rect.bottom + popoverHeight + 20 < window.innerHeight) {
-    // Below target
-    top = rect.bottom + 14;
+  // Prefer the side that has sufficient clearance
+  if (spaceBelow >= popoverHeight + 8) {
+    top = cutoutTop + cutoutHeight + 7;
     isArrowTop = true;
-  } else if (rect.top - popoverHeight - 20 > 0) {
-    // Above target
-    top = rect.top - popoverHeight - 14;
+  } else if (spaceAbove >= popoverHeight + 8) {
+    top = cutoutTop - popoverHeight - 7;
     isArrowTop = false;
   } else {
-    // Fallback: inside viewport center
-    top = Math.max(16, (window.innerHeight - popoverHeight) / 2);
-    isArrowTop = true;
+    // If element is tall, choose whichever side has more room and place completely outside cutout
+    if (spaceAbove >= spaceBelow) {
+      top = Math.max(4, cutoutTop - popoverHeight - 4);
+      isArrowTop = false;
+    } else {
+      top = Math.min(window.innerHeight - popoverHeight - 4, cutoutTop + cutoutHeight + 4);
+      isArrowTop = true;
+    }
+  }
+
+  // Absolute guarantee against covering cutout area
+  if (top < cutoutTop + cutoutHeight && top + popoverHeight > cutoutTop) {
+    if (spaceAbove >= spaceBelow) {
+      top = Math.max(2, cutoutTop - popoverHeight - 3);
+      isArrowTop = false;
+    } else {
+      top = Math.min(window.innerHeight - popoverHeight - 3, cutoutTop + cutoutHeight + 3);
+      isArrowTop = true;
+    }
   }
 
   popover.style.left = `${left}px`;
   popover.style.top = `${top}px`;
 
-  // Calculate arrow horizontal offset pointing directly to target center
+  // Arrow points to target center X
   const targetCenterX = rect.left + (rect.width / 2);
   const arrowLeft = Math.max(16, Math.min(targetCenterX - left - 8, popoverWidth - 28));
   popover.style.setProperty('--arrow-left', `${arrowLeft}px`);
@@ -1078,6 +1212,142 @@ function closeWelcomeModal() {
       return null;
     }
 
+    function parseCheckInDetails(bookingCodeRaw, checkInLinkRaw, checkInNotesRaw, inboundMeta = {}, outboundMeta = {}) {
+      const urlRegex = /https?:\/\/[^\s"',;<>]+/gi;
+      
+      const cleanCode = bookingCodeRaw && !/^n\/?a$|^none$|^null$|^-$/i.test(String(bookingCodeRaw).trim()) && !String(bookingCodeRaw).trim().startsWith('#') && !String(bookingCodeRaw).trim().startsWith('=') ? String(bookingCodeRaw).trim() : '';
+      const cleanLink = checkInLinkRaw && !/^n\/?a$|^none$|^null$|^-$/i.test(String(checkInLinkRaw).trim()) && !String(checkInLinkRaw).trim().startsWith('#') && !String(checkInLinkRaw).trim().startsWith('=') ? String(checkInLinkRaw).trim() : '';
+      let cleanNotes = checkInNotesRaw && !/^n\/?a$|^none$|^null$|^-$/i.test(String(checkInNotesRaw).trim()) && !String(checkInNotesRaw).trim().startsWith('#') && !String(checkInNotesRaw).trim().startsWith('=') ? String(checkInNotesRaw).trim() : '';
+      if (/פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(cleanNotes)) {
+        cleanNotes = '';
+      }
+
+      const isInboundText = (t) => /הלוך|inbound|arrival|to tlv|הגעה/i.test(t);
+      const isOutboundText = (t) => /חזור|outbound|departure|return|from tlv|עזיבה|יציאה/i.test(t);
+
+      // Parse URLs
+      let inboundUrl = null;
+      let outboundUrl = null;
+      const allUrls = (cleanLink.match(urlRegex) || []).map(u => u.replace(/[.,;)]+$/, ''));
+      
+      if (allUrls.length >= 2) {
+        const linkLines = cleanLink.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+        linkLines.forEach(line => {
+          const match = line.match(urlRegex);
+          if (match) {
+            const u = match[0].replace(/[.,;)]+$/, '');
+            if (isOutboundText(line)) outboundUrl = u;
+            else if (isInboundText(line)) inboundUrl = u;
+          }
+        });
+        if (!inboundUrl || !outboundUrl || inboundUrl === outboundUrl) {
+          inboundUrl = allUrls[0];
+          outboundUrl = allUrls[1];
+        }
+      } else if (allUrls.length === 1) {
+        if (isOutboundText(cleanLink) && !isInboundText(cleanLink)) {
+          outboundUrl = allUrls[0];
+        } else {
+          inboundUrl = allUrls[0];
+        }
+      }
+
+      // Parse Booking Codes
+      let inboundCode = null;
+      let outboundCode = null;
+
+      if (cleanCode) {
+        const codeLines = cleanCode.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+        if (codeLines.length >= 2) {
+          codeLines.forEach(line => {
+            const val = line.replace(/^(הלוך|חזור|inbound|outbound|arrival|departure|return)\s*[:\-–]\s*/i, '').trim();
+            if (isOutboundText(line)) outboundCode = val;
+            else if (isInboundText(line)) inboundCode = val;
+          });
+          if (!inboundCode || !outboundCode) {
+            inboundCode = codeLines[0].replace(/^(הלוך|inbound|arrival)\s*[:\-–]\s*/i, '').trim();
+            outboundCode = codeLines[1].replace(/^(חזור|outbound|departure|return)\s*[:\-–]\s*/i, '').trim();
+          }
+        } else if (cleanCode.includes('/') || cleanCode.includes(';') || cleanCode.includes('|')) {
+          const parts = cleanCode.split(/[\/;|]+/).map(p => p.trim()).filter(Boolean);
+          if (parts.length >= 2) {
+            parts.forEach(p => {
+              const val = p.replace(/^(הלוך|חזור|inbound|outbound|arrival|departure|return)\s*[:\-–]\s*/i, '').trim();
+              if (isOutboundText(p)) outboundCode = val;
+              else if (isInboundText(p)) inboundCode = val;
+            });
+            if (!inboundCode || !outboundCode) {
+              inboundCode = parts[0].replace(/^(הלוך|inbound|arrival)\s*[:\-–]\s*/i, '').trim();
+              outboundCode = parts[1].replace(/^(חזור|outbound|departure|return)\s*[:\-–]\s*/i, '').trim();
+            }
+          } else {
+            inboundCode = cleanCode;
+          }
+        } else {
+          if (isOutboundText(cleanCode) && !isInboundText(cleanCode)) {
+            outboundCode = cleanCode.replace(/^(חזור|outbound|departure|return)\s*[:\-–]\s*/i, '').trim();
+          } else {
+            inboundCode = cleanCode.replace(/^(הלוך|inbound|arrival)\s*[:\-–]\s*/i, '').trim();
+          }
+        }
+      }
+
+      // Parse Notes
+      let inboundNotes = '';
+      let outboundNotes = '';
+      let generalNotes = '';
+
+      if (cleanNotes) {
+        const noteLines = cleanNotes.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+        let hasDirectionalNotes = false;
+        noteLines.forEach(line => {
+          if (isOutboundText(line)) {
+            outboundNotes += (outboundNotes ? ' | ' : '') + line.replace(/^(חזור|outbound|departure|return)\s*[:\-–]\s*/i, '').trim();
+            hasDirectionalNotes = true;
+          } else if (isInboundText(line)) {
+            inboundNotes += (inboundNotes ? ' | ' : '') + line.replace(/^(הלוך|inbound|arrival)\s*[:\-–]\s*/i, '').trim();
+            hasDirectionalNotes = true;
+          } else {
+            generalNotes += (generalNotes ? ' | ' : '') + line;
+          }
+        });
+        if (!hasDirectionalNotes) {
+          generalNotes = cleanNotes;
+        }
+      }
+
+      // Determine isDual
+      const hasMultipleCodes = Boolean(inboundCode && outboundCode && inboundCode !== outboundCode);
+      const hasMultipleUrls = Boolean(inboundUrl && outboundUrl && inboundUrl !== outboundUrl);
+      const isDual = hasMultipleCodes || hasMultipleUrls || Boolean(outboundCode && inboundUrl) || Boolean(inboundCode && outboundUrl);
+
+      return {
+        isDual,
+        generalNotes,
+        inbound: {
+          code: inboundCode,
+          url: inboundUrl,
+          notes: inboundNotes,
+          airline: inboundMeta.airline || '',
+          flight: inboundMeta.flight || ''
+        },
+        outbound: {
+          code: outboundCode,
+          url: outboundUrl,
+          notes: outboundNotes,
+          airline: outboundMeta.airline || '',
+          flight: outboundMeta.flight || ''
+        },
+        single: {
+          code: inboundCode || outboundCode || cleanCode,
+          url: inboundUrl || outboundUrl || allUrls[0] || null,
+          notes: generalNotes || cleanNotes,
+          airline: inboundMeta.airline || outboundMeta.airline || '',
+          flight: inboundMeta.flight || outboundMeta.flight || ''
+        }
+      };
+    }
+
     window.copyBookingCode = function(code, btn) {
       if (!code) return;
       const handleSuccess = () => {
@@ -1380,7 +1650,7 @@ function closeWelcomeModal() {
       // 1. RUBRIC: Travel & Border Documents
       if (ticketLink || airportInvitationLink) {
         html += `
-          <div class="flight-rubric-wrap">
+          <div class="flight-rubric-wrap" id="travel-border-docs-rubric">
             <div class="rubric-subheading">
               <div class="rubric-title">
                 <span>📄</span>
@@ -1394,27 +1664,17 @@ function closeWelcomeModal() {
       }
 
       // Web Check-in & Booking Reference Rubric
-      const cleanBookingCode = bookingCode ? String(bookingCode).trim() : '';
-      const hasBookingCode = cleanBookingCode !== '' && 
-                             !cleanBookingCode.startsWith('#') && 
-                             !cleanBookingCode.startsWith('=') && 
-                             !/^n\/?a$/i.test(cleanBookingCode) && 
-                             !/^none$/i.test(cleanBookingCode) && 
-                             !/^null$/i.test(cleanBookingCode) && 
-                             cleanBookingCode !== '-';
+      const parsedCheckIn = parseCheckInDetails(
+        bookingCode, 
+        checkInLink, 
+        checkInNotes,
+        { airline: arrivalAirline, flight: arrivalFlight },
+        { airline: departureAirline, flight: departureFlight }
+      );
 
-      const checkInUrl = extractFirstUrl(checkInLink);
-
-      const cleanCheckInNotes = checkInNotes ? String(checkInNotes).trim() : '';
-      const isParserStatus = /פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(cleanCheckInNotes);
-      const hasCheckInNotes = cleanCheckInNotes !== '' && 
-                              !isParserStatus &&
-                              !cleanCheckInNotes.startsWith('#') && 
-                              !cleanCheckInNotes.startsWith('=') && 
-                              !/^n\/?a$/i.test(cleanCheckInNotes) && 
-                              !/^none$/i.test(cleanCheckInNotes) && 
-                              !/^null$/i.test(cleanCheckInNotes) && 
-                              cleanCheckInNotes !== '-';
+      const hasBookingCode = Boolean(parsedCheckIn.isDual ? (parsedCheckIn.inbound.code || parsedCheckIn.outbound.code) : parsedCheckIn.single.code);
+      const hasCheckInUrl = Boolean(parsedCheckIn.isDual ? (parsedCheckIn.inbound.url || parsedCheckIn.outbound.url) : parsedCheckIn.single.url);
+      const hasCheckInNotes = Boolean(parsedCheckIn.generalNotes || parsedCheckIn.inbound.notes || parsedCheckIn.outbound.notes || parsedCheckIn.single.notes);
 
       // 1. Automatic Date Expiry: Hide if today is at least 1 day after the flight date (arrival flight into Israel)
       const flightDateObj = parseFlightDateObject(rawArrivalDate) || parseFlightDateObject(rawDepartureDate);
@@ -1431,8 +1691,9 @@ function closeWelcomeModal() {
 
       // 2. RUBRIC: Online Web Check-In (display if not passed and either booking code, link, custom notes, or flight schedule exists)
       const hasFlightSchedule = (arrival && arrival !== 'TBD') || (departure && departure !== 'TBD');
-      if (!isFlightDatePassed && (hasBookingCode || checkInUrl || hasCheckInNotes || hasFlightSchedule)) {
-        const bookingKey = cleanBookingCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
+      if (!isFlightDatePassed && (hasBookingCode || hasCheckInUrl || hasCheckInNotes || hasFlightSchedule)) {
+        const primaryCode = parsedCheckIn.inbound.code || parsedCheckIn.outbound.code || parsedCheckIn.single.code;
+        const bookingKey = primaryCode || (typeof currentGuestEmail !== 'undefined' && currentGuestEmail ? currentGuestEmail : 'default');
         const isCheckInDone = localStorage.getItem('imsf_checkin_done_' + bookingKey) === 'true';
 
         html += `
@@ -1460,15 +1721,16 @@ function closeWelcomeModal() {
           `;
         } else {
           const defaultRec = "It is highly recommended to make web check in 24 hours prior to your flight.";
-          const isDuplicateRec = hasCheckInNotes && cleanCheckInNotes.toLowerCase().includes("web check in") && cleanCheckInNotes.toLowerCase().includes("24 hours");
+          const tipText = parsedCheckIn.generalNotes || (!parsedCheckIn.isDual && parsedCheckIn.single.notes ? parsedCheckIn.single.notes : "");
+          const isDuplicateRec = tipText && tipText.toLowerCase().includes("web check in") && tipText.toLowerCase().includes("24 hours");
           
           let tipContentHtml = '';
           if (isDuplicateRec) {
-            tipContentHtml = `<div class="checkin-tip-text">${escapeHtml(cleanCheckInNotes)}</div>`;
+            tipContentHtml = `<div class="checkin-tip-text">${escapeHtml(tipText)}</div>`;
           } else {
             tipContentHtml = `
               <div class="checkin-tip-text">${defaultRec}</div>
-              ${hasCheckInNotes ? `<div class="checkin-custom-note"><span>📌</span> <span><strong>Note:</strong> ${escapeHtml(cleanCheckInNotes)}</span></div>` : ''}
+              ${tipText ? `<div class="checkin-custom-note"><span>📌</span> <span><strong>Note:</strong> ${escapeHtml(tipText)}</span></div>` : ''}
             `;
           }
 
@@ -1480,27 +1742,123 @@ function closeWelcomeModal() {
                   ${tipContentHtml}
                 </div>
               </div>
+          `;
 
-              ${hasBookingCode ? `
+          if (parsedCheckIn.isDual) {
+            html += `<div class="checkin-segments-container">`;
+
+            // Segment 1: Inbound
+            const inAirlineTag = [parsedCheckIn.inbound.airline, parsedCheckIn.inbound.flight].filter(Boolean).join(' · ');
+            html += `
+              <div class="checkin-segment-box">
+                <div class="checkin-segment-header">
+                  <div class="checkin-segment-title">
+                    <span>🛬</span>
+                    <span>Inbound to Israel</span>
+                  </div>
+                  ${inAirlineTag ? `<span class="checkin-airline-tag">${escapeHtml(inAirlineTag)}</span>` : ''}
+                </div>
+
+                ${parsedCheckIn.inbound.code ? `
+                  <div class="checkin-code-row">
+                    <span class="checkin-code-label">Booking Reference:</span>
+                    <div class="checkin-code-box">
+                      <span class="checkin-code-val">${escapeHtml(parsedCheckIn.inbound.code)}</span>
+                      <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(parsedCheckIn.inbound.code).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                  </div>
+                ` : ''}
+
+                ${parsedCheckIn.inbound.url ? `
+                  <a href="${parsedCheckIn.inbound.url}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                    <span>🛫 Open Inbound Check-In${parsedCheckIn.inbound.airline ? ' (' + escapeHtml(parsedCheckIn.inbound.airline) + ')' : ''}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
+                ` : ''}
+
+                ${parsedCheckIn.inbound.notes ? `
+                  <div class="checkin-custom-note">
+                    <span>📌</span> <span><strong>Note:</strong> ${escapeHtml(parsedCheckIn.inbound.notes)}</span>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+
+            // Segment 2: Outbound
+            const outAirlineTag = [parsedCheckIn.outbound.airline, parsedCheckIn.outbound.flight].filter(Boolean).join(' · ');
+            html += `
+              <div class="checkin-segment-box">
+                <div class="checkin-segment-header">
+                  <div class="checkin-segment-title">
+                    <span>🛫</span>
+                    <span>Outbound from Israel</span>
+                  </div>
+                  ${outAirlineTag ? `<span class="checkin-airline-tag">${escapeHtml(outAirlineTag)}</span>` : ''}
+                </div>
+
+                ${parsedCheckIn.outbound.code ? `
+                  <div class="checkin-code-row">
+                    <span class="checkin-code-label">Booking Reference:</span>
+                    <div class="checkin-code-box">
+                      <span class="checkin-code-val">${escapeHtml(parsedCheckIn.outbound.code)}</span>
+                      <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(parsedCheckIn.outbound.code).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                  </div>
+                ` : ''}
+
+                ${parsedCheckIn.outbound.url ? `
+                  <a href="${parsedCheckIn.outbound.url}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                    <span>🛫 Open Outbound Check-In${parsedCheckIn.outbound.airline ? ' (' + escapeHtml(parsedCheckIn.outbound.airline) + ')' : ''}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  </a>
+                ` : ''}
+
+                ${parsedCheckIn.outbound.notes ? `
+                  <div class="checkin-custom-note">
+                    <span>📌</span> <span><strong>Note:</strong> ${escapeHtml(parsedCheckIn.outbound.notes)}</span>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+
+            html += `</div>`; // end checkin-segments-container
+          } else {
+            const singleCode = parsedCheckIn.single.code;
+            const singleUrl = parsedCheckIn.single.url;
+            const singleAirline = parsedCheckIn.single.airline;
+
+            if (singleCode) {
+              html += `
                 <div class="checkin-code-row">
                   <span class="checkin-code-label">Booking Reference:</span>
                   <div class="checkin-code-box">
-                    <span class="checkin-code-val">${escapeHtml(cleanBookingCode)}</span>
-                    <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(cleanBookingCode).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
+                    <span class="checkin-code-val">${escapeHtml(singleCode)}</span>
+                    <button type="button" class="checkin-copy-btn" onclick="copyBookingCode('${escapeHtml(singleCode).replace(/'/g, "\\'")}', this)" title="Copy booking reference">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
                       <span>Copy</span>
                     </button>
                   </div>
                 </div>
-              ` : ''}
+              `;
+            }
 
-              ${checkInUrl ? `
-                <a href="${checkInUrl}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
-                  <span>🛫 Open Web Check-In</span>
+            if (singleUrl) {
+              html += `
+                <a href="${singleUrl}" target="_blank" rel="noopener noreferrer" class="checkin-action-btn">
+                  <span>🛫 Open Web Check-In${singleAirline ? ' (' + escapeHtml(singleAirline) + ')' : ''}</span>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 </a>
-              ` : ''}
+              `;
+            }
+          }
 
+          html += `
               <div class="checkin-done-row">
                 <label class="checkin-done-label" for="checkin-done-checkbox">
                   <input type="checkbox" id="checkin-done-checkbox" onchange="window.toggleCheckInDone(this.checked, '${escapeHtml(bookingKey)}', '${escapeHtml(containerId)}')">
@@ -1515,57 +1873,6 @@ function closeWelcomeModal() {
         html += `</div>`;
       }
 
-      // 3. RUBRIC: Flight Schedule & Routes (Boarding Pass)
-      html += `
-        <div class="flight-rubric-wrap">
-          <div class="rubric-subheading">
-            <div class="rubric-title">
-              <span>✈️</span>
-              <span>Flight Schedule & Routes</span>
-            </div>
-            <span class="rubric-tag">Boarding Pass</span>
-          </div>
-
-          <div class="boarding-pass" style="margin-bottom: 0;">
-            <div class="bp-header">
-              <span>OFFICIAL FLIGHT ITINERARY</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21,16v-2l-8-5V3.5c0-0.83-0.67-1.5-1.5-1.5S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z"/></svg>
-            </div>
-            <div class="bp-body">
-              <div class="bp-flight">
-                <div class="bp-label" style="display: flex; justify-content: space-between;">
-                  <span>INBOUND TO ISRAEL</span>
-                  ${arrivalFlight ? `<span style="font-weight:bold; color:var(--accent);">${arrivalFlight}</span>` : ''}
-                </div>
-                <div class="bp-route">
-                  <span class="bp-city">${origin}</span>
-                  <span class="bp-arrow">→</span>
-                  <span class="bp-city">TLV</span>
-                </div>
-                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                  <span>${arrivalAirline ? arrivalAirline + ' | ' : ''}${arrival} ${arrivalTime ? '- ' + arrivalTime : ''}</span>
-                </div>
-              </div>
-
-              <div class="bp-divider"></div>
-              <div class="bp-flight">
-                <div class="bp-label" style="display: flex; justify-content: space-between;">
-                  <span>OUTBOUND FROM ISRAEL</span>
-                  ${departureFlight ? `<span style="font-weight:bold; color:var(--accent);">${departureFlight}</span>` : ''}
-                </div>
-                <div class="bp-route">
-                  <span class="bp-city">TLV</span>
-                  <span class="bp-arrow">→</span>
-                  <span class="bp-city">${dest}</span>
-                </div>
-                <div class="bp-date" style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                  <span>${departureAirline ? departureAirline + ' | ' : ''}${departure} ${departureTime ? '- ' + departureTime : ''}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
 
       // 4. RUBRIC: Airport Shuttle & Transfers (shown if shuttle is assigned or fellow passengers are scheduled)
       if (hasShuttle || togetherNames.length > 0) {
@@ -1596,7 +1903,7 @@ function closeWelcomeModal() {
         ` : '';
 
         html += `
-          <div class="flight-rubric-wrap">
+          <div class="flight-rubric-wrap" id="flight-shuttle-wrapper">
             <div class="rubric-subheading">
               <div class="rubric-title">
                 <span>🚐</span>
@@ -4005,8 +4312,15 @@ function closeWelcomeModal() {
       }
       
       // If we closed it manually via the X or overlay, we must clean up the hash
-      if (isHashChange !== true && (window.location.hash === "#sheet" || window.location.hash === "#timetable")) {
-        history.back();
+      const isTourActive = !!(currentTourTab || document.body.classList.contains('tour-active-sheet'));
+      if (isHashChange !== true && !isTourActive && (window.location.hash === "#sheet" || window.location.hash === "#timetable")) {
+        try {
+          history.back();
+        } catch(e) {}
+      } else if (window.location.hash === "#sheet") {
+        try {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        } catch(e) {}
       }
     }
 
@@ -6399,33 +6713,54 @@ function closeWelcomeModal() {
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
         'PRODID:-//Israel Music Showcase Festival 2026//Timetable//EN',
-        'CALSCALE:GREGORIAN',
-        `METHOD:${isCancellation ? 'CANCEL' : 'PUBLISH'}`,
-        'X-WR-CALNAME:IMSF 2026 - My Shows',
-        'X-WR-TIMEZONE:Asia/Jerusalem',
-        'BEGIN:VTIMEZONE',
-        'TZID:Asia/Jerusalem',
-        'X-LIC-LOCATION:Asia/Jerusalem',
-        'BEGIN:STANDARD',
-        'TZOFFSETFROM:+0300',
-        'TZOFFSETTO:+0200',
-        'TZNAME:IST',
-        'DTSTART:19701025T020000',
-        'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10',
-        'END:STANDARD',
-        'BEGIN:DAYLIGHT',
-        'TZOFFSETFROM:+0200',
-        'TZOFFSETTO:+0300',
-        'TZNAME:IDT',
-        'DTSTART:19700327T020000',
-        'RRULE:FREQ=YEARLY;BYDAY=-1FR;BYMONTH=3',
-        'END:DAYLIGHT',
-        'END:VTIMEZONE'
+        'CALSCALE:GREGORIAN'
       ];
+
+      if (isCancellation) {
+        lines.push('METHOD:CANCEL');
+      }
+
+      lines.push('X-WR-CALNAME:IMSF 2026 - My Shows');
+      lines.push('X-WR-TIMEZONE:Asia/Jerusalem');
+      lines.push('BEGIN:VTIMEZONE');
+      lines.push('TZID:Asia/Jerusalem');
+      lines.push('X-LIC-LOCATION:Asia/Jerusalem');
+      lines.push('BEGIN:STANDARD');
+      lines.push('TZOFFSETFROM:+0300');
+      lines.push('TZOFFSETTO:+0200');
+      lines.push('TZNAME:IST');
+      lines.push('DTSTART:19701025T020000');
+      lines.push('RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10');
+      lines.push('END:STANDARD');
+      lines.push('BEGIN:DAYLIGHT');
+      lines.push('TZOFFSETFROM:+0200');
+      lines.push('TZOFFSETTO:+0300');
+      lines.push('TZNAME:IDT');
+      lines.push('DTSTART:19700327T020000');
+      lines.push('RRULE:FREQ=YEARLY;BYDAY=-1FR;BYMONTH=3');
+      lines.push('END:DAYLIGHT');
+      lines.push('END:VTIMEZONE');
+
+      function getIcsAlarmUuid(id) {
+        const clean = String(id || '').replace(/[^a-zA-Z0-9]/g, '');
+        let hash = 0x811c9dc5;
+        const seed = `imsf-alarm-5m-${clean}`;
+        for (let i = 0; i < seed.length; i++) {
+          hash ^= seed.charCodeAt(i);
+          hash = Math.imul(hash, 0x01000193);
+        }
+        const h1 = (Math.abs(hash) & 0xffffffff).toString(16).padStart(8, '0');
+        const h2 = ((Math.abs(hash) >>> 4) & 0xffff).toString(16).padStart(4, '0');
+        const h3 = '4' + ((Math.abs(hash) >>> 8) & 0x0fff).toString(16).padStart(3, '0');
+        const h4 = 'a' + ((Math.abs(hash) >>> 12) & 0x0fff).toString(16).padStart(3, '0');
+        const h5 = (h1 + h1).slice(0, 12);
+        return `${h1}-${h2}-${h3}-${h4}-${h5}`.toUpperCase();
+      }
 
       shows.forEach(show => {
         const artist = show.matchedArtist;
         const displayName = artist ? artist.name : show.artistName;
+        const dayObj = (typeof FESTIVAL_TIMETABLE_DAYS !== 'undefined') ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === show.date) : null;
         
         let startH = 19, startM = 0;
         if (show.startTime) {
@@ -6464,9 +6799,8 @@ function closeWelcomeModal() {
         if (!cleanStage.toLowerCase().endsWith('stage')) {
           cleanStage = `${cleanStage} Stage`;
         }
-        // Format: <Artist Name> | <Stage Name> Stage
         const eventSummary = `${displayName} | ${cleanStage}`;
-        const exactLocation = getSpecificShowLocation(show);
+        const exactLocation = (typeof getSpecificShowLocation === 'function') ? getSpecificShowLocation(show) : [show.stage, dayObj ? dayObj.venue : '', dayObj ? dayObj.city : ''].filter(Boolean).join(', ');
         const portalDeepLink = `${baseUrl}/?tab=artists&date=${encodeURIComponent(show.date)}&show=${encodeURIComponent(show.id)}${artist ? `&artist=${encodeURIComponent(artist.id)}` : ''}`;
 
         const desc = `Israel Music Showcase Festival 2026\\nArtist: ${escapeIcsText(displayName)}\\nStage: ${escapeIcsText(cleanStage)}\\nTime: ${escapeIcsText(show.startTime || 'TBA')}${show.endTime ? ' - ' + escapeIcsText(show.endTime) : ''}\\nLocation: ${escapeIcsText(exactLocation)}\\nReminder: Starts in 5 minutes!\\n\\nView in Festival Portal:\\n${portalDeepLink}`;
@@ -6477,18 +6811,24 @@ function closeWelcomeModal() {
         lines.push(`DTSTART;TZID=Asia/Jerusalem:${formatLocal(startDt)}`);
         lines.push(`DTEND;TZID=Asia/Jerusalem:${formatLocal(endDt)}`);
         lines.push(`SUMMARY:${escapeIcsText(eventSummary)}`);
+        lines.push('ORGANIZER;CN="Israel Music Showcase Festival 2026":mailto:production@yellowsubmarine.org.il');
         lines.push(`LOCATION:${escapeIcsText(exactLocation)}`);
         lines.push(`URL;VALUE=URI:${portalDeepLink}`);
         lines.push(`DESCRIPTION:${desc}`);
+        lines.push(`SEQUENCE:${isCancellation ? 2 : 1}`);
 
         if (isCancellation) {
           lines.push('STATUS:CANCELLED');
         } else {
           lines.push('STATUS:CONFIRMED');
+          const alarmUuid = getIcsAlarmUuid(show.id);
           lines.push('BEGIN:VALARM');
-          lines.push('TRIGGER:-PT5M');
           lines.push('ACTION:DISPLAY');
-          lines.push(`DESCRIPTION:${escapeIcsText(displayName)} starts in 5 minutes at ${escapeIcsText(cleanStage)}!`);
+          lines.push('DESCRIPTION:Reminder');
+          lines.push('TRIGGER:-PT5M');
+          lines.push('X-APPLE-DEFAULT-ALARM:FALSE');
+          lines.push(`UID:${alarmUuid}`);
+          lines.push(`X-WR-ALARMUID:${alarmUuid}`);
           lines.push('END:VALARM');
         }
 
@@ -6496,7 +6836,7 @@ function closeWelcomeModal() {
       });
 
       lines.push('END:VCALENDAR');
-      return lines.join('\r\n');
+      return lines.join('\r\n') + '\r\n';
     }
     window.generateIcsContent = generateIcsContent;
 
@@ -6543,13 +6883,17 @@ function closeWelcomeModal() {
       const successText = document.getElementById('calendar-success-text');
       const successDetail = document.getElementById('calendar-success-detail');
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isIOS = (typeof navigator !== 'undefined') && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
-      if (actionType === 'download') {
+      if (actionType === 'download' || actionType === 'file-download') {
+        try {
+          const syncedIds = shows.map(s => s.id);
+          localStorage.setItem('imsf_synced_calendar_show_ids', JSON.stringify(syncedIds));
+        } catch(e) {}
+
         const icsString = generateIcsContent(shows, false);
 
-        if (isIOS) {
-          // 1-Tap iOS native calendar sheet without download prompt
+        if (isIOS && actionType !== 'file-download') {
           window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
         } else {
           const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
@@ -6560,7 +6904,7 @@ function closeWelcomeModal() {
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
         }
 
         if (actionsDiv) actionsDiv.style.display = 'none';
@@ -6569,14 +6913,29 @@ function closeWelcomeModal() {
           successDiv.style.display = 'block';
           if (successText) successText.innerText = 'Calendar Ready!';
           if (successDetail) {
-            successDetail.innerText = isIOS 
-              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.'
-              : 'Open the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
+            successDetail.innerHTML = (isIOS && actionType !== 'file-download')
+              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.<br><br><span style="font-size:0.8rem; opacity:0.9;">Want to download the .ics file directly? <a href="javascript:void(0)" onclick="executeCalendarSync(\'file-download\')" style="color:var(--accent); text-decoration:underline; font-weight:bold;">Tap here</a></span>'
+              : 'Open or import the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
           }
         }
       } else if (actionType === 'cancel') {
-        const allKnownShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(shouldKeepTimetableItem);
-        const icsString = generateIcsContent(shows.length > 0 ? shows : allKnownShows, true);
+        let showsToCancel = [];
+        try {
+          const savedIds = JSON.parse(localStorage.getItem('imsf_synced_calendar_show_ids') || '[]');
+          if (Array.isArray(savedIds) && savedIds.length > 0) {
+            const allSchedule = (typeof FESTIVAL_SHOWS_SCHEDULE !== 'undefined') ? FESTIVAL_SHOWS_SCHEDULE : [];
+            showsToCancel = allSchedule.filter(s => savedIds.includes(s.id));
+          }
+        } catch (e) {}
+
+        if (showsToCancel.length === 0 && shows.length > 0) {
+          showsToCancel = shows;
+        }
+        if (showsToCancel.length === 0) {
+          showsToCancel = (typeof FESTIVAL_SHOWS_SCHEDULE !== 'undefined') ? FESTIVAL_SHOWS_SCHEDULE.filter(shouldKeepTimetableItem) : [];
+        }
+
+        const icsString = generateIcsContent(showsToCancel, true);
 
         if (isIOS) {
           window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
@@ -6589,15 +6948,23 @@ function closeWelcomeModal() {
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
         }
+
+        try {
+          localStorage.removeItem('imsf_synced_calendar_show_ids');
+        } catch (e) {}
 
         if (actionsDiv) actionsDiv.style.display = 'none';
         if (statusDiv) statusDiv.style.display = 'none';
         if (successDiv) {
           successDiv.style.display = 'block';
           if (successText) successText.innerText = 'Cancellation Ready!';
-          if (successDetail) successDetail.innerText = 'Open or confirm the cancellation file to remove previously added festival shows from your calendar.';
+          if (successDetail) {
+            successDetail.innerText = isIOS
+              ? 'Confirm on your screen to remove previously added festival shows from your calendar.'
+              : 'Open or import the downloaded cancellation file to remove previously added festival shows from your calendar.';
+          }
         }
       }
     }
@@ -8718,17 +9085,67 @@ function viewAdminGuestDetails(rowIndex) {
       flightHtml += `<div style="margin-top:4px; font-size:0.85rem; color:var(--accent-bright);">Notes: ${flightNotes}</div>`;
     }
     const cleanAdminCheckInNotes = (checkInNotes && !/פוענח|סריקה|שגיאה|parsed|parser|gemini/i.test(checkInNotes)) ? String(checkInNotes).trim() : '';
-    if (bookingCode || checkInLink || cleanAdminCheckInNotes) {
-      flightHtml += `
-        <div style="margin-top:8px; padding:10px; background:rgba(241, 169, 160, 0.1); border:1.5px solid rgba(241, 169, 160, 0.35); border-radius:6px; font-size:0.85rem;">
-          <div style="font-weight:bold; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
-            <span>🛫</span><span>Web Check-In & Booking:</span>
+    const adminParsedCheckIn = parseCheckInDetails(
+      bookingCode, 
+      checkInLink, 
+      cleanAdminCheckInNotes,
+      { airline: arrivalAirline, flight: arrivalFlight },
+      { airline: departureAirline, flight: departureFlight }
+    );
+
+    const hasAdminCheckIn = Boolean(
+      adminParsedCheckIn.isDual || 
+      adminParsedCheckIn.single.code || 
+      adminParsedCheckIn.single.url || 
+      adminParsedCheckIn.single.notes
+    );
+
+    if (hasAdminCheckIn) {
+      if (adminParsedCheckIn.isDual) {
+        flightHtml += `
+          <div style="margin-top:8px; padding:10px; background:rgba(241, 169, 160, 0.1); border:1.5px solid rgba(241, 169, 160, 0.35); border-radius:6px; font-size:0.85rem;">
+            <div style="font-weight:bold; color:var(--accent); margin-bottom:6px; display:flex; align-items:center; gap:5px;">
+              <span>🛫</span><span>Web Check-In & Booking (Dual Flights):</span>
+            </div>
+            
+            <!-- Inbound -->
+            <div style="padding:6px 8px; background:rgba(0,0,0,0.15); border-radius:5px; margin-bottom:6px;">
+              <div style="font-weight:700; color:var(--foreground); display:flex; justify-content:space-between; margin-bottom:3px;">
+                <span>🛬 Inbound to Israel</span>
+                ${adminParsedCheckIn.inbound.airline ? `<span style="color:var(--accent-bright); font-size:0.8rem;">${escapeHtml([adminParsedCheckIn.inbound.airline, adminParsedCheckIn.inbound.flight].filter(Boolean).join(' · '))}</span>` : ''}
+              </div>
+              ${adminParsedCheckIn.inbound.code ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent);">${escapeHtml(adminParsedCheckIn.inbound.code)}</code></div>` : ''}
+              ${adminParsedCheckIn.inbound.url ? `<div style="margin-top:2px;"><strong>Link:</strong> <a href="${escapeHtml(adminParsedCheckIn.inbound.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(adminParsedCheckIn.inbound.url.length > 40 ? adminParsedCheckIn.inbound.url.slice(0, 40) + '...' : adminParsedCheckIn.inbound.url)}</a></div>` : ''}
+              ${adminParsedCheckIn.inbound.notes ? `<div style="margin-top:2px; color:var(--foreground-muted);"><strong>Note:</strong> ${escapeHtml(adminParsedCheckIn.inbound.notes)}</div>` : ''}
+            </div>
+
+            <!-- Outbound -->
+            <div style="padding:6px 8px; background:rgba(0,0,0,0.15); border-radius:5px;">
+              <div style="font-weight:700; color:var(--foreground); display:flex; justify-content:space-between; margin-bottom:3px;">
+                <span>🛫 Outbound from Israel</span>
+                ${adminParsedCheckIn.outbound.airline ? `<span style="color:var(--accent-bright); font-size:0.8rem;">${escapeHtml([adminParsedCheckIn.outbound.airline, adminParsedCheckIn.outbound.flight].filter(Boolean).join(' · '))}</span>` : ''}
+              </div>
+              ${adminParsedCheckIn.outbound.code ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent);">${escapeHtml(adminParsedCheckIn.outbound.code)}</code></div>` : ''}
+              ${adminParsedCheckIn.outbound.url ? `<div style="margin-top:2px;"><strong>Link:</strong> <a href="${escapeHtml(adminParsedCheckIn.outbound.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(adminParsedCheckIn.outbound.url.length > 40 ? adminParsedCheckIn.outbound.url.slice(0, 40) + '...' : adminParsedCheckIn.outbound.url)}</a></div>` : ''}
+              ${adminParsedCheckIn.outbound.notes ? `<div style="margin-top:2px; color:var(--foreground-muted);"><strong>Note:</strong> ${escapeHtml(adminParsedCheckIn.outbound.notes)}</div>` : ''}
+            </div>
+
+            ${adminParsedCheckIn.generalNotes ? `<div style="margin-top:5px; color:var(--foreground-muted);"><strong>General Notes:</strong> ${escapeHtml(adminParsedCheckIn.generalNotes)}</div>` : ''}
           </div>
-          ${bookingCode ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent); background:rgba(0,0,0,0.15); padding:2px 6px; border-radius:4px;">${escapeHtml(bookingCode)}</code></div>` : ''}
-          ${checkInLink ? `<div style="margin-top:3px;"><strong>Link:</strong> <a href="${escapeHtml(checkInLink)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(checkInLink.length > 45 ? checkInLink.slice(0, 45) + '...' : checkInLink)}</a></div>` : ''}
-          ${cleanAdminCheckInNotes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(cleanAdminCheckInNotes)}</div>` : ''}
-        </div>
-      `;
+        `;
+      } else {
+        const sc = adminParsedCheckIn.single;
+        flightHtml += `
+          <div style="margin-top:8px; padding:10px; background:rgba(241, 169, 160, 0.1); border:1.5px solid rgba(241, 169, 160, 0.35); border-radius:6px; font-size:0.85rem;">
+            <div style="font-weight:bold; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:5px;">
+              <span>🛫</span><span>Web Check-In & Booking:</span>
+            </div>
+            ${sc.code ? `<div><strong>Code:</strong> <code style="font-family:monospace; font-weight:bold; color:var(--accent); background:rgba(0,0,0,0.15); padding:2px 6px; border-radius:4px;">${escapeHtml(sc.code)}</code></div>` : ''}
+            ${sc.url ? `<div style="margin-top:3px;"><strong>Link:</strong> <a href="${escapeHtml(sc.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">${escapeHtml(sc.url.length > 45 ? sc.url.slice(0, 45) + '...' : sc.url)}</a></div>` : ''}
+            ${sc.notes ? `<div style="margin-top:3px; color:var(--foreground-muted);"><strong>Notes:</strong> ${escapeHtml(sc.notes)}</div>` : ''}
+          </div>
+        `;
+      }
     }
   }
 

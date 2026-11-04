@@ -218,5 +218,32 @@ function populateProductionScheduleData() {
   return statusResults;
 }
 
+function setupAnatMirrorSheet() {
+  const masterSS = SpreadsheetApp.getActiveSpreadsheet();
+  const masterID = masterSS.getId();
+  const anatSsId = CONFIG.ANAT_SPREADSHEET_ID;
+  if (!anatSsId) return { success: false, message: "ANAT_SPREADSHEET_ID not defined in CONFIG" };
+  
+  const anatSS = SpreadsheetApp.openById(anatSsId);
+  const mirrorName = "שיקוף_אורחים";
+  let sheet = anatSS.getSheetByName(mirrorName);
+  let created = false;
+  if (!sheet) {
+    sheet = anatSS.insertSheet(mirrorName);
+    created = true;
+  }
+  
+  sheet.getRange("A1").setFormula(`=IMPORTRANGE("${masterID}", "'אורחים'!A:AF")`);
+  
+  return {
+    success: true,
+    created: created,
+    mirrorSheetName: mirrorName,
+    anatSpreadsheetId: anatSsId,
+    masterId: masterID
+  };
+}
+
+
 
 

@@ -128,8 +128,8 @@
 14. **✈️ רכיבי טיסות, צ'ק-אין מקוון ומסמכי מעבר (Flights, Web Check-In & Travel Rubrics Components):**
     * **מעטפת רובריקה תקנית:** `.flight-rubric-wrap` (עוטפת כל אחת מ-4 רובריקות הטיסה במרווח אנכי תקני ומבנה נקי).
     * **מיני-כותרת רובריקה מעוצבת:** `.rubric-subheading` (גופן Oswald, אותיות גדולות, פס הדגשה סלמון שמאלי).
-    * **כותרת הרובריקה:** `.rubric-title` (למשל `Travel & Border Documents`, `Online Web Check-In`, `Flight Schedule & Routes`, `Airport Shuttle & Transfers`).
-    * **תגית קטגוריה ברובריקה:** `.rubric-tag` (תגית מינימליסטית לצד הכותרת, כגון `Documents`, `Important`, `Itinerary`, `Transfer`).
+    * **כותרת הרובריקה:** `.rubric-title` (למשל `Travel & Border Documents`, `Online Web Check-In`, `Airport Shuttle & Transfers`).
+    * **תגית קטגוריה ברובריקה:** `.rubric-tag` (תגית מינימליסטית לצד הכותרת, כגון `Documents`, `Important`, `Transfer`).
     * **רובריקה 1 - מסמכי טיסה ומעבר גבול:**
       - `.flight-documents-actions`: מיכל כפתורי המסמכים.
       - כפתור כרטיס טיסה אלקטרוני: `View E-Ticket (PDF)` או פיצול לשניים `Inbound Ticket (PDF)` ו-`Outbound Ticket (PDF)`.

@@ -250,11 +250,10 @@
         <div id="schedule-card" class="card col-span-3 fade-up" style="animation-delay: 0.15s; display: block;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <h3 style="margin: 0;">Itinerary</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 12px;">
               <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('itinerary')" title="How this tab works">
                 <span class="guide-icon">💡</span>
-                <span class="guide-text">Quick Guide</span>
+                <span class="guide-text">Quick Guide for Itinerary</span>
               </button>
             </div>
             <div id="schedule-days-nav" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none;">
@@ -287,11 +286,16 @@
         <div id="mytrip-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.2s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3 style="margin-bottom: 8px;">My Trip</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 8px;">
+              <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('mytrip')" title="How this tab works">
+                <span class="guide-icon">💡</span>
+                <span class="guide-text">Quick Guide for My Trip</span>
+              </button>
+            </div>
             <p class="desc" style="margin-bottom: 1.5rem;">Your personal travel itinerary, flights, and accommodations in Jerusalem and Tel Aviv.</p>
 
             <!-- SECTION: FLIGHT DETAILS -->
-            <div class="mytrip-section" style="margin-bottom: 2rem;">
+            <div id="mytrip-flight-section" class="mytrip-section" style="margin-bottom: 2rem;">
               <h4 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
                 <span>✈️</span> Flight Details
               </h4>
@@ -312,7 +316,7 @@
             <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; opacity: 0.3;" />
 
             <!-- SECTION: ACCOMMODATIONS -->
-            <div class="mytrip-section">
+            <div id="mytrip-accommodations-section" class="mytrip-section">
               <h4 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
                 <span>🏨</span> Accommodations
               </h4>
@@ -365,11 +369,10 @@
         <div id="guide-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.25s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-              <h3 style="margin: 0;">Guide & Recommendations</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 8px;">
               <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('guide')" title="How this tab works">
                 <span class="guide-icon">💡</span>
-                <span class="guide-text">Quick Guide</span>
+                <span class="guide-text">Quick Guide for Guide</span>
               </button>
             </div>
             <p class="desc" style="margin-bottom: 1.25rem;">Curated spots, festival venues, essential apps, and local tips.</p>
@@ -410,11 +413,10 @@
         <div id="directory-card" class="card col-span-3 fade-up" style="animation-delay: 0.4s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <h3 style="margin: 0;">Delegates</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 12px;">
               <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('directory')" title="How this tab works">
                 <span class="guide-icon">💡</span>
-                <span class="guide-text">Quick Guide</span>
+                <span class="guide-text">Quick Guide for Delegates</span>
               </button>
             </div>
             
@@ -466,11 +468,10 @@
         <div id="artists-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.5s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <h3 style="margin: 0;">Artists</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 12px;">
               <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('artists')" title="How this tab works">
                 <span class="guide-icon">💡</span>
-                <span class="guide-text">Quick Guide</span>
+                <span class="guide-text">Quick Guide for Artist</span>
               </button>
             </div>
             <!-- ARTISTS SUB-NAVIGATION (Segmented Switcher) -->
@@ -1001,7 +1002,7 @@
 
         <!-- Friendly Reminder -->
         <div style="background: rgba(241, 169, 160, 0.15); border-left: 3.5px solid var(--accent, #F1A9A0); border-radius: 4px; padding: 10px 12px; margin-bottom: 16px; font-size: 0.83rem; line-height: 1.45; color: var(--foreground);">
-          <strong>💡 Friendly Reminder:</strong> Make sure you have favorited (❤️) all the bands you want to see across all 6 festival days <em>before</em> syncing, so your calendar has your complete festival itinerary!
+          <strong>💡 Friendly Reminder:</strong> Make sure you have favorited (❤️) all the bands you want to see across all 6 festival days <em>before</em> syncing. If you previously exported, clicking <strong>Add to Calendar</strong> will update your shows with the <strong>5-minute alarm</strong>!
         </div>
 
         <!-- Stats Chips -->
@@ -1136,8 +1137,8 @@
     <button type="button" onclick="resetLiveSimulation()" class="live-sim-reset-btn">Reset Clock</button>
   </div>
 
-  <script type="module" src="/main.js"></script>
-  <script type="module" src="/src/app.js"></script>
+  <script type="module" src="/main.js?v=12"></script>
+  <script type="module" src="/src/app.js?v=12"></script>
 
   <!-- FULLSCREEN IMAGE VIEWER -->
   <div id="fullscreen-image-viewer" class="fullscreen-viewer" onclick="closeImageViewer()">
