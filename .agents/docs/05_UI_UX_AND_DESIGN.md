@@ -230,6 +230,11 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Step 4 of the Artists tour explicitly reminds delegates to verify their calendar alerts are set to 5 minutes before showtime (or adjust default calendar alert settings).
   - **Conditional Shuttle Step**:
     - In My Trip, Step 3 (Airport Shuttle & Transfers) is strictly conditional (`isTourTargetVisible(shuttleEl)`). Only delegates with scheduled shuttles see this step; others have it omitted automatically.
+  - **Checkbox Gating & Locked Tab Visibility**:
+    - The Quick Guide button is strictly gated by the tab's approval checkbox from Google Sheets (`response.checklist`).
+    - If a tab is locked / unapproved (`approvalSchedule`, `approvalFlights`/`approvalHotels`, `approvalGuide`, `approvalDirectory`, `approvalArtists` is `false`), its Quick Guide button header (`#card-header-...`) is completely hidden (`display: none`).
+    - The button is only displayed (`display: flex`) when the corresponding content has been approved and unlocked for the delegate.
+    - `startTabTour` includes an internal `isTourTabLocked(tabKey)` guard ensuring no tour can be initiated on locked tabs.
 
 
 

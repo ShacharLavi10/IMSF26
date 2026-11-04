@@ -150,6 +150,7 @@
       - קישור שחזור פרטים: `.checkin-restore-link` ("Show check-in details").
       - מפתח שמירה ב-`localStorage`: `imsf_checkin_done_<bookingKey>`.
       - מנגנון תפוגה אוטומטי: הסתרה מלאה כאשר `today >= arrivalFlightDate + 1 day`.
+      - התניית תצוגה: הרובריקה מוצגת אך ורק כאשר קיים קוד הזמנה (Booking Reference) או קישור צ'ק-אין מקוון (Web Check-In Link). במידה ואין לאורח קוד הזמנה או לינק המשויכים למייל, הרובריקה מוסתרת לחלוטין למניעת כרטיסייה ריקה.
     * **רובריקה 3 - שאטלים והסעות מנתב"ג:**
       - מעטפת כרטיס שאטל: `.shuttle-info-card`.
       - פרטי מפגש וזמנים: הצגת שעת יציאה מנתב"ג.
@@ -180,8 +181,13 @@
   - מיכל רשימת האירועים: `#admin-schedule-events-container` (`.schedule-events-list`).
   - כרטיסיית משימה: `.schedule-event-inline` (`.event-time`, `.schedule-event-details`, `.schedule-title-row`, `.event-title`, `.schedule-cat-badge`, `.schedule-loc-link`, `.schedule-contact-btn`, `.event-desc`, `.schedule-inline-link`).
 
-15. **💡 מערכת סיורים מודרכים וספוטלייט חי בלשוניות (Tab Quick Guides & Live Spotlight):**
-    * **שורת כותרת הכרטיס:** `.card-header-row` (מיושרת ימינה `justify-content: flex-end`, ללא כותרת טאב כפולה).
+    * **שורת כותרת הכרטיס המנוהלת לפי צ'קבוקס אישור (Approval-Gated Headers):**
+      - `.card-header-row` (מיושרת ימינה `justify-content: flex-end`, ברירת מחדל מוסתרת `display: none`).
+      - `#card-header-itinerary`: כותרת כפתור לו"ז (מוצג רק כש-`approvalSchedule` מסומן).
+      - `#card-header-mytrip`: כותרת כפתור הטיול שלי (מוצג רק כש-`approvalFlights` או `approvalHotels` מסומנים).
+      - `#card-header-guide`: כותרת כפתור מדריך והמלצות (מוצג רק כש-`approvalGuide` מסומן).
+      - `#card-header-directory`: כותרת כפתור ספר אורחים (מוצג רק כש-`approvalDirectory` מסומן).
+      - `#card-header-artists`: כותרת כפתור אומנים (מוצג רק כש-`approvalArtists` מסומן; בהיעדר אישור מוסתרים גם מתגי הליינאפ והטיימטייבל `.artists-subnav-container`).
     * **כפתור פתיחת מדריך בלשונית (Tab Quick Guide Button):** `.tab-quick-guide-btn`, אייקון `.guide-icon` (💡), טקסט `.guide-text`.
     * **טקסט הכפתור לפי לשונית:**
       - `💡 Quick Guide for Itinerary` (לו"ז אירועים)
@@ -202,12 +208,13 @@
       - `#tour-popover-next`: כפתור שלב הבא (`nextTabTourStep()`, משתנה ל-`Got It ✓` בסיום).
     * **מזהי DOM ייעודיים לספוטלייט:**
       - `#travel-border-docs-rubric`: רובריקת מסמכי טיסה ומעבר גבול.
-      - `#flight-checkin-wrapper`: רובריקת צ'ק-אין מקוון.
+      - `#flight-checkin-wrapper`: רובריקת צ'ק-אין מקוון (מוצגת בסיור מותנה בלבד כאשר קיים קוד/לינק צ'ק-אין).
       - `#flight-shuttle-wrapper`: רובריקת שאטלים והסעות (מוצג בסיור מותנה בלבד).
       - `#mytrip-flight-section`: מקטע פרטי טיסות ומסמכים.
       - `#mytrip-accommodations-section`: מקטע מלונות וניווט למפות.
     * **פונקציות ליבה בקוד (`src/app.js`):**
-      - `startTabTour(tabKey)`: אתחול והפעלת הסיור לפי שם הלשונית.
+      - `startTabTour(tabKey)`: אתחול והפעלת הסיור לפי שם הלשונית (מוגן ב-`isTourTabLocked(tabKey)`).
+      - `isTourTabLocked(tabKey)`: בדיקת נעילת לשונית לפי תיבת ה-Pending הפעילה.
       - `closeTabTour()`: סגירה נקייה וביטול מאזיני גלילה/אנימציה.
       - `nextTabTourStep()`, `prevTabTourStep()`: מעבר שלבים.
       - `renderTabTourStep(stepIdx)`: עדכון תוכן הבועית ומציאת אלמנט המטרה.
