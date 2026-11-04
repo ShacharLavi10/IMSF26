@@ -180,6 +180,63 @@ const TAB_TOUR_CONFIGS = {
         }
       }
     ]
+  },
+  mytrip: {
+    name: "My Trip",
+    getSteps: () => {
+      const steps = [];
+
+      // Step 1: Travel & Border Documents
+      const borderDocsEl = document.getElementById("travel-border-docs-rubric");
+      if (borderDocsEl && isTourTargetVisible(borderDocsEl)) {
+        steps.push({
+          target: "#travel-border-docs-rubric",
+          title: "Travel & Border Documents",
+          desc: "Access your confirmed E-Ticket and official Israeli airport entry invitation letter to easily present upon arrival at border control."
+        });
+      } else {
+        steps.push({
+          target: "#mytrip-flight-section, #flights-container",
+          title: "Flight Details & E-Ticket",
+          desc: "Your confirmed flights, e-tickets, and arrival details into Israel all consolidated in one place."
+        });
+      }
+
+      // Step 2: Online Web Check-In
+      const checkinEl = document.getElementById("flight-checkin-wrapper");
+      if (checkinEl && isTourTargetVisible(checkinEl)) {
+        steps.push({
+          target: "#flight-checkin-wrapper",
+          title: "Online Web Check-In",
+          desc: "Copy your airline booking reference with one tap, open the check-in portal, and complete web check-in 24 hours prior to departure."
+        });
+      } else {
+        steps.push({
+          target: "#mytrip-flight-section, #flights-container",
+          title: "Online Web Check-In",
+          desc: "Copy your airline booking reference with one tap, open the check-in portal, and complete web check-in 24 hours prior to departure."
+        });
+      }
+
+      // Step 3: Airport Shuttle (Only if shuttle exists & is visible)
+      const shuttleEl = document.getElementById("flight-shuttle-wrapper") || document.querySelector(".shuttle-info-card");
+      if (shuttleEl && isTourTargetVisible(shuttleEl)) {
+        steps.push({
+          target: "#flight-shuttle-wrapper, .shuttle-info-card",
+          title: "Airport Shuttle & Transfers",
+          desc: "Check your confirmed airport shuttle pickup time and see fellow delegates sharing your ride from Ben Gurion airport."
+        });
+      }
+
+      // Step 4: Accommodations & Locations
+      steps.push({
+        target: "#mytrip-accommodations-section, #hotels-container",
+        title: "Accommodations & Locations",
+        desc: "View your hotel details in Jerusalem and Tel Aviv, and tap 'Location' on any card to launch direct Google Maps navigation."
+      });
+
+      return steps;
+    }
   }
 };
 
@@ -347,7 +404,7 @@ function renderTabTourStep(stepIdx) {
     if (isTourTargetVisible(targetEl)) {
       updateCutoutAndPopover(targetEl);
     } else {
-      const fallbackEl = document.querySelector("#subtab-artists-directory, #subtab-artists-timetable, .artist-card, #schedule-days-nav");
+      const fallbackEl = document.querySelector("#mytrip-card, #subtab-artists-directory, #subtab-artists-timetable, .artist-card, #schedule-days-nav");
       if (isTourTargetVisible(fallbackEl)) {
         updateCutoutAndPopover(fallbackEl);
       } else {
@@ -1457,7 +1514,7 @@ function closeWelcomeModal() {
       // 1. RUBRIC: Travel & Border Documents
       if (ticketLink || airportInvitationLink) {
         html += `
-          <div class="flight-rubric-wrap">
+          <div class="flight-rubric-wrap" id="travel-border-docs-rubric">
             <div class="rubric-subheading">
               <div class="rubric-title">
                 <span>📄</span>
@@ -1622,7 +1679,7 @@ function closeWelcomeModal() {
         ` : '';
 
         html += `
-          <div class="flight-rubric-wrap">
+          <div class="flight-rubric-wrap" id="flight-shuttle-wrapper">
             <div class="rubric-subheading">
               <div class="rubric-title">
                 <span>🚐</span>

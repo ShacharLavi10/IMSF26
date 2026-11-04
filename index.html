@@ -287,11 +287,17 @@
         <div id="mytrip-card" class="card col-span-3 fade-up" style="display: none; animation-delay: 0.2s;">
           <div class="spotlight"></div>
           <div class="card-content">
-            <h3 style="margin-bottom: 8px;">My Trip</h3>
+            <div class="card-header-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <h3 style="margin: 0;">My Trip</h3>
+              <button type="button" class="tab-quick-guide-btn" onclick="startTabTour('mytrip')" title="How this tab works">
+                <span class="guide-icon">💡</span>
+                <span class="guide-text">Quick Guide</span>
+              </button>
+            </div>
             <p class="desc" style="margin-bottom: 1.5rem;">Your personal travel itinerary, flights, and accommodations in Jerusalem and Tel Aviv.</p>
 
             <!-- SECTION: FLIGHT DETAILS -->
-            <div class="mytrip-section" style="margin-bottom: 2rem;">
+            <div id="mytrip-flight-section" class="mytrip-section" style="margin-bottom: 2rem;">
               <h4 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
                 <span>✈️</span> Flight Details
               </h4>
@@ -312,7 +318,7 @@
             <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2rem 0; opacity: 0.3;" />
 
             <!-- SECTION: ACCOMMODATIONS -->
-            <div class="mytrip-section">
+            <div id="mytrip-accommodations-section" class="mytrip-section">
               <h4 style="margin: 0 0 1rem; display: flex; align-items: center; gap: 8px; font-size: 1.25rem;">
                 <span>🏨</span> Accommodations
               </h4>
