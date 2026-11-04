@@ -174,7 +174,7 @@
   - סרגל אינדיקטור צף פעיל: `#live-sim-active-bar` (`#live-sim-status-text`).
 
 * **לו"ז הפקה ותפעול פנימי (Admin Production Schedule):**
-  - אקורדיון ראשי: `#admin-sec-prod-schedule` (`.admin-section-accordion`).
+  - אקורדיון ראשי: `#admin-sec-prod-schedule` (`.admin-section-accordion`). כל רובריקות ההפקה (`.admin-section-accordion`) מוגדרות כאקורדיון בלעדי (`name="admin-section"`) - פתיחת רובריקה סוגרת מיידית את שאר הרובריקות (בדומה ללשונית guide), ובכל מעבר/כניסה ללשונית ההפקה כל הרובריקות נסגרות כברירת מחדל. כפתור "רענן לו"ז" הוסר לטובת ממשק נקי.
   - תגית כמות משימות: `#admin-schedule-count-badge` (`.admin-section-badge`).
   - שדה חיפוש משימות: `#admin-schedule-search` (מסנן לפי משימה, מיקום, איש קשר, שעה וקטגוריה).
   - רצועת ימי הפסטיבל: `#admin-schedule-days-nav` (מכיל `.schedule-pill` עם `.day-weekday` ו-`.day-num`).
