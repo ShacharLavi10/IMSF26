@@ -6532,6 +6532,7 @@ function closeWelcomeModal() {
       shows.forEach(show => {
         const artist = show.matchedArtist;
         const displayName = artist ? artist.name : show.artistName;
+        const dayObj = (typeof FESTIVAL_TIMETABLE_DAYS !== 'undefined') ? FESTIVAL_TIMETABLE_DAYS.find(d => d.date === show.date) : null;
         
         let startH = 19, startM = 0;
         if (show.startTime) {
@@ -6566,26 +6567,18 @@ function closeWelcomeModal() {
           endDt.setDate(endDt.getDate() + 1);
         }
 
-        let cleanStage = (show.stage || 'Festival Stage').trim();
-        if (!cleanStage.toLowerCase().endsWith('stage')) {
-          cleanStage = `${cleanStage} Stage`;
-        }
-        // Format: <Artist Name> | <Stage Name> Stage
-        const eventSummary = `${displayName} | ${cleanStage}`;
-        const exactLocation = getSpecificShowLocation(show);
-        const portalDeepLink = `${baseUrl}/?tab=artists&date=${encodeURIComponent(show.date)}&show=${encodeURIComponent(show.id)}${artist ? `&artist=${encodeURIComponent(artist.id)}` : ''}`;
-
-        const desc = `Israel Music Showcase Festival 2026\\nArtist: ${escapeIcsText(displayName)}\\nStage: ${escapeIcsText(cleanStage)}\\nTime: ${escapeIcsText(show.startTime || 'TBA')}${show.endTime ? ' - ' + escapeIcsText(show.endTime) : ''}\\nLocation: ${escapeIcsText(exactLocation)}\\nReminder: Starts in 5 minutes!\\n\\nView in Festival Portal:\\n${portalDeepLink}`;
+        const locationStr = [show.stage, dayObj ? dayObj.venue : '', dayObj ? dayObj.city : ''].filter(Boolean).join(', ');
+        const desc = `Israel Music Showcase Festival 2026\\nArtist: ${escapeIcsText(displayName)}\\nStage: ${escapeIcsText(show.stage || 'Festival Stage')}\\nTime: ${escapeIcsText(show.startTime || 'TBA')} - ${escapeIcsText(show.endTime || '')}\\nVenue: ${escapeIcsText(dayObj ? dayObj.venue + ', ' + dayObj.city : '')}\\nReminder: Show starts in 5 minutes!\\nPortal: https://imsf26sandbox.vercel.app`;
 
         lines.push('BEGIN:VEVENT');
         lines.push(`UID:imsf2026-show-${show.id}@imsf-festival.com`);
         lines.push(`DTSTAMP:${dtstamp}`);
         lines.push(`DTSTART;TZID=Asia/Jerusalem:${formatLocal(startDt)}`);
         lines.push(`DTEND;TZID=Asia/Jerusalem:${formatLocal(endDt)}`);
-        lines.push(`SUMMARY:${escapeIcsText(eventSummary)}`);
-        lines.push(`LOCATION:${escapeIcsText(exactLocation)}`);
-        lines.push(`URL;VALUE=URI:${portalDeepLink}`);
+        lines.push(`SUMMARY:🎸 ${escapeIcsText(displayName)} (IMSF 2026)`);
+        lines.push(`LOCATION:${escapeIcsText(locationStr)}`);
         lines.push(`DESCRIPTION:${desc}`);
+        lines.push(`SEQUENCE:${isCancellation ? 2 : 1}`);
 
         if (isCancellation) {
           lines.push('STATUS:CANCELLED');
@@ -6652,61 +6645,46 @@ function closeWelcomeModal() {
       const successText = document.getElementById('calendar-success-text');
       const successDetail = document.getElementById('calendar-success-detail');
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
       if (actionType === 'download') {
         const icsString = generateIcsContent(shows, false);
-
-        if (isIOS) {
-          // 1-Tap iOS native calendar sheet without download prompt
-          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
-        } else {
-          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'IMSF_2026_My_Shows.ics';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }
+        const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'IMSF_2026_My_Shows.ics';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
 
         if (actionsDiv) actionsDiv.style.display = 'none';
         if (statusDiv) statusDiv.style.display = 'none';
         if (successDiv) {
           successDiv.style.display = 'block';
-          if (successText) successText.innerText = 'Calendar Ready!';
+          if (successText) successText.innerText = 'Calendar File Downloaded!';
           if (successDetail) {
-            successDetail.innerText = isIOS 
-              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.'
-              : 'Open the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
+            successDetail.innerText = 'Open or tap the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
           }
         }
       } else if (actionType === 'cancel') {
         const allKnownShows = (FESTIVAL_SHOWS_SCHEDULE || []).filter(shouldKeepTimetableItem);
         const icsString = generateIcsContent(shows.length > 0 ? shows : allKnownShows, true);
-
-        if (isIOS) {
-          window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
-        } else {
-          const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'IMSF_2026_Cancel_Shows.ics';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }
+        const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'IMSF_2026_Cancel_Shows.ics';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
 
         if (actionsDiv) actionsDiv.style.display = 'none';
         if (statusDiv) statusDiv.style.display = 'none';
         if (successDiv) {
           successDiv.style.display = 'block';
-          if (successText) successText.innerText = 'Cancellation Ready!';
-          if (successDetail) successDetail.innerText = 'Open or confirm the cancellation file to remove previously added festival shows from your calendar.';
+          if (successText) successText.innerText = 'Cancellation File Downloaded!';
+          if (successDetail) successDetail.innerText = 'Open or tap the downloaded cancellation file to remove previously added festival shows from your calendar.';
         }
       }
     }
