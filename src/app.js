@@ -138,7 +138,7 @@ const TAB_TOUR_CONFIGS = {
       {
         target: ".timetable-calendar-sync-btn",
         title: "1-Tap Calendar Sync",
-        desc: "Sync your favorited shows directly into Apple Calendar, Google Calendar, or Outlook to get automatic alerts 5 minutes before each showcase starts!",
+        desc: "Sync your favorited shows directly into Apple Calendar, Google Calendar, or Outlook. After syncing, please check that alerts are set to 5 minutes before (or adjust your calendar's default notification setting).",
         onEnter: () => {
           document.body.classList.remove('tour-active-sheet');
           const sheet = document.getElementById('artist-bottom-sheet');
