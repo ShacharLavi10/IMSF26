@@ -6741,6 +6741,22 @@ function closeWelcomeModal() {
       lines.push('END:DAYLIGHT');
       lines.push('END:VTIMEZONE');
 
+      function getIcsAlarmUuid(id) {
+        const clean = String(id || '').replace(/[^a-zA-Z0-9]/g, '');
+        let hash = 0x811c9dc5;
+        const seed = `imsf-alarm-5m-${clean}`;
+        for (let i = 0; i < seed.length; i++) {
+          hash ^= seed.charCodeAt(i);
+          hash = Math.imul(hash, 0x01000193);
+        }
+        const h1 = (Math.abs(hash) & 0xffffffff).toString(16).padStart(8, '0');
+        const h2 = ((Math.abs(hash) >>> 4) & 0xffff).toString(16).padStart(4, '0');
+        const h3 = '4' + ((Math.abs(hash) >>> 8) & 0x0fff).toString(16).padStart(3, '0');
+        const h4 = 'a' + ((Math.abs(hash) >>> 12) & 0x0fff).toString(16).padStart(3, '0');
+        const h5 = (h1 + h1).slice(0, 12);
+        return `${h1}-${h2}-${h3}-${h4}-${h5}`.toUpperCase();
+      }
+
       shows.forEach(show => {
         const artist = show.matchedArtist;
         const displayName = artist ? artist.name : show.artistName;
@@ -6805,10 +6821,14 @@ function closeWelcomeModal() {
           lines.push('STATUS:CANCELLED');
         } else {
           lines.push('STATUS:CONFIRMED');
+          const alarmUuid = getIcsAlarmUuid(show.id);
           lines.push('BEGIN:VALARM');
           lines.push('ACTION:DISPLAY');
           lines.push('DESCRIPTION:Reminder');
           lines.push('TRIGGER:-PT5M');
+          lines.push('X-APPLE-DEFAULT-ALARM:FALSE');
+          lines.push(`UID:${alarmUuid}`);
+          lines.push(`X-WR-ALARMUID:${alarmUuid}`);
           lines.push('END:VALARM');
         }
 
@@ -6816,7 +6836,7 @@ function closeWelcomeModal() {
       });
 
       lines.push('END:VCALENDAR');
-      return lines.join('\r\n');
+      return lines.join('\r\n') + '\r\n';
     }
     window.generateIcsContent = generateIcsContent;
 
@@ -6865,7 +6885,7 @@ function closeWelcomeModal() {
 
       const isIOS = (typeof navigator !== 'undefined') && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
-      if (actionType === 'download') {
+      if (actionType === 'download' || actionType === 'file-download') {
         try {
           const syncedIds = shows.map(s => s.id);
           localStorage.setItem('imsf_synced_calendar_show_ids', JSON.stringify(syncedIds));
@@ -6873,7 +6893,7 @@ function closeWelcomeModal() {
 
         const icsString = generateIcsContent(shows, false);
 
-        if (isIOS) {
+        if (isIOS && actionType !== 'file-download') {
           window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsString);
         } else {
           const blob = new Blob([icsString], { type: 'text/calendar;charset=utf-8' });
@@ -6893,8 +6913,8 @@ function closeWelcomeModal() {
           successDiv.style.display = 'block';
           if (successText) successText.innerText = 'Calendar Ready!';
           if (successDetail) {
-            successDetail.innerText = isIOS 
-              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.'
+            successDetail.innerHTML = (isIOS && actionType !== 'file-download')
+              ? 'Tap "Add All" in the Apple Calendar screen to save all ' + shows.length + ' shows with 5-minute alerts.<br><br><span style="font-size:0.8rem; opacity:0.9;">Want to download the .ics file directly? <a href="javascript:void(0)" onclick="executeCalendarSync(\'file-download\')" style="color:var(--accent); text-decoration:underline; font-weight:bold;">Tap here</a></span>'
               : 'Open or import the downloaded calendar file to add all ' + shows.length + ' shows to your calendar with 5-minute alerts.';
           }
         }
