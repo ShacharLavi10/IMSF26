@@ -204,6 +204,10 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
     - Event times are scrubbed of any date/year/ISO artifacts, rendering cleanly as `HH:MM` or `HH:MM-HH:MM` (`.event-time`, `.time-part`, `.time-dash`).
   - **Visual Symmetry**:
     - Admin Production Schedule mirrors the Guest Itinerary layout (`.schedule-events-list`, `.schedule-event-inline`), incorporating compact inline location links (`.schedule-loc-link`), quick contact actions (`.schedule-contact-btn.call`, `.schedule-contact-btn.wa`), and category badge styling (`.schedule-cat-badge`).
+  - **Exclusive Accordions & Default-Closed State (`.admin-section-accordion`, `name="admin-section"`)**:
+    - All Production tab rubrics (Production Overview, Production Schedule, Lineup & Networking Leads, and Guest Management) are configured as exclusive accordions. Expanding one section automatically collapses any previously open section across both desktop and mobile viewports.
+    - Every time an admin switches/navigates into the Production tab (`switchCategoryTab('admin')`), all rubrics are collapsed by default to present a clean, organized starting view.
+    - The redundant "רענן לו"ז" (Refresh Schedule) button in the Production Schedule rubric has been removed to maintain visual clarity.
 
 - **Interactive Tab Quick Guides & Live Spotlight (`.tab-quick-guide-btn`, `#tour-spotlight-backdrop`, `#tour-spotlight-cutout`, `#tour-spotlight-popover`)**:
   - **Pill Button Design & Header Alignment**:

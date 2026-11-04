@@ -629,6 +629,12 @@ function closeWelcomeModal() {
         if (t === 'admin' && tabName === 'admin') {
           if (isCurrentGuestAdmin) {
             loadAdminDashboard();
+            const adminContainer = document.getElementById("admin-dashboard-container");
+            if (adminContainer) {
+              adminContainer.querySelectorAll('details.admin-section-accordion[open]').forEach(acc => {
+                acc.removeAttribute('open');
+              });
+            }
           }
         }
         if (t === 'guide' && tabName === 'guide') {
@@ -3466,6 +3472,40 @@ function closeWelcomeModal() {
         const container = acc.closest('#guide-content-area') || acc.parentElement;
         if (container) {
           container.querySelectorAll('details.guide-category-accordion[open]').forEach(other => {
+            if (other !== acc) {
+              other.removeAttribute('open');
+            }
+          });
+        }
+      }
+    }, true);
+
+    // Exclusive accordion for admin / production sections: only one section open at a time (Desktop & Mobile)
+    document.addEventListener('click', function(e) {
+      const summary = e.target.closest('.admin-section-summary');
+      if (!summary) return;
+      const acc = summary.closest('details.admin-section-accordion');
+      if (!acc) return;
+
+      if (!acc.open) {
+        const container = acc.closest('.admin-sections-wrapper') || acc.parentElement;
+        if (container) {
+          container.querySelectorAll('details.admin-section-accordion[open]').forEach(other => {
+            if (other !== acc) {
+              other.removeAttribute('open');
+            }
+          });
+        }
+      }
+    });
+
+    document.addEventListener('toggle', function(e) {
+      const acc = e.target;
+      if (!acc || !acc.classList || !acc.classList.contains('admin-section-accordion')) return;
+      if (acc.open) {
+        const container = acc.closest('.admin-sections-wrapper') || acc.parentElement;
+        if (container) {
+          container.querySelectorAll('details.admin-section-accordion[open]').forEach(other => {
             if (other !== acc) {
               other.removeAttribute('open');
             }
@@ -7264,7 +7304,7 @@ function renderAdminDashboard() {
     <div class="admin-sections-wrapper">
       
       <!-- 1. PRODUCTION OVERVIEW ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-overview">
+      <details class="admin-section-accordion" id="admin-sec-overview" name="admin-section">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">📊</span>
@@ -7374,7 +7414,7 @@ function renderAdminDashboard() {
       </details>
 
       <!-- 2. INTERNAL PRODUCTION SCHEDULE ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-prod-schedule" open>
+      <details class="admin-section-accordion" id="admin-sec-prod-schedule" name="admin-section">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">🗓️</span>
@@ -7390,13 +7430,10 @@ function renderAdminDashboard() {
           </div>
         </summary>
         <div class="admin-section-content" style="direction: rtl; text-align: right;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+          <div style="margin-bottom: 14px;">
             <p style="font-size: 0.85rem; color: var(--foreground-muted); margin: 0;">
               לו"ז תפעול ומשימות פנימיות לצוות הפסטיבל בירושלים ובתל אביב
             </p>
-            <button class="primary" style="padding: 6px 12px; font-size: 0.85rem; direction: ltr;" onclick="loadAdminDashboard(true)">
-              🔄 רענן לו"ז
-            </button>
           </div>
 
           <!-- Search input -->
@@ -7416,7 +7453,7 @@ function renderAdminDashboard() {
       </details>
 
       <!-- 3. LINEUP & NETWORKING LEADS ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-networking">
+      <details class="admin-section-accordion" id="admin-sec-networking" name="admin-section">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">🎸</span>
@@ -7466,8 +7503,8 @@ function renderAdminDashboard() {
         </div>
       </details>
 
-      <!-- 3. GUEST MANAGEMENT ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-guests">
+      <!-- 4. GUEST MANAGEMENT ACCORDION -->
+      <details class="admin-section-accordion" id="admin-sec-guests" name="admin-section">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">👥</span>
