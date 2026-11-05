@@ -7446,7 +7446,7 @@ function renderAdminDashboard() {
       </details>
 
       <!-- 3. LINEUP & NETWORKING LEADS ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-networking" name="admin-section">
+      <details class="admin-section-accordion" id="admin-sec-networking" name="admin-section" ontoggle="if(this.open) loadAdminNetworkingData(true)">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">🎸</span>
@@ -7987,7 +7987,17 @@ function getResolvedGuestsNetworkingList() {
       if (!fullName || !email || !email.includes("@")) continue;
 
       if (prefMap.has(email)) {
-        result.push(prefMap.get(email));
+        const pGuest = prefMap.get(email);
+        const resolvedLikes = Number(pGuest.totalLikes) || (pGuest.favs ? pGuest.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
+        result.push({
+          ...pGuest,
+          name: (pGuest.name && !pGuest.name.includes("@")) ? pGuest.name : (fullName || pGuest.name || email),
+          country: pGuest.country || (countryIdx !== -1 ? String(row[countryIdx] || "").trim() : ""),
+          company: pGuest.company || (compIdx !== -1 ? String(row[compIdx] || "").trim() : ""),
+          role: pGuest.role || cleanRole,
+          totalLikes: resolvedLikes,
+          status: resolvedLikes > 0 ? `🟢 פעיל (${resolvedLikes} אומנים)` : (pGuest.status || "🔴 טרם סימן אומנים")
+        });
         prefMap.delete(email);
       } else {
         result.push({
@@ -8001,6 +8011,7 @@ function getResolvedGuestsNetworkingList() {
           booking: "",
           connect: "",
           press: "",
+          general: "",
           totalLikes: 0,
           notes: ""
         });
@@ -8011,9 +8022,14 @@ function getResolvedGuestsNetworkingList() {
   // Include any remaining guests from prefMap (ensure valid email and not admin)
   prefMap.forEach(g => {
     const gRole = String(g.role || "").replace(/\s+/g, ' ').trim();
-    const gEmail = String(g.email || "").trim();
+    const gEmail = String(g.email || "").trim().toLowerCase();
     if (gEmail && gEmail.includes("@") && gRole !== "הפקה חשיפה" && !gRole.includes("הפקה חשיפה")) {
-      result.push(g);
+      const resolvedLikes = Number(g.totalLikes) || (g.favs ? g.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
+      result.push({
+        ...g,
+        totalLikes: resolvedLikes,
+        status: resolvedLikes > 0 ? `🟢 פעיל (${resolvedLikes} אומנים)` : (g.status || "🔴 טרם סימן אומנים")
+      });
     }
   });
 
@@ -8031,8 +8047,11 @@ function renderAdminNetworkingKPIs() {
     // 1. Lineup Coverage
     const totalArtists = artists.length;
     const engagedArtists = artists.filter(a => 
-      (a.likesCount > 0) || 
+      (Number(a.likesCount) > 0) || 
       (a.bookingLeads && a.bookingLeads.trim().length > 0) ||
+      (a.connectLeads && a.connectLeads.trim().length > 0) ||
+      (a.pressLeads && a.pressLeads.trim().length > 0) ||
+      (a.generalLeads && a.generalLeads.trim().length > 0) ||
       (a.notes && a.notes.trim().length > 0)
     ).length;
     const unengagedArtists = Math.max(0, totalArtists - engagedArtists);
@@ -8040,12 +8059,28 @@ function renderAdminNetworkingKPIs() {
 
     // 2. Top 5 In-Demand Artists
     const topArtists = [...artists]
-      .filter(a => (a.likesCount > 0) || (a.bookingLeads && a.bookingLeads.trim().length > 0))
+      .filter(a => 
+        (Number(a.likesCount) > 0) || 
+        (a.bookingLeads && a.bookingLeads.trim().length > 0) ||
+        (a.connectLeads && a.connectLeads.trim().length > 0) ||
+        (a.pressLeads && a.pressLeads.trim().length > 0) ||
+        (a.generalLeads && a.generalLeads.trim().length > 0) ||
+        (a.notes && a.notes.trim().length > 0)
+      )
       .sort((a, b) => {
-        if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
-        const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
-        const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
-        if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
+        const aLikes = Number(a.likesCount) || 0;
+        const bLikes = Number(b.likesCount) || 0;
+        if (bLikes !== aLikes) return bLikes - aLikes;
+        const aBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
+        const bBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
+        if (bBooking !== aBooking) return bBooking - aBooking;
+        const aLeads = ((a.connectLeads && a.connectLeads.trim()) ? 1 : 0) +
+                       ((a.pressLeads && a.pressLeads.trim()) ? 1 : 0) +
+                       ((a.notes && a.notes.trim()) ? 1 : 0);
+        const bLeads = ((b.connectLeads && b.connectLeads.trim()) ? 1 : 0) +
+                       ((b.pressLeads && b.pressLeads.trim()) ? 1 : 0) +
+                       ((b.notes && b.notes.trim()) ? 1 : 0);
+        if (bLeads !== aLeads) return bLeads - aLeads;
         return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
       })
       .slice(0, 5);
@@ -8057,6 +8092,8 @@ function renderAdminNetworkingKPIs() {
       topArtistsHtml = '<div class="networking-top-list">';
       topArtists.forEach((a, idx) => {
         const hasBooking = a.bookingLeads && a.bookingLeads.trim().length > 0;
+        const hasConnect = a.connectLeads && a.connectLeads.trim().length > 0;
+        const hasPress = a.pressLeads && a.pressLeads.trim().length > 0;
         const safeName = escapeHtmlAdmin(a.name);
         topArtistsHtml += `
           <div class="networking-top-item" onclick="openNetworkingDetail('artist', '${safeName.replace(/'/g, "\\'")}')" title="View ${safeName} details">
@@ -8069,6 +8106,8 @@ function renderAdminNetworkingKPIs() {
             <div class="networking-top-right">
               <span class="networking-top-tag">❤️ ${a.likesCount || 0}</span>
               ${hasBooking ? `<span class="networking-top-tag" style="background: rgba(16,185,129,0.15); color: #10b981;" title="Booking inquiries">🎯</span>` : ''}
+              ${(!hasBooking && hasConnect) ? `<span class="networking-top-tag" style="background: rgba(59,130,246,0.15); color: #3b82f6;" title="Connect requests">🤝</span>` : ''}
+              ${(!hasBooking && !hasConnect && hasPress) ? `<span class="networking-top-tag" style="background: rgba(139,92,246,0.15); color: #8b5cf6;" title="Press coverage">📰</span>` : ''}
             </div>
           </div>
         `;
@@ -8118,24 +8157,23 @@ function renderAdminNetworkingKPIs() {
     // 1. Delegate Engagement Rate
     const totalGuests = guests.length;
     const activeGuests = guests.filter(g => {
-      const isInactive = (g.status && g.status.includes('טרם סימן')) ||
-                         ((!g.totalLikes || Number(g.totalLikes) === 0) &&
-                          (!g.favs || !g.favs.trim()) &&
-                          (!g.notes || !g.notes.trim()) &&
-                          (!g.booking || !g.booking.trim()) &&
-                          (!g.connect || !g.connect.trim()) &&
-                          (!g.press || !g.press.trim()) &&
-                          (!g.general || !g.general.trim()));
-      return !isInactive;
+      const likes = Number(g.totalLikes) || (g.favs ? g.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
+      const hasFavs = g.favs && g.favs.trim().length > 0;
+      const hasNotes = g.notes && g.notes.trim().length > 0;
+      const hasTags = (g.booking && g.booking.trim().length > 0) ||
+                      (g.connect && g.connect.trim().length > 0) ||
+                      (g.press && g.press.trim().length > 0) ||
+                      (g.general && g.general.trim().length > 0);
+      return likes > 0 || hasFavs || hasNotes || hasTags;
     });
     const activeCount = activeGuests.length;
     const inactiveCount = Math.max(0, totalGuests - activeCount);
     const ratePercent = totalGuests > 0 ? Math.round((activeCount / totalGuests) * 100) : 0;
 
-    // 2. Top 5 Most Engaged Delegates (Ensure 5 delegates are shown)
-    const topGuests = [...guests]
+    // 2. Top 5 Most Engaged Delegates
+    const topGuests = [...activeGuests]
       .map(g => {
-        const likes = Number(g.totalLikes) || 0;
+        const likes = Number(g.totalLikes) || (g.favs ? g.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
         const hasNotes = (g.notes && g.notes.trim().length > 0);
         const notesCount = hasNotes ? g.notes.split('\n').filter(Boolean).length : 0;
         const tagsCount = ((g.booking && g.booking.trim()) ? 1 : 0) +
@@ -8160,7 +8198,11 @@ function renderAdminNetworkingKPIs() {
       topGuests.forEach((g, idx) => {
         const safeName = escapeHtmlAdmin(g.name);
         const safeKey = escapeHtmlAdmin(g.email || g.name);
-        const subInfo = escapeHtmlAdmin(g.company || g.country || '');
+        const metaParts = [];
+        if (g.company) metaParts.push(escapeHtmlAdmin(g.company));
+        if (g.country) metaParts.push(escapeHtmlAdmin(g.country));
+        const subInfo = metaParts.join(' • ');
+
         topGuestsHtml += `
           <div class="networking-top-item" onclick="openNetworkingDetail('guest', '${safeKey.replace(/'/g, "\\'")}')" title="View ${safeName} activity">
             <div class="networking-top-left">
@@ -8403,8 +8445,8 @@ function openNetworkingDetail(type, target) {
           <h2 class="networking-detail-title">${escapeHtmlAdmin(artist.name)}</h2>
           <span style="font-size: 0.9rem; font-weight: 700; color: var(--accent-bright);">${escapeHtmlAdmin(artist.genre || 'General')}</span>
         </div>
-        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button class="modal-close-btn sheet-close-btn" style="position: static;" onclick="closeNetworkingDetailSheet()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
@@ -8532,8 +8574,8 @@ function openNetworkingDetail(type, target) {
             ${escapeHtmlAdmin(guest.country || 'N/A')}
           </div>
         </div>
-        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button class="modal-close-btn sheet-close-btn" style="position: static;" onclick="closeNetworkingDetailSheet()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
@@ -9328,8 +9370,8 @@ function viewAdminGuestDetails(rowIndex) {
         <div style="color: var(--accent-bright); font-weight: 500; font-size: 0.95rem;">${role ? role + ' @ ' : ''}${company}</div>
         <div style="color: var(--foreground-muted); font-size: 0.85rem; margin-top: 2px;">${country}</div>
       </div>
-      <button class="sheet-close-btn" onclick="closeAdminModal()" style="background:var(--surface); border:1px solid var(--border); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--foreground);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button class="modal-close-btn sheet-close-btn" onclick="closeAdminModal()" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
     
