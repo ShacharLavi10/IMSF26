@@ -446,13 +446,13 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         const cleanEmail = String(row[emailIdx] || "").trim().toLowerCase();
         if (!cleanEmail || !cleanEmail.includes("@")) continue;
 
-        // Skip admin / production staff (role "הפקה חשיפה")
+        // Skip admin / production staff (role "הפקה חשיפה" or "הפקה", and admin emails)
         const roleIdx = colMap.role !== undefined ? colMap.role : -1;
         const rawRole = roleIdx >= 0 ? String(row[roleIdx] || "").trim() : "";
         const masterInfo = getGuestDetailsFromMaster(cleanEmail);
         const masterRole = (masterInfo && masterInfo.role) ? String(masterInfo.role).trim() : "";
-        if (rawRole === "הפקה חשיפה" || rawRole.includes("הפקה חשיפה") || masterRole === "הפקה חשיפה" || masterRole.includes("הפקה חשיפה")) {
-          continue; // Admin likes are excluded from delegate leads
+        if (rawRole.includes("הפקה") || masterRole.includes("הפקה") || cleanEmail === "shacharlavi10@gmail.com" || cleanEmail === "exposubmarine@gmail.com") {
+          continue; // Admin likes and inquiries are excluded from delegate leads
         }
 
         latestRowsByEmail.set(cleanEmail, { row: row, masterInfo: masterInfo });
@@ -677,6 +677,13 @@ function getAdminArtistsNetworkingData() {
         else if (s.includes("raw")) lMap.raw = idx;
       });
 
+      const adminKeywords = ["הפקה חשיפה", "הפקה", "shacharlavi10@gmail.com", "exposubmarine@gmail.com", "shachar lavi", "ido hamelch"];
+      const isLeadAdmin = function(str) {
+        if (!str) return false;
+        const low = String(str).toLowerCase().trim();
+        return adminKeywords.some(function(k) { return low.indexOf(k) !== -1; });
+      };
+
       for (let r = 1; r < data.length; r++) {
         const row = data[r];
         if (!row[0]) continue;
@@ -689,18 +696,37 @@ function getAdminArtistsNetworkingData() {
             }
           } catch(e) {}
         }
+
+        // Clean out admin names from likedGuests
+        const cleanLikedGuests = likedGuestsVal
+          ? likedGuestsVal.split(",").map(function(s) { return s.trim(); }).filter(Boolean).filter(function(s) { return !isLeadAdmin(s); })
+          : [];
+
+        const filterLeadLines = function(val) {
+          if (!val) return "";
+          return String(val).split("\n").map(function(s) { return s.trim(); }).filter(Boolean).filter(function(s) { return !isLeadAdmin(s); }).join("\n");
+        };
+
+        const bookingClean = filterLeadLines(lMap.booking !== undefined ? row[lMap.booking] : row[4]);
+        const connectClean = filterLeadLines(lMap.connect !== undefined ? row[lMap.connect] : row[5]);
+        const pressClean = filterLeadLines(lMap.press !== undefined ? row[lMap.press] : row[6]);
+        const generalClean = filterLeadLines(lMap.general !== undefined ? row[lMap.general] : "");
+        const rawLikesCount = Number((lMap.likes !== undefined ? row[lMap.likes] : row[7]) || 0);
+        const notesClean = String((lMap.notes !== undefined ? row[lMap.notes] : row[8]) || "")
+          .split("\n\n").map(function(s) { return s.trim(); }).filter(Boolean).filter(function(s) { return !isLeadAdmin(s); }).join("\n\n");
+
         artistsLeads.push({
           name: String((lMap.name !== undefined ? row[lMap.name] : row[0]) || "").trim(),
           genre: String((lMap.genre !== undefined ? row[lMap.genre] : row[1]) || "").trim(),
           tourPotential: String((lMap.tour !== undefined ? row[lMap.tour] : row[2]) || "").trim(),
           countries: String((lMap.countries !== undefined ? row[lMap.countries] : row[3]) || "").trim(),
-          bookingLeads: String((lMap.booking !== undefined ? row[lMap.booking] : row[4]) || "").trim(),
-          connectLeads: String((lMap.connect !== undefined ? row[lMap.connect] : row[5]) || "").trim(),
-          pressLeads: String((lMap.press !== undefined ? row[lMap.press] : row[6]) || "").trim(),
-          generalLeads: String((lMap.general !== undefined ? row[lMap.general] : "") || "").trim(),
-          likesCount: Number((lMap.likes !== undefined ? row[lMap.likes] : row[7]) || 0),
-          likedGuests: likedGuestsVal,
-          notes: String((lMap.notes !== undefined ? row[lMap.notes] : row[8]) || "").trim()
+          bookingLeads: bookingClean,
+          connectLeads: connectClean,
+          pressLeads: pressClean,
+          generalLeads: generalClean,
+          likesCount: cleanLikedGuests.length > 0 ? cleanLikedGuests.length : (likedGuestsVal ? 0 : rawLikesCount),
+          likedGuests: cleanLikedGuests.join(", "),
+          notes: notesClean
         });
       }
     }
@@ -743,7 +769,7 @@ function getAdminArtistsNetworkingData() {
         const role = String((colMap.role !== undefined ? row[colMap.role] : "") || "").trim();
         const masterInfo = getGuestDetailsFromMaster(email);
         const masterRole = (masterInfo && masterInfo.role) ? String(masterInfo.role).trim() : "";
-        if (role === "הפקה חשיפה" || role.includes("הפקה חשיפה") || masterRole === "הפקה חשיפה" || masterRole.includes("הפקה חשיפה")) {
+        if (role.includes("הפקה") || masterRole.includes("הפקה") || email === "shacharlavi10@gmail.com" || email === "exposubmarine@gmail.com") {
           return; // Skip admin
         }
 
