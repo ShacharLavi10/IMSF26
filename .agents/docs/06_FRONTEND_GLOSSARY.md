@@ -37,8 +37,11 @@
    * **מזוודת ייצוא אישית:** `#export-briefcase-container`, `#export-briefcase-btn` (מציג את האומנים שאהב).
 
 6. **📊 רכיבי דשבורד הפקה לנטוורקינג (Admin Lineup & Networking Leads)**
+   * **רובריקת כרטיסי סיכום ו-KPIs:** `#admin-networking-kpis` (כולל בורר `Artists / Guests`, כרטיסיות `Lineup Coverage` / `Delegate Engagement` ודירוגי `Top In-Demand / Active`).
+   * **מתג מעבר אומנים/אורחים:** `#admin-networking-switcher` (או כפתורי הבורר המשולבים).
    * **תיבת חיפוש וסינון לידים:** `#admin-networking-search` (חיפוש לפי אמן, ז'אנר, מדינה, בוקר או הערה).
-   * **רשימת כרטיסי לידים:** `#admin-networking-list`.
+   * **רשימת כרטיסי לידים:** `#admin-networking-list` (גריד קוביות אומנים ואורחים).
+   * **חלונית פירוט נטוורקינג תחתונה:** `#networking-bottom-sheet` (כולל כפתור העתקת שמות `copyLikedGuestsList`).
    * **כפתור סנכרון וחישוב מחדש:** `#admin-sync-leads-btn` ("⚡ Run Full Sync" - מפעיל `triggerFullLeadsSync()`).
 
 7. **📅 רכיבי לשונית לו"ז הפסטיבל (Itinerary / Schedule Components)**
