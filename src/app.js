@@ -7977,10 +7977,13 @@ function getResolvedGuestsNetworkingList() {
 
     for (let i = 1; i < adminData.guests.length; i++) {
       const row = adminData.guests[i];
+      const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim().toLowerCase() : "";
       const rawRole = roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "";
       const cleanRole = rawRole.replace(/\s+/g, ' ').trim();
-      if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה")) continue; // skip admin
-      const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim().toLowerCase() : "";
+      if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה") || email === "shacharlavi10@gmail.com") {
+        if (email) prefMap.delete(email);
+        continue; // skip admin
+      }
       const fname = fnIdx !== -1 ? String(row[fnIdx] || "").trim() : "";
       const lname = lnIdx !== -1 ? String(row[lnIdx] || "").trim() : "";
       const fullName = `${fname} ${lname}`.trim();
@@ -7988,7 +7991,7 @@ function getResolvedGuestsNetworkingList() {
 
       if (prefMap.has(email)) {
         const pGuest = prefMap.get(email);
-        const resolvedLikes = Number(pGuest.totalLikes) || (pGuest.favs ? pGuest.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
+        const resolvedLikes = Number(pGuest.totalLikes) || (pGuest.favs ? (!isNaN(Number(pGuest.favs)) ? Number(pGuest.favs) : pGuest.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
         result.push({
           ...pGuest,
           name: (pGuest.name && !pGuest.name.includes("@")) ? pGuest.name : (fullName || pGuest.name || email),
@@ -8023,8 +8026,8 @@ function getResolvedGuestsNetworkingList() {
   prefMap.forEach(g => {
     const gRole = String(g.role || "").replace(/\s+/g, ' ').trim();
     const gEmail = String(g.email || "").trim().toLowerCase();
-    if (gEmail && gEmail.includes("@") && gRole !== "הפקה חשיפה" && !gRole.includes("הפקה חשיפה")) {
-      const resolvedLikes = Number(g.totalLikes) || (g.favs ? g.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
+    if (gEmail && gEmail.includes("@") && gRole !== "הפקה חשיפה" && !gRole.includes("הפקה חשיפה") && gEmail !== "shacharlavi10@gmail.com") {
+      const resolvedLikes = Number(g.totalLikes) || (g.favs ? (!isNaN(Number(g.favs)) ? Number(g.favs) : g.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
       result.push({
         ...g,
         totalLikes: resolvedLikes,
@@ -8157,8 +8160,8 @@ function renderAdminNetworkingKPIs() {
     // 1. Delegate Engagement Rate
     const totalGuests = guests.length;
     const activeGuests = guests.filter(g => {
-      const likes = Number(g.totalLikes) || (g.favs ? g.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
-      const hasFavs = g.favs && g.favs.trim().length > 0;
+      const likes = Number(g.totalLikes) || (g.favs ? (!isNaN(Number(g.favs)) ? Number(g.favs) : g.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
+      const hasFavs = g.favs && g.favs.trim().length > 0 && isNaN(Number(g.favs.trim()));
       const hasNotes = g.notes && g.notes.trim().length > 0;
       const hasTags = (g.booking && g.booking.trim().length > 0) ||
                       (g.connect && g.connect.trim().length > 0) ||
@@ -8173,7 +8176,7 @@ function renderAdminNetworkingKPIs() {
     // 2. Top 5 Most Engaged Delegates
     const topGuests = [...activeGuests]
       .map(g => {
-        const likes = Number(g.totalLikes) || (g.favs ? g.favs.split(',').map(s => s.trim()).filter(Boolean).length : 0);
+        const likes = Number(g.totalLikes) || (g.favs ? (!isNaN(Number(g.favs)) ? Number(g.favs) : g.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
         const hasNotes = (g.notes && g.notes.trim().length > 0);
         const notesCount = hasNotes ? g.notes.split('\n').filter(Boolean).length : 0;
         const tagsCount = ((g.booking && g.booking.trim()) ? 1 : 0) +
@@ -8556,13 +8559,13 @@ function openNetworkingDetail(type, target) {
     }
     if (!guest) return;
 
-    const hasFavs = guest.favs && guest.favs.trim().length > 0;
+    const hasFavs = guest.favs && guest.favs.trim().length > 0 && isNaN(Number(guest.favs.trim()));
     const hasBooking = guest.booking && guest.booking.trim().length > 0;
     const hasConnect = guest.connect && guest.connect.trim().length > 0;
     const hasPress = guest.press && guest.press.trim().length > 0;
     const hasGeneral = guest.general && guest.general.trim().length > 0;
     const hasNotes = guest.notes && guest.notes.trim().length > 0;
-    const isActive = guest.totalLikes > 0 || hasFavs;
+    const isActive = guest.totalLikes > 0 || hasFavs || hasBooking || hasConnect || hasPress || hasGeneral || hasNotes;
 
     content.innerHTML = `
       <div class="networking-detail-header">
