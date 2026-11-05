@@ -372,13 +372,14 @@ function getGuestArtistFeedback(email) {
         if (rawJsonCol) {
           try {
             const parsed = JSON.parse(rawJsonCol);
+            if (!parsed.updatedAt) parsed.updatedAt = 0;
             return { success: true, feedback: parsed };
           } catch (e) {}
         }
         break;
       }
     }
-    return { success: true, feedback: { favorites: {}, notes: {}, tags: {} } };
+    return { success: true, feedback: { favorites: {}, notes: {}, tags: {}, updatedAt: 0 } };
   } catch (err) {
     console.error("Error in getGuestArtistFeedback:", err);
     return { success: false, message: err.toString() };
@@ -452,7 +453,12 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         Object.keys(favs).forEach(aId => {
           if (favs[aId] && agg[aId]) {
             agg[aId].likes++;
-            const guestFullName = guestName || cleanEmail;
+            let guestFullName = guestName;
+            if (!guestFullName && cleanEmail) {
+              const masterInfo = getGuestDetailsFromMaster(cleanEmail);
+              if (masterInfo && masterInfo.fullName) guestFullName = masterInfo.fullName;
+            }
+            if (!guestFullName) guestFullName = cleanEmail;
             if (guestFullName && !agg[aId].likedGuests.includes(guestFullName)) {
               agg[aId].likedGuests.push(guestFullName);
             }

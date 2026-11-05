@@ -3799,15 +3799,8 @@ function closeWelcomeModal() {
       const isOnline = (typeof navigator !== 'undefined' && typeof navigator.onLine === 'boolean') ? navigator.onLine : true;
       if (!isOnline) return;
 
-      console.log("[Offline Engine] Network reconnected. Pulling remote data to merge before syncing...");
-      // Always pull & merge latest server data first so laptop/other device changes are preserved!
-      fetchGuestArtistFeedback(function() {
-        console.log("[Offline Engine] Smart 2-way merge complete.");
-        const pendingKey = 'imsf_pending_sync_' + currentGuestEmail;
-        if (localStorage.getItem(pendingKey)) {
-          syncArtistFeedbackToServer();
-        }
-      });
+      console.log("[Offline Engine] Network reconnected. Checking feedback sync...");
+      fetchGuestArtistFeedback();
     }
 
     // Fetch remote feedback on startup, reconnect or tab focus for cross-device consistency
@@ -3824,13 +3817,25 @@ function closeWelcomeModal() {
             const serverUpdatedAt = serverRawUpdatedAt 
               ? (typeof serverRawUpdatedAt === 'number' ? serverRawUpdatedAt : new Date(serverRawUpdatedAt).getTime()) 
               : 0;
+            const pendingKey = 'imsf_pending_sync_' + currentGuestEmail;
+            const rawPending = localStorage.getItem(pendingKey);
+            let pendingSync = null;
+            if (rawPending) {
+              try { pendingSync = JSON.parse(rawPending); } catch(e) {}
+            }
+
             const localUpdatedAt = Number(localStorage.getItem('artist_feedback_updated_at_' + currentGuestEmail)) || 0;
 
-            console.log(`[Artist Feedback Sync] Server: ${serverUpdatedAt}, Local: ${localUpdatedAt}`);
+            console.log(`[Artist Feedback Sync] Server: ${serverUpdatedAt}, Local: ${localUpdatedAt}, HasPending: ${!!pendingSync}`);
 
-            // Server Wins if server is newer or equal, or if local device has no recorded timestamp
-            if (serverUpdatedAt >= localUpdatedAt || localUpdatedAt === 0) {
-              console.log("[Artist Feedback Sync] Server is newer (or local empty). Overwriting local device with server state.");
+            // A device only pushes to server if there is an unsaved offline modification made AFTER the server timestamp
+            if (pendingSync && pendingSync.timestamp && pendingSync.timestamp > serverUpdatedAt) {
+              console.log("[Artist Feedback Sync] Local device has newer offline edits. Pushing to server.");
+              syncArtistFeedbackToServer();
+            } else {
+              // Server wins: either server is newer/equal, or local device has no pending edits.
+              // Local device MUST adopt server state and not revive deleted items or push stale cache.
+              console.log("[Artist Feedback Sync] Adopting server state on local device.");
 
               // Overwrite favorites
               const newFavs = fb.favorites || {};
@@ -3873,12 +3878,7 @@ function closeWelcomeModal() {
               if (serverUpdatedAt > 0) {
                 localStorage.setItem('artist_feedback_updated_at_' + currentGuestEmail, serverUpdatedAt);
               }
-              localStorage.removeItem('imsf_pending_sync_' + currentGuestEmail);
-
-            } else {
-              // Local Wins if localUpdatedAt > serverUpdatedAt (user edited locally while offline/newer)
-              console.log("[Artist Feedback Sync] Local device has newer edits. Pushing to server.");
-              syncArtistFeedbackToServer();
+              localStorage.removeItem(pendingKey);
             }
 
             // Refresh open sheet if any
@@ -8380,7 +8380,7 @@ function openNetworkingDetail(type, target) {
       adminNetworkingData.guestsPreferences.forEach(g => {
         if (g.favs) {
           const fList = g.favs.split(',').map(f => f.trim().toLowerCase());
-          if (fList.includes(aNameNorm) || fList.some(f => f.includes(aNameNorm) || aNameNorm.includes(f))) {
+          if (fList.includes(aNameNorm)) {
             const gName = (g.name || g.email || '').trim();
             if (gName && !likedGuestsList.includes(gName)) likedGuestsList.push(gName);
           }
@@ -8688,53 +8688,29 @@ function loadAdminNetworkingData(forceRefresh = false) {
 function triggerFullLeadsSync() {
   const container = document.getElementById('admin-networking-list');
   if (container) {
-    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Scanning local test data and running full recalculation...</p>';
+    container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Running full recalculation of artist leads...</p>';
   }
 
-  // Scan localStorage for any guest emails that have saved favorites in this browser
-  const emailsToSync = new Set();
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('artist_favs_')) {
-        const em = k.replace('artist_favs_', '').trim();
-        if (em && em.includes('@')) emailsToSync.add(em);
-      }
-    }
-  } catch(e) {}
+  // If the current guest has a pending debounced save, flush it first
+  if (typeof flushFeedbackAutoSave === 'function') {
+    flushFeedbackAutoSave();
+  }
 
-  const runServerSync = () => {
-    if (window.google && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (typeof showToast === 'function') {
-            showToast(res.message || "Sync completed successfully!", "success");
-          }
-          loadAdminNetworkingData(true);
-        })
-        .withFailureHandler(function(err) {
-          if (typeof showToast === 'function') {
-            showToast("Sync failed: " + err.toString(), "error");
-          }
-          loadAdminNetworkingData(true);
-        })
-        .syncAllArtistsAndLeads();
-    }
-  };
-
-  const emailList = Array.from(emailsToSync);
-  if (emailList.length > 0) {
-    let pending = emailList.length;
-    emailList.forEach(em => {
-      syncLocalGuestFeedbackToServer(em, () => {
-        pending--;
-        if (pending <= 0) {
-          runServerSync();
+  if (window.google && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (typeof showToast === 'function') {
+          showToast(res.message || "Sync completed successfully!", "success");
         }
-      });
-    });
-  } else {
-    runServerSync();
+        loadAdminNetworkingData(true);
+      })
+      .withFailureHandler(function(err) {
+        if (typeof showToast === 'function') {
+          showToast("Sync failed: " + err.toString(), "error");
+        }
+        loadAdminNetworkingData(true);
+      })
+      .syncAllArtistsAndLeads();
   }
 }
 
