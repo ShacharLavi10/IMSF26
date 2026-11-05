@@ -178,7 +178,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
         "שם האמן", "ז'אנר", "פוטנציאל סיבוב הופעות (Tour Match)",
         "מדינות מתעניינות", "בוקרים להופעה (🎯 Booking)",
         "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)", "כללי (General)",
-        "סה\"כ לייקים (❤️)", "הערות אורחים", "Raw Data"
+        "סה\"כ לייקים (❤️)", "אורחים שעשו לייקים", "הערות אורחים", "Raw Data"
       ]);
       leadsSheet.setFrozenRows(1);
     }
@@ -232,11 +232,15 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     const totalLiked = favNames.length;
     const activityStatus = totalLiked > 0 ? `🟢 פעיל (${totalLiked} אומנים)` : `🔴 טרם סימן אומנים`;
 
+    const serverTimestamp = (payload && payload.updatedAt)
+      ? (typeof payload.updatedAt === "number" ? payload.updatedAt : new Date(payload.updatedAt).getTime())
+      : Date.now();
+
     const rawJson = JSON.stringify({
       favorites: favorites,
       notes: notes,
       tags: tags,
-      updatedAt: new Date().toISOString()
+      updatedAt: serverTimestamp
     });
 
     // Inspect existing headers dynamically
@@ -325,7 +329,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     // Synchronize the Artist Leads sheet
     syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList);
 
-    return { success: true, message: "Feedback saved successfully." };
+    return { success: true, message: "Feedback saved successfully.", updatedAt: serverTimestamp };
   } catch (err) {
     console.error("Error in saveGuestArtistFeedback:", err);
     return { success: false, message: "Error saving feedback: " + err.toString() };
@@ -390,13 +394,14 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
     const hasPreferences = prefData.length > 1;
 
     // Aggregates per artistId
-    // artistId -> { likes: 0, countries: {}, booking: [], connect: [], press: [], notes: [] }
+    // artistId -> { likes: 0, likedGuests: [], countries: {}, booking: [], connect: [], press: [], notes: [] }
     const agg = {};
     artistsList.forEach(a => {
       agg[a.id] = {
         name: a.name,
         genre: a.genre || "",
         likes: 0,
+        likedGuests: [],
         countries: {},
         booking: [],
         connect: [],
@@ -447,6 +452,10 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         Object.keys(favs).forEach(aId => {
           if (favs[aId] && agg[aId]) {
             agg[aId].likes++;
+            const guestFullName = guestName || cleanEmail;
+            if (guestFullName && !agg[aId].likedGuests.includes(guestFullName)) {
+              agg[aId].likedGuests.push(guestFullName);
+            }
             if (country) {
               agg[aId].countries[country] = (agg[aId].countries[country] || 0) + 1;
             }
@@ -481,7 +490,8 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
     const lColMap = {};
     leadsHeaders.forEach((h, idx) => {
       const s = String(h).trim().toLowerCase();
-      if (s.includes("שם") && s.includes("אמן")) lColMap.name = idx;
+      if ((s.includes("אורחים") && s.includes("לייק")) || s.includes("שעשו לייק") || s.includes("אורחים שעשו לייקים")) lColMap.likedGuests = idx;
+      else if (s.includes("שם") && s.includes("אמן")) lColMap.name = idx;
       else if (s.includes("ז'אנר") || s.includes("זאנר")) lColMap.genre = idx;
       else if (s.includes("טור") || s.includes("סיבוב") || s.includes("match")) lColMap.tour = idx;
       else if (s.includes("מדינות")) lColMap.countries = idx;
@@ -493,6 +503,14 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
       else if (s.includes("הערות")) lColMap.notes = idx;
       else if (s.includes("raw")) lColMap.raw = idx;
     });
+
+    // If leads sheet headers exist but 'אורחים שעשו לייקים' is missing, add it dynamically
+    if (leadsHeaders.length > 0 && lColMap.likedGuests === undefined) {
+      const newColIdx = leadsHeaders.length;
+      leadsSheet.getRange(1, newColIdx + 1).setValue("אורחים שעשו לייקים");
+      leadsHeaders.push("אורחים שעשו לייקים");
+      lColMap.likedGuests = newColIdx;
+    }
 
     const rowsToWrite = [];
     artistsList.forEach(a => {
@@ -507,6 +525,8 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         tourPotential = `🟡 עניין מקומי: ${countryKeys[0]}`;
       }
 
+      const likedGuestsStr = data.likedGuests.join(", ");
+
       if (leadsHeaders.length > 0 && Object.keys(lColMap).length >= 4) {
         const row = new Array(leadsHeaders.length).fill("");
         if (lColMap.name !== undefined) row[lColMap.name] = data.name;
@@ -518,8 +538,9 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         if (lColMap.press !== undefined) row[lColMap.press] = data.press.join("\n");
         if (lColMap.general !== undefined) row[lColMap.general] = data.general.join("\n");
         if (lColMap.likes !== undefined) row[lColMap.likes] = data.likes;
+        if (lColMap.likedGuests !== undefined) row[lColMap.likedGuests] = likedGuestsStr;
         if (lColMap.notes !== undefined) row[lColMap.notes] = data.notes.join("\n\n");
-        if (lColMap.raw !== undefined) row[lColMap.raw] = JSON.stringify({ likes: data.likes, countries: data.countries, bookingCount: data.booking.length });
+        if (lColMap.raw !== undefined) row[lColMap.raw] = JSON.stringify({ likes: data.likes, countries: data.countries, bookingCount: data.booking.length, likedGuests: data.likedGuests });
         rowsToWrite.push(row);
       } else {
         rowsToWrite.push([
@@ -532,8 +553,9 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
           data.press.join("\n"),
           data.general.join("\n"),
           data.likes,
+          likedGuestsStr,
           data.notes.join("\n\n"),
-          JSON.stringify({ likes: data.likes, countries: data.countries, bookingCount: data.booking.length })
+          JSON.stringify({ likes: data.likes, countries: data.countries, bookingCount: data.booking.length, likedGuests: data.likedGuests })
         ]);
       }
     });
@@ -573,7 +595,8 @@ function getAdminArtistsNetworkingData() {
       const lMap = {};
       lHeaders.forEach((h, idx) => {
         const s = String(h).trim().toLowerCase();
-        if (s.includes("שם") && s.includes("אמן")) lMap.name = idx;
+        if ((s.includes("אורחים") && s.includes("לייק")) || s.includes("שעשו לייק") || s.includes("אורחים שעשו לייקים")) lMap.likedGuests = idx;
+        else if (s.includes("שם") && s.includes("אמן")) lMap.name = idx;
         else if (s.includes("ז'אנר") || s.includes("זאנר")) lMap.genre = idx;
         else if (s.includes("טור") || s.includes("סיבוב") || s.includes("match")) lMap.tour = idx;
         else if (s.includes("מדינות")) lMap.countries = idx;
@@ -583,11 +606,21 @@ function getAdminArtistsNetworkingData() {
         else if (s.includes("general") || s.includes("כללי")) lMap.general = idx;
         else if (s.includes("לייקים") || s.includes("סה\"כ") || s.includes("סה״כ")) lMap.likes = idx;
         else if (s.includes("הערות")) lMap.notes = idx;
+        else if (s.includes("raw")) lMap.raw = idx;
       });
 
       for (let r = 1; r < data.length; r++) {
         const row = data[r];
         if (!row[0]) continue;
+        let likedGuestsVal = String((lMap.likedGuests !== undefined ? row[lMap.likedGuests] : "") || "").trim();
+        if (!likedGuestsVal && lMap.raw !== undefined && row[lMap.raw]) {
+          try {
+            const rawP = JSON.parse(row[lMap.raw]);
+            if (Array.isArray(rawP.likedGuests) && rawP.likedGuests.length > 0) {
+              likedGuestsVal = rawP.likedGuests.join(", ");
+            }
+          } catch(e) {}
+        }
         artistsLeads.push({
           name: String((lMap.name !== undefined ? row[lMap.name] : row[0]) || "").trim(),
           genre: String((lMap.genre !== undefined ? row[lMap.genre] : row[1]) || "").trim(),
@@ -598,6 +631,7 @@ function getAdminArtistsNetworkingData() {
           pressLeads: String((lMap.press !== undefined ? row[lMap.press] : row[6]) || "").trim(),
           generalLeads: String((lMap.general !== undefined ? row[lMap.general] : "") || "").trim(),
           likesCount: Number((lMap.likes !== undefined ? row[lMap.likes] : row[7]) || 0),
+          likedGuests: likedGuestsVal,
           notes: String((lMap.notes !== undefined ? row[lMap.notes] : row[8]) || "").trim()
         });
       }
@@ -613,7 +647,8 @@ function getAdminArtistsNetworkingData() {
         const lMap = {};
         lHeaders.forEach((h, idx) => {
           const s = String(h).trim().toLowerCase();
-          if (s.includes("שם") && s.includes("אמן")) lMap.name = idx;
+          if ((s.includes("אורחים") && s.includes("לייק")) || s.includes("שעשו לייק") || s.includes("אורחים שעשו לייקים")) lMap.likedGuests = idx;
+          else if (s.includes("שם") && s.includes("אמן")) lMap.name = idx;
           else if (s.includes("ז'אנר") || s.includes("זאנר")) lMap.genre = idx;
           else if (s.includes("טור") || s.includes("סיבוב") || s.includes("match")) lMap.tour = idx;
           else if (s.includes("מדינות")) lMap.countries = idx;
@@ -623,11 +658,21 @@ function getAdminArtistsNetworkingData() {
           else if (s.includes("general") || s.includes("כללי")) lMap.general = idx;
           else if (s.includes("לייקים") || s.includes("סה\"כ") || s.includes("סה״כ")) lMap.likes = idx;
           else if (s.includes("הערות")) lMap.notes = idx;
+          else if (s.includes("raw")) lMap.raw = idx;
         });
 
         for (let r = 1; r < data.length; r++) {
           const row = data[r];
           if (!row[0]) continue;
+          let likedGuestsVal = String((lMap.likedGuests !== undefined ? row[lMap.likedGuests] : "") || "").trim();
+          if (!likedGuestsVal && lMap.raw !== undefined && row[lMap.raw]) {
+            try {
+              const rawP = JSON.parse(row[lMap.raw]);
+              if (Array.isArray(rawP.likedGuests) && rawP.likedGuests.length > 0) {
+                likedGuestsVal = rawP.likedGuests.join(", ");
+              }
+            } catch(e) {}
+          }
           artistsLeads.push({
             name: String((lMap.name !== undefined ? row[lMap.name] : row[0]) || "").trim(),
             genre: String((lMap.genre !== undefined ? row[lMap.genre] : row[1]) || "").trim(),
@@ -638,6 +683,7 @@ function getAdminArtistsNetworkingData() {
             pressLeads: String((lMap.press !== undefined ? row[lMap.press] : row[6]) || "").trim(),
             generalLeads: String((lMap.general !== undefined ? row[lMap.general] : "") || "").trim(),
             likesCount: Number((lMap.likes !== undefined ? row[lMap.likes] : row[7]) || 0),
+            likedGuests: likedGuestsVal,
             notes: String((lMap.notes !== undefined ? row[lMap.notes] : row[8]) || "").trim()
           });
         }
@@ -760,8 +806,8 @@ function syncAllArtistsAndLeads() {
       leadsSheet.appendRow([
         "שם האמן", "ז'אנר", "פוטנציאל סיבוב הופעות (Tour Match)",
         "מדינות מתעניינות", "בוקרים להופעה (🎯 Booking)",
-        "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)",
-        "סה\"כ לייקים (❤️)", "הערות אורחים", "Raw Data"
+        "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)", "כללי (General)",
+        "סה\"כ לייקים (❤️)", "אורחים שעשו לייקים", "הערות אורחים", "Raw Data"
       ]);
       leadsSheet.setFrozenRows(1);
     }
