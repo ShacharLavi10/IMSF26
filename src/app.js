@@ -629,6 +629,7 @@ function closeWelcomeModal() {
         if (t === 'admin' && tabName === 'admin') {
           if (isCurrentGuestAdmin) {
             loadAdminDashboard();
+            loadAdminNetworkingData(true);
             const adminContainer = document.getElementById("admin-dashboard-container");
             if (adminContainer) {
               adminContainer.querySelectorAll('details.admin-section-accordion[open]').forEach(acc => {
@@ -7446,7 +7447,7 @@ function renderAdminDashboard() {
       </details>
 
       <!-- 3. LINEUP & NETWORKING LEADS ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-networking" name="admin-section">
+      <details class="admin-section-accordion" id="admin-sec-networking" name="admin-section" ontoggle="if(this.open) loadAdminNetworkingData(true)">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">🎸</span>
@@ -7965,29 +7966,53 @@ function getResolvedGuestsNetworkingList() {
     });
   }
 
-  // Cross-reference with adminData.guests to ensure no guest is missed
+  const isGuestAdmin = (email, role) => {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const cleanRole = String(role || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    return cleanRole.includes("הפקה") || cleanRole.includes("admin") || cleanEmail === "shacharlavi10@gmail.com" || cleanEmail === "exposubmarine@gmail.com";
+  };
+
+  // Cross-reference with adminData.guests to ensure all registered delegates are included
   if (adminData && adminData.guests && adminData.guests.length > 1) {
-    const headers = adminData.guests[0].map(h => String(h).trim().toLowerCase());
-    const emailIdx = headers.indexOf("מייל אורח");
-    const fnIdx = headers.indexOf("שם פרטי");
-    const lnIdx = headers.indexOf("שם משפחה");
-    const roleIdx = headers.indexOf("תפקיד");
-    const compIdx = headers.indexOf("שם חברה");
-    const countryIdx = headers.indexOf("מדינה");
+    const headers = adminData.guests[0].map(h => String(h || '').trim().toLowerCase());
+    let emailIdx = headers.indexOf("מייל אורח");
+    if (emailIdx === -1) emailIdx = headers.findIndex(h => h.includes("מייל") || h.includes("email"));
+    let fnIdx = headers.indexOf("שם פרטי");
+    if (fnIdx === -1) fnIdx = headers.findIndex(h => h.includes("שם פרטי") || h.includes("first name"));
+    let lnIdx = headers.indexOf("שם משפחה");
+    if (lnIdx === -1) lnIdx = headers.findIndex(h => h.includes("שם משפחה") || h.includes("last name"));
+    let roleIdx = headers.indexOf("תפקיד");
+    if (roleIdx === -1) roleIdx = headers.findIndex(h => h.includes("תפקיד") || h.includes("role"));
+    let compIdx = headers.indexOf("שם חברה");
+    if (compIdx === -1) compIdx = headers.findIndex(h => h.includes("שם חברה") || h.includes("company"));
+    let countryIdx = headers.indexOf("מדינה");
+    if (countryIdx === -1) countryIdx = headers.findIndex(h => h.includes("מדינה") || h.includes("country"));
 
     for (let i = 1; i < adminData.guests.length; i++) {
       const row = adminData.guests[i];
-      const rawRole = roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "";
-      const cleanRole = rawRole.replace(/\s+/g, ' ').trim();
-      if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה")) continue; // skip admin
       const email = emailIdx !== -1 ? String(row[emailIdx] || "").trim().toLowerCase() : "";
+      const rawRole = roleIdx !== -1 ? String(row[roleIdx] || "").trim() : "";
+      if (isGuestAdmin(email, rawRole)) {
+        if (email) prefMap.delete(email);
+        continue; // skip admin
+      }
       const fname = fnIdx !== -1 ? String(row[fnIdx] || "").trim() : "";
       const lname = lnIdx !== -1 ? String(row[lnIdx] || "").trim() : "";
       const fullName = `${fname} ${lname}`.trim();
       if (!fullName || !email || !email.includes("@")) continue;
 
       if (prefMap.has(email)) {
-        result.push(prefMap.get(email));
+        const pGuest = prefMap.get(email);
+        const resolvedLikes = Number(pGuest.totalLikes) || (pGuest.favs ? (!isNaN(Number(pGuest.favs)) ? Number(pGuest.favs) : pGuest.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
+        result.push({
+          ...pGuest,
+          name: (pGuest.name && !pGuest.name.includes("@")) ? pGuest.name : (fullName || pGuest.name || email),
+          country: pGuest.country || (countryIdx !== -1 ? String(row[countryIdx] || "").trim() : ""),
+          company: pGuest.company || (compIdx !== -1 ? String(row[compIdx] || "").trim() : ""),
+          role: pGuest.role || rawRole,
+          totalLikes: resolvedLikes,
+          status: resolvedLikes > 0 ? `🟢 פעיל (${resolvedLikes} אומנים)` : (pGuest.status || "🔴 טרם סימן אומנים")
+        });
         prefMap.delete(email);
       } else {
         result.push({
@@ -7995,12 +8020,13 @@ function getResolvedGuestsNetworkingList() {
           name: fullName || email,
           country: countryIdx !== -1 ? String(row[countryIdx] || "").trim() : "",
           company: compIdx !== -1 ? String(row[compIdx] || "").trim() : "",
-          role: cleanRole,
+          role: rawRole,
           status: "🔴 טרם סימן אומנים",
           favs: "",
           booking: "",
           connect: "",
           press: "",
+          general: "",
           totalLikes: 0,
           notes: ""
         });
@@ -8010,53 +8036,245 @@ function getResolvedGuestsNetworkingList() {
 
   // Include any remaining guests from prefMap (ensure valid email and not admin)
   prefMap.forEach(g => {
+    const gEmail = String(g.email || "").trim().toLowerCase();
     const gRole = String(g.role || "").replace(/\s+/g, ' ').trim();
-    const gEmail = String(g.email || "").trim();
-    if (gEmail && gEmail.includes("@") && gRole !== "הפקה חשיפה" && !gRole.includes("הפקה חשיפה")) {
-      result.push(g);
+    if (gEmail && gEmail.includes("@") && !isGuestAdmin(gEmail, gRole)) {
+      const resolvedLikes = Number(g.totalLikes) || (g.favs ? (!isNaN(Number(g.favs)) ? Number(g.favs) : g.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
+      result.push({
+        ...g,
+        totalLikes: resolvedLikes,
+        status: resolvedLikes > 0 ? `🟢 פעיל (${resolvedLikes} אומנים)` : (g.status || "🔴 טרם סימן אומנים")
+      });
     }
   });
 
   return result;
 }
 
+function getResolvedArtistsNetworkingList() {
+  if (!adminNetworkingData || !adminNetworkingData.artistsLeads) return [];
+
+  const adminSet = new Set([
+    'shachar lavi',
+    'ido hamelch',
+    'exposubmarine',
+    'shacharlavi10@gmail.com',
+    'exposubmarine@gmail.com'
+  ]);
+
+  if (adminData && adminData.guests && adminData.guests.length > 1) {
+    const headers = adminData.guests[0].map(h => String(h || '').trim().toLowerCase());
+    let emailIdx = headers.indexOf('מייל אורח');
+    if (emailIdx === -1) emailIdx = headers.findIndex(h => h.includes('מייל') || h.includes('email'));
+    let roleIdx = headers.indexOf('תפקיד');
+    if (roleIdx === -1) roleIdx = headers.findIndex(h => h.includes('תפקיד') || h.includes('role'));
+    let fnIdx = headers.indexOf('שם פרטי');
+    if (fnIdx === -1) fnIdx = headers.findIndex(h => h.includes('שם פרטי') || h.includes('first name'));
+    let lnIdx = headers.indexOf('שם משפחה');
+    if (lnIdx === -1) lnIdx = headers.findIndex(h => h.includes('שם משפחה') || h.includes('last name'));
+
+    for (let i = 1; i < adminData.guests.length; i++) {
+      const row = adminData.guests[i];
+      const role = roleIdx !== -1 ? String(row[roleIdx] || '').trim().toLowerCase() : '';
+      const email = emailIdx !== -1 ? String(row[emailIdx] || '').trim().toLowerCase() : '';
+      const fname = fnIdx !== -1 ? String(row[fnIdx] || '').trim().toLowerCase() : '';
+      const lname = lnIdx !== -1 ? String(row[lnIdx] || '').trim().toLowerCase() : '';
+      const fullName = `${fname} ${lname}`.trim();
+
+      if (role.includes('הפקה') || role.includes('admin') || email === 'shacharlavi10@gmail.com' || email === 'exposubmarine@gmail.com') {
+        if (email) adminSet.add(email);
+        if (fullName) adminSet.add(fullName);
+        if (fname) adminSet.add(fname);
+      }
+    }
+  }
+
+  const isItemAdmin = (str) => {
+    if (!str) return false;
+    const lower = str.toLowerCase().trim();
+    if (lower.includes('הפקה חשיפה') || lower.includes('הפקה')) return true;
+    for (const a of adminSet) {
+      if (a && lower.includes(a)) return true;
+    }
+    return false;
+  };
+
+  // Get clean resolved guests for bidirectional cross-referencing
+  const resolvedGuests = getResolvedGuestsNetworkingList();
+  const guestLikesMap = new Map();
+  const guestBookingMap = new Map();
+  const guestConnectMap = new Map();
+  const guestPressMap = new Map();
+  const guestGeneralMap = new Map();
+  const guestNotesMap = new Map();
+
+  resolvedGuests.forEach(g => {
+    const gName = g.name || g.email;
+    const gLabel = g.country ? `${gName} (${g.country}${g.company ? ' - ' + g.company : ''})` : `${gName}${g.company ? ' (' + g.company + ')' : ''}`;
+
+    const addArtistMap = (map, str, val) => {
+      if (!str || typeof str !== 'string' || !isNaN(Number(str.trim()))) return;
+      str.split(',').map(s => s.trim().toLowerCase()).filter(Boolean).forEach(aNorm => {
+        if (!map.has(aNorm)) map.set(aNorm, []);
+        if (!map.get(aNorm).includes(val)) map.get(aNorm).push(val);
+      });
+    };
+
+    addArtistMap(guestLikesMap, g.favs, gName);
+    addArtistMap(guestBookingMap, g.booking, gLabel);
+    addArtistMap(guestConnectMap, g.connect, gLabel);
+    addArtistMap(guestPressMap, g.press, gLabel);
+    addArtistMap(guestGeneralMap, g.general, gLabel);
+
+    if (g.notes && typeof g.notes === 'string') {
+      const noteBlocks = g.notes.split('\n\n').map(n => n.trim()).filter(Boolean);
+      noteBlocks.forEach(nb => {
+        const match = nb.match(/^\[(.*?)\]:\s*([\s\S]*)$/);
+        if (match) {
+          const aNorm = match[1].trim().toLowerCase();
+          const noteText = `[${gLabel}]: ${match[2].trim()}`;
+          if (!guestNotesMap.has(aNorm)) guestNotesMap.set(aNorm, []);
+          guestNotesMap.get(aNorm).push(noteText);
+        }
+      });
+    }
+  });
+
+  return adminNetworkingData.artistsLeads.map(a => {
+    const aNameNorm = (a.name || '').trim().toLowerCase();
+
+    // 1. Liked guests
+    let likedGuestsArr = [];
+    if (a.likedGuests && typeof a.likedGuests === 'string') {
+      likedGuestsArr = a.likedGuests.split(',').map(s => s.trim()).filter(Boolean).filter(s => !isItemAdmin(s));
+    }
+    if (guestLikesMap.has(aNameNorm)) {
+      guestLikesMap.get(aNameNorm).forEach(gn => {
+        if (!likedGuestsArr.includes(gn) && !isItemAdmin(gn)) likedGuestsArr.push(gn);
+      });
+    }
+
+    // 2. Booking leads
+    let bookingArr = [];
+    if (a.bookingLeads && typeof a.bookingLeads === 'string') {
+      bookingArr = a.bookingLeads.split('\n').map(s => s.trim()).filter(Boolean).filter(s => !isItemAdmin(s));
+    }
+    if (guestBookingMap.has(aNameNorm)) {
+      guestBookingMap.get(aNameNorm).forEach(b => {
+        if (!bookingArr.includes(b) && !isItemAdmin(b)) bookingArr.push(b);
+      });
+    }
+
+    // 3. Connect leads
+    let connectArr = [];
+    if (a.connectLeads && typeof a.connectLeads === 'string') {
+      connectArr = a.connectLeads.split('\n').map(s => s.trim()).filter(Boolean).filter(s => !isItemAdmin(s));
+    }
+    if (guestConnectMap.has(aNameNorm)) {
+      guestConnectMap.get(aNameNorm).forEach(c => {
+        if (!connectArr.includes(c) && !isItemAdmin(c)) connectArr.push(c);
+      });
+    }
+
+    // 4. Press leads
+    let pressArr = [];
+    if (a.pressLeads && typeof a.pressLeads === 'string') {
+      pressArr = a.pressLeads.split('\n').map(s => s.trim()).filter(Boolean).filter(s => !isItemAdmin(s));
+    }
+    if (guestPressMap.has(aNameNorm)) {
+      guestPressMap.get(aNameNorm).forEach(p => {
+        if (!pressArr.includes(p) && !isItemAdmin(p)) pressArr.push(p);
+      });
+    }
+
+    // 5. General leads
+    let generalArr = [];
+    if (a.generalLeads && typeof a.generalLeads === 'string') {
+      generalArr = a.generalLeads.split('\n').map(s => s.trim()).filter(Boolean).filter(s => !isItemAdmin(s));
+    }
+    if (guestGeneralMap.has(aNameNorm)) {
+      guestGeneralMap.get(aNameNorm).forEach(g => {
+        if (!generalArr.includes(g) && !isItemAdmin(g)) generalArr.push(g);
+      });
+    }
+
+    // 6. Notes
+    let notesArr = [];
+    if (a.notes && typeof a.notes === 'string') {
+      notesArr = a.notes.split('\n\n').map(s => s.trim()).filter(Boolean).filter(s => !isItemAdmin(s));
+    }
+    if (guestNotesMap.has(aNameNorm)) {
+      guestNotesMap.get(aNameNorm).forEach(n => {
+        if (!notesArr.includes(n) && !isItemAdmin(n)) notesArr.push(n);
+      });
+    }
+
+    const cleanLikesCount = likedGuestsArr.length;
+    const isEngaged = cleanLikesCount > 0 ||
+                      bookingArr.length > 0 ||
+                      connectArr.length > 0 ||
+                      pressArr.length > 0 ||
+                      generalArr.length > 0 ||
+                      notesArr.length > 0;
+
+    return {
+      ...a,
+      likesCount: cleanLikesCount,
+      likedGuests: likedGuestsArr.join(', '),
+      bookingLeads: bookingArr.join('\n'),
+      connectLeads: connectArr.join('\n'),
+      pressLeads: pressArr.join('\n'),
+      generalLeads: generalArr.join('\n'),
+      notes: notesArr.join('\n\n'),
+      isEngaged: isEngaged
+    };
+  });
+}
+
 function renderAdminNetworkingKPIs() {
   const container = document.getElementById('admin-networking-kpis');
   if (!container || !adminNetworkingData) return;
 
-  const artists = adminNetworkingData.artistsLeads || [];
+  const artists = getResolvedArtistsNetworkingList();
   const guests = getResolvedGuestsNetworkingList();
 
   if (currentNetworkingTab === 'artists') {
     // 1. Lineup Coverage
     const totalArtists = artists.length;
-    const engagedArtists = artists.filter(a => 
-      (a.likesCount > 0) || 
-      (a.bookingLeads && a.bookingLeads.trim().length > 0) ||
-      (a.notes && a.notes.trim().length > 0)
-    ).length;
+    const engagedArtists = artists.filter(a => a.isEngaged).length;
     const unengagedArtists = Math.max(0, totalArtists - engagedArtists);
     const coveragePercent = totalArtists > 0 ? Math.round((engagedArtists / totalArtists) * 100) : 0;
 
     // 2. Top 5 In-Demand Artists
     const topArtists = [...artists]
-      .filter(a => (a.likesCount > 0) || (a.bookingLeads && a.bookingLeads.trim().length > 0))
+      .filter(a => a.isEngaged)
       .sort((a, b) => {
-        if (b.likesCount !== a.likesCount) return b.likesCount - a.likesCount;
-        const aHasBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
-        const bHasBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
-        if (bHasBooking !== aHasBooking) return bHasBooking - aHasBooking;
+        const aLikes = Number(a.likesCount) || 0;
+        const bLikes = Number(b.likesCount) || 0;
+        if (bLikes !== aLikes) return bLikes - aLikes;
+        const aBooking = (a.bookingLeads && a.bookingLeads.trim().length > 0) ? 1 : 0;
+        const bBooking = (b.bookingLeads && b.bookingLeads.trim().length > 0) ? 1 : 0;
+        if (bBooking !== aBooking) return bBooking - aBooking;
+        const aLeads = ((a.connectLeads && a.connectLeads.trim()) ? 1 : 0) +
+                       ((a.pressLeads && a.pressLeads.trim()) ? 1 : 0) +
+                       ((a.notes && a.notes.trim()) ? 1 : 0);
+        const bLeads = ((b.connectLeads && b.connectLeads.trim()) ? 1 : 0) +
+                       ((b.pressLeads && b.pressLeads.trim()) ? 1 : 0) +
+                       ((b.notes && b.notes.trim()) ? 1 : 0);
+        if (bLeads !== aLeads) return bLeads - aLeads;
         return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
       })
       .slice(0, 5);
 
     let topArtistsHtml = '';
     if (topArtists.length === 0) {
-      topArtistsHtml = '<p style="color: var(--foreground-muted); font-size: 0.85rem; margin: 14px 0; text-align: center;">No likes or leads recorded yet.</p>';
+      topArtistsHtml = '<p style="color: var(--foreground-muted); font-size: 0.85rem; margin: 14px 0; text-align: center;">No delegate interest recorded yet.</p>';
     } else {
       topArtistsHtml = '<div class="networking-top-list">';
       topArtists.forEach((a, idx) => {
         const hasBooking = a.bookingLeads && a.bookingLeads.trim().length > 0;
+        const hasConnect = a.connectLeads && a.connectLeads.trim().length > 0;
+        const hasPress = a.pressLeads && a.pressLeads.trim().length > 0;
         const safeName = escapeHtmlAdmin(a.name);
         topArtistsHtml += `
           <div class="networking-top-item" onclick="openNetworkingDetail('artist', '${safeName.replace(/'/g, "\\'")}')" title="View ${safeName} details">
@@ -8069,6 +8287,8 @@ function renderAdminNetworkingKPIs() {
             <div class="networking-top-right">
               <span class="networking-top-tag">❤️ ${a.likesCount || 0}</span>
               ${hasBooking ? `<span class="networking-top-tag" style="background: rgba(16,185,129,0.15); color: #10b981;" title="Booking inquiries">🎯</span>` : ''}
+              ${(!hasBooking && hasConnect) ? `<span class="networking-top-tag" style="background: rgba(59,130,246,0.15); color: #3b82f6;" title="Connect requests">🤝</span>` : ''}
+              ${(!hasBooking && !hasConnect && hasPress) ? `<span class="networking-top-tag" style="background: rgba(139,92,246,0.15); color: #8b5cf6;" title="Press coverage">📰</span>` : ''}
             </div>
           </div>
         `;
@@ -8118,24 +8338,23 @@ function renderAdminNetworkingKPIs() {
     // 1. Delegate Engagement Rate
     const totalGuests = guests.length;
     const activeGuests = guests.filter(g => {
-      const isInactive = (g.status && g.status.includes('טרם סימן')) ||
-                         ((!g.totalLikes || Number(g.totalLikes) === 0) &&
-                          (!g.favs || !g.favs.trim()) &&
-                          (!g.notes || !g.notes.trim()) &&
-                          (!g.booking || !g.booking.trim()) &&
-                          (!g.connect || !g.connect.trim()) &&
-                          (!g.press || !g.press.trim()) &&
-                          (!g.general || !g.general.trim()));
-      return !isInactive;
+      const likes = Number(g.totalLikes) || (g.favs ? (!isNaN(Number(g.favs)) ? Number(g.favs) : g.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
+      const hasFavs = g.favs && g.favs.trim().length > 0 && isNaN(Number(g.favs.trim()));
+      const hasNotes = g.notes && g.notes.trim().length > 0;
+      const hasTags = (g.booking && g.booking.trim().length > 0) ||
+                      (g.connect && g.connect.trim().length > 0) ||
+                      (g.press && g.press.trim().length > 0) ||
+                      (g.general && g.general.trim().length > 0);
+      return likes > 0 || hasFavs || hasNotes || hasTags;
     });
     const activeCount = activeGuests.length;
     const inactiveCount = Math.max(0, totalGuests - activeCount);
     const ratePercent = totalGuests > 0 ? Math.round((activeCount / totalGuests) * 100) : 0;
 
-    // 2. Top 5 Most Engaged Delegates (Ensure 5 delegates are shown)
-    const topGuests = [...guests]
+    // 2. Top 5 Most Engaged Delegates
+    const topGuests = [...activeGuests]
       .map(g => {
-        const likes = Number(g.totalLikes) || 0;
+        const likes = Number(g.totalLikes) || (g.favs ? (!isNaN(Number(g.favs)) ? Number(g.favs) : g.favs.split(',').map(s => s.trim()).filter(Boolean).length) : 0);
         const hasNotes = (g.notes && g.notes.trim().length > 0);
         const notesCount = hasNotes ? g.notes.split('\n').filter(Boolean).length : 0;
         const tagsCount = ((g.booking && g.booking.trim()) ? 1 : 0) +
@@ -8160,7 +8379,11 @@ function renderAdminNetworkingKPIs() {
       topGuests.forEach((g, idx) => {
         const safeName = escapeHtmlAdmin(g.name);
         const safeKey = escapeHtmlAdmin(g.email || g.name);
-        const subInfo = escapeHtmlAdmin(g.company || g.country || '');
+        const metaParts = [];
+        if (g.company) metaParts.push(escapeHtmlAdmin(g.company));
+        if (g.country) metaParts.push(escapeHtmlAdmin(g.country));
+        const subInfo = metaParts.join(' • ');
+
         topGuestsHtml += `
           <div class="networking-top-item" onclick="openNetworkingDetail('guest', '${safeKey.replace(/'/g, "\\'")}')" title="View ${safeName} activity">
             <div class="networking-top-left">
@@ -8227,7 +8450,7 @@ function renderAdminNetworkingCubes(query = "") {
 
   const q = query.toLowerCase().trim();
 
-  const artists = adminNetworkingData.artistsLeads || [];
+  const artists = getResolvedArtistsNetworkingList();
   const guests = getResolvedGuestsNetworkingList();
 
   const artistsCountEl = document.getElementById('networking-artists-count');
@@ -8365,27 +8588,16 @@ function openNetworkingDetail(type, target) {
     if (typeof target === 'number') {
       artist = networkingArtistsList[target];
     } else {
-      const allArtists = (adminNetworkingData && adminNetworkingData.artistsLeads) ? adminNetworkingData.artistsLeads : networkingArtistsList;
+      const allArtists = getResolvedArtistsNetworkingList();
       artist = allArtists.find(a => a.name.toLowerCase() === String(target).toLowerCase()) ||
                networkingArtistsList.find(a => a.name.toLowerCase() === String(target).toLowerCase());
     }
     if (!artist) return;
 
-    // Resolve liked guests list (from leads column or dynamic fallback from preferences)
+    // Resolve liked guests list (already cleaned and cross-referenced)
     let likedGuestsList = [];
     if (artist.likedGuests && artist.likedGuests.trim()) {
       likedGuestsList = artist.likedGuests.split(',').map(s => s.trim()).filter(Boolean);
-    } else if (adminNetworkingData && Array.isArray(adminNetworkingData.guestsPreferences)) {
-      const aNameNorm = (artist.name || '').trim().toLowerCase();
-      adminNetworkingData.guestsPreferences.forEach(g => {
-        if (g.favs) {
-          const fList = g.favs.split(',').map(f => f.trim().toLowerCase());
-          if (fList.includes(aNameNorm)) {
-            const gName = (g.name || g.email || '').trim();
-            if (gName && !likedGuestsList.includes(gName)) likedGuestsList.push(gName);
-          }
-        }
-      });
     }
 
     const rawLikedNames = likedGuestsList.join(', ');
@@ -8403,8 +8615,8 @@ function openNetworkingDetail(type, target) {
           <h2 class="networking-detail-title">${escapeHtmlAdmin(artist.name)}</h2>
           <span style="font-size: 0.9rem; font-weight: 700; color: var(--accent-bright);">${escapeHtmlAdmin(artist.genre || 'General')}</span>
         </div>
-        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button class="modal-close-btn sheet-close-btn" style="position: static;" onclick="closeNetworkingDetailSheet()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
@@ -8514,13 +8726,13 @@ function openNetworkingDetail(type, target) {
     }
     if (!guest) return;
 
-    const hasFavs = guest.favs && guest.favs.trim().length > 0;
+    const hasFavs = guest.favs && guest.favs.trim().length > 0 && isNaN(Number(guest.favs.trim()));
     const hasBooking = guest.booking && guest.booking.trim().length > 0;
     const hasConnect = guest.connect && guest.connect.trim().length > 0;
     const hasPress = guest.press && guest.press.trim().length > 0;
     const hasGeneral = guest.general && guest.general.trim().length > 0;
     const hasNotes = guest.notes && guest.notes.trim().length > 0;
-    const isActive = guest.totalLikes > 0 || hasFavs;
+    const isActive = guest.totalLikes > 0 || hasFavs || hasBooking || hasConnect || hasPress || hasGeneral || hasNotes;
 
     content.innerHTML = `
       <div class="networking-detail-header">
@@ -8532,8 +8744,8 @@ function openNetworkingDetail(type, target) {
             ${escapeHtmlAdmin(guest.country || 'N/A')}
           </div>
         </div>
-        <button class="sheet-close-btn" style="position: static; width: 34px; height: 34px;" onclick="closeNetworkingDetailSheet()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        <button class="modal-close-btn sheet-close-btn" style="position: static;" onclick="closeNetworkingDetailSheet()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
@@ -8662,24 +8874,55 @@ window.addEventListener('keydown', function(e) {
 
 function loadAdminNetworkingData(forceRefresh = false) {
   const container = document.getElementById('admin-networking-list');
+  const kpiContainer = document.getElementById('admin-networking-kpis');
   if (!container) return;
-  if (adminNetworkingData && !forceRefresh) {
+
+  // 1. Instant display from SWR cache if available and not forced
+  if (!adminNetworkingData && !forceRefresh) {
+    const cached = localStorage.getItem('swr_adminNetworkingData');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.success && parsed.artistsLeads) {
+          adminNetworkingData = parsed;
+          renderAdminNetworkingCubes();
+        }
+      } catch(e) {}
+    }
+  } else if (adminNetworkingData && !forceRefresh) {
     renderAdminNetworkingCubes();
     return;
   }
-  container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Loading networking insights...</p>';
+
+  // Visual refresh indicator: subtle opacity on KPIs and polite message in list
+  if (kpiContainer) {
+    kpiContainer.style.transition = 'opacity 0.2s ease';
+    kpiContainer.style.opacity = '0.6';
+  }
+  container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Updating networking insights...</p>';
+
   if (window.google && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(res) {
+        if (kpiContainer) kpiContainer.style.opacity = '1';
         if (res && res.success) {
           adminNetworkingData = res;
+          try {
+            localStorage.setItem('swr_adminNetworkingData', JSON.stringify(res));
+          } catch(e) {}
           renderAdminNetworkingCubes();
         } else {
           container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">No networking data available yet.</p>';
         }
       })
       .withFailureHandler(function(err) {
-        container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Could not load networking data.</p>';
+        if (kpiContainer) kpiContainer.style.opacity = '1';
+        console.warn("loadAdminNetworkingData failed:", err);
+        if (!adminNetworkingData) {
+          container.innerHTML = '<p style="color:var(--foreground-muted); text-align:center; padding:15px; grid-column:1 / -1;">Could not load networking data.</p>';
+        } else {
+          renderAdminNetworkingCubes();
+        }
       })
       .getAdminArtistsNetworkingData();
   }
@@ -9328,8 +9571,8 @@ function viewAdminGuestDetails(rowIndex) {
         <div style="color: var(--accent-bright); font-weight: 500; font-size: 0.95rem;">${role ? role + ' @ ' : ''}${company}</div>
         <div style="color: var(--foreground-muted); font-size: 0.85rem; margin-top: 2px;">${country}</div>
       </div>
-      <button class="sheet-close-btn" onclick="closeAdminModal()" style="background:var(--surface); border:1px solid var(--border); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--foreground);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button class="modal-close-btn sheet-close-btn" onclick="closeAdminModal()" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
     

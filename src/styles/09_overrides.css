@@ -575,9 +575,10 @@ body.light-mode .live-show-card.is-fav {
   background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 50%, var(--background-elevated) 100%);
 }
 
-.sheet-close-btn, .sheet-fav-btn {
+.sheet-fav-btn {
   position: absolute;
   top: 16px;
+  right: 16px;
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.1);
@@ -591,8 +592,6 @@ body.light-mode .live-show-card.is-fav {
   cursor: pointer;
   z-index: 2;
 }
-.sheet-close-btn { left: 16px; }
-.sheet-fav-btn { right: 16px; }
 .sheet-fav-btn.active { color: #ef4444; }
 .sheet-fav-btn.active svg { fill: #ef4444; }
 
@@ -5207,6 +5206,175 @@ body.light-mode .popover-btn.secondary {
   transform: translate(2px, 2px);
   box-shadow: 0px 0px 0px #000000;
 }
+
+/* ==========================================================================
+   UNIFIED ELEGANT MODAL & SHEET CLOSE BUTTONS (.modal-close-btn)
+   ========================================================================== */
+button.modal-close-btn,
+button.sheet-close-btn,
+button.updates-close,
+button.viewer-close,
+.modal-close-btn,
+.sheet-close-btn,
+.updates-close,
+.viewer-close {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  line-height: 1 !important;
+  font-size: 0 !important;
+  touch-action: manipulation !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  outline: none !important;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  flex-shrink: 0 !important;
+  z-index: 10;
+
+  /* Default / Dark Mode */
+  background: rgba(15, 23, 42, 0.78) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Light Mode (standard modal surfaces) */
+body.light-mode button.modal-close-btn,
+body.light-mode button.sheet-close-btn,
+body.light-mode button.updates-close,
+body.light-mode button.viewer-close,
+body.light-mode .modal-close-btn,
+body.light-mode .sheet-close-btn,
+body.light-mode .updates-close,
+body.light-mode .viewer-close {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  color: #000000 !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+
+/* When placed over Hero/Header Images (Artist & Guest Bottom Sheets) */
+.sheet-header-image button.sheet-close-btn,
+.sheet-header-image .sheet-close-btn,
+.sheet-header-image button.modal-close-btn,
+.sheet-header-image .modal-close-btn,
+body.light-mode .sheet-header-image button.sheet-close-btn,
+body.light-mode .sheet-header-image .sheet-close-btn,
+body.light-mode .sheet-header-image button.modal-close-btn,
+body.light-mode .sheet-header-image .modal-close-btn {
+  position: absolute !important;
+  top: 14px !important;
+  left: 14px !important;
+  right: auto !important;
+  background: rgba(15, 23, 42, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Fullscreen image viewer close button position */
+.viewer-close {
+  position: absolute !important;
+  top: max(20px, env(safe-area-inset-top)) !important;
+  right: 20px !important;
+  z-index: 10001 !important;
+}
+
+/* Hover States */
+button.modal-close-btn:hover,
+button.sheet-close-btn:hover,
+button.updates-close:hover,
+button.viewer-close:hover,
+.modal-close-btn:hover,
+.sheet-close-btn:hover,
+.updates-close:hover,
+.viewer-close:hover {
+  transform: scale(1.08) !important;
+  background: var(--accent, #F1A9A0) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+  box-shadow: 0 4px 12px rgba(241, 169, 160, 0.4) !important;
+}
+
+body.light-mode button.modal-close-btn:hover,
+body.light-mode button.sheet-close-btn:hover,
+body.light-mode button.updates-close:hover,
+body.light-mode button.viewer-close:hover,
+body.light-mode .modal-close-btn:hover,
+body.light-mode .sheet-close-btn:hover,
+body.light-mode .updates-close:hover,
+body.light-mode .viewer-close:hover {
+  background: var(--accent, #F1A9A0) !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+  box-shadow: 1px 1px 0px #000000 !important;
+  transform: translate(1px, 1px) scale(1.02) !important;
+}
+
+/* Active / Pressed States */
+button.modal-close-btn:active,
+button.sheet-close-btn:active,
+button.updates-close:active,
+button.viewer-close:active,
+.modal-close-btn:active,
+.sheet-close-btn:active,
+.updates-close:active,
+.viewer-close:active {
+  transform: scale(0.92) !important;
+}
+
+body.light-mode button.modal-close-btn:active,
+body.light-mode button.sheet-close-btn:active,
+body.light-mode button.updates-close:active,
+body.light-mode button.viewer-close:active,
+body.light-mode .modal-close-btn:active,
+body.light-mode .sheet-close-btn:active,
+body.light-mode .updates-close:active,
+body.light-mode .viewer-close:active {
+  transform: translate(2px, 2px) scale(0.96) !important;
+  box-shadow: 0px 0px 0px #000000 !important;
+}
+
+/* The SVG inside: razor-sharp, visible, perfectly centered */
+button.modal-close-btn svg,
+button.sheet-close-btn svg,
+button.updates-close svg,
+button.viewer-close svg,
+.modal-close-btn svg,
+.sheet-close-btn svg,
+.updates-close svg,
+.viewer-close svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  stroke: currentColor !important;
+  stroke-width: 2.5px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  fill: none !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+  pointer-events: none !important;
+}
+
 
 
 

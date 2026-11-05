@@ -395,8 +395,9 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
     const hasPreferences = prefData.length > 1;
 
     // Aggregates per artistId
-    // artistId -> { likes: 0, likedGuests: [], countries: {}, booking: [], connect: [], press: [], notes: [] }
+    // artistId -> { name, genre, likes: 0, likedGuests: [], countries: {}, booking: [], connect: [], press: [], general: [], notes: [] }
     const agg = {};
+    const artistNameMap = {};
     artistsList.forEach(a => {
       agg[a.id] = {
         name: a.name,
@@ -410,57 +411,81 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         general: [],
         notes: []
       };
+      if (a.name) {
+        artistNameMap[String(a.name).trim().toLowerCase()] = a.id;
+      }
     });
 
     if (hasPreferences) {
       const headers = prefData[0];
-      let rawJsonIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("raw"));
-      if (rawJsonIdx === -1) rawJsonIdx = headers.length - 1;
+      const colMap = {};
+      headers.forEach((h, idx) => {
+        const s = String(h).trim().toLowerCase();
+        if (s.includes("מייל")) colMap.email = idx;
+        else if (s.includes("שם מלא")) colMap.fullName = idx;
+        else if (s.includes("מדינה")) colMap.country = idx;
+        else if (s.includes("חברה") || s.includes("עושה")) colMap.company = idx;
+        else if (s.includes("תפקיד")) colMap.role = idx;
+        else if (s.includes("סטטוס")) colMap.status = idx;
+        else if ((s.includes("סה\"כ") || s.includes("סה״כ")) && s.includes("לייק")) colMap.totalLikes = idx;
+        else if (s.includes("לייק") && !s.includes("אורחים") && !s.includes("אהב")) colMap.totalLikes = idx;
+        else if (s.includes("אומנים שאהב") || s.includes("שאהב") || (s.includes("אהב") && !s.includes("סה"))) colMap.favs = idx;
+        else if (s.includes("booking") || s.includes("הזמנות")) colMap.booking = idx;
+        else if (s.includes("connect") || s.includes("קשר")) colMap.connect = idx;
+        else if (s.includes("press") || s.includes("עיתונות")) colMap.press = idx;
+        else if (s.includes("general") || s.includes("כללי")) colMap.general = idx;
+        else if (s.includes("הערות")) colMap.notes = idx;
+        else if (s.includes("raw")) colMap.raw = idx;
+      });
 
-      let emailIdx = headers.findIndex(h => String(h).trim().toLowerCase().includes("מייל"));
-      if (emailIdx === -1) emailIdx = 0;
-
-      let nameIdx = headers.findIndex(h => String(h).trim().includes("שם מלא"));
-      if (nameIdx === -1) nameIdx = 1;
-
-      let countryIdx = headers.findIndex(h => String(h).trim().includes("מדינה"));
-      if (countryIdx === -1) countryIdx = 2;
-
-      let roleIdx = headers.findIndex(h => String(h).trim().includes("תפקיד"));
-      let companyIdx = headers.findIndex(h => String(h).trim().includes("חברה") || String(h).trim().includes("עושה"));
-
+      // Deduplicate rows by cleanEmail, keeping latest row
+      const latestRowsByEmail = new Map();
       for (let r = 1; r < prefData.length; r++) {
         const row = prefData[r];
-        const cleanEmail = String(row[emailIdx] || "").trim();
-        const guestName = String(row[nameIdx] || "").trim();
-        const country = String(row[countryIdx] || "").trim();
-        const company = String((roleIdx >= 0 && row[roleIdx]) || (companyIdx >= 0 && row[companyIdx]) || "").trim();
-        const rawJson = row[rawJsonIdx];
-        if (!rawJson) continue;
+        const emailIdx = colMap.email !== undefined ? colMap.email : 0;
+        const cleanEmail = String(row[emailIdx] || "").trim().toLowerCase();
+        if (!cleanEmail || !cleanEmail.includes("@")) continue;
 
-        let payload = null;
-        try { payload = JSON.parse(rawJson); } catch (e) { continue; }
+        // Skip admin / production staff (role "הפקה חשיפה" or "הפקה", and admin emails)
+        const roleIdx = colMap.role !== undefined ? colMap.role : -1;
+        const rawRole = roleIdx >= 0 ? String(row[roleIdx] || "").trim() : "";
+        const masterInfo = getGuestDetailsFromMaster(cleanEmail);
+        const masterRole = (masterInfo && masterInfo.role) ? String(masterInfo.role).trim() : "";
+        if (rawRole.includes("הפקה") || masterRole.includes("הפקה") || cleanEmail === "shacharlavi10@gmail.com" || cleanEmail === "exposubmarine@gmail.com") {
+          continue; // Admin likes and inquiries are excluded from delegate leads
+        }
 
-        const favs = payload.favorites || {};
-        const notes = payload.notes || {};
-        const tags = payload.tags || {};
+        latestRowsByEmail.set(cleanEmail, { row: row, masterInfo: masterInfo });
+      }
+
+      latestRowsByEmail.forEach((item, cleanEmail) => {
+        const row = item.row;
+        const masterInfo = item.masterInfo;
+        const guestName = (masterInfo && masterInfo.fullName) ? masterInfo.fullName : (String((colMap.fullName !== undefined ? row[colMap.fullName] : "") || cleanEmail).trim());
+        const country = (masterInfo && masterInfo.country) ? masterInfo.country : String((colMap.country !== undefined ? row[colMap.country] : "") || "").trim();
+        const company = (masterInfo && (masterInfo.companyName || masterInfo.companyBio)) ? (masterInfo.companyName || masterInfo.companyBio) : String((colMap.company !== undefined ? row[colMap.company] : "") || "").trim();
 
         const displayName = guestName || cleanEmail;
         const delegateLabel = country 
           ? `${displayName} (${country}${company ? " - " + company : ""})` 
           : `${displayName}${company ? " (" + company + ")" : ""}`;
 
+        let payload = null;
+        if (colMap.raw !== undefined && row[colMap.raw]) {
+          try { payload = JSON.parse(row[colMap.raw]); } catch (e) {}
+        }
+
+        const favs = (payload && payload.favorites) ? payload.favorites : {};
+        const notes = (payload && payload.notes) ? payload.notes : {};
+        const tags = (payload && payload.tags) ? payload.tags : {};
+
+        const processedFavArtists = new Set();
         Object.keys(favs).forEach(aId => {
           if (favs[aId] && agg[aId]) {
+            processedFavArtists.add(aId);
             agg[aId].likes++;
-            let guestFullName = guestName;
-            if (!guestFullName && cleanEmail) {
-              const masterInfo = getGuestDetailsFromMaster(cleanEmail);
-              if (masterInfo && masterInfo.fullName) guestFullName = masterInfo.fullName;
-            }
-            if (!guestFullName) guestFullName = cleanEmail;
-            if (guestFullName && !agg[aId].likedGuests.includes(guestFullName)) {
-              agg[aId].likedGuests.push(guestFullName);
+            if (!agg[aId].likedGuests.includes(displayName)) {
+              agg[aId].likedGuests.push(displayName);
             }
             if (country) {
               agg[aId].countries[country] = (agg[aId].countries[country] || 0) + 1;
@@ -468,13 +493,31 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
           }
         });
 
+        // Fallback: If payload was empty or missing, check colMap.favs
+        if (processedFavArtists.size === 0 && colMap.favs !== undefined && row[colMap.favs]) {
+          const namesList = String(row[colMap.favs]).split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+          namesList.forEach(n => {
+            const matchedId = artistNameMap[n];
+            if (matchedId && agg[matchedId] && !processedFavArtists.has(matchedId)) {
+              processedFavArtists.add(matchedId);
+              agg[matchedId].likes++;
+              if (!agg[matchedId].likedGuests.includes(displayName)) {
+                agg[matchedId].likedGuests.push(displayName);
+              }
+              if (country) {
+                agg[matchedId].countries[country] = (agg[matchedId].countries[country] || 0) + 1;
+              }
+            }
+          });
+        }
+
         Object.keys(tags).forEach(aId => {
           if (!agg[aId]) return;
           const tList = tags[aId] || [];
-          if (tList.includes("Booking")) agg[aId].booking.push(delegateLabel);
-          if (tList.includes("Connect")) agg[aId].connect.push(delegateLabel);
-          if (tList.includes("Press")) agg[aId].press.push(delegateLabel);
-          if (tList.includes("General")) agg[aId].general.push(delegateLabel);
+          if (tList.includes("Booking") && !agg[aId].booking.includes(delegateLabel)) agg[aId].booking.push(delegateLabel);
+          if (tList.includes("Connect") && !agg[aId].connect.includes(delegateLabel)) agg[aId].connect.push(delegateLabel);
+          if (tList.includes("Press") && !agg[aId].press.includes(delegateLabel)) agg[aId].press.push(delegateLabel);
+          if (tList.includes("General") && !agg[aId].general.includes(delegateLabel)) agg[aId].general.push(delegateLabel);
         });
 
         Object.keys(notes).forEach(aId => {
@@ -484,7 +527,7 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
             agg[aId].notes.push(`[${delegateLabel}]: ${text}`);
           }
         });
-      }
+      });
     }
 
     // Inspect existing leads headers dynamically
@@ -510,7 +553,6 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
       else if (s.includes("raw")) lColMap.raw = idx;
     });
 
-    // If leads sheet headers exist but 'אורחים שעשו לייקים' is missing, add it dynamically
     if (leadsHeaders.length > 0 && lColMap.likedGuests === undefined) {
       const newColIdx = leadsHeaders.length;
       leadsSheet.getRange(1, newColIdx + 1).setValue("אורחים שעשו לייקים");
@@ -567,7 +609,6 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
     });
 
     if (rowsToWrite.length > 0) {
-      // Clear previous rows starting from row 2
       const maxRows = leadsSheet.getMaxRows();
       const maxCols = leadsSheet.getMaxColumns();
       if (maxRows > 1) {
@@ -594,6 +635,27 @@ function getAdminArtistsNetworkingData() {
     const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
     const prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
 
+    // Fetch artists data
+    const artistsRes = getArtistsData(false);
+    const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
+    const artistMap = {};
+    artistsList.forEach(a => { artistMap[a.id] = a; });
+
+    // Always ensure fresh sync of leadsSheet from prefSheet
+    if (prefSheet) {
+      if (!leadsSheet) {
+        leadsSheet = ss.insertSheet(leadsSheetName);
+        leadsSheet.appendRow([
+          "שם האמן", "ז'אנר", "פוטנציאל סיבוב הופעות (Tour Match)",
+          "מדינות מתעניינות", "בוקרים להופעה (🎯 Booking)",
+          "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)", "כללי (General)",
+          "סה\"כ לייקים (❤️)", "אורחים שעשו לייקים", "הערות אורחים", "Raw Data"
+        ]);
+        leadsSheet.setFrozenRows(1);
+      }
+      syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList);
+    }
+
     let artistsLeads = [];
     if (leadsSheet && leadsSheet.getLastRow() > 1) {
       const data = leadsSheet.getDataRange().getValues();
@@ -615,6 +677,13 @@ function getAdminArtistsNetworkingData() {
         else if (s.includes("raw")) lMap.raw = idx;
       });
 
+      const adminKeywords = ["הפקה חשיפה", "הפקה", "shacharlavi10@gmail.com", "exposubmarine@gmail.com", "shachar lavi", "ido hamelch"];
+      const isLeadAdmin = function(str) {
+        if (!str) return false;
+        const low = String(str).toLowerCase().trim();
+        return adminKeywords.some(function(k) { return low.indexOf(k) !== -1; });
+      };
+
       for (let r = 1; r < data.length; r++) {
         const row = data[r];
         if (!row[0]) continue;
@@ -627,72 +696,38 @@ function getAdminArtistsNetworkingData() {
             }
           } catch(e) {}
         }
+
+        // Clean out admin names from likedGuests
+        const cleanLikedGuests = likedGuestsVal
+          ? likedGuestsVal.split(",").map(function(s) { return s.trim(); }).filter(Boolean).filter(function(s) { return !isLeadAdmin(s); })
+          : [];
+
+        const filterLeadLines = function(val) {
+          if (!val) return "";
+          return String(val).split("\n").map(function(s) { return s.trim(); }).filter(Boolean).filter(function(s) { return !isLeadAdmin(s); }).join("\n");
+        };
+
+        const bookingClean = filterLeadLines(lMap.booking !== undefined ? row[lMap.booking] : row[4]);
+        const connectClean = filterLeadLines(lMap.connect !== undefined ? row[lMap.connect] : row[5]);
+        const pressClean = filterLeadLines(lMap.press !== undefined ? row[lMap.press] : row[6]);
+        const generalClean = filterLeadLines(lMap.general !== undefined ? row[lMap.general] : "");
+        const rawLikesCount = Number((lMap.likes !== undefined ? row[lMap.likes] : row[7]) || 0);
+        const notesClean = String((lMap.notes !== undefined ? row[lMap.notes] : row[8]) || "")
+          .split("\n\n").map(function(s) { return s.trim(); }).filter(Boolean).filter(function(s) { return !isLeadAdmin(s); }).join("\n\n");
+
         artistsLeads.push({
           name: String((lMap.name !== undefined ? row[lMap.name] : row[0]) || "").trim(),
           genre: String((lMap.genre !== undefined ? row[lMap.genre] : row[1]) || "").trim(),
           tourPotential: String((lMap.tour !== undefined ? row[lMap.tour] : row[2]) || "").trim(),
           countries: String((lMap.countries !== undefined ? row[lMap.countries] : row[3]) || "").trim(),
-          bookingLeads: String((lMap.booking !== undefined ? row[lMap.booking] : row[4]) || "").trim(),
-          connectLeads: String((lMap.connect !== undefined ? row[lMap.connect] : row[5]) || "").trim(),
-          pressLeads: String((lMap.press !== undefined ? row[lMap.press] : row[6]) || "").trim(),
-          generalLeads: String((lMap.general !== undefined ? row[lMap.general] : "") || "").trim(),
-          likesCount: Number((lMap.likes !== undefined ? row[lMap.likes] : row[7]) || 0),
-          likedGuests: likedGuestsVal,
-          notes: String((lMap.notes !== undefined ? row[lMap.notes] : row[8]) || "").trim()
+          bookingLeads: bookingClean,
+          connectLeads: connectClean,
+          pressLeads: pressClean,
+          generalLeads: generalClean,
+          likesCount: cleanLikedGuests.length > 0 ? cleanLikedGuests.length : (likedGuestsVal ? 0 : rawLikesCount),
+          likedGuests: cleanLikedGuests.join(", "),
+          notes: notesClean
         });
-      }
-    }
-
-    // Auto-populate if leads sheet is empty
-    if (artistsLeads.length === 0) {
-      syncAllArtistsAndLeads();
-      leadsSheet = ss.getSheetByName(leadsSheetName);
-      if (leadsSheet && leadsSheet.getLastRow() > 1) {
-        const data = leadsSheet.getDataRange().getValues();
-        const lHeaders = data[0];
-        const lMap = {};
-        lHeaders.forEach((h, idx) => {
-          const s = String(h).trim().toLowerCase();
-          if ((s.includes("אורחים") && s.includes("לייק")) || s.includes("שעשו לייק") || s.includes("אורחים שעשו לייקים")) lMap.likedGuests = idx;
-          else if (s.includes("שם") && s.includes("אמן")) lMap.name = idx;
-          else if (s.includes("ז'אנר") || s.includes("זאנר")) lMap.genre = idx;
-          else if (s.includes("טור") || s.includes("סיבוב") || s.includes("match")) lMap.tour = idx;
-          else if (s.includes("מדינות")) lMap.countries = idx;
-          else if (s.includes("booking") || s.includes("בוקרים") || s.includes("הזמנות")) lMap.booking = idx;
-          else if (s.includes("connect") || s.includes("קשר")) lMap.connect = idx;
-          else if (s.includes("press") || s.includes("עיתונות")) lMap.press = idx;
-          else if (s.includes("general") || s.includes("כללי")) lMap.general = idx;
-          else if (s.includes("לייקים") || s.includes("סה\"כ") || s.includes("סה״כ")) lMap.likes = idx;
-          else if (s.includes("הערות")) lMap.notes = idx;
-          else if (s.includes("raw")) lMap.raw = idx;
-        });
-
-        for (let r = 1; r < data.length; r++) {
-          const row = data[r];
-          if (!row[0]) continue;
-          let likedGuestsVal = String((lMap.likedGuests !== undefined ? row[lMap.likedGuests] : "") || "").trim();
-          if (!likedGuestsVal && lMap.raw !== undefined && row[lMap.raw]) {
-            try {
-              const rawP = JSON.parse(row[lMap.raw]);
-              if (Array.isArray(rawP.likedGuests) && rawP.likedGuests.length > 0) {
-                likedGuestsVal = rawP.likedGuests.join(", ");
-              }
-            } catch(e) {}
-          }
-          artistsLeads.push({
-            name: String((lMap.name !== undefined ? row[lMap.name] : row[0]) || "").trim(),
-            genre: String((lMap.genre !== undefined ? row[lMap.genre] : row[1]) || "").trim(),
-            tourPotential: String((lMap.tour !== undefined ? row[lMap.tour] : row[2]) || "").trim(),
-            countries: String((lMap.countries !== undefined ? row[lMap.countries] : row[3]) || "").trim(),
-            bookingLeads: String((lMap.booking !== undefined ? row[lMap.booking] : row[4]) || "").trim(),
-            connectLeads: String((lMap.connect !== undefined ? row[lMap.connect] : row[5]) || "").trim(),
-            pressLeads: String((lMap.press !== undefined ? row[lMap.press] : row[6]) || "").trim(),
-            generalLeads: String((lMap.general !== undefined ? row[lMap.general] : "") || "").trim(),
-            likesCount: Number((lMap.likes !== undefined ? row[lMap.likes] : row[7]) || 0),
-            likedGuests: likedGuestsVal,
-            notes: String((lMap.notes !== undefined ? row[lMap.notes] : row[8]) || "").trim()
-          });
-        }
       }
     }
 
@@ -710,41 +745,80 @@ function getAdminArtistsNetworkingData() {
         else if (s.includes("חברה") || s.includes("עושה")) colMap.company = idx;
         else if (s.includes("תפקיד")) colMap.role = idx;
         else if (s.includes("סטטוס")) colMap.status = idx;
-        else if (s.includes("אהב") || s.includes("❤️")) colMap.favs = idx;
+        else if ((s.includes("סה\"כ") || s.includes("סה״כ")) && s.includes("לייק")) colMap.totalLikes = idx;
+        else if (s.includes("לייק") && !s.includes("אורחים") && !s.includes("אהב")) colMap.totalLikes = idx;
+        else if (s.includes("אומנים שאהב") || s.includes("שאהב") || (s.includes("אהב") && !s.includes("סה"))) colMap.favs = idx;
         else if (s.includes("booking") || s.includes("הזמנות")) colMap.booking = idx;
         else if (s.includes("connect") || s.includes("קשר")) colMap.connect = idx;
         else if (s.includes("press") || s.includes("עיתונות")) colMap.press = idx;
         else if (s.includes("general") || s.includes("כללי")) colMap.general = idx;
-        else if (s.includes("לייקים")) colMap.totalLikes = idx;
         else if (s.includes("הערות")) colMap.notes = idx;
+        else if (s.includes("raw")) colMap.raw = idx;
       });
 
+      // Deduplicate by clean email, keeping latest
+      const latestPrefRows = new Map();
       for (let r = 1; r < pData.length; r++) {
         const row = pData[r];
-        const email = String((colMap.email !== undefined ? row[colMap.email] : row[0]) || "").trim();
-        const fullName = String((colMap.fullName !== undefined ? row[colMap.fullName] : row[1]) || "").trim();
-        if (!email && !fullName) continue;
+        const email = String((colMap.email !== undefined ? row[colMap.email] : row[0]) || "").trim().toLowerCase();
+        if (!email || !email.includes("@")) continue;
+        latestPrefRows.set(email, row);
+      }
 
-        const status = String((colMap.status !== undefined ? row[colMap.status] : row[5]) || "").trim();
+      latestPrefRows.forEach((row, email) => {
+        const role = String((colMap.role !== undefined ? row[colMap.role] : "") || "").trim();
+        const masterInfo = getGuestDetailsFromMaster(email);
+        const masterRole = (masterInfo && masterInfo.role) ? String(masterInfo.role).trim() : "";
+        if (role.includes("הפקה") || masterRole.includes("הפקה") || email === "shacharlavi10@gmail.com" || email === "exposubmarine@gmail.com") {
+          return; // Skip admin
+        }
+
+        const fullName = (masterInfo && masterInfo.fullName) ? masterInfo.fullName : String((colMap.fullName !== undefined ? row[colMap.fullName] : "") || email).trim();
+        const country = (masterInfo && masterInfo.country) ? masterInfo.country : String((colMap.country !== undefined ? row[colMap.country] : "") || "").trim();
+        const company = (masterInfo && (masterInfo.companyName || masterInfo.companyBio)) ? (masterInfo.companyName || masterInfo.companyBio) : String((colMap.company !== undefined ? row[colMap.company] : "") || "").trim();
+
+        let favsVal = String((colMap.favs !== undefined ? row[colMap.favs] : "") || "").trim();
+        let totalLikesVal = Number(colMap.totalLikes !== undefined ? row[colMap.totalLikes] : 0);
+
+        let rawPayload = null;
+        if (colMap.raw !== undefined && row[colMap.raw]) {
+          try { rawPayload = JSON.parse(row[colMap.raw]); } catch(e) {}
+        }
+
+        if (rawPayload && rawPayload.favorites) {
+          const rawLikedKeys = Object.keys(rawPayload.favorites).filter(k => !!rawPayload.favorites[k]);
+          if (rawLikedKeys.length > 0) {
+            totalLikesVal = rawLikedKeys.length;
+            if (!favsVal || !isNaN(Number(favsVal))) {
+              favsVal = rawLikedKeys.map(k => (artistMap[k] ? artistMap[k].name : k)).join(", ");
+            }
+          }
+        }
+        if (isNaN(totalLikesVal) || totalLikesVal === 0) {
+          if (favsVal && isNaN(Number(favsVal))) {
+            totalLikesVal = favsVal.split(",").filter(s => Boolean(s.trim())).length;
+          }
+        }
+
         const guestObj = {
           email: email,
           name: fullName || email,
-          country: String((colMap.country !== undefined ? row[colMap.country] : row[2]) || "").trim(),
-          company: String((colMap.company !== undefined ? row[colMap.company] : row[3]) || "").trim(),
-          role: String((colMap.role !== undefined ? row[colMap.role] : row[4]) || "").trim(),
-          status: status,
-          favs: String((colMap.favs !== undefined ? row[colMap.favs] : row[6]) || "").trim(),
-          booking: String((colMap.booking !== undefined ? row[colMap.booking] : row[7]) || "").trim(),
-          connect: String((colMap.connect !== undefined ? row[colMap.connect] : row[8]) || "").trim(),
-          press: String((colMap.press !== undefined ? row[colMap.press] : row[9]) || "").trim(),
+          country: country,
+          company: company,
+          role: role || (masterInfo ? masterInfo.role : ""),
+          status: totalLikesVal > 0 ? `🟢 פעיל (${totalLikesVal} אומנים)` : `🔴 טרם סימן אומנים`,
+          favs: favsVal,
+          booking: String((colMap.booking !== undefined ? row[colMap.booking] : "") || "").trim(),
+          connect: String((colMap.connect !== undefined ? row[colMap.connect] : "") || "").trim(),
+          press: String((colMap.press !== undefined ? row[colMap.press] : "") || "").trim(),
           general: String((colMap.general !== undefined ? row[colMap.general] : "") || "").trim(),
-          totalLikes: Number((colMap.totalLikes !== undefined ? row[colMap.totalLikes] : row[10]) || 0),
-          notes: String((colMap.notes !== undefined ? row[colMap.notes] : row[11]) || "").trim()
+          totalLikes: totalLikesVal,
+          notes: String((colMap.notes !== undefined ? row[colMap.notes] : "") || "").trim()
         };
 
         guestsPreferences.push(guestObj);
 
-        if (status.includes("טרם סימן")) {
+        if (totalLikesVal === 0 && !guestObj.booking && !guestObj.connect && !guestObj.press && !guestObj.general && !guestObj.notes) {
           inactiveGuests.push({
             email: email,
             name: fullName,
@@ -753,7 +827,7 @@ function getAdminArtistsNetworkingData() {
             role: guestObj.role
           });
         }
-      }
+      });
     }
 
     return {
