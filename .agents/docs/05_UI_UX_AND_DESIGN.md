@@ -44,8 +44,9 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
 - **Compact Guide Cards (`.guide-place-row`)**:
   - Row layout reducing card height by 55%, enabling 4-5 venues visible per screen without vertical clutter.
   - Direct right-aligned "Open in Maps" button with map icon.
-- **Unified Accommodations Spec Card (`.hotel-spec-card`)**:
-  - Modern spec card for Arthur Hotel & Cinema Hotel with row-based key-value details, external map button, and high-contrast Neo-Brutalist borders.
+- **Unified Accommodations Spec Card & Extra Payment (`.hotel-spec-card`, `.hotel-extra-payment-card`)**:
+  - **Hotel Spec Card**: Modern spec card for Arthur Hotel & Cinema Hotel with row-based key-value details (Nights Count, Arrival Date, Departure Date, Room Type), external map button, and high-contrast Neo-Brutalist borders.
+  - **Hotel Extra Payment Card (`.hotel-extra-payment-card`)**: Independent, distinct card positioned below the spec card for delegates with personal additions (extra nights, double room upgrade fee). Warm amber/gold theme (`#fbbf24` in dark mode, `#b45309` in light mode), large typography for USD and ILS amounts (`~$1,370 (₪5,000)`), status tag `Payable at Check-In`, and clear breakdown (`Covers: X extra nights & double room upgrade fee`). Completely hidden when amount is zero or empty.
 - **Artist Intent 2x2 Grid Cards (`.sheet-intent-grid`, `.sheet-intent-card-btn`)**:
   - Compact 2x2 grid tiles for delegate collaboration interest inside the Artist Bottom Sheet:
     - `🎯 Live Booking` (*Shows, tours & festivals*)
