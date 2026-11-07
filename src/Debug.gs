@@ -912,4 +912,32 @@ function syncLineupSheetFromProdToSandbox() {
   }
 }
 
+function inspectHotelSheetsData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const jlm = ss.getSheetByName(CONFIG.JERUSALEM_SHEET);
+  const tlv = ss.getSheetByName(CONFIG.TELAVIV_SHEET);
+  
+  const getInfo = (sheet) => {
+    if (!sheet) return null;
+    return sheet.getRange(1, 1, Math.min(8, sheet.getLastRow()), Math.min(20, sheet.getLastColumn())).getDisplayValues();
+  };
+  
+  return {
+    jerusalem: getInfo(jlm),
+    telAviv: getInfo(tlv),
+    mapping: MAPPINGS.HOTELS
+  };
+}
+
+function testHotelMappedDataForGuest(email) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const targetEmail = email || "buihuytuan@gmail.com";
+  const jlm = ss.getSheetByName(CONFIG.JERUSALEM_SHEET);
+  const tlv = ss.getSheetByName(CONFIG.TELAVIV_SHEET);
+  const jlmData = fetchMappedData(jlm, targetEmail, MAPPINGS.HOTELS);
+  const tlvData = fetchMappedData(tlv, targetEmail, MAPPINGS.HOTELS);
+  return { email: targetEmail, jlmData: jlmData, tlvData: tlvData };
+}
+
+
 
