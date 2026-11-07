@@ -1247,82 +1247,92 @@
           ilsAmount = parseFloat(cleanPaymentStr) || 0;
         }
 
-        let paymentRowHtml = '';
-        if (ilsAmount > 0) {
-          const rate = getCachedUsdIlsRate() || 3.65;
-          const usdEst = Math.round(ilsAmount / rate);
+          let paymentBlockHtml = '';
+          if (ilsAmount > 0) {
+            const rate = getCachedUsdIlsRate() || 3.65;
+            const usdEst = Math.round(ilsAmount / rate);
 
-          // Parse extra nights count
-          let extraNightsNum = 0;
-          if (extraNightsRaw) {
-            const cleanNightsStr = String(extraNightsRaw).replace(/[^\d]/g, '');
-            extraNightsNum = parseInt(cleanNightsStr, 10) || 0;
+            // Parse extra nights count
+            let extraNightsNum = 0;
+            if (extraNightsRaw) {
+              const cleanNightsStr = String(extraNightsRaw).replace(/[^\d]/g, '');
+              extraNightsNum = parseInt(cleanNightsStr, 10) || 0;
+            }
+
+            // Check if room type is double
+            const isDouble = roomTypeRaw && (
+              String(roomTypeRaw).toLowerCase().includes('double') ||
+              String(roomTypeRaw).includes('זוגי') ||
+              String(roomTypeRaw).toLowerCase().includes('twin') ||
+              String(roomTypeRaw).toLowerCase() === 'dbl'
+            );
+
+            let breakdownParts = [];
+            if (extraNightsNum > 0) {
+              breakdownParts.push(`${extraNightsNum} extra night${extraNightsNum > 1 ? 's' : ''}`);
+            }
+            if (isDouble) {
+              breakdownParts.push('double room supplement');
+            }
+            let breakdownText = breakdownParts.join(' & ');
+            if (!breakdownText) {
+              breakdownText = 'Direct hotel charges';
+            }
+            breakdownText = breakdownText.charAt(0).toUpperCase() + breakdownText.slice(1);
+
+            paymentBlockHtml = `
+              <div class="hotel-extra-payment-card">
+                <div class="extra-payment-header">
+                  <div class="extra-payment-badge">
+                    <span>💳</span>
+                    <span>Your Extra Payment</span>
+                  </div>
+                  <span class="extra-payment-due-tag">Payable at Check-In</span>
+                </div>
+                <div class="extra-payment-amount">
+                  ~$${usdEst} <span class="extra-payment-currency-ils">(₪${ilsAmount.toLocaleString()})</span>
+                </div>
+                <div class="extra-payment-breakdown">
+                  <strong>Covers:</strong> ${breakdownText}
+                </div>
+                <div class="extra-payment-note">
+                  To be paid directly by you to the hotel front desk upon arrival.
+                </div>
+              </div>
+            `;
           }
 
-          // Check if room type is double
-          const isDouble = roomTypeRaw && (
-            String(roomTypeRaw).toLowerCase().includes('double') ||
-            String(roomTypeRaw).includes('זוגי') ||
-            String(roomTypeRaw).toLowerCase().includes('twin') ||
-            String(roomTypeRaw).toLowerCase() === 'dbl'
-          );
+          const hasDetails = (nights && String(nights).trim() !== "") || 
+                             (arrivalFormatted && arrivalFormatted.trim() !== "") ||
+                             (departureFormatted && departureFormatted.trim() !== "") ||
+                             (roomTypeFormatted && roomTypeFormatted.trim() !== "") ||
+                             ilsAmount > 0;
 
-          let breakdownParts = [];
-          if (extraNightsNum > 0) {
-            breakdownParts.push(`${extraNightsNum} extra night${extraNightsNum > 1 ? 's' : ''}`);
+          if (!hasDetails) {
+            return `<p class="empty-state">No ${cityName} accommodation details confirmed yet.</p>`;
           }
-          if (isDouble) {
-            breakdownParts.push('double room supplement');
-          }
-          let breakdownText = breakdownParts.join(' & ');
-          if (!breakdownText) {
-            breakdownText = 'Direct hotel charges';
-          }
-          breakdownText = breakdownText.charAt(0).toUpperCase() + breakdownText.slice(1);
 
-          paymentRowHtml = `
-            <div class="hotel-spec-row hotel-payment-row">
-              <span class="hotel-spec-label hotel-payment-label">Due at Check-In</span>
-              <span class="hotel-spec-value hotel-payment-value">~$${usdEst} (₪${ilsAmount.toLocaleString()})</span>
+          return `
+            <div class="hotel-spec-card">
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Nights Count</span>
+                <span class="hotel-spec-value">${nights ? `${nights}` : '—'}</span>
+              </div>
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Arrival Date</span>
+                <span class="hotel-spec-value">${arrivalFormatted || '—'}</span>
+              </div>
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Departure Date</span>
+                <span class="hotel-spec-value">${departureFormatted || '—'}</span>
+              </div>
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Room Type</span>
+                <span class="hotel-spec-value">${roomTypeFormatted || '—'}</span>
+              </div>
             </div>
-            <div class="hotel-spec-row hotel-payment-breakdown-row">
-              <span class="hotel-spec-label">Covers</span>
-              <span class="hotel-spec-value hotel-breakdown-text">${breakdownText}</span>
-            </div>
+            ${paymentBlockHtml}
           `;
-        }
-
-        const hasDetails = (nights && String(nights).trim() !== "") || 
-                           (arrivalFormatted && arrivalFormatted.trim() !== "") ||
-                           (departureFormatted && departureFormatted.trim() !== "") ||
-                           (roomTypeFormatted && roomTypeFormatted.trim() !== "") ||
-                           ilsAmount > 0;
-
-        if (!hasDetails) {
-          return `<p class="empty-state">No ${cityName} accommodation details confirmed yet.</p>`;
-        }
-
-        return `
-          <div class="hotel-spec-card">
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Nights Count</span>
-              <span class="hotel-spec-value">${nights ? `${nights}` : '—'}</span>
-            </div>
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Arrival Date</span>
-              <span class="hotel-spec-value">${arrivalFormatted || '—'}</span>
-            </div>
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Departure Date</span>
-              <span class="hotel-spec-value">${departureFormatted || '—'}</span>
-            </div>
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Room Type</span>
-              <span class="hotel-spec-value">${roomTypeFormatted || '—'}</span>
-            </div>
-            ${paymentRowHtml}
-          </div>
-        `;
       };
 
       if (jlmContainer) jlmContainer.innerHTML = buildHotelCard(jerusalemData, "Jerusalem");
