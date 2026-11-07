@@ -96,7 +96,9 @@ const MAPPINGS = {
     { key: "שעת הגעה משוערת", label: "Est. Arrival Time" },
     { key: "תאריך יציאה", label: "Departure Date" },
     { key: "סוג חדר", label: "Room Type" },
-    { key: "סה\"כ לילות", label: "Total Nights" }
+    { key: "סה\"כ לילות", label: "Total Nights" },
+    { key: "סה\"כ סכום על חשבון האורח", altKeys: ["סה\"כ סכום על חשבון האורח", "סכום על חשבון האורח", "סה\"כ על חשבון האורח", "על חשבון האורח", "תשלום אורח"], label: "Guest Payment Total" },
+    { key: "מס' לילות על חשבון האורח", altKeys: ["מס' לילות על חשבון האורח", "מס לילות על חשבון האורח", "לילות על חשבון האורח", "מספר לילות על חשבון האורח", "אקסטרה לילות"], label: "Guest Extra Nights" }
   ],
   GUESTS_DIRECTORY: [
     { key: "שם פרטי", altKeys: ["שם פרטי"], label: "First Name" },

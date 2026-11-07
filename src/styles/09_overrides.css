@@ -2805,6 +2805,62 @@ body.light-mode .hotel-spec-value {
   color: #0f172a;
 }
 
+.hotel-payment-row {
+  background: rgba(245, 158, 11, 0.08);
+  border-top: 1px dashed rgba(245, 158, 11, 0.35);
+}
+
+.hotel-payment-row:hover {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+body.light-mode .hotel-payment-row {
+  background: #fffbeb;
+  border-top: 1px dashed #d97706;
+}
+
+body.light-mode .hotel-payment-row:hover {
+  background: #fef3c7;
+}
+
+.hotel-payment-label {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+body.light-mode .hotel-payment-label {
+  color: #b45309;
+}
+
+.hotel-payment-value {
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 0.98rem;
+}
+
+body.light-mode .hotel-payment-value {
+  color: #b45309;
+}
+
+.hotel-payment-breakdown-row {
+  background: rgba(245, 158, 11, 0.04);
+}
+
+body.light-mode .hotel-payment-breakdown-row {
+  background: #fefdf8;
+}
+
+.hotel-breakdown-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--foreground);
+  opacity: 0.92;
+}
+
+body.light-mode .hotel-breakdown-text {
+  color: #334155;
+}
+
 /* Production Tab - Hidden by default unless user is in role 'הפקה חשיפה' */
 #tab-admin {
   display: none;

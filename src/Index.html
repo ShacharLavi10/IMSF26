@@ -1155,6 +1155,38 @@
       return s;
     }
 
+    let cachedUsdIlsRate = 3.65;
+    function getCachedUsdIlsRate() {
+      try {
+        const cached = localStorage.getItem('imsf_usd_ils_rate');
+        const cachedTime = localStorage.getItem('imsf_usd_ils_rate_time');
+        if (cached && cachedTime && (Date.now() - Number(cachedTime) < 12 * 3600 * 1000)) {
+          const parsed = parseFloat(cached);
+          if (parsed > 0) cachedUsdIlsRate = parsed;
+        }
+      } catch(e) {}
+      return cachedUsdIlsRate;
+    }
+
+    function refreshUsdIlsRate() {
+      try {
+        fetch('https://open.er-api.com/v6/latest/USD')
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.rates && data.rates.ILS) {
+              const rate = parseFloat(data.rates.ILS);
+              if (rate > 0) {
+                cachedUsdIlsRate = rate;
+                localStorage.setItem('imsf_usd_ils_rate', String(rate));
+                localStorage.setItem('imsf_usd_ils_rate_time', String(Date.now()));
+              }
+            }
+          })
+          .catch(() => {});
+      } catch(e) {}
+    }
+    refreshUsdIlsRate();
+
     function renderHotelData(jerusalemData, telAvivData, hotelLinks) {
       const jlmContainer = document.getElementById("hotel-jerusalem-content");
       const tlvContainer = document.getElementById("hotel-telaviv-content");
@@ -1201,15 +1233,70 @@
         const arrivalRaw = map["Arrival Date"] || map["תאריך הגעה"] || "";
         const departureRaw = map["Departure Date"] || map["תאריך יציאה"] || map["תאריך עזיבה"] || "";
         const roomTypeRaw = map["Room Type"] || map["סוג חדר"] || "";
+        const paymentRaw = map["Guest Payment Total"] || map["סה\"כ סכום על חשבון האורח"] || map["סכום על חשבון האורח"] || map["סה\"כ על חשבון האורח"] || "";
+        const extraNightsRaw = map["Guest Extra Nights"] || map["מס' לילות על חשבון האורח"] || map["מס לילות על חשבון האורח"] || map["לילות על חשבון האורח"] || "";
 
         const arrivalFormatted = formatHotelDateStrict(arrivalRaw);
         const departureFormatted = formatHotelDateStrict(departureRaw);
         const roomTypeFormatted = translateRoomType(roomTypeRaw);
 
+        // Parse payment amount in ILS
+        let ilsAmount = 0;
+        if (paymentRaw) {
+          const cleanPaymentStr = String(paymentRaw).replace(/[^\d.-]/g, '');
+          ilsAmount = parseFloat(cleanPaymentStr) || 0;
+        }
+
+        let paymentRowHtml = '';
+        if (ilsAmount > 0) {
+          const rate = getCachedUsdIlsRate() || 3.65;
+          const usdEst = Math.round(ilsAmount / rate);
+
+          // Parse extra nights count
+          let extraNightsNum = 0;
+          if (extraNightsRaw) {
+            const cleanNightsStr = String(extraNightsRaw).replace(/[^\d]/g, '');
+            extraNightsNum = parseInt(cleanNightsStr, 10) || 0;
+          }
+
+          // Check if room type is double
+          const isDouble = roomTypeRaw && (
+            String(roomTypeRaw).toLowerCase().includes('double') ||
+            String(roomTypeRaw).includes('זוגי') ||
+            String(roomTypeRaw).toLowerCase().includes('twin') ||
+            String(roomTypeRaw).toLowerCase() === 'dbl'
+          );
+
+          let breakdownParts = [];
+          if (extraNightsNum > 0) {
+            breakdownParts.push(`${extraNightsNum} extra night${extraNightsNum > 1 ? 's' : ''}`);
+          }
+          if (isDouble) {
+            breakdownParts.push('double room supplement');
+          }
+          let breakdownText = breakdownParts.join(' & ');
+          if (!breakdownText) {
+            breakdownText = 'Direct hotel charges';
+          }
+          breakdownText = breakdownText.charAt(0).toUpperCase() + breakdownText.slice(1);
+
+          paymentRowHtml = `
+            <div class="hotel-spec-row hotel-payment-row">
+              <span class="hotel-spec-label hotel-payment-label">Due at Check-In</span>
+              <span class="hotel-spec-value hotel-payment-value">~$${usdEst} (₪${ilsAmount.toLocaleString()})</span>
+            </div>
+            <div class="hotel-spec-row hotel-payment-breakdown-row">
+              <span class="hotel-spec-label">Covers</span>
+              <span class="hotel-spec-value hotel-breakdown-text">${breakdownText}</span>
+            </div>
+          `;
+        }
+
         const hasDetails = (nights && String(nights).trim() !== "") || 
                            (arrivalFormatted && arrivalFormatted.trim() !== "") ||
                            (departureFormatted && departureFormatted.trim() !== "") ||
-                           (roomTypeFormatted && roomTypeFormatted.trim() !== "");
+                           (roomTypeFormatted && roomTypeFormatted.trim() !== "") ||
+                           ilsAmount > 0;
 
         if (!hasDetails) {
           return `<p class="empty-state">No ${cityName} accommodation details confirmed yet.</p>`;
@@ -1233,6 +1320,7 @@
               <span class="hotel-spec-label">Room Type</span>
               <span class="hotel-spec-value">${roomTypeFormatted || '—'}</span>
             </div>
+            ${paymentRowHtml}
           </div>
         `;
       };
