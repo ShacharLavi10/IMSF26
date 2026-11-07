@@ -424,9 +424,20 @@ function fetchMappedData(sheet, email, mappingArray) {
           
           for (let key of searchKeys) {
             const cleanKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
+            const strippedKey = cleanKey.replace(/[\u05F3\u05F4"'״׳`’“”]/g, '').trim();
             let foundIdx = headers.findIndex(h => h === cleanKey);
+            if (foundIdx === -1 && strippedKey) {
+              foundIdx = headers.findIndex(h => h && h.replace(/[\u05F3\u05F4"'״׳`’“”]/g, '').trim() === strippedKey);
+            }
             if (foundIdx === -1) {
               foundIdx = headers.findIndex(h => h && h.length > 1 && h.includes(cleanKey));
+            }
+            if (foundIdx === -1 && strippedKey && strippedKey.length > 2) {
+              foundIdx = headers.findIndex(h => {
+                if (!h) return false;
+                const strippedH = h.replace(/[\u05F3\u05F4"'״׳`’“”]/g, '').trim();
+                return strippedH.length > 2 && (strippedH.includes(strippedKey) || strippedKey.includes(strippedH));
+              });
             }
             if (foundIdx !== -1) { cIdx = foundIdx; break; }
           }
