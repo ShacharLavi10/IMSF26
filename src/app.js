@@ -2160,7 +2160,7 @@ function closeWelcomeModal() {
               breakdownParts.push(`${extraNightsNum} extra night${extraNightsNum > 1 ? 's' : ''}`);
             }
             if (isDouble) {
-              breakdownParts.push('double room supplement');
+              breakdownParts.push('double room upgrade fee');
             }
             let breakdownText = breakdownParts.join(' & ');
             if (!breakdownText) {
