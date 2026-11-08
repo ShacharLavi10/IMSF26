@@ -538,6 +538,7 @@ body.light-mode .live-show-card.is-fav {
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   max-height: 90vh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
@@ -545,6 +546,7 @@ body.light-mode .live-show-card.is-fav {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
+  overscroll-behavior: contain;
 }
 .bottom-sheet.active {
   transform: translateY(0);
@@ -596,9 +598,10 @@ body.light-mode .live-show-card.is-fav {
 .sheet-fav-btn.active svg { fill: #ef4444; }
 
 .sheet-content {
-  padding: 0 20px 30px;
+  padding: 0 20px calc(30px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   flex: 1;
   min-height: 0;
 }
@@ -1025,7 +1028,7 @@ body.light-mode .sheet-intent-card-btn.active .intent-card-desc {
   padding: 12px;
   color: var(--foreground);
   font-family: var(--font-stack);
-  font-size: 0.9rem;
+  font-size: 16px;
   resize: none;
   min-height: 80px;
   transition: border-color 0.2s;
@@ -4129,7 +4132,7 @@ body.light-mode .venue-doors-pill {
   border: none;
   color: var(--foreground);
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 16px;
   font-weight: 700;
   padding-right: 20px;
   cursor: pointer;
@@ -4141,7 +4144,7 @@ body.light-mode .venue-doors-pill {
 .timetable-stage-select option {
   background: #11233a;
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 16px;
   padding: 6px;
 }
 

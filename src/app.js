@@ -2895,11 +2895,13 @@ function closeWelcomeModal() {
     function startLiveUpdatesPolling() {
       fetchUpdates();
       if (updatesPollingInterval) clearInterval(updatesPollingInterval);
-      updatesPollingInterval = setInterval(fetchUpdates, 30000); // Check every 30s
+      updatesPollingInterval = setInterval(fetchUpdates, 180000); // Check every 3 minutes (180s)
     }
 
     function fetchUpdates() {
       if (!currentGuestEmail) return;
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
       google.script.run
         .withSuccessHandler(res => {
           if (res.success && res.updates) {
@@ -2907,6 +2909,19 @@ function closeWelcomeModal() {
           }
         })
         .getLiveUpdates(localStorage.getItem('guestSessionToken'));
+    }
+
+    if (typeof window !== 'undefined') {
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible' && currentGuestEmail) {
+          fetchUpdates();
+        }
+      });
+      window.addEventListener('online', function() {
+        if (currentGuestEmail) {
+          fetchUpdates();
+        }
+      });
     }
 
     function dismissUpdate(updateId) {
@@ -6000,7 +6015,7 @@ function closeWelcomeModal() {
       if (isFetchingTimetableSchedule) return;
       isFetchingTimetableSchedule = true;
 
-      const shouldForce = (forceRefresh !== false); // default to true to always get freshest changes
+      const shouldForce = (forceRefresh === true); // default to false to leverage server cache
       google.script.run
         .withSuccessHandler(function(res) {
           isFetchingTimetableSchedule = false;
@@ -6031,22 +6046,22 @@ function closeWelcomeModal() {
     }
     window.fetchDynamicTimetableSchedule = fetchDynamicTimetableSchedule;
 
-    // Real-time synchronization: automatically fetch fresh timetable on boot and on tab focus
+    // Real-time synchronization: fetch timetable on boot and on tab focus
     if (typeof window !== 'undefined') {
       setTimeout(function() {
-        fetchDynamicTimetableSchedule(true);
+        fetchDynamicTimetableSchedule(false);
       }, 600);
 
       window.addEventListener('focus', function() {
-        fetchDynamicTimetableSchedule(true);
+        fetchDynamicTimetableSchedule(false);
       });
 
-      // Periodic background sync every 30 seconds if user is viewing timetable
+      // Periodic background sync every 2 minutes if user is viewing timetable
       setInterval(function() {
         if (document.visibilityState === 'visible' && (currentArtistsSubTab === 'timetable' || (document.getElementById('artists-timetable-view') && document.getElementById('artists-timetable-view').style.display !== 'none'))) {
-          fetchDynamicTimetableSchedule(true);
+          fetchDynamicTimetableSchedule(false);
         }
-      }, 30000);
+      }, 120000);
     }
 
     function switchArtistsSubTab(subTabName) {
@@ -6076,7 +6091,7 @@ function closeWelcomeModal() {
           requestAnimationFrame(function() {
             setTimeout(function() {
               initFestivalTimetableUI();
-              fetchDynamicTimetableSchedule(true);
+              fetchDynamicTimetableSchedule(false);
             }, 0);
           });
         }
@@ -6085,11 +6100,9 @@ function closeWelcomeModal() {
     window.switchArtistsSubTab = switchArtistsSubTab;
 
     function initFestivalTimetableUI() {
-      // Auto-select today if within festival dates
+      // Auto-select today if within festival dates (evaluated in Israel Time)
       try {
-        const todayD = new Date();
-        const pad = n => String(n).padStart(2, '0');
-        const todayStr = `${todayD.getFullYear()}-${pad(todayD.getMonth() + 1)}-${pad(todayD.getDate())}`;
+        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
         const isFestDay = FESTIVAL_TIMETABLE_DAYS.some(d => d.date === todayStr);
         if (isFestDay && currentSelectedTimetableDate !== todayStr) {
           currentSelectedTimetableDate = todayStr;
@@ -6104,7 +6117,7 @@ function closeWelcomeModal() {
       if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
       if (typeof updateLiveBanner === 'function') updateLiveBanner();
       if (typeof initLiveSimulatorEnv === 'function') initLiveSimulatorEnv();
-      fetchDynamicTimetableSchedule(true);
+      fetchDynamicTimetableSchedule(false);
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
 
@@ -6600,15 +6613,18 @@ function closeWelcomeModal() {
 
       const parts = show.date.split('-').map(Number);
       if (parts.length < 3) return false;
-      const [y, m, d] = parts;
-      const startDt = new Date(y, m - 1, d, startH, startM, 0);
-      let endDt = new Date(y, m - 1, d, endH, endM, 0);
+      const pad = n => String(n).padStart(2, '0');
 
+      // Festival is in Jerusalem (UTC+2 in November Israel Standard Time)
+      let startDt = new Date(`${show.date}T${pad(startH)}:${pad(startM)}:00+02:00`);
+      let endDt = new Date(`${show.date}T${pad(endH)}:${pad(endM)}:00+02:00`);
+
+      // Handle after-midnight shows
       if (startH < 6) {
-        startDt.setDate(startDt.getDate() + 1);
+        startDt = new Date(startDt.getTime() + 24 * 3600 * 1000);
       }
       if (endH < 6 || endDt <= startDt) {
-        endDt.setDate(endDt.getDate() + 1);
+        endDt = new Date(endDt.getTime() + 24 * 3600 * 1000);
       }
 
       return now >= startDt && now <= endDt;
@@ -6696,10 +6712,10 @@ function closeWelcomeModal() {
         window.simulatedLiveFestivalTime = null;
         console.log("Simulated live festival time cleared. Using real clock.");
       } else {
-        const [y, m, d] = dateStr.split('-').map(Number);
         const [h, min] = timeStr.split(':').map(Number);
-        window.simulatedLiveFestivalTime = new Date(y, m - 1, d, h, min, 0);
-        console.log("Simulated live festival time set to:", window.simulatedLiveFestivalTime.toString());
+        const pad = n => String(n).padStart(2, '0');
+        window.simulatedLiveFestivalTime = new Date(`${dateStr}T${pad(h)}:${pad(min)}:00+02:00`);
+        console.log("Simulated live festival time set to:", window.simulatedLiveFestivalTime.toISOString());
       }
       renderTimetableShows();
       updateLiveBanner();

@@ -320,7 +320,7 @@
     background: rgba(255, 255, 255, 0.03) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23A3A9B4" viewBox="0 0 16 16"><path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06z"/></svg>') no-repeat right 12px center;
     background-size: 16px;
     color: var(--foreground);
-    font-size: 0.95rem;
+    font-size: 16px;
     font-family: var(--font-stack);
     outline: none;
     appearance: none;
@@ -330,7 +330,7 @@
   }
   @media (max-width: 599px) {
     .filter-selects { flex-direction: row; }
-    .filter-selects select { flex: 1; min-width: 0; padding-right: 24px; text-overflow: ellipsis; font-size: 0.85rem; }
+    .filter-selects select { flex: 1; min-width: 0; padding-right: 24px; text-overflow: ellipsis; font-size: 16px; }
   }
   .filter-selects select:focus {
     border-color: var(--accent);

@@ -141,10 +141,45 @@ function getGuestDetailsFromMaster(email) {
   return result;
 }
 
+let _scriptLockDepth = 0;
+
+function acquireScriptLock(timeoutMs) {
+  timeoutMs = timeoutMs || 15000;
+  if (_scriptLockDepth > 0) {
+    _scriptLockDepth++;
+    return true; // Already held by current thread
+  }
+  try {
+    const lock = LockService.getScriptLock();
+    const success = lock.tryLock(timeoutMs);
+    if (success) {
+      _scriptLockDepth = 1;
+    }
+    return success;
+  } catch (e) {
+    console.warn("Could not acquire script lock:", e);
+    return false;
+  }
+}
+
+function releaseScriptLock() {
+  if (_scriptLockDepth > 1) {
+    _scriptLockDepth--;
+    return;
+  }
+  if (_scriptLockDepth === 1) {
+    _scriptLockDepth = 0;
+    try {
+      LockService.getScriptLock().releaseLock();
+    } catch(e) {}
+  }
+}
+
 /**
  * Save Guest Feedback (Favorites, Notes, and Quick Intent Tags)
  */
 function saveGuestArtistFeedback(email, feedbackPayload) {
+  acquireScriptLock(15000);
   try {
     if (!email) return { success: false, message: "Email is required." };
     const cleanEmail = email.toString().trim().toLowerCase();
@@ -267,6 +302,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
       else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
       else if (headerStr.includes("הערות")) colMap.notes = idx;
       else if (headerStr.includes("raw")) colMap.raw = idx;
+      else if (headerStr.includes("הוריד pdf") || (headerStr.includes("pdf") && headerStr.includes("הוריד"))) colMap.pdfDownloaded = idx;
     });
 
     // If sheet had old 11 columns and is missing the new ones, update headers row to defaultHeaders
@@ -289,6 +325,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
         else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
         else if (headerStr.includes("הערות")) colMap.notes = idx;
         else if (headerStr.includes("raw")) colMap.raw = idx;
+        else if (headerStr.includes("הוריד pdf") || (headerStr.includes("pdf") && headerStr.includes("הוריד"))) colMap.pdfDownloaded = idx;
       });
     }
 
@@ -321,6 +358,10 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     }
 
     if (guestRowIdx > 0) {
+      // Preserve existing PDF downloaded flag if present
+      if (colMap.pdfDownloaded !== undefined && prefData[guestRowIdx - 1]) {
+        rowValues[colMap.pdfDownloaded] = prefData[guestRowIdx - 1][colMap.pdfDownloaded] || "";
+      }
       prefSheet.getRange(guestRowIdx, 1, 1, rowValues.length).setValues([rowValues]);
     } else {
       prefSheet.appendRow(rowValues);
@@ -333,6 +374,8 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
   } catch (err) {
     console.error("Error in saveGuestArtistFeedback:", err);
     return { success: false, message: "Error saving feedback: " + err.toString() };
+  } finally {
+    releaseScriptLock();
   }
 }
 
@@ -390,6 +433,7 @@ function getGuestArtistFeedback(email) {
  * Recalculate and update the 'לידים והזדמנויות אומנים' sheet
  */
 function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
+  acquireScriptLock(15000);
   try {
     const prefData = (prefSheet && prefSheet.getLastRow() > 0) ? prefSheet.getDataRange().getValues() : [];
     const hasPreferences = prefData.length > 1;
@@ -618,6 +662,8 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
     }
   } catch (err) {
     console.error("Error in syncArtistLeadsSheet:", err);
+  } finally {
+    releaseScriptLock();
   }
 }
 
@@ -1007,7 +1053,7 @@ function getFestivalTimetableSchedule(forceRefresh) {
     const parsedSchedule = parseLineupGrid(grid, artistsList);
 
     try {
-      cache.put(cacheKey, JSON.stringify(parsedSchedule), 60); // 60 seconds cache for rapid live synchronization
+      cache.put(cacheKey, JSON.stringify(parsedSchedule), 180); // 180 seconds (3 minutes) cache
     } catch(e) {}
 
     return { 
@@ -1894,6 +1940,65 @@ function buildBriefcasePdfHtml(guestName, guestEmail, exportArtists) {
 }
 
 /**
+ * Records in the 'העדפות אורחים' sheet that the guest downloaded / received their PDF briefcase.
+ */
+function recordGuestPdfDownload(email) {
+  acquireScriptLock(15000);
+  try {
+    if (!email) return;
+    const cleanEmail = email.toString().trim().toLowerCase();
+    const ssId = CONFIG.ARTISTS_SPREADSHEET_ID;
+    if (!ssId) return;
+    const ss = SpreadsheetApp.openById(ssId);
+    const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
+    let prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
+    if (!prefSheet) return;
+
+    const data = prefSheet.getDataRange().getValues();
+    if (data.length < 1) return;
+
+    const headers = data[0].map(h => String(h).trim().toLowerCase());
+    let pdfColIdx = headers.findIndex(h => h.includes("הוריד pdf") || (h.includes("pdf") && h.includes("הוריד")));
+    let emailColIdx = headers.findIndex(h => h.includes("מייל") || h.includes("email"));
+    if (emailColIdx === -1) emailColIdx = 0;
+
+    // If 'מי הוריד PDF' column does not exist yet, add it to headers
+    if (pdfColIdx === -1) {
+      pdfColIdx = headers.length;
+      prefSheet.getRange(1, pdfColIdx + 1).setValue("מי הוריד PDF");
+    }
+
+    const timestampStr = Utilities.formatDate(new Date(), "Asia/Jerusalem", "dd/MM/yyyy HH:mm");
+    const recordValue = "כן (" + timestampStr + ")";
+
+    let targetRow = -1;
+    for (let r = 1; r < data.length; r++) {
+      if (String(data[r][emailColIdx]).trim().toLowerCase() === cleanEmail) {
+        targetRow = r + 1;
+        break;
+      }
+    }
+
+    if (targetRow > 0) {
+      prefSheet.getRange(targetRow, pdfColIdx + 1).setValue(recordValue);
+    } else {
+      // Append a new row for this guest
+      const guestInfo = getGuestDetailsFromMaster(cleanEmail);
+      const newRow = new Array(Math.max(headers.length, pdfColIdx + 1)).fill("");
+      newRow[emailColIdx] = cleanEmail;
+      const fullNameIdx = headers.findIndex(h => h.includes("שם מלא") || h.includes("name"));
+      if (fullNameIdx !== -1) newRow[fullNameIdx] = guestInfo.fullName;
+      newRow[pdfColIdx] = recordValue;
+      prefSheet.appendRow(newRow);
+    }
+  } catch (err) {
+    console.error("Error in recordGuestPdfDownload:", err);
+  } finally {
+    releaseScriptLock();
+  }
+}
+
+/**
  * Main Controller: Generates the Briefcase PDF and sends it via GmailApp
  */
 function generateAndSendBriefcasePdf(email, clientPayload, options) {
@@ -1986,7 +2091,6 @@ function generateAndSendBriefcasePdf(email, clientPayload, options) {
         htmlBody: emailBodyHtml,
         from: "imsfhost@gmail.com",
         name: "Israel Music Showcase Festival 2026",
-        bcc: "imsfhost@gmail.com",
         attachments: [pdfBlob]
       });
       emailSent = true;
@@ -1995,6 +2099,13 @@ function generateAndSendBriefcasePdf(email, clientPayload, options) {
     let base64 = "";
     if (returnBase64) {
       base64 = Utilities.base64Encode(pdfBlob.getBytes());
+    }
+
+    // Record PDF download in 'העדפות אורחים' sheet
+    try {
+      recordGuestPdfDownload(cleanEmail);
+    } catch (recordErr) {
+      console.warn("Could not record guest PDF download:", recordErr);
     }
 
     return {
@@ -2070,7 +2181,6 @@ function sendCalendarInviteEmail(email, icsString, options) {
       htmlBody: emailBodyHtml,
       from: "imsfhost@gmail.com",
       name: "Israel Music Showcase Festival 2026",
-      bcc: "imsfhost@gmail.com",
       attachments: [icsBlob]
     });
 

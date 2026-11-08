@@ -1,4 +1,4 @@
-const CACHE_NAME = 'imsf-portal-shell-v2';
+const CACHE_NAME = 'imsf-portal-shell-v3';
 const IMAGE_CACHE_NAME = 'imsf-portal-images-v1';
 
 const STATIC_SHELL_ASSETS = [
@@ -48,19 +48,24 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2. Navigation requests (HTML page load / reload)
-  // Network first with instant cache fallback to keep user offline-ready
+  // Network first with a 2.5s timeout, falling back instantly to cached shell on stalled cellular
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
-        .then((networkResponse) => {
+      (async () => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+          const networkResponse = await fetch(req, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
           }
           return networkResponse;
-        })
-        .catch(async () => {
-          // Offline fallback
+        } catch (err) {
+          // Network failed or timed out (>2.5s) -> serve cached shell immediately
           const cached = await caches.match(req);
           if (cached) return cached;
           const fallback = await caches.match('/index.html');
@@ -69,7 +74,8 @@ self.addEventListener('fetch', (event) => {
             status: 503,
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
           });
-        })
+        }
+      })()
     );
     return;
   }
