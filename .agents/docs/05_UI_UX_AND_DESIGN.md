@@ -10,6 +10,7 @@
 - **Mobile-First Priority**: All UI components, pages, forms, buttons, cards, typography, and information hierarchy must be designed, structured, and optimized for mobile smartphone screens first. The primary user journey happens on mobile during the festival.
 - **Touch Ergonomics & Usability**: Interactive elements (buttons, inputs, dropdowns, tabs) must have generous touch targets (minimum 44x44px), readable typography without zooming, comfortable spacing, and zero unwanted horizontal scrolling on mobile devices.
 - **Language & Localization (Strict English-Only)**: All UI copy, headings, labels, button text, error messages, system announcements, and placeholders must be strictly in English. No Hebrew text in the portal interface. If there is any doubt or question regarding phrasing or wording, ask for clarification.
+- **iOS Safari Auto-Zoom Prevention (Strict 16px Font Rule)**: All text inputs, textareas, and select elements (`<input>`, `<textarea>`, `<select>`, `.input-group input`, `.timetable-stage-select`) must enforce an explicit font size of at least `16px` on mobile viewports. On iOS Safari, any form element with a font size below 16px triggers an automatic viewport zoom upon focus, breaking page layouts and jarring the user experience.
 - **Progressive Enhancement**: Desktop layouts should scale cleanly and make smart use of wider screens, but never at the expense of mobile simplicity, speed, or ergonomics.
 
 ## 3. Visual Identity & Design System (Neo-Brutalism)
@@ -44,8 +45,9 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
 - **Compact Guide Cards (`.guide-place-row`)**:
   - Row layout reducing card height by 55%, enabling 4-5 venues visible per screen without vertical clutter.
   - Direct right-aligned "Open in Maps" button with map icon.
-- **Unified Accommodations Spec Card (`.hotel-spec-card`)**:
-  - Modern spec card for Arthur Hotel & Cinema Hotel with row-based key-value details, external map button, and high-contrast Neo-Brutalist borders.
+- **Unified Accommodations Spec Card & Extra Payment (`.hotel-spec-card`, `.hotel-extra-payment-card`)**:
+  - **Hotel Spec Card**: Modern spec card for Arthur Hotel & Cinema Hotel with row-based key-value details (Nights Count, Arrival Date, Departure Date, Room Type), external map button, and high-contrast Neo-Brutalist borders.
+  - **Hotel Extra Payment Card (`.hotel-extra-payment-card`)**: Independent, distinct card positioned below the spec card for delegates with personal additions (extra nights, double room upgrade fee). Warm amber/gold theme (`#fbbf24` in dark mode, `#b45309` in light mode), large typography for USD and ILS amounts (`~$1,370 (₪5,000)`), status tag `Payable at Check-In`, and clear breakdown (`Covers: X extra nights & double room upgrade fee`). Completely hidden when amount is zero or empty.
 - **Artist Intent 2x2 Grid Cards (`.sheet-intent-grid`, `.sheet-intent-card-btn`)**:
   - Compact 2x2 grid tiles for delegate collaboration interest inside the Artist Bottom Sheet:
     - `🎯 Live Booking` (*Shows, tours & festivals*)
@@ -136,6 +138,11 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - A secondary reset inside `requestAnimationFrame` must be executed to prevent mobile browsers (especially iOS Safari and Chrome Android) from retaining or restoring the previous scroll offset.
   - **Rationale**: If a user scrolls down inside an artist or guest profile and closes it, opening a subsequent profile must always start from the top (hero image, artist/guest name, and bio) rather than jumping to the scrolled bottom.
 
+- **Bottom Sheet Viewport Sizing, Containment & Safe Area (`.bottom-sheet`, `.sheet-content`)**:
+  - **Dynamic Viewport Height**: Bottom sheets must use `max-height: 90dvh` (with fallback to `90vh`) so they dynamically adjust when browser URL bars expand or collapse on mobile scroll.
+  - **Safe Area Inset Clearance**: The bottom padding of sheet content must incorporate `calc(30px + env(safe-area-inset-bottom, 0px))` ensuring action buttons, close buttons, and intent tags are never obscured by the iPhone home indicator or Android navigation pill.
+  - **Scroll Containment (`overscroll-behavior: contain`)**: Bottom sheets must set `overscroll-behavior: contain` to prevent touch-drag gestures and inner scroll bounce from chaining to the background page behind the modal.
+
 - **PWA & Offline Indicator UX (`#offline-status-pill`, `#pwa-prompt-modal-overlay`, `.pwa-action-install-btn`)**:
   - **Discrete Floating Pill (`#offline-status-pill`)**:
     - Zero vertical footprint while online (`display: none`).
@@ -193,6 +200,9 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - **Live Simulator Sandbox Gating**:
     - The testing tool `🧪 Live Simulator` (`#timetable-sim-trigger-btn` and modal `#live-simulator-modal-overlay`) is exclusively enabled in the Sandbox environment (`imsf26sandbox.vercel.app` & localhost).
     - In Production (`imsf26portal.vercel.app`), the button is completely hidden from real festival delegates and guests (`display: none !important`), ensuring a clean, authentic festival experience.
+  - **Timezone Anchor (Strict Asia/Jerusalem Reference)**:
+    - All real-time festival timetable calculations, live show status evaluations, current festival date matching, and "Now Playing" live banner logic use `Intl.DateTimeFormat` explicitly bound to `timeZone: 'Asia/Jerusalem'` (`new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(targetDate)`).
+    - Guarantees that international delegates and industry professionals viewing the portal from any timezone worldwide (e.g. London, New York, Tokyo) always see the exact live show state and current day matching the festival's local time in Israel without timezone drift.
 
 - **Schedule & Production Itinerary Mobile Design Standards (`#schedule-days-nav`, `#admin-schedule-days-nav`)**:
   - **Zero Horizontal Scroll on Phone**:

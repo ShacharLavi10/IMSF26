@@ -2043,6 +2043,38 @@ function closeWelcomeModal() {
       return s;
     }
 
+    let cachedUsdIlsRate = 3.65;
+    function getCachedUsdIlsRate() {
+      try {
+        const cached = localStorage.getItem('imsf_usd_ils_rate');
+        const cachedTime = localStorage.getItem('imsf_usd_ils_rate_time');
+        if (cached && cachedTime && (Date.now() - Number(cachedTime) < 12 * 3600 * 1000)) {
+          const parsed = parseFloat(cached);
+          if (parsed > 0) cachedUsdIlsRate = parsed;
+        }
+      } catch(e) {}
+      return cachedUsdIlsRate;
+    }
+
+    function refreshUsdIlsRate() {
+      try {
+        fetch('https://open.er-api.com/v6/latest/USD')
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.rates && data.rates.ILS) {
+              const rate = parseFloat(data.rates.ILS);
+              if (rate > 0) {
+                cachedUsdIlsRate = rate;
+                localStorage.setItem('imsf_usd_ils_rate', String(rate));
+                localStorage.setItem('imsf_usd_ils_rate_time', String(Date.now()));
+              }
+            }
+          })
+          .catch(() => {});
+      } catch(e) {}
+    }
+    refreshUsdIlsRate();
+
     function renderHotelData(jerusalemData, telAvivData, hotelLinks) {
       const jlmContainer = document.getElementById("hotel-jerusalem-content");
       const tlvContainer = document.getElementById("hotel-telaviv-content");
@@ -2089,40 +2121,106 @@ function closeWelcomeModal() {
         const arrivalRaw = map["Arrival Date"] || map["תאריך הגעה"] || "";
         const departureRaw = map["Departure Date"] || map["תאריך יציאה"] || map["תאריך עזיבה"] || "";
         const roomTypeRaw = map["Room Type"] || map["סוג חדר"] || "";
+        const paymentRaw = map["Guest Payment Total"] || map["סה\"כ סכום על חשבון האורח"] || map["סכום על חשבון האורח"] || map["סה\"כ על חשבון האורח"] || "";
+        const extraNightsRaw = map["Guest Extra Nights"] || map["מס' לילות על חשבון האורח"] || map["מס לילות על חשבון האורח"] || map["לילות על חשבון האורח"] || "";
 
         const arrivalFormatted = formatHotelDateStrict(arrivalRaw);
         const departureFormatted = formatHotelDateStrict(departureRaw);
         const roomTypeFormatted = translateRoomType(roomTypeRaw);
 
-        const hasDetails = (nights && String(nights).trim() !== "") || 
-                           (arrivalFormatted && arrivalFormatted.trim() !== "") ||
-                           (departureFormatted && departureFormatted.trim() !== "") ||
-                           (roomTypeFormatted && roomTypeFormatted.trim() !== "");
-
-        if (!hasDetails) {
-          return `<p class="empty-state">No ${cityName} accommodation details confirmed yet.</p>`;
+        // Parse payment amount in ILS
+        let ilsAmount = 0;
+        if (paymentRaw) {
+          const cleanPaymentStr = String(paymentRaw).replace(/[^\d.-]/g, '');
+          ilsAmount = parseFloat(cleanPaymentStr) || 0;
         }
 
-        return `
-          <div class="hotel-spec-card">
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Nights Count</span>
-              <span class="hotel-spec-value">${nights ? `${nights}` : '—'}</span>
+          let paymentBlockHtml = '';
+          if (ilsAmount > 0) {
+            const rate = getCachedUsdIlsRate() || 3.65;
+            const usdEst = Math.round(ilsAmount / rate);
+
+            // Parse extra nights count
+            let extraNightsNum = 0;
+            if (extraNightsRaw) {
+              const cleanNightsStr = String(extraNightsRaw).replace(/[^\d]/g, '');
+              extraNightsNum = parseInt(cleanNightsStr, 10) || 0;
+            }
+
+            // Check if room type is double
+            const isDouble = roomTypeRaw && (
+              String(roomTypeRaw).toLowerCase().includes('double') ||
+              String(roomTypeRaw).includes('זוגי') ||
+              String(roomTypeRaw).toLowerCase().includes('twin') ||
+              String(roomTypeRaw).toLowerCase() === 'dbl'
+            );
+
+            let breakdownParts = [];
+            if (extraNightsNum > 0) {
+              breakdownParts.push(`${extraNightsNum} extra night${extraNightsNum > 1 ? 's' : ''}`);
+            }
+            if (isDouble) {
+              breakdownParts.push('double room upgrade fee');
+            }
+            let breakdownText = breakdownParts.join(' & ');
+            if (!breakdownText) {
+              breakdownText = 'Direct hotel charges';
+            }
+            breakdownText = breakdownText.charAt(0).toUpperCase() + breakdownText.slice(1);
+
+            paymentBlockHtml = `
+              <div class="hotel-extra-payment-card">
+                <div class="extra-payment-header">
+                  <div class="extra-payment-badge">
+                    <span>💳</span>
+                    <span>Your Extra Payment</span>
+                  </div>
+                  <span class="extra-payment-due-tag">Payable at Check-In</span>
+                </div>
+                <div class="extra-payment-amount">
+                  ~$${usdEst} <span class="extra-payment-currency-ils">(₪${ilsAmount.toLocaleString()})</span>
+                </div>
+                <div class="extra-payment-breakdown">
+                  <strong>Covers:</strong> ${breakdownText}
+                </div>
+                <div class="extra-payment-note">
+                  To be paid directly by you to the hotel front desk upon arrival.
+                </div>
+              </div>
+            `;
+          }
+
+          const hasDetails = (nights && String(nights).trim() !== "") || 
+                             (arrivalFormatted && arrivalFormatted.trim() !== "") ||
+                             (departureFormatted && departureFormatted.trim() !== "") ||
+                             (roomTypeFormatted && roomTypeFormatted.trim() !== "") ||
+                             ilsAmount > 0;
+
+          if (!hasDetails) {
+            return `<p class="empty-state">No ${cityName} accommodation details confirmed yet.</p>`;
+          }
+
+          return `
+            <div class="hotel-spec-card">
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Nights Count</span>
+                <span class="hotel-spec-value">${nights ? `${nights}` : '—'}</span>
+              </div>
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Arrival Date</span>
+                <span class="hotel-spec-value">${arrivalFormatted || '—'}</span>
+              </div>
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Departure Date</span>
+                <span class="hotel-spec-value">${departureFormatted || '—'}</span>
+              </div>
+              <div class="hotel-spec-row">
+                <span class="hotel-spec-label">Room Type</span>
+                <span class="hotel-spec-value">${roomTypeFormatted || '—'}</span>
+              </div>
             </div>
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Arrival Date</span>
-              <span class="hotel-spec-value">${arrivalFormatted || '—'}</span>
-            </div>
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Departure Date</span>
-              <span class="hotel-spec-value">${departureFormatted || '—'}</span>
-            </div>
-            <div class="hotel-spec-row">
-              <span class="hotel-spec-label">Room Type</span>
-              <span class="hotel-spec-value">${roomTypeFormatted || '—'}</span>
-            </div>
-          </div>
-        `;
+            ${paymentBlockHtml}
+          `;
       };
 
       if (jlmContainer) jlmContainer.innerHTML = buildHotelCard(jerusalemData, "Jerusalem");
@@ -2797,11 +2895,13 @@ function closeWelcomeModal() {
     function startLiveUpdatesPolling() {
       fetchUpdates();
       if (updatesPollingInterval) clearInterval(updatesPollingInterval);
-      updatesPollingInterval = setInterval(fetchUpdates, 30000); // Check every 30s
+      updatesPollingInterval = setInterval(fetchUpdates, 180000); // Check every 3 minutes (180s)
     }
 
     function fetchUpdates() {
       if (!currentGuestEmail) return;
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
       google.script.run
         .withSuccessHandler(res => {
           if (res.success && res.updates) {
@@ -2809,6 +2909,19 @@ function closeWelcomeModal() {
           }
         })
         .getLiveUpdates(localStorage.getItem('guestSessionToken'));
+    }
+
+    if (typeof window !== 'undefined') {
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible' && currentGuestEmail) {
+          fetchUpdates();
+        }
+      });
+      window.addEventListener('online', function() {
+        if (currentGuestEmail) {
+          fetchUpdates();
+        }
+      });
     }
 
     function dismissUpdate(updateId) {
@@ -5902,7 +6015,7 @@ function closeWelcomeModal() {
       if (isFetchingTimetableSchedule) return;
       isFetchingTimetableSchedule = true;
 
-      const shouldForce = (forceRefresh !== false); // default to true to always get freshest changes
+      const shouldForce = (forceRefresh === true); // default to false to leverage server cache
       google.script.run
         .withSuccessHandler(function(res) {
           isFetchingTimetableSchedule = false;
@@ -5933,22 +6046,22 @@ function closeWelcomeModal() {
     }
     window.fetchDynamicTimetableSchedule = fetchDynamicTimetableSchedule;
 
-    // Real-time synchronization: automatically fetch fresh timetable on boot and on tab focus
+    // Real-time synchronization: fetch timetable on boot and on tab focus
     if (typeof window !== 'undefined') {
       setTimeout(function() {
-        fetchDynamicTimetableSchedule(true);
+        fetchDynamicTimetableSchedule(false);
       }, 600);
 
       window.addEventListener('focus', function() {
-        fetchDynamicTimetableSchedule(true);
+        fetchDynamicTimetableSchedule(false);
       });
 
-      // Periodic background sync every 30 seconds if user is viewing timetable
+      // Periodic background sync every 2 minutes if user is viewing timetable
       setInterval(function() {
         if (document.visibilityState === 'visible' && (currentArtistsSubTab === 'timetable' || (document.getElementById('artists-timetable-view') && document.getElementById('artists-timetable-view').style.display !== 'none'))) {
-          fetchDynamicTimetableSchedule(true);
+          fetchDynamicTimetableSchedule(false);
         }
-      }, 30000);
+      }, 120000);
     }
 
     function switchArtistsSubTab(subTabName) {
@@ -5978,7 +6091,7 @@ function closeWelcomeModal() {
           requestAnimationFrame(function() {
             setTimeout(function() {
               initFestivalTimetableUI();
-              fetchDynamicTimetableSchedule(true);
+              fetchDynamicTimetableSchedule(false);
             }, 0);
           });
         }
@@ -5987,11 +6100,10 @@ function closeWelcomeModal() {
     window.switchArtistsSubTab = switchArtistsSubTab;
 
     function initFestivalTimetableUI() {
-      // Auto-select today if within festival dates
+      // Auto-select today if within festival dates (evaluated in Israel Time)
       try {
-        const todayD = new Date();
-        const pad = n => String(n).padStart(2, '0');
-        const todayStr = `${todayD.getFullYear()}-${pad(todayD.getMonth() + 1)}-${pad(todayD.getDate())}`;
+        const targetDate = window.simulatedLiveFestivalTime || new Date();
+        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(targetDate);
         const isFestDay = FESTIVAL_TIMETABLE_DAYS.some(d => d.date === todayStr);
         if (isFestDay && currentSelectedTimetableDate !== todayStr) {
           currentSelectedTimetableDate = todayStr;
@@ -6006,7 +6118,7 @@ function closeWelcomeModal() {
       if (typeof updateCalendarSyncBadge === 'function') updateCalendarSyncBadge();
       if (typeof updateLiveBanner === 'function') updateLiveBanner();
       if (typeof initLiveSimulatorEnv === 'function') initLiveSimulatorEnv();
-      fetchDynamicTimetableSchedule(true);
+      fetchDynamicTimetableSchedule(false);
     }
     window.initFestivalTimetableUI = initFestivalTimetableUI;
 
@@ -6502,15 +6614,18 @@ function closeWelcomeModal() {
 
       const parts = show.date.split('-').map(Number);
       if (parts.length < 3) return false;
-      const [y, m, d] = parts;
-      const startDt = new Date(y, m - 1, d, startH, startM, 0);
-      let endDt = new Date(y, m - 1, d, endH, endM, 0);
+      const pad = n => String(n).padStart(2, '0');
 
+      // Festival is in Jerusalem (UTC+2 in November Israel Standard Time)
+      let startDt = new Date(`${show.date}T${pad(startH)}:${pad(startM)}:00+02:00`);
+      let endDt = new Date(`${show.date}T${pad(endH)}:${pad(endM)}:00+02:00`);
+
+      // Handle after-midnight shows
       if (startH < 6) {
-        startDt.setDate(startDt.getDate() + 1);
+        startDt = new Date(startDt.getTime() + 24 * 3600 * 1000);
       }
       if (endH < 6 || endDt <= startDt) {
-        endDt.setDate(endDt.getDate() + 1);
+        endDt = new Date(endDt.getTime() + 24 * 3600 * 1000);
       }
 
       return now >= startDt && now <= endDt;
@@ -6598,10 +6713,10 @@ function closeWelcomeModal() {
         window.simulatedLiveFestivalTime = null;
         console.log("Simulated live festival time cleared. Using real clock.");
       } else {
-        const [y, m, d] = dateStr.split('-').map(Number);
         const [h, min] = timeStr.split(':').map(Number);
-        window.simulatedLiveFestivalTime = new Date(y, m - 1, d, h, min, 0);
-        console.log("Simulated live festival time set to:", window.simulatedLiveFestivalTime.toString());
+        const pad = n => String(n).padStart(2, '0');
+        window.simulatedLiveFestivalTime = new Date(`${dateStr}T${pad(h)}:${pad(min)}:00+02:00`);
+        console.log("Simulated live festival time set to:", window.simulatedLiveFestivalTime.toISOString());
       }
       renderTimetableShows();
       updateLiveBanner();
@@ -6689,11 +6804,26 @@ function closeWelcomeModal() {
       const text = document.getElementById('live-sim-status-text');
       if (!bar) return;
       if (window.simulatedLiveFestivalTime) {
-        const pad = n => String(n).padStart(2, '0');
-        const dt = window.simulatedLiveFestivalTime;
-        const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-        const dateStr = `${dt.getDate()}.${dt.getMonth() + 1}`;
-        if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        try {
+          const dt = window.simulatedLiveFestivalTime;
+          const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Jerusalem',
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }).formatToParts(dt).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+          const timeStr = `${parts.hour}:${parts.minute}`;
+          const dateStr = `${parts.day}.${parts.month}`;
+          if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        } catch (e) {
+          const pad = n => String(n).padStart(2, '0');
+          const dt = window.simulatedLiveFestivalTime;
+          const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+          const dateStr = `${dt.getDate()}.${dt.getMonth() + 1}`;
+          if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        }
         bar.style.display = 'flex';
       } else {
         bar.style.display = 'none';

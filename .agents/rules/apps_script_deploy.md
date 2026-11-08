@@ -29,3 +29,14 @@ Whenever you deploy code to the **Production** Google Apps Script (`1wFP1kbXUC-7
 `https://script.google.com/home/projects/1wFP1kbXUC-7dpdlghPGDPcv2AKtX0ZusEpTpkBIw6w4raDyikZkdvj3z/edit`
 and ask them to click "Run" once to re-authorize permissions, preventing guest login (OTP) lockouts.
 
+## 200 Versions Ceiling Rule (Google Apps Script Hard Limit)
+Google imposes a strict limit of 200 immutable versions per Apps Script project.
+Because Google's REST API does NOT provide any programmatic deletion endpoint for versions (`projects.versions` only supports create, get, list), deleting versions CANNOT be performed via API/clasp.
+Whenever `clasp deploy` reports:
+`Cannot create more versions: Script has reached the limit of 200 versions`
+The agent MUST immediately provide the direct project history link to the user:
+- **Sandbox:** `https://script.google.com/home/projects/1Yy2p2pJifKLOqd-UEHW8KKpazlVUpBcy6oUezhvDZYTDZeKekesi0FkW/history`
+- **Production:** `https://script.google.com/home/projects/1wFP1kbXUC-7dpdlghPGDPcv2AKtX0ZusEpTpkBIw6w4raDyikZkdvj3z/history`
+Instructing them to click **Bulk delete versions** (מחיקה מרוכזת של גרסאות) and delete 10-20 old unused versions (e.g., versions 1–20).
+Once cleared, running `clasp deploy` will immediately succeed.
+

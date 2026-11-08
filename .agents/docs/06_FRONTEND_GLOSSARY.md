@@ -26,6 +26,7 @@
    * 🛠️ **חלונית ניהול אורח (Admin Guest Sheet):** מודאל מנהל מקיף עבור הפקה בלבד לצפייה בטפסים, וואטסאפ והתחזות (`#admin-bottom-sheet`, `#admin-overlay`).
    * 🧭 **רכיבי מדריך (Guide Components):** מתג 3 עמודות ללא גלילה (`#guide-city-switcher`), קוביית מקום קומפקטית (`.guide-place-row`), וכפתור ניווט מהיר (`.guide-maps-btn`).
    * 🏨 **כרטיסיית מפרט מלון (Hotel Spec Card):** תצוגת פרטי מלון מעוצבת בטבלה נקייה וניאו-ברוטליסטית (`.hotel-spec-card`, `.hotel-map-btn`).
+   * 💳 **כרטיסיית תשלום ישיר למלון (Hotel Extra Payment Card):** קובייה ייעודית ונפרדת המוצגת מתחת לטבלת המפרט כאשר לאורח יש חוב אישי למלון (`.hotel-extra-payment-card`, `.extra-payment-header`, `.extra-payment-badge`, `.extra-payment-due-tag`, `.extra-payment-amount`, `.extra-payment-currency-ils`, `.extra-payment-breakdown`, `.extra-payment-note`). מציגה "Your Extra Payment" עם סכום דולרי מקורב ושקלים, ופירוט הכיסוי (אקסטרה לילות ו/או `double room upgrade fee`). מוסתרת לחלוטין אם אין תוספת לתשלום.
 
 5. **🎸 רכיבי לשונית אומנים ונטוורקינג (Artists & Networking Components)**
    * **כרטיסיית אמן בגריד:** `.artist-card`, כפתור לב מהיר `.fav-btn-inline`.

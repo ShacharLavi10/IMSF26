@@ -538,6 +538,7 @@ body.light-mode .live-show-card.is-fav {
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   max-height: 90vh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
@@ -545,6 +546,7 @@ body.light-mode .live-show-card.is-fav {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
+  overscroll-behavior: contain;
 }
 .bottom-sheet.active {
   transform: translateY(0);
@@ -596,9 +598,10 @@ body.light-mode .live-show-card.is-fav {
 .sheet-fav-btn.active svg { fill: #ef4444; }
 
 .sheet-content {
-  padding: 0 20px 30px;
+  padding: 0 20px calc(30px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   flex: 1;
   min-height: 0;
 }
@@ -1025,7 +1028,7 @@ body.light-mode .sheet-intent-card-btn.active .intent-card-desc {
   padding: 12px;
   color: var(--foreground);
   font-family: var(--font-stack);
-  font-size: 0.9rem;
+  font-size: 16px;
   resize: none;
   min-height: 80px;
   transition: border-color 0.2s;
@@ -2805,6 +2808,122 @@ body.light-mode .hotel-spec-value {
   color: #0f172a;
 }
 
+/* Hotel Extra Payment Dedicated Card */
+.hotel-extra-payment-card {
+  margin-top: 14px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1.5px solid rgba(245, 158, 11, 0.38);
+  border-radius: var(--radius-lg, 12px);
+  padding: 14px 16px;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+body.light-mode .hotel-extra-payment-card {
+  background: #fffbeb;
+  border: 1.5px solid #d97706;
+  box-shadow: 2px 2px 0px rgba(217, 119, 6, 0.18);
+}
+
+.extra-payment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.extra-payment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fbbf24;
+}
+
+body.light-mode .extra-payment-badge {
+  color: #b45309;
+}
+
+.extra-payment-due-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.18);
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+body.light-mode .extra-payment-due-tag {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.extra-payment-amount {
+  font-family: var(--font-heading, 'Oswald', sans-serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+body.light-mode .extra-payment-amount {
+  color: #b45309;
+}
+
+.extra-payment-currency-ils {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground-muted);
+  opacity: 0.9;
+}
+
+body.light-mode .extra-payment-currency-ils {
+  color: #78350f;
+}
+
+.extra-payment-breakdown {
+  font-size: 0.88rem;
+  color: var(--foreground);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.extra-payment-breakdown strong {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+body.light-mode .extra-payment-breakdown {
+  color: #1e293b;
+}
+
+body.light-mode .extra-payment-breakdown strong {
+  color: #0f172a;
+}
+
+.extra-payment-note {
+  font-size: 0.78rem;
+  color: var(--foreground-muted);
+  opacity: 0.85;
+  line-height: 1.3;
+}
+
+body.light-mode .extra-payment-note {
+  color: #64748b;
+}
+
 /* Production Tab - Hidden by default unless user is in role 'הפקה חשיפה' */
 #tab-admin {
   display: none;
@@ -4013,7 +4132,7 @@ body.light-mode .venue-doors-pill {
   border: none;
   color: var(--foreground);
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 16px;
   font-weight: 700;
   padding-right: 20px;
   cursor: pointer;
@@ -4025,7 +4144,7 @@ body.light-mode .venue-doors-pill {
 .timetable-stage-select option {
   background: #11233a;
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 16px;
   padding: 6px;
 }
 

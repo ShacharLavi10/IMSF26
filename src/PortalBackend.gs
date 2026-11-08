@@ -412,6 +412,9 @@ function fetchMappedData(sheet, email, mappingArray) {
     
     const targetEmail = String(email || "").trim().toLowerCase();
     
+    let allFormulas = null;
+    let allRichText = null;
+
     for (let i = headerRowIdx + 1; i < data.length; i++) {
       const currentEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
       if (currentEmail === targetEmail) {
@@ -424,9 +427,20 @@ function fetchMappedData(sheet, email, mappingArray) {
           
           for (let key of searchKeys) {
             const cleanKey = key.trim().toLowerCase().replace(/\s+/g, ' ');
+            const strippedKey = cleanKey.replace(/[\u05F3\u05F4"'״׳`’“”]/g, '').trim();
             let foundIdx = headers.findIndex(h => h === cleanKey);
+            if (foundIdx === -1 && strippedKey) {
+              foundIdx = headers.findIndex(h => h && h.replace(/[\u05F3\u05F4"'״׳`’“”]/g, '').trim() === strippedKey);
+            }
             if (foundIdx === -1) {
               foundIdx = headers.findIndex(h => h && h.length > 1 && h.includes(cleanKey));
+            }
+            if (foundIdx === -1 && strippedKey && strippedKey.length > 2) {
+              foundIdx = headers.findIndex(h => {
+                if (!h) return false;
+                const strippedH = h.replace(/[\u05F3\u05F4"'״׳`’“”]/g, '').trim();
+                return strippedH.length > 2 && (strippedH.includes(strippedKey) || strippedKey.includes(strippedH));
+              });
             }
             if (foundIdx !== -1) { cIdx = foundIdx; break; }
           }
@@ -446,8 +460,14 @@ function fetchMappedData(sheet, email, mappingArray) {
 
           if ((item.label === "Final Ticket Link" || item.label === "Airport Invitation Link" || item.label === "Check-in Link") && cIdx !== -1) {
             try {
-              const cellRange = sheet.getRange(i + 1, cIdx + 1);
-              const cellFormula = cellRange.getFormula();
+              if (allFormulas === null) {
+                try { allFormulas = range.getFormulas(); } catch (fErr) { allFormulas = []; }
+              }
+              if (allRichText === null) {
+                try { allRichText = range.getRichTextValues(); } catch (rtErr) { allRichText = []; }
+              }
+
+              const cellFormula = (allFormulas && allFormulas[i] && allFormulas[i][cIdx]) ? allFormulas[i][cIdx] : "";
               if (cellFormula && cellFormula.toUpperCase().includes("HYPERLINK")) {
                 const match = cellFormula.match(/HYPERLINK\(\s*["']([^"']+)["']/i);
                 if (match && match[1]) {
@@ -456,7 +476,8 @@ function fetchMappedData(sheet, email, mappingArray) {
                   finalVal = dispVal;
                 }
               }
-              const rt = cellRange.getRichTextValue();
+
+              const rt = (allRichText && allRichText[i] && allRichText[i][cIdx]) ? allRichText[i][cIdx] : null;
               if (rt) {
                 const runs = rt.getRuns();
                 const runLinks = [];
