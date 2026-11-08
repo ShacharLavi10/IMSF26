@@ -35,7 +35,7 @@
    * **הערה אישית של האורח:** `#sheet-private-note` (שמירה אוטומטית בהשהיה של 3.5 שניות).
    * **אינדיקטור סטטוס שמירה:** `#sheet-save-status` (מציג `Saving...` / `Saved ✓`).
    * **פילטרים עליונים:** `#artist-search`, `#clear-artist-search-btn`, `#artist-genre-filter`, כפתור מועדפים בלבד `#artist-fav-filter-btn`.
-   * **מזוודת ייצוא אישית:** `#export-briefcase-container`, `#export-briefcase-btn` (מציג את האומנים שאהב).
+   * **מזוודת ייצוא אישית (Artist Briefcase PDF):** `#export-briefcase-container`, `#export-briefcase-btn`, מודאל ייצוא `#artist-briefcase-modal` (כולל שליחה למייל `sendBriefcaseToEmail`, הורדה ישירה `downloadBriefcasePdf`, וצפייה בדפדפן `previewBriefcasePdf`). רישום מועד ההורדה מתועד בעמודת 'מי הוריד PDF' ע"י `recordBriefcaseDownload()`.
 
 6. **📊 רכיבי דשבורד הפקה לנטוורקינג (Admin Lineup & Networking Leads)**
    * **רובריקת כרטיסי סיכום ו-KPIs:** `#admin-networking-kpis` (כולל בורר `Artists / Guests`, כרטיסיות `Lineup Coverage` / `Delegate Engagement` ודירוגי `Top In-Demand / Active`).
@@ -120,6 +120,11 @@
     * **אנימציית הדגשה עזה בקפיצה (Super-Bold Multi-Wave Pulse):** `.timetable-show-card.highlight-pulse`.
     * **סנכרון חיווי היסטוריית חץ אחורה בדפדפן ובמובייל:** שימוש ב-`#sheet` לפתיחת חלונית אמן וב-`#timetable` לקפיצה ללו"ז, ומעקב אחר `lastOpenedArtistId` לחזרה מושלמת ומדויקת לחלונית האמן בלחיצה על Back.
     * **איפוס גלילה אוטומטי בחלוניות קופצות (Scroll Reset to Top):** בכל פתיחה או סגירה של חלונית אמן (`#artist-bottom-sheet`), אורח (`#guest-bottom-sheet`), מנהל (`#admin-bottom-sheet`) או נטוורקינג (`#networking-bottom-sheet`), גלילת החלונית והמיכל הפנימי שלה (`.sheet-content` / `#admin-modal-content`) מאופסת אוטומטית לראש העמוד (`scrollTop = 0`) כולל הגנה נוספת ב-`requestAnimationFrame` למניעת שימור גלילה בדפדפני מובייל.
+    * **סנכרון מופעים ליומן והורדת קובץ ICS (Calendar Sync & ICS Export):**
+      - כפתור סנכרון בלו"ז: `#calendar-sync-btn` ("📅 Sync My Shows to Calendar").
+      - תגית מונה מופעים נבחרים: `#calendar-sync-badge`.
+      - מודאל סנכרון: `#calendar-sync-modal-overlay`, מונה מופעים `#calendar-modal-shows-count`, מייל אורח `#calendar-modal-email`.
+      - פעולות סנכרון: כפתור הורדת קובץ יומן `#calendar-modal-download-btn` ("Add to Calendar"), כפתור ביטול/הסרה `#calendar-modal-cancel-btn` ("Remove from Calendar"), ומחווני סטטוס/הצלחה `#calendar-modal-status`, `#calendar-modal-success`.
 
 13. **📲 רכיבי PWA, אופליין והתקנה למסך הבית (PWA & Offline Components):**
     * **אינדיקטור סטטוס רשת ניאו-ברוטליסטי:** `#offline-status-pill` (צף עדין בראש המסך, מוסתר באונליין, מציג `⚡ Offline Mode • Notes & Timetable Ready` באופליין ו-`✓ Back Online • Synchronizing...` בחזרת רשת).
