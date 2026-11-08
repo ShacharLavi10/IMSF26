@@ -33,7 +33,8 @@
     color: var(--foreground-muted);
     opacity: 1;
   }
-  .input-group input[type="file"] {
+  .input-group input[type="file"],
+  input[type="file"] {
     padding: 12px;
     background: rgba(255,255,255,0.03);
     font-size: 16px;

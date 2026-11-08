@@ -195,7 +195,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
       "מייל אורח", "שם מלא", "מדינה", "מה החברה עושה", "תפקיד",
       "סטטוס פעילות", "אומנים שאהב (❤️)", "הזמנות להופעה (🎯 Booking)",
       "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)", "כללי (General)", "סה\"כ לייקים (❤️)",
-      "הערות אורח", "Raw Data"
+      "הערות אורח", "מי הוריד PDF", "Raw Data"
     ];
 
     if (!prefSheet) {
@@ -302,7 +302,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
       else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
       else if (headerStr.includes("הערות")) colMap.notes = idx;
       else if (headerStr.includes("raw")) colMap.raw = idx;
-      else if (headerStr.includes("הוריד pdf") || (headerStr.includes("pdf") && headerStr.includes("הוריד"))) colMap.pdfDownloaded = idx;
+      else if ((headerStr.includes("pdf") && (headerStr.includes("הורד") || headerStr.includes("הוריד") || headerStr.includes("download"))) || headerStr.includes("מי הוריד")) colMap.pdfDownloaded = idx;
     });
 
     // If sheet had old 11 columns and is missing the new ones, update headers row to defaultHeaders
@@ -325,7 +325,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
         else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
         else if (headerStr.includes("הערות")) colMap.notes = idx;
         else if (headerStr.includes("raw")) colMap.raw = idx;
-        else if (headerStr.includes("הוריד pdf") || (headerStr.includes("pdf") && headerStr.includes("הוריד"))) colMap.pdfDownloaded = idx;
+        else if ((headerStr.includes("pdf") && (headerStr.includes("הורד") || headerStr.includes("הוריד") || headerStr.includes("download"))) || headerStr.includes("מי הוריד")) colMap.pdfDownloaded = idx;
       });
     }
 
@@ -1958,7 +1958,7 @@ function recordGuestPdfDownload(email) {
     if (data.length < 1) return;
 
     const headers = data[0].map(h => String(h).trim().toLowerCase());
-    let pdfColIdx = headers.findIndex(h => h.includes("הוריד pdf") || (h.includes("pdf") && h.includes("הוריד")));
+    let pdfColIdx = headers.findIndex(h => (h.includes("pdf") && (h.includes("הורד") || h.includes("הוריד") || h.includes("download"))) || h.includes("מי הוריד"));
     let emailColIdx = headers.findIndex(h => h.includes("מייל") || h.includes("email"));
     if (emailColIdx === -1) emailColIdx = 0;
 

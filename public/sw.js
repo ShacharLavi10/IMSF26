@@ -66,10 +66,10 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         } catch (err) {
           // Network failed or timed out (>2.5s) -> serve cached shell immediately
-          const cached = await caches.match(req);
+          const cached = (await caches.match(req, { ignoreSearch: true })) ||
+                         (await caches.match('/index.html')) ||
+                         (await caches.match('/'));
           if (cached) return cached;
-          const fallback = await caches.match('/index.html');
-          if (fallback) return fallback;
           return new Response('Offline - IMSF Portal shell not cached yet', {
             status: 503,
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }

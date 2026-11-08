@@ -6102,7 +6102,8 @@ function closeWelcomeModal() {
     function initFestivalTimetableUI() {
       // Auto-select today if within festival dates (evaluated in Israel Time)
       try {
-        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+        const targetDate = window.simulatedLiveFestivalTime || new Date();
+        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(targetDate);
         const isFestDay = FESTIVAL_TIMETABLE_DAYS.some(d => d.date === todayStr);
         if (isFestDay && currentSelectedTimetableDate !== todayStr) {
           currentSelectedTimetableDate = todayStr;
@@ -6803,11 +6804,26 @@ function closeWelcomeModal() {
       const text = document.getElementById('live-sim-status-text');
       if (!bar) return;
       if (window.simulatedLiveFestivalTime) {
-        const pad = n => String(n).padStart(2, '0');
-        const dt = window.simulatedLiveFestivalTime;
-        const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-        const dateStr = `${dt.getDate()}.${dt.getMonth() + 1}`;
-        if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        try {
+          const dt = window.simulatedLiveFestivalTime;
+          const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Jerusalem',
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }).formatToParts(dt).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+          const timeStr = `${parts.hour}:${parts.minute}`;
+          const dateStr = `${parts.day}.${parts.month}`;
+          if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        } catch (e) {
+          const pad = n => String(n).padStart(2, '0');
+          const dt = window.simulatedLiveFestivalTime;
+          const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+          const dateStr = `${dt.getDate()}.${dt.getMonth() + 1}`;
+          if (text) text.innerText = `Simulating Live: ${dateStr} • ${timeStr}`;
+        }
         bar.style.display = 'flex';
       } else {
         bar.style.display = 'none';

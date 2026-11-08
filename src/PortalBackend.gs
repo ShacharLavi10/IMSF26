@@ -412,13 +412,14 @@ function fetchMappedData(sheet, email, mappingArray) {
     
     const targetEmail = String(email || "").trim().toLowerCase();
     
+    let allFormulas = null;
+    let allRichText = null;
+
     for (let i = headerRowIdx + 1; i < data.length; i++) {
       const currentEmail = String(data[i][emailIdx] || "").trim().toLowerCase();
       if (currentEmail === targetEmail) {
         const resultList = [];
         const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
-        let allFormulas = null;
-        let allRichText = null;
         
         mappingArray.forEach(item => {
           let cIdx = -1;
@@ -466,7 +467,7 @@ function fetchMappedData(sheet, email, mappingArray) {
                 try { allRichText = range.getRichTextValues(); } catch (rtErr) { allRichText = []; }
               }
 
-              const cellFormula = (allFormulas && allFormulas[i]) ? allFormulas[i][cIdx] : "";
+              const cellFormula = (allFormulas && allFormulas[i] && allFormulas[i][cIdx]) ? allFormulas[i][cIdx] : "";
               if (cellFormula && cellFormula.toUpperCase().includes("HYPERLINK")) {
                 const match = cellFormula.match(/HYPERLINK\(\s*["']([^"']+)["']/i);
                 if (match && match[1]) {
@@ -476,7 +477,7 @@ function fetchMappedData(sheet, email, mappingArray) {
                 }
               }
 
-              const rt = (allRichText && allRichText[i]) ? allRichText[i][cIdx] : null;
+              const rt = (allRichText && allRichText[i] && allRichText[i][cIdx]) ? allRichText[i][cIdx] : null;
               if (rt) {
                 const runs = rt.getRuns();
                 const runLinks = [];

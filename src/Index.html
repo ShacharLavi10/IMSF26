@@ -1706,11 +1706,13 @@
     function startLiveUpdatesPolling() {
       fetchUpdates();
       if (updatesPollingInterval) clearInterval(updatesPollingInterval);
-      updatesPollingInterval = setInterval(fetchUpdates, 30000); // Check every 30s
+      updatesPollingInterval = setInterval(fetchUpdates, 180000); // Check every 3 minutes (180s)
     }
 
     function fetchUpdates() {
       if (!currentGuestEmail) return;
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
       google.script.run
         .withSuccessHandler(res => {
           if (res.success && res.updates) {
