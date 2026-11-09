@@ -232,3 +232,16 @@
       - `isTourTargetVisible(el)`: בדיקת נראות ממשית של אלמנט ב-DOM.
       - `TAB_TOUR_CONFIGS`: אובייקט הגדרת הצעדים, טקסטים, מטרות ו-lifecycle hooks (`onEnter`, `onLeave`).
 
+14. **🤝 רכיבי לשונית אורחים וסינון נטוורקינג (Delegates Directory & Filter Components):**
+    * **כרטיסיית הלשונית הראשית:** `#tab-directory`, `#directory-card`.
+    * **קונטיינר מסננים:** `#directory-filters`.
+    * **חיפוש חופשי:** `#guest-search`, כפתור ניקוי `#clear-search-btn` (`clearSearch()`).
+    * **בורר ז'אנר (Genre Filter):** `#guest-genre-filter` הכולל:
+      - `All Genres` (`value="All"`)
+      - `Rock, Indie & Electronic`
+      - `Jazz & World Music`
+    * **בורר מדינה (Country Filter):** `#guest-country-filter` (מאוכלס דינמית מכלל המדינות של האורחים).
+    * **סטטוס תוצאות:** `#directory-status` (מציג `Showing X of Y delegates` וכפתור `Clear` לאיפוס מסננים `resetFilters()`).
+    * **גריד כרטיסיות אורחים:** `#directory-container` (`.artists-grid`, `.artist-card`).
+    * **לוגיקת התאמת Multi-genre (`filterDirectory()`):** אורחים שמוגדרים בגיליון עם `Multi genre` (או `multi`, `both`, `all`, `מולטי`, `הכל`, או שילוב רוק וג'אז) מוצגים **תמיד בכל סינוני הז'אנר** (גם בסינון רוק וגם בסינון ג'אז) מתוך הבנה שהם רלוונטיים לכלל הז'אנרים בפסטיבל.
+
