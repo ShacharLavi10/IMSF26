@@ -102,15 +102,27 @@ function getArtistsData(forceRefresh) {
 /**
  * Retrieve guest profile info from Master Sheet ('אורחים')
  */
-function getGuestDetailsFromMaster(email) {
-  const result = { fullName: "", country: "", companyBio: "", role: "", companyName: "" };
+let _masterGuestsMap = null;
+
+function getGuestDetailsMap(forceRefresh) {
+  if (_masterGuestsMap && !forceRefresh) {
+    return _masterGuestsMap;
+  }
+  const map = new Map();
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const masterSheet = ss.getSheetByName(CONFIG.MASTER_SHEET || "אורחים");
-    if (!masterSheet) return result;
+    let ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss || !ss.getSheetByName(CONFIG.MASTER_SHEET || "אורחים")) {
+      if (CONFIG.MASTER_SPREADSHEET_ID) {
+        try {
+          ss = SpreadsheetApp.openById(CONFIG.MASTER_SPREADSHEET_ID);
+        } catch (e) {}
+      }
+    }
+    const masterSheet = ss ? ss.getSheetByName(CONFIG.MASTER_SHEET || "אורחים") : null;
+    if (!masterSheet) return map;
 
     const data = masterSheet.getDataRange().getValues();
-    if (data.length < 2) return result;
+    if (data.length < 2) return map;
 
     const headers = data[0].map(h => String(h).trim().toLowerCase());
     const emailIdx = headers.indexOf((CONFIG.EMAIL_COL || "מייל אורח").toLowerCase());
@@ -118,25 +130,48 @@ function getGuestDetailsFromMaster(email) {
     const lastIdx = headers.indexOf("שם משפחה");
     const countryIdx = headers.indexOf("מדינה");
     const roleIdx = headers.indexOf("תפקיד");
-    const companyIdx = headers.indexOf("שם חברה");
+    const companyIdx = headers.findIndex(h => h.includes("שם חברה") || (h.includes("חברה") && !h.includes("עושה")));
+    const companyWhatIdx = headers.findIndex(h => h.includes("מה החברה עושה") || h.includes("מה עושה החברה") || h === "מה החברה עושה" || h === "מה עושה");
     const bioIdx = headers.indexOf("ביוגרפיה אנגלית");
 
-    const cleanEmail = email.toLowerCase().trim();
     for (let r = 1; r < data.length; r++) {
       const row = data[r];
-      if (row[emailIdx] && String(row[emailIdx]).trim().toLowerCase() === cleanEmail) {
+      if (emailIdx >= 0 && row[emailIdx]) {
+        const cleanEmail = String(row[emailIdx]).trim().toLowerCase();
+        if (!cleanEmail) continue;
         const first = firstIdx >= 0 ? String(row[firstIdx]).trim() : "";
         const last = lastIdx >= 0 ? String(row[lastIdx]).trim() : "";
-        result.fullName = (first + " " + last).trim();
-        result.country = countryIdx >= 0 ? String(row[countryIdx]).trim() : "";
-        result.role = roleIdx >= 0 ? String(row[roleIdx]).trim() : "";
-        result.companyName = companyIdx >= 0 ? String(row[companyIdx]).trim() : "";
-        result.companyBio = bioIdx >= 0 ? String(row[bioIdx]).trim() : result.companyName;
-        break;
+        
+        let whatTheCompanyDoes = "";
+        if (companyWhatIdx >= 0 && row[companyWhatIdx] !== undefined && row[companyWhatIdx] !== null && String(row[companyWhatIdx]).trim() !== "") {
+          whatTheCompanyDoes = String(row[companyWhatIdx]).trim();
+        } else if (bioIdx >= 0 && row[bioIdx] !== undefined && row[bioIdx] !== null && String(row[bioIdx]).trim() !== "") {
+          whatTheCompanyDoes = String(row[bioIdx]).trim();
+        }
+
+        map.set(cleanEmail, {
+          fullName: (first + " " + last).trim(),
+          country: countryIdx >= 0 ? String(row[countryIdx]).trim() : "",
+          role: roleIdx >= 0 ? String(row[roleIdx]).trim() : "",
+          companyName: companyIdx >= 0 ? String(row[companyIdx]).trim() : "",
+          companyBio: whatTheCompanyDoes
+        });
       }
     }
+    _masterGuestsMap = map;
   } catch (err) {
-    console.error("Error in getGuestDetailsFromMaster:", err);
+    console.error("Error in getGuestDetailsMap:", err);
+  }
+  return map;
+}
+
+function getGuestDetailsFromMaster(email) {
+  const result = { fullName: "", country: "", companyBio: "", role: "", companyName: "" };
+  if (!email) return result;
+  const cleanEmail = String(email).trim().toLowerCase();
+  const map = getGuestDetailsMap(false);
+  if (map.has(cleanEmail)) {
+    return Object.assign({}, map.get(cleanEmail));
   }
   return result;
 }
@@ -192,7 +227,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     const prefSheetName = CONFIG.GUEST_PREFERENCES_SHEET || "העדפות אורחים";
     let prefSheet = ss.getSheetByName(prefSheetName) || ss.getSheetByName("הערות אורחים");
     const defaultHeaders = [
-      "מייל אורח", "שם מלא", "מדינה", "מה החברה עושה", "תפקיד",
+      "מייל אורח", "שם מלא", "מדינה", "שם חברה", "מה החברה עושה", "תפקיד",
       "סטטוס פעילות", "אומנים שאהב (❤️)", "הזמנות להופעה (🎯 Booking)",
       "בקשות לקשר (🤝 Connect)", "עיתונות וסיקור (📰 Press)", "כללי (General)", "סה\"כ לייקים (❤️)",
       "הערות אורח", "מי הוריד PDF", "Raw Data"
@@ -279,54 +314,44 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     });
 
     // Inspect existing headers dynamically
-    let headers = prefSheet.getRange(1, 1, 1, Math.max(prefSheet.getLastColumn(), defaultHeaders.length)).getValues()[0];
-    if (!headers[0]) {
+    const lastCol = prefSheet.getLastColumn();
+    let headers = lastCol > 0 ? prefSheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+    if (!headers || headers.length === 0 || !headers[0]) {
       prefSheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
       headers = defaultHeaders;
     }
 
-    const colMap = {};
-    headers.forEach((h, idx) => {
-      const headerStr = String(h).trim().toLowerCase();
-      if (headerStr.includes("מייל")) colMap.email = idx;
-      else if (headerStr.includes("שם מלא")) colMap.fullName = idx;
-      else if (headerStr.includes("מדינה")) colMap.country = idx;
-      else if (headerStr.includes("חברה") || headerStr.includes("עושה")) colMap.companyBio = idx;
-      else if (headerStr.includes("תפקיד")) colMap.role = idx;
-      else if (headerStr.includes("סטטוס")) colMap.status = idx;
-      else if (headerStr.includes("אומנים שאהב") || (headerStr.includes("אהב") && headerStr.includes("❤️"))) colMap.favs = idx;
-      else if (headerStr.includes("booking") || headerStr.includes("הזמנות להופעה")) colMap.booking = idx;
-      else if (headerStr.includes("connect") || headerStr.includes("בקשות לקשר")) colMap.connect = idx;
-      else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
-      else if (headerStr.includes("general") || headerStr.includes("כללי")) colMap.general = idx;
-      else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
-      else if (headerStr.includes("הערות")) colMap.notes = idx;
-      else if (headerStr.includes("raw")) colMap.raw = idx;
-      else if ((headerStr.includes("pdf") && (headerStr.includes("הורד") || headerStr.includes("הוריד") || headerStr.includes("download"))) || headerStr.includes("מי הוריד")) colMap.pdfDownloaded = idx;
-    });
+    const mapHeaders = (hList) => {
+      const map = {};
+      hList.forEach((h, idx) => {
+        const s = String(h).trim().toLowerCase();
+        if (s.includes("מייל") || s.includes("email")) map.email = idx;
+        else if (s.includes("שם מלא") || s === "שם" || s === "name") map.fullName = idx;
+        else if (s.includes("מדינה") || s.includes("country")) map.country = idx;
+        else if (s.includes("שם חברה") || (s.includes("חברה") && !s.includes("עושה"))) map.companyName = idx;
+        else if (s.includes("מה החברה עושה") || s.includes("מה עושה") || s.includes("עושה") || s.includes("ביוגרפיה")) map.companyBio = idx;
+        else if (s.includes("תפקיד") || s.includes("role")) map.role = idx;
+        else if (s.includes("סטטוס")) map.status = idx;
+        else if (s.includes("אומנים שאהב") || (s.includes("אהב") && s.includes("❤️"))) map.favs = idx;
+        else if (s.includes("booking") || s.includes("הזמנות להופעה") || s.includes("הזמנות")) map.booking = idx;
+        else if (s.includes("connect") || s.includes("בקשות לקשר") || s.includes("קשר")) map.connect = idx;
+        else if (s.includes("press") || s.includes("עיתונות")) map.press = idx;
+        else if (s.includes("general") || s.includes("כללי")) map.general = idx;
+        else if ((s.includes("סה\"כ") || s.includes("סה״כ")) && s.includes("לייק")) map.totalLikes = idx;
+        else if (s.includes("הערות")) map.notes = idx;
+        else if (s.includes("raw")) map.raw = idx;
+        else if ((s.includes("pdf") && (s.includes("הורד") || s.includes("הוריד") || s.includes("download"))) || s.includes("מי הוריד")) map.pdfDownloaded = idx;
+      });
+      return map;
+    };
+
+    let colMap = mapHeaders(headers);
 
     // If sheet had old 11 columns and is missing the new ones, update headers row to defaultHeaders
     if (colMap.press === undefined || colMap.totalLikes === undefined) {
       prefSheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders]);
       headers = defaultHeaders;
-      defaultHeaders.forEach((h, idx) => {
-        const headerStr = String(h).trim().toLowerCase();
-        if (headerStr.includes("מייל")) colMap.email = idx;
-        else if (headerStr.includes("שם מלא")) colMap.fullName = idx;
-        else if (headerStr.includes("מדינה")) colMap.country = idx;
-        else if (headerStr.includes("חברה") || headerStr.includes("עושה")) colMap.companyBio = idx;
-        else if (headerStr.includes("תפקיד")) colMap.role = idx;
-        else if (headerStr.includes("סטטוס")) colMap.status = idx;
-        else if (headerStr.includes("אומנים שאהב") || (headerStr.includes("אהב") && headerStr.includes("❤️"))) colMap.favs = idx;
-        else if (headerStr.includes("booking") || headerStr.includes("הזמנות להופעה")) colMap.booking = idx;
-        else if (headerStr.includes("connect") || headerStr.includes("בקשות לקשר")) colMap.connect = idx;
-        else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
-        else if (headerStr.includes("general") || headerStr.includes("כללי")) colMap.general = idx;
-        else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
-        else if (headerStr.includes("הערות")) colMap.notes = idx;
-        else if (headerStr.includes("raw")) colMap.raw = idx;
-        else if ((headerStr.includes("pdf") && (headerStr.includes("הורד") || headerStr.includes("הוריד") || headerStr.includes("download"))) || headerStr.includes("מי הוריד")) colMap.pdfDownloaded = idx;
-      });
+      colMap = mapHeaders(headers);
     }
 
     // Build row values strictly matching column layout
@@ -334,6 +359,7 @@ function saveGuestArtistFeedback(email, feedbackPayload) {
     if (colMap.email !== undefined) rowValues[colMap.email] = cleanEmail;
     if (colMap.fullName !== undefined) rowValues[colMap.fullName] = guestInfo.fullName;
     if (colMap.country !== undefined) rowValues[colMap.country] = guestInfo.country;
+    if (colMap.companyName !== undefined) rowValues[colMap.companyName] = guestInfo.companyName;
     if (colMap.companyBio !== undefined) rowValues[colMap.companyBio] = guestInfo.companyBio;
     if (colMap.role !== undefined) rowValues[colMap.role] = guestInfo.role;
     if (colMap.status !== undefined) rowValues[colMap.status] = activityStatus;
@@ -468,7 +494,8 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         if (s.includes("מייל")) colMap.email = idx;
         else if (s.includes("שם מלא")) colMap.fullName = idx;
         else if (s.includes("מדינה")) colMap.country = idx;
-        else if (s.includes("חברה") || s.includes("עושה")) colMap.company = idx;
+        else if (s.includes("שם חברה") || (s.includes("חברה") && !s.includes("עושה"))) colMap.companyName = idx;
+        else if (s.includes("מה החברה עושה") || s.includes("מה עושה") || s.includes("עושה") || s.includes("ביוגרפיה")) colMap.companyBio = idx;
         else if (s.includes("תפקיד")) colMap.role = idx;
         else if (s.includes("סטטוס")) colMap.status = idx;
         else if ((s.includes("סה\"כ") || s.includes("סה״כ")) && s.includes("לייק")) colMap.totalLikes = idx;
@@ -507,7 +534,7 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         const masterInfo = item.masterInfo;
         const guestName = (masterInfo && masterInfo.fullName) ? masterInfo.fullName : (String((colMap.fullName !== undefined ? row[colMap.fullName] : "") || cleanEmail).trim());
         const country = (masterInfo && masterInfo.country) ? masterInfo.country : String((colMap.country !== undefined ? row[colMap.country] : "") || "").trim();
-        const company = (masterInfo && (masterInfo.companyName || masterInfo.companyBio)) ? (masterInfo.companyName || masterInfo.companyBio) : String((colMap.company !== undefined ? row[colMap.company] : "") || "").trim();
+        const company = (masterInfo && (masterInfo.companyName || masterInfo.companyBio)) ? (masterInfo.companyName || masterInfo.companyBio) : String((colMap.companyName !== undefined ? row[colMap.companyName] : (colMap.companyBio !== undefined ? row[colMap.companyBio] : "")) || "").trim();
 
         const displayName = guestName || cleanEmail;
         const delegateLabel = country 
@@ -788,7 +815,8 @@ function getAdminArtistsNetworkingData() {
         if (s.includes("מייל")) colMap.email = idx;
         else if (s.includes("שם מלא")) colMap.fullName = idx;
         else if (s.includes("מדינה")) colMap.country = idx;
-        else if (s.includes("חברה") || s.includes("עושה")) colMap.company = idx;
+        else if (s.includes("שם חברה") || (s.includes("חברה") && !s.includes("עושה"))) colMap.companyName = idx;
+        else if (s.includes("מה החברה עושה") || s.includes("מה עושה") || s.includes("עושה") || s.includes("ביוגרפיה")) colMap.companyBio = idx;
         else if (s.includes("תפקיד")) colMap.role = idx;
         else if (s.includes("סטטוס")) colMap.status = idx;
         else if ((s.includes("סה\"כ") || s.includes("סה״כ")) && s.includes("לייק")) colMap.totalLikes = idx;
@@ -821,7 +849,9 @@ function getAdminArtistsNetworkingData() {
 
         const fullName = (masterInfo && masterInfo.fullName) ? masterInfo.fullName : String((colMap.fullName !== undefined ? row[colMap.fullName] : "") || email).trim();
         const country = (masterInfo && masterInfo.country) ? masterInfo.country : String((colMap.country !== undefined ? row[colMap.country] : "") || "").trim();
-        const company = (masterInfo && (masterInfo.companyName || masterInfo.companyBio)) ? (masterInfo.companyName || masterInfo.companyBio) : String((colMap.company !== undefined ? row[colMap.company] : "") || "").trim();
+        const companyName = (masterInfo && masterInfo.companyName) ? masterInfo.companyName : String((colMap.companyName !== undefined ? row[colMap.companyName] : "") || "").trim();
+        const companyBio = (masterInfo && masterInfo.companyBio) ? masterInfo.companyBio : String((colMap.companyBio !== undefined ? row[colMap.companyBio] : "") || "").trim();
+        const company = companyName || companyBio;
 
         let favsVal = String((colMap.favs !== undefined ? row[colMap.favs] : "") || "").trim();
         let totalLikesVal = Number(colMap.totalLikes !== undefined ? row[colMap.totalLikes] : 0);
@@ -851,6 +881,8 @@ function getAdminArtistsNetworkingData() {
           name: fullName || email,
           country: country,
           company: company,
+          companyName: companyName,
+          companyBio: companyBio,
           role: role || (masterInfo ? masterInfo.role : ""),
           status: totalLikesVal > 0 ? `🟢 פעיל (${totalLikesVal} אומנים)` : `🔴 טרם סימן אומנים`,
           favs: favsVal,
@@ -942,26 +974,67 @@ function syncAllArtistsAndLeads() {
     const artistsList = (artistsRes && artistsRes.artists) ? artistsRes.artists : [];
 
     if (prefSheet && leadsSheet) {
-      // Backfill any missing columns in prefSheet if headers exist
+      // Backfill any missing columns and guest details in prefSheet if headers exist
       if (prefSheet.getLastRow() > 1) {
         const pData = prefSheet.getDataRange().getValues();
-        const headers = pData[0];
+        let headers = pData[0];
         const colMap = {};
         headers.forEach((h, idx) => {
           const headerStr = String(h).trim().toLowerCase();
-          if (headerStr.includes("מייל")) colMap.email = idx;
+          if (headerStr.includes("מייל") || headerStr.includes("email")) colMap.email = idx;
+          else if (headerStr.includes("שם מלא") || headerStr === "שם" || headerStr === "name") colMap.fullName = idx;
+          else if (headerStr.includes("מדינה") || headerStr.includes("country")) colMap.country = idx;
+          else if (headerStr.includes("שם חברה") || (headerStr.includes("חברה") && !headerStr.includes("עושה"))) colMap.companyName = idx;
+          else if (headerStr.includes("מה החברה עושה") || headerStr.includes("מה עושה") || headerStr.includes("עושה") || headerStr.includes("ביוגרפיה")) colMap.companyBio = idx;
+          else if (headerStr.includes("תפקיד") || headerStr.includes("role")) colMap.role = idx;
           else if (headerStr.includes("press") || headerStr.includes("עיתונות")) colMap.press = idx;
           else if (headerStr.includes("general") || headerStr.includes("כללי")) colMap.general = idx;
-          else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייקים")) colMap.totalLikes = idx;
+          else if ((headerStr.includes("סה\"כ") || headerStr.includes("סה״כ")) && headerStr.includes("לייק")) colMap.totalLikes = idx;
           else if (headerStr.includes("raw")) colMap.raw = idx;
         });
 
-        if (colMap.raw !== undefined && (colMap.press !== undefined || colMap.general !== undefined || colMap.totalLikes !== undefined)) {
-          const artistMap = {};
-          artistsList.forEach(a => { artistMap[a.id] = a; });
-          for (let r = 1; r < pData.length; r++) {
-            const rawJson = pData[r][colMap.raw];
-            if (!rawJson) continue;
+        if (colMap.companyName === undefined) {
+          colMap.companyName = headers.length;
+          headers.push("שם חברה");
+          prefSheet.getRange(1, headers.length).setValue("שם חברה");
+          for (let r = 0; r < pData.length; r++) {
+            if (r === 0) pData[r].push("שם חברה");
+            else pData[r].push("");
+          }
+        }
+
+        const artistMap = {};
+        artistsList.forEach(a => { artistMap[a.id] = a; });
+
+        let sheetUpdated = false;
+        for (let r = 1; r < pData.length; r++) {
+          const email = String(pData[r][colMap.email !== undefined ? colMap.email : 0] || "").trim().toLowerCase();
+          if (email && email.includes("@")) {
+            const gInfo = getGuestDetailsFromMaster(email);
+            if (colMap.companyName !== undefined && gInfo.companyName && pData[r][colMap.companyName] !== gInfo.companyName) {
+              pData[r][colMap.companyName] = gInfo.companyName;
+              sheetUpdated = true;
+            }
+            if (colMap.companyBio !== undefined && gInfo.companyBio && pData[r][colMap.companyBio] !== gInfo.companyBio) {
+              pData[r][colMap.companyBio] = gInfo.companyBio;
+              sheetUpdated = true;
+            }
+            if (colMap.fullName !== undefined && gInfo.fullName && !pData[r][colMap.fullName]) {
+              pData[r][colMap.fullName] = gInfo.fullName;
+              sheetUpdated = true;
+            }
+            if (colMap.country !== undefined && gInfo.country && !pData[r][colMap.country]) {
+              pData[r][colMap.country] = gInfo.country;
+              sheetUpdated = true;
+            }
+            if (colMap.role !== undefined && gInfo.role && !pData[r][colMap.role]) {
+              pData[r][colMap.role] = gInfo.role;
+              sheetUpdated = true;
+            }
+          }
+
+          const rawJson = colMap.raw !== undefined ? pData[r][colMap.raw] : null;
+          if (rawJson) {
             try {
               const parsed = JSON.parse(rawJson);
               const favs = parsed.favorites || {};
@@ -982,17 +1055,24 @@ function syncAllArtistsAndLeads() {
                 }
               });
 
-              if (colMap.press !== undefined) {
-                prefSheet.getRange(r + 1, colMap.press + 1).setValue(pressNames.join(", "));
+              if (colMap.press !== undefined && pData[r][colMap.press] !== pressNames.join(", ")) {
+                pData[r][colMap.press] = pressNames.join(", ");
+                sheetUpdated = true;
               }
-              if (colMap.general !== undefined) {
-                prefSheet.getRange(r + 1, colMap.general + 1).setValue(generalNames.join(", "));
+              if (colMap.general !== undefined && pData[r][colMap.general] !== generalNames.join(", ")) {
+                pData[r][colMap.general] = generalNames.join(", ");
+                sheetUpdated = true;
               }
-              if (colMap.totalLikes !== undefined) {
-                prefSheet.getRange(r + 1, colMap.totalLikes + 1).setValue(totalLiked);
+              if (colMap.totalLikes !== undefined && pData[r][colMap.totalLikes] !== totalLiked) {
+                pData[r][colMap.totalLikes] = totalLiked;
+                sheetUpdated = true;
               }
             } catch(e) {}
           }
+        }
+
+        if (sheetUpdated) {
+          prefSheet.getRange(1, 1, pData.length, headers.length).setValues(pData);
         }
       }
 
@@ -1988,6 +2068,14 @@ function recordGuestPdfDownload(email) {
       newRow[emailColIdx] = cleanEmail;
       const fullNameIdx = headers.findIndex(h => h.includes("שם מלא") || h.includes("name"));
       if (fullNameIdx !== -1) newRow[fullNameIdx] = guestInfo.fullName;
+      const compNameIdx = headers.findIndex(h => h.includes("שם חברה") || (h.includes("חברה") && !h.includes("עושה")));
+      if (compNameIdx !== -1) newRow[compNameIdx] = guestInfo.companyName;
+      const compBioIdx = headers.findIndex(h => h.includes("מה החברה עושה") || h.includes("מה עושה") || h.includes("עושה") || h.includes("ביוגרפיה"));
+      if (compBioIdx !== -1) newRow[compBioIdx] = guestInfo.companyBio;
+      const roleIdx = headers.findIndex(h => h.includes("תפקיד") || h.includes("role"));
+      if (roleIdx !== -1) newRow[roleIdx] = guestInfo.role;
+      const countryIdx = headers.findIndex(h => h.includes("מדינה") || h.includes("country"));
+      if (countryIdx !== -1) newRow[countryIdx] = guestInfo.country;
       newRow[pdfColIdx] = recordValue;
       prefSheet.appendRow(newRow);
     }
