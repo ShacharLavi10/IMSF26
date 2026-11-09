@@ -2266,13 +2266,37 @@ function closeWelcomeModal() {
         
         // Match Genre
         let matchesGenre = true;
-        const guestGenre = (guest["Genre / Style"] || "").toLowerCase();
+        const guestGenre = (guest["Genre / Style"] || "").toLowerCase().trim();
         if (genreVal !== "All") {
-          if (guestGenre.includes("both") || guestGenre.includes("all")) {
+          const isMultiGenre = guestGenre.includes("multi") || 
+                               guestGenre.includes("both") || 
+                               guestGenre.includes("all") || 
+                               guestGenre.includes("מולטי") || 
+                               guestGenre.includes("הכל") ||
+                               (guestGenre.includes("rock") && guestGenre.includes("jazz"));
+          if (isMultiGenre) {
             matchesGenre = true;
           } else {
-            matchesGenre = guestGenre.includes(genreVal.split('/')[0].toLowerCase().trim()) || 
-                           guestGenre.includes(genreVal.toLowerCase().trim());
+            const isRockFilter = genreVal.toLowerCase().includes("rock") || genreVal.toLowerCase().includes("electronic");
+            const isJazzFilter = genreVal.toLowerCase().includes("jazz") || genreVal.toLowerCase().includes("world");
+            
+            if (isRockFilter) {
+              matchesGenre = guestGenre.includes("rock") || 
+                             guestGenre.includes("indie") || 
+                             guestGenre.includes("electronic") || 
+                             guestGenre.includes("רוק") || 
+                             guestGenre.includes("אינדי") || 
+                             guestGenre.includes("אלקטרונ");
+            } else if (isJazzFilter) {
+              matchesGenre = guestGenre.includes("jazz") || 
+                             guestGenre.includes("world") || 
+                             guestGenre.includes("ג'אז") || 
+                             guestGenre.includes("ג׳אז") || 
+                             guestGenre.includes("עולם");
+            } else {
+              const tokens = genreVal.toLowerCase().split(/[&,/]+/).map(t => t.trim()).filter(Boolean);
+              matchesGenre = tokens.some(t => guestGenre.includes(t)) || guestGenre.includes(genreVal.toLowerCase().trim());
+            }
           }
         }
         
