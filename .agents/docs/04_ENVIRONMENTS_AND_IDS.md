@@ -40,6 +40,8 @@
 * **תיקיית תמונות אישיות:** `1ia1t0xqowQbYKjsYQl9PRy396dDNr7fXbKXzr20suy9waDJEcxMcvYDtb7w3J_d3Q_b8w6c9`
 * **תיקיית דרכונים:** `1gHSfIH1175u09sQEtp5gOSI_oNF6WrDUqUnxUPT4umwKNM-J0dxeNLI3qYQBqcevujCWq6rI`
 * **תיקיית כרטיסי טיסה אמיתיים:** `1nagpOxAfr_ZYGiwPkOO17irHTXMCytOA`
+* **תיקיית גיבויים יומיים (IMSF 2026 Backups):** `1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz`
+  * [קישור לתיקיית גיבויים ב-Google Drive](https://drive.google.com/drive/folders/1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz?usp=drive_link)
 
 ## 📝 טפסים חיצוניים (Forms)
 * **טופס טיסות:** `https://forms.gle/kXCwSXuP3hWHztyh9`
