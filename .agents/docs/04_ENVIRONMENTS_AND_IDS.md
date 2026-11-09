@@ -42,6 +42,9 @@
 * **תיקיית כרטיסי טיסה אמיתיים:** `1nagpOxAfr_ZYGiwPkOO17irHTXMCytOA`
 * **תיקיית גיבויים יומיים (IMSF 2026 Backups):** `1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz`
   * [קישור לתיקיית גיבויים ב-Google Drive](https://drive.google.com/drive/folders/1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz?usp=drive_link)
+  * **קבצים מגובים:** קובץ האורחים הראשי (`BACKUP_MASTER`), גיליון טיסות ענת (`BACKUP_FLIGHTS`), וקובץ אומנים 26 (`BACKUP_ARTISTS`).
+  * **מבנה ואחסון:** בכל לילה נוצרת תת-תיקייה לפי תאריך (`YYYY-MM-DD`) המכילה את 3 הקבצים.
+  * **מדיניות Retention:** שמירה של 7 הימים האחרונים בלבד ומחיקה אוטומטית של ימים ישנים יותר.
 
 ## 📝 טפסים חיצוניים (Forms)
 * **טופס טיסות:** `https://forms.gle/kXCwSXuP3hWHztyh9`

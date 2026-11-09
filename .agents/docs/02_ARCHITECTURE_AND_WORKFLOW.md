@@ -703,3 +703,46 @@ npx.cmd clasp deploy -i <DEPLOYMENT_ID> -d "Update description"
 ```
 * **חובה:** תמיד לבצע `clasp deploy` לאחר `clasp push` כדי שה-Web App ישתמש בגרסה החדשה של הקוד ולא בגרסה ישנה השמורה בהפצה.
 
+---
+
+## 🛡️ 12. מנגנון גיבוי יומי אוטומטי (Automated Daily Backups & 7-Day Retention)
+
+כדי למנוע כל אפשרות של אובדן מידע קריטי במהלך הפסטיבל, הוטמע מנגנון גיבוי אוטונומי ב-Google Apps Script (`src/BackupService.gs`).
+
+### א. מה המנגנון עושה?
+בכל לילה, המערכת מייצרת עותקים שלמים ונפרדים של **שלושת קבצי האמת המרכזיים** של ההפקה:
+1. **קובץ האורחים הראשי (Master Sheet - אורחים):**
+   * ID: `17R6e27QsISFr0jmwOYje857sVRLoxNrePZVa0CTeMos`
+   * נשמר תחת השם: `BACKUP_MASTER_YYYY-MM-DD_HH-mm`
+2. **טבלת טיסות ענת (עדכוני טיסות / טבלת טיסות):**
+   * ID: `1UDzPjGWdvjJ1yOQHmORY-itX0yr52BMOkSrdac3t95M`
+   * נשמר תחת השם: `BACKUP_FLIGHTS_YYYY-MM-DD_HH-mm`
+3. **קובץ אומנים 26 (מידע אומנים, העדפות אורחים, לידים וליינאפ):**
+   * ID: `13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ`
+   * נשמר תחת השם: `BACKUP_ARTISTS_YYYY-MM-DD_HH-mm`
+
+### ב. מבנה התיקיות ב-Google Drive
+* **תיקיית גיבויים ראשית:** `1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz` ([קישור לתיקיית הגיבויים ב-Drive](https://drive.google.com/drive/folders/1Rk6Ahmjxch_zOMvif_Ey9V7UvadYrWZz?usp=drive_link)).
+* בתוך התיקייה הראשית, המערכת מייצרת תת-תיקייה לכל יום בפורמט תאריך בינלאומי: `YYYY-MM-DD` (לדוגמה: `2026-11-09`).
+* בתוך תיקיית היום נמצאים שלושת קבצי הגיבוי של אותו תאריך.
+
+### ג. מדיניות שמירה וגריסה (7-Day Rolling Retention)
+* המערכת מפעילה את פונקציית `pruneOldDailyBackupFolders(parentFolder, 7)`.
+* הפונקציה סורקת את התיקיות היומיות, ממיינת אותן לפי תאריך מהחדש לישן, ושומרת תמיד בדיוק את **7 הימים האחרונים** של השבוע.
+* כל תיקייה ישנה יותר מהיום השביעי מועברת אוטומטית לאשפה (`setTrashed(true)`), וכך נמנעת הצטברות אינסופית ונשמרת תמונת מצב אמינה שמאפשרת שחזור שבוע אחורה בכל רגע.
+
+### ד. תזמון והפעלה
+* **טריגר אוטומטי:** מוגדר ב-Apps Script כטריגר מבוסס זמן (`timeBased`) שרץ מדי לילה בין **03:00 ל-04:00 לפנות בוקר** ומפעיל את הפונקציה `createDailyBackup()`.
+* **הפעלת גיבוי ידני יזום:**
+  ניתן להפעיל גיבוי מיידי בכל שלב מתוך עורך ה-Apps Script ע"י הרצת הפונקציה:
+  ```javascript
+  createDailyBackup(true); // true עוקף בדיקת סביבה אם מריצים ידנית
+  ```
+
+### ה. הגנת סביבות (Sandbox Guard)
+* הפונקציה כוללת בדיקה קשיחה:
+  ```javascript
+  if (typeof IS_PROD !== 'undefined' && !IS_PROD && !forceRun) return;
+  ```
+* בדיקה זו מבטיחה כי ריצות בסביבת Sandbox לעולם לא ייגעו בתיקיית הגיבויים האמיתית ולא יערבבו קבצי ניסוי ודמה עם נתוני האמת.
+
