@@ -132,7 +132,6 @@ function getGuestDetailsMap(forceRefresh) {
     const roleIdx = headers.indexOf("תפקיד");
     const companyIdx = headers.findIndex(h => h.includes("שם חברה") || (h.includes("חברה") && !h.includes("עושה")));
     const companyWhatIdx = headers.findIndex(h => h.includes("מה החברה עושה") || h.includes("מה עושה החברה") || h === "מה החברה עושה" || h === "מה עושה");
-    const bioIdx = headers.indexOf("ביוגרפיה אנגלית");
 
     for (let r = 1; r < data.length; r++) {
       const row = data[r];
@@ -143,17 +142,20 @@ function getGuestDetailsMap(forceRefresh) {
         const last = lastIdx >= 0 ? String(row[lastIdx]).trim() : "";
         
         let whatTheCompanyDoes = "";
-        if (companyWhatIdx >= 0 && row[companyWhatIdx] !== undefined && row[companyWhatIdx] !== null && String(row[companyWhatIdx]).trim() !== "") {
+        if (companyWhatIdx >= 0 && row[companyWhatIdx] !== undefined && row[companyWhatIdx] !== null) {
           whatTheCompanyDoes = String(row[companyWhatIdx]).trim();
-        } else if (bioIdx >= 0 && row[bioIdx] !== undefined && row[bioIdx] !== null && String(row[bioIdx]).trim() !== "") {
-          whatTheCompanyDoes = String(row[bioIdx]).trim();
+        }
+
+        let companyName = "";
+        if (companyIdx >= 0 && row[companyIdx] !== undefined && row[companyIdx] !== null) {
+          companyName = String(row[companyIdx]).trim();
         }
 
         map.set(cleanEmail, {
           fullName: (first + " " + last).trim(),
           country: countryIdx >= 0 ? String(row[countryIdx]).trim() : "",
           role: roleIdx >= 0 ? String(row[roleIdx]).trim() : "",
-          companyName: companyIdx >= 0 ? String(row[companyIdx]).trim() : "",
+          companyName: companyName,
           companyBio: whatTheCompanyDoes
         });
       }
@@ -534,7 +536,12 @@ function syncArtistLeadsSheet(ss, prefSheet, leadsSheet, artistsList) {
         const masterInfo = item.masterInfo;
         const guestName = (masterInfo && masterInfo.fullName) ? masterInfo.fullName : (String((colMap.fullName !== undefined ? row[colMap.fullName] : "") || cleanEmail).trim());
         const country = (masterInfo && masterInfo.country) ? masterInfo.country : String((colMap.country !== undefined ? row[colMap.country] : "") || "").trim();
-        const company = (masterInfo && (masterInfo.companyName || masterInfo.companyBio)) ? (masterInfo.companyName || masterInfo.companyBio) : String((colMap.companyName !== undefined ? row[colMap.companyName] : (colMap.companyBio !== undefined ? row[colMap.companyBio] : "")) || "").trim();
+        let company = "";
+        if (masterInfo) {
+          company = masterInfo.companyName || masterInfo.companyBio || "";
+        } else {
+          company = String((colMap.companyName !== undefined ? row[colMap.companyName] : (colMap.companyBio !== undefined ? row[colMap.companyBio] : "")) || "").trim();
+        }
 
         const displayName = guestName || cleanEmail;
         const delegateLabel = country 
@@ -849,9 +856,9 @@ function getAdminArtistsNetworkingData() {
 
         const fullName = (masterInfo && masterInfo.fullName) ? masterInfo.fullName : String((colMap.fullName !== undefined ? row[colMap.fullName] : "") || email).trim();
         const country = (masterInfo && masterInfo.country) ? masterInfo.country : String((colMap.country !== undefined ? row[colMap.country] : "") || "").trim();
-        const companyName = (masterInfo && masterInfo.companyName) ? masterInfo.companyName : String((colMap.companyName !== undefined ? row[colMap.companyName] : "") || "").trim();
-        const companyBio = (masterInfo && masterInfo.companyBio) ? masterInfo.companyBio : String((colMap.companyBio !== undefined ? row[colMap.companyBio] : "") || "").trim();
-        const company = companyName || companyBio;
+        const companyName = masterInfo ? (masterInfo.companyName || "") : String((colMap.companyName !== undefined ? row[colMap.companyName] : "") || "").trim();
+        const companyBio = masterInfo ? (masterInfo.companyBio || "") : String((colMap.companyBio !== undefined ? row[colMap.companyBio] : "") || "").trim();
+        const company = companyName || companyBio || "";
 
         let favsVal = String((colMap.favs !== undefined ? row[colMap.favs] : "") || "").trim();
         let totalLikesVal = Number(colMap.totalLikes !== undefined ? row[colMap.totalLikes] : 0);
@@ -1011,12 +1018,14 @@ function syncAllArtistsAndLeads() {
           const email = String(pData[r][colMap.email !== undefined ? colMap.email : 0] || "").trim().toLowerCase();
           if (email && email.includes("@")) {
             const gInfo = getGuestDetailsFromMaster(email);
-            if (colMap.companyName !== undefined && gInfo.companyName && pData[r][colMap.companyName] !== gInfo.companyName) {
-              pData[r][colMap.companyName] = gInfo.companyName;
+            const targetCompanyName = gInfo.companyName || "";
+            const targetCompanyBio = gInfo.companyBio || "";
+            if (colMap.companyName !== undefined && String(pData[r][colMap.companyName] || "").trim() !== targetCompanyName) {
+              pData[r][colMap.companyName] = targetCompanyName;
               sheetUpdated = true;
             }
-            if (colMap.companyBio !== undefined && gInfo.companyBio && pData[r][colMap.companyBio] !== gInfo.companyBio) {
-              pData[r][colMap.companyBio] = gInfo.companyBio;
+            if (colMap.companyBio !== undefined && String(pData[r][colMap.companyBio] || "").trim() !== targetCompanyBio) {
+              pData[r][colMap.companyBio] = targetCompanyBio;
               sheetUpdated = true;
             }
             if (colMap.fullName !== undefined && gInfo.fullName && !pData[r][colMap.fullName]) {
