@@ -5494,6 +5494,16 @@ button.viewer-close svg,
   pointer-events: none !important;
 }
 
+/* Specific focal adjustment for Angella Lee whose photo is low in frame */
+.artist-card.angella-lee-card {
+  background-position: center 78% !important;
+}
 
-
-
+#sheet-guest-img.angella-lee-header {
+  background-position: center 62% !important;
+}
+@media (min-width: 601px) {
+  #sheet-guest-img.angella-lee-header {
+    background-position: center 60% !important;
+  }
+}

@@ -2337,6 +2337,19 @@ function closeWelcomeModal() {
       return url;
     }
 
+    function isAngellaLeeGuest(guest, fullName) {
+      if (!guest && !fullName) return false;
+      const fName = ((guest && (guest["First Name"] || guest.firstName)) || "").trim().toLowerCase();
+      const lName = ((guest && (guest["Last Name"] || guest.lastName)) || "").trim().toLowerCase();
+      const name = (fullName || `${fName} ${lName}`).trim().toLowerCase();
+      const email = ((guest && (guest["Email"] || guest.email)) || "").trim().toLowerCase();
+      return name === "angella lee" || 
+             name === "angela lee" || 
+             (fName === "angella" && lName === "lee") || 
+             (fName === "angela" && lName === "lee") ||
+             email === "contact@jarasumjazz.com";
+    }
+
     function renderDirectoryCards(filteredArray) {
       const container = document.getElementById("directory-container");
       if (filteredArray.length === 0) {
@@ -2364,10 +2377,13 @@ function closeWelcomeModal() {
         // Pass index to openGuestSheet so we can easily find the guest in globalDirectoryData
         const originalIndex = globalDirectoryData.indexOf(guest);
         
-        const bgStyle = photoUrl ? `background-image: url('${photoUrl}')` : `background-color: #000`;
+        const isAngella = isAngellaLeeGuest(guest, fullName);
+        const cardClass = isAngella ? "artist-card angella-lee-card" : "artist-card";
+        const bgPosStyle = isAngella ? '; background-position: center 78% !important;' : '';
+        const bgStyle = photoUrl ? `background-image: url('${photoUrl}')${bgPosStyle}` : `background-color: #000`;
         
         html += `
-          <div class="artist-card" style="${bgStyle}" onclick="openGuestSheet(${originalIndex})">
+          <div class="${cardClass}" style="${bgStyle}" onclick="openGuestSheet(${originalIndex})">
             <div class="artist-card-overlay">
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 2px;">
                 <div class="artist-card-name" style="margin-bottom: 0;">${fullName}</div>
@@ -2405,6 +2421,7 @@ function closeWelcomeModal() {
       let genreText = guest["Genre / Style"] || "";
       if (genreText.toLowerCase().includes("both")) genreText = "All Genres";
       
+      const isAngella = isAngellaLeeGuest(guest, fullName);
       const imgEl = document.getElementById('sheet-guest-img');
       if (photoUrl) {
         imgEl.style.backgroundImage = `url('${photoUrl}')`;
@@ -2412,6 +2429,14 @@ function closeWelcomeModal() {
       } else {
         imgEl.style.backgroundImage = 'none';
         imgEl.style.backgroundColor = '#000';
+      }
+
+      if (isAngella) {
+        imgEl.classList.add('angella-lee-header');
+        imgEl.style.backgroundPosition = (window.innerWidth > 600) ? 'center 60%' : 'center 62%';
+      } else {
+        imgEl.classList.remove('angella-lee-header');
+        imgEl.style.backgroundPosition = '';
       }
       
       document.getElementById('sheet-guest-name').innerText = fullName;
@@ -2501,6 +2526,11 @@ function closeWelcomeModal() {
     function closeGuestSheet(isHashChange) {
       const overlayEl = document.getElementById('guest-sheet-overlay');
       const sheetEl = document.getElementById('guest-bottom-sheet');
+      const imgEl = document.getElementById('sheet-guest-img');
+      if (imgEl) {
+        imgEl.classList.remove('angella-lee-header');
+        imgEl.style.backgroundPosition = '';
+      }
       if (sheetEl) {
         sheetEl.scrollTop = 0;
         const sheetContentEl = sheetEl.querySelector('.sheet-content');
