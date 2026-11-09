@@ -1,6 +1,8 @@
 # TASKS_BACKLOG.md
 
 > מסמך ריכוז משימות עתידיות, רעיונות לסיעור מוחות ובק-לוג (Backlog) להמשך פיתוח הפורטל ומערכות האוטומציה. מסודר לפי רמות עדיפות.
+> 
+> 💡 **תובנות, לקחים ושיפורים אסטרטגיים לפסטיבל הבא:** ראו מסמך ייעודי ב-[FESTIVAL_INSIGHTS_AND_IMPROVEMENTS.md](FESTIVAL_INSIGHTS_AND_IMPROVEMENTS.md).
 
 ---
 
