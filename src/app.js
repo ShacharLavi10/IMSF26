@@ -4963,7 +4963,7 @@ function closeWelcomeModal() {
         city: 'Jerusalem',
         venue: 'Museum of Tolerance',
         meta: 'Doors 18:30 | B2 Main Stage, Grand Hall 1 & 2, Prayer Room, Auditorium, Plaza & Amphi',
-        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2', 'Grand Hall Full', 'Prayer Room', 'Auditorium 400', 'Plaza Stage', 'Amphi', 'Nocturno Club', 'Shvitz Club']
+        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2', 'Grand Hall Full', 'Prayer Room', 'Auditorium 400', 'Plaza Stage', 'Amphi', 'Nocturno Club', 'Swiss Club']
       },
       {
         date: '2026-11-20',
@@ -5494,18 +5494,20 @@ function closeWelcomeModal() {
       {
             "id": "show_3_18",
             "date": "2026-11-19",
-            "stage": "Shvitz Club",
+            "stage": "Swiss Club",
             "startTime": "00:00",
-            "endTime": "02:00",
+            "endTime": "",
             "artistName": "SILVI COHEN",
             "aliases": [
                   "סילבי כהן",
                   "סילבי",
                   "Silvi Cohen",
                   "אפטר בשוויץ (ליד המזקקה) סילבי כהן",
-                  "אפטר בשוויץ"
+                  "אפטר בשוויץ",
+                  "אפטר בסוויס קלאב",
+                  "סוויס קלאב"
             ],
-            "format": "Aftershow at Shvitz (Schweiz)"
+            "format": "Aftershow at Swiss Club"
       },
       {
             "id": "show_4_1",
@@ -5899,7 +5901,10 @@ function closeWelcomeModal() {
       'silvi': 'SILVI COHEN',
       'אפטר בשוויץ סילבי כהן': 'SILVI COHEN',
       'אפטר בשוויץ': 'SILVI COHEN',
-      'שוויץ סילבי כהן': 'SILVI COHEN'
+      'שוויץ סילבי כהן': 'SILVI COHEN',
+      'אפטר בסוויס קלאב': 'SILVI COHEN',
+      'סוויס קלאב': 'SILVI COHEN',
+      'swiss club': 'SILVI COHEN'
     };
 
     const matchedArtistCache = new Map();
@@ -6087,7 +6092,7 @@ function closeWelcomeModal() {
       return false;
     }
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v12';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v13';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {

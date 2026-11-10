@@ -1405,7 +1405,10 @@ const ARTIST_NAME_ALIASES_DICT = {
   'silvi': 'SILVI COHEN',
   'אפטר בשוויץ סילבי כהן': 'SILVI COHEN',
   'אפטר בשוויץ': 'SILVI COHEN',
-  'שוויץ סילבי כהן': 'SILVI COHEN'
+  'שוויץ סילבי כהן': 'SILVI COHEN',
+  'אפטר בסוויס קלאב': 'SILVI COHEN',
+  'סוויס קלאב': 'SILVI COHEN',
+  'swiss club': 'SILVI COHEN'
 };
 
 function normalizeArtistString(str) {
@@ -1621,8 +1624,9 @@ function parseLineupGrid(grid, artistsList) {
     'צוללת': 'Submarine Hall',
     'בית המכולות': 'Container House',
     'נוקטורנו': 'Nocturno Club',
-    'שוויץ': 'Shvitz Club',
-    'שויץ': 'Shvitz Club'
+    'שוויץ': 'Swiss Club',
+    'שויץ': 'Swiss Club',
+    'סוויס': 'Swiss Club'
   };
 
   const allShows = [];
@@ -1730,11 +1734,11 @@ function parseLineupGrid(grid, artistsList) {
         candidateShow.artistName = 'Las Piratas Piratas';
       }
 
-      if (cellArtist.includes('סילבי כהן') || (cellArtist.includes('סילבי') && (cellArtist.includes('שוויץ') || cellArtist.includes('שויץ')))) {
-        candidateShow.stage = 'Shvitz Club';
+      if (cellArtist.includes('סילבי כהן') || (cellArtist.includes('סילבי') && (cellArtist.includes('שוויץ') || cellArtist.includes('שויץ') || cellArtist.includes('סוויס')))) {
+        candidateShow.stage = 'Swiss Club';
         candidateShow.artistName = 'SILVI COHEN';
-        candidateShow.format = 'Aftershow at Shvitz (Schweiz)';
-        if (!candidateShow.endTime) candidateShow.endTime = '02:00';
+        candidateShow.format = 'Aftershow at Swiss Club';
+        candidateShow.endTime = '';
       }
 
       if (cellArtist.includes('פיל ביית') || cellArtist.includes('פיל בית') || cellArtist.includes('פילבט') || cellArtist.toLowerCase().includes('feelbeit') || cellArtist.toLowerCase().includes('feelbeat')) {
