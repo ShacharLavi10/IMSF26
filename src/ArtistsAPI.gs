@@ -1393,7 +1393,14 @@ const ARTIST_NAME_ALIASES_DICT = {
   'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
   'אפטר בנוקטורנו': 'Las Piratas Piratas',
   'las piratas piratas': 'Las Piratas Piratas',
-  'piratas': 'Las Piratas Piratas'
+  'piratas': 'Las Piratas Piratas',
+  'סילבי כהן': 'SILVI COHEN',
+  'סילבי': 'SILVI COHEN',
+  'silvi cohen': 'SILVI COHEN',
+  'silvi': 'SILVI COHEN',
+  'אפטר בשוויץ סילבי כהן': 'SILVI COHEN',
+  'אפטר בשוויץ': 'SILVI COHEN',
+  'שוויץ סילבי כהן': 'SILVI COHEN'
 };
 
 function normalizeArtistString(str) {
@@ -1608,7 +1615,9 @@ function parseLineupGrid(grid, artistsList) {
     'מגדל דוד': 'Tower of David',
     'צוללת': 'Submarine Hall',
     'בית המכולות': 'Container House',
-    'נוקטורנו': 'Nocturno Club'
+    'נוקטורנו': 'Nocturno Club',
+    'שוויץ': 'Shvitz Club',
+    'שויץ': 'Shvitz Club'
   };
 
   const allShows = [];
@@ -1714,6 +1723,13 @@ function parseLineupGrid(grid, artistsList) {
       if (cellArtist.includes('נוקטורנו') && (cellArtist.includes('פיראטי') || cellArtist.includes('הפיראטיות'))) {
         candidateShow.stage = 'Nocturno Club';
         candidateShow.artistName = 'Las Piratas Piratas';
+      }
+
+      if (cellArtist.includes('סילבי כהן') || (cellArtist.includes('סילבי') && (cellArtist.includes('שוויץ') || cellArtist.includes('שויץ')))) {
+        candidateShow.stage = 'Shvitz Club';
+        candidateShow.artistName = 'SILVI COHEN';
+        candidateShow.format = 'Aftershow at Shvitz (Schweiz)';
+        if (!candidateShow.endTime) candidateShow.endTime = '02:00';
       }
 
       if (shouldKeepTimetableItem(candidateShow, artistsList)) {
