@@ -4159,13 +4159,20 @@ function closeWelcomeModal() {
         .getArtistsData();
     }
 
+    function isTimetableOnlyArtist(artist) {
+      if (!artist || !artist.name) return false;
+      const lower = String(artist.name).toLowerCase();
+      return lower.includes('feelbeit') || lower.includes('feelbeat') || (artist.id === 'artist_55');
+    }
+    window.isTimetableOnlyArtist = isTimetableOnlyArtist;
+
     // Initialize Artists UI
     function initArtistsUI() {
       // Setup Genre Filter
       const genreSelect = document.getElementById('artist-genre-filter');
       const currentVal = genreSelect ? genreSelect.value : 'All';
       const predefinedGenres = ["Rock, Indie & Electronic", "Jazz & World Music"];
-      const genres = new Set([...predefinedGenres, ...globalArtistsData.map(a => a.genre).filter(g => g && g.trim())]);
+      const genres = new Set([...predefinedGenres, ...globalArtistsData.filter(a => !isTimetableOnlyArtist(a)).map(a => a.genre).filter(g => g && g.trim())]);
       let genreHtml = '<option value="All">All Genres</option>';
       genres.forEach(g => {
         const isSelected = (g === currentVal) ? 'selected' : '';
@@ -4274,6 +4281,9 @@ function closeWelcomeModal() {
       if (clearBtn) clearBtn.style.display = searchTxt ? 'flex' : 'none';
 
       const filtered = globalArtistsData.filter(a => {
+        // Exclude acts that are not part of the official festival lineup (only shown in timetable)
+        if (isTimetableOnlyArtist(a)) return false;
+
         const aGenre = (a.genre || "").trim();
         const matchesSearch = !searchTxt || (a.name && a.name.toLowerCase().includes(searchTxt)) || aGenre.toLowerCase().includes(searchTxt);
         
@@ -4953,7 +4963,7 @@ function closeWelcomeModal() {
         city: 'Jerusalem',
         venue: 'Museum of Tolerance',
         meta: 'Doors 18:30 | B2 Main Stage, Grand Hall 1 & 2, Prayer Room, Auditorium, Plaza & Amphi',
-        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2', 'Grand Hall Full', 'Prayer Room', 'Auditorium 400', 'Plaza Stage', 'Amphi', 'Nocturno Club']
+        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2', 'Grand Hall Full', 'Prayer Room', 'Auditorium 400', 'Plaza Stage', 'Amphi', 'Nocturno Club', 'Swiss Club']
       },
       {
         date: '2026-11-20',
@@ -5482,6 +5492,24 @@ function closeWelcomeModal() {
             "format": "Aftershow at Nocturno Club"
       },
       {
+            "id": "show_3_18",
+            "date": "2026-11-19",
+            "stage": "Swiss Club",
+            "startTime": "00:00",
+            "endTime": "",
+            "artistName": "SILVI COHEN",
+            "aliases": [
+                  "סילבי כהן",
+                  "סילבי",
+                  "Silvi Cohen",
+                  "אפטר בשוויץ (ליד המזקקה) סילבי כהן",
+                  "אפטר בשוויץ",
+                  "אפטר בסוויס קלאב",
+                  "סוויס קלאב"
+            ],
+            "format": "Aftershow at Swiss Club"
+      },
+      {
             "id": "show_4_1",
             "date": "2026-11-20",
             "stage": "Main Plaza",
@@ -5756,14 +5784,17 @@ function closeWelcomeModal() {
             "stage": "Container House",
             "startTime": "17:00",
             "endTime": "18:00",
-            "artistName": "FeelBeat Ensemble",
+            "artistName": "The FeelBeit Ensemble",
             "aliases": [
                   "אנסמבל פיל ביית",
                   "אנסמבל פיל בית",
                   "פיל בית",
-                  "פילבט"
+                  "פיל ביית",
+                  "פילבט",
+                  "FeelBeat Ensemble",
+                  "The FeelBeit Ensemble"
             ],
-            "format": "Closing Showcase Live Concert"
+            "format": "Closing Performance"
       }
 ];
 
@@ -5835,12 +5866,17 @@ function closeWelcomeModal() {
       'bilteez': 'BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)',
       'עדן דרסו': 'Eden Derso',
       'eden derso': 'Eden Derso',
-      'אנסמבל פיל ביית': 'FeelBeat Ensemble',
-      'אנסמבל פיל בית': 'FeelBeat Ensemble',
-      'פיל בית': 'FeelBeat Ensemble',
-      'פילבט': 'FeelBeat Ensemble',
-      'feelbeat': 'FeelBeat Ensemble',
-      'feelbeat ensemble': 'FeelBeat Ensemble',
+      'אנסמבל פיל ביית': 'The FeelBeit Ensemble',
+      'אנסמבל פיל בית': 'The FeelBeit Ensemble',
+      'פיל בית': 'The FeelBeit Ensemble',
+      'פיל ביית': 'The FeelBeit Ensemble',
+      'פילבט': 'The FeelBeit Ensemble',
+      'feelbeat': 'The FeelBeit Ensemble',
+      'feelbeat ensemble': 'The FeelBeit Ensemble',
+      'feelbeit': 'The FeelBeit Ensemble',
+      'feelbeit ensemble': 'The FeelBeit Ensemble',
+      'the feelbeit ensemble': 'The FeelBeit Ensemble',
+      'the feelbeat ensemble': 'The FeelBeit Ensemble',
       'רם מלכה': 'DJ Ram Malca',
       'dj ram malca': 'DJ Ram Malca',
       'fortuna records': 'Fortuna Records',
@@ -5858,7 +5894,17 @@ function closeWelcomeModal() {
       'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
       'אפטר בנוקטורנו': 'Las Piratas Piratas',
       'las piratas piratas': 'Las Piratas Piratas',
-      'piratas': 'Las Piratas Piratas'
+      'piratas': 'Las Piratas Piratas',
+      'סילבי כהן': 'SILVI COHEN',
+      'סילבי': 'SILVI COHEN',
+      'silvi cohen': 'SILVI COHEN',
+      'silvi': 'SILVI COHEN',
+      'אפטר בשוויץ סילבי כהן': 'SILVI COHEN',
+      'אפטר בשוויץ': 'SILVI COHEN',
+      'שוויץ סילבי כהן': 'SILVI COHEN',
+      'אפטר בסוויס קלאב': 'SILVI COHEN',
+      'סוויס קלאב': 'SILVI COHEN',
+      'swiss club': 'SILVI COHEN'
     };
 
     const matchedArtistCache = new Map();
@@ -6046,7 +6092,7 @@ function closeWelcomeModal() {
       return false;
     }
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v10';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v13';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {

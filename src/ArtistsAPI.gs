@@ -1370,12 +1370,17 @@ const ARTIST_NAME_ALIASES_DICT = {
   'bilteez': 'BILTEEZ\n(Ester Rada, Daniel Zamir, & Michael Meital)',
   'עדן דרסו': 'Eden Derso',
   'eden derso': 'Eden Derso',
-  'אנסמבל פיל ביית': 'FeelBeat Ensemble',
-  'אנסמבל פיל בית': 'FeelBeat Ensemble',
-  'פיל בית': 'FeelBeat Ensemble',
-  'פילבט': 'FeelBeat Ensemble',
-  'feelbeat': 'FeelBeat Ensemble',
-  'feelbeat ensemble': 'FeelBeat Ensemble',
+  'אנסמבל פיל ביית': 'The FeelBeit Ensemble',
+  'אנסמבל פיל בית': 'The FeelBeit Ensemble',
+  'פיל בית': 'The FeelBeit Ensemble',
+  'פיל ביית': 'The FeelBeit Ensemble',
+  'פילבט': 'The FeelBeit Ensemble',
+  'feelbeat': 'The FeelBeit Ensemble',
+  'feelbeat ensemble': 'The FeelBeit Ensemble',
+  'feelbeit': 'The FeelBeit Ensemble',
+  'feelbeit ensemble': 'The FeelBeit Ensemble',
+  'the feelbeit ensemble': 'The FeelBeit Ensemble',
+  'the feelbeat ensemble': 'The FeelBeit Ensemble',
   'רם מלכה': 'DJ Ram Malca',
   'dj ram malca': 'DJ Ram Malca',
   'fortuna records': 'Fortuna Records',
@@ -1393,7 +1398,17 @@ const ARTIST_NAME_ALIASES_DICT = {
   'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
   'אפטר בנוקטורנו': 'Las Piratas Piratas',
   'las piratas piratas': 'Las Piratas Piratas',
-  'piratas': 'Las Piratas Piratas'
+  'piratas': 'Las Piratas Piratas',
+  'סילבי כהן': 'SILVI COHEN',
+  'סילבי': 'SILVI COHEN',
+  'silvi cohen': 'SILVI COHEN',
+  'silvi': 'SILVI COHEN',
+  'אפטר בשוויץ סילבי כהן': 'SILVI COHEN',
+  'אפטר בשוויץ': 'SILVI COHEN',
+  'שוויץ סילבי כהן': 'SILVI COHEN',
+  'אפטר בסוויס קלאב': 'SILVI COHEN',
+  'סוויס קלאב': 'SILVI COHEN',
+  'swiss club': 'SILVI COHEN'
 };
 
 function normalizeArtistString(str) {
@@ -1608,7 +1623,10 @@ function parseLineupGrid(grid, artistsList) {
     'מגדל דוד': 'Tower of David',
     'צוללת': 'Submarine Hall',
     'בית המכולות': 'Container House',
-    'נוקטורנו': 'Nocturno Club'
+    'נוקטורנו': 'Nocturno Club',
+    'שוויץ': 'Swiss Club',
+    'שויץ': 'Swiss Club',
+    'סוויס': 'Swiss Club'
   };
 
   const allShows = [];
@@ -1714,6 +1732,20 @@ function parseLineupGrid(grid, artistsList) {
       if (cellArtist.includes('נוקטורנו') && (cellArtist.includes('פיראטי') || cellArtist.includes('הפיראטיות'))) {
         candidateShow.stage = 'Nocturno Club';
         candidateShow.artistName = 'Las Piratas Piratas';
+      }
+
+      if (cellArtist.includes('סילבי כהן') || (cellArtist.includes('סילבי') && (cellArtist.includes('שוויץ') || cellArtist.includes('שויץ') || cellArtist.includes('סוויס')))) {
+        candidateShow.stage = 'Swiss Club';
+        candidateShow.artistName = 'SILVI COHEN';
+        candidateShow.format = 'Aftershow at Swiss Club';
+        candidateShow.endTime = '';
+      }
+
+      if (cellArtist.includes('פיל ביית') || cellArtist.includes('פיל בית') || cellArtist.includes('פילבט') || cellArtist.toLowerCase().includes('feelbeit') || cellArtist.toLowerCase().includes('feelbeat')) {
+        candidateShow.stage = 'Container House';
+        candidateShow.artistName = 'The FeelBeit Ensemble';
+        candidateShow.format = 'Closing Performance';
+        if (!candidateShow.endTime) candidateShow.endTime = '18:00';
       }
 
       if (shouldKeepTimetableItem(candidateShow, artistsList)) {
