@@ -7448,6 +7448,25 @@ function renderAdminDashboard() {
   const container = document.getElementById("admin-dashboard-container");
   if (!adminData || !adminData.guests) return;
   
+  // Capture current user interaction state before replacing DOM (preserves open accordion on background SWR fetch)
+  const openAccordion = container ? container.querySelector('details.admin-section-accordion[open]') : null;
+  const openAccordionId = openAccordion ? openAccordion.id : null;
+
+  const guestSearchEl = document.getElementById("admin-guest-search");
+  const savedGuestSearch = guestSearchEl ? guestSearchEl.value : "";
+  const isGuestSearchFocused = (document.activeElement && document.activeElement.id === "admin-guest-search");
+
+  const schedSearchEl = document.getElementById("admin-schedule-search");
+  const savedSchedSearch = schedSearchEl ? schedSearchEl.value : "";
+  const isSchedSearchFocused = (document.activeElement && document.activeElement.id === "admin-schedule-search");
+
+  const netSearchEl = document.getElementById("admin-networking-search");
+  const savedNetSearch = netSearchEl ? netSearchEl.value : "";
+  const isNetSearchFocused = (document.activeElement && document.activeElement.id === "admin-networking-search");
+
+  const guestListEl = document.getElementById("admin-guest-list");
+  const savedGuestListScroll = guestListEl ? guestListEl.scrollTop : 0;
+  
   const guests = adminData.guests;
   const headers = guests[0].map(h => String(h).trim().toLowerCase());
   
@@ -7528,7 +7547,7 @@ function renderAdminDashboard() {
     <div class="admin-sections-wrapper">
       
       <!-- 1. PRODUCTION OVERVIEW ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-overview" name="admin-section">
+      <details class="admin-section-accordion" id="admin-sec-overview" name="admin-section"${openAccordionId === 'admin-sec-overview' ? ' open' : ''}>
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">📊</span>
@@ -7638,7 +7657,7 @@ function renderAdminDashboard() {
       </details>
 
       <!-- 2. INTERNAL PRODUCTION SCHEDULE ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-prod-schedule" name="admin-section">
+      <details class="admin-section-accordion" id="admin-sec-prod-schedule" name="admin-section"${openAccordionId === 'admin-sec-prod-schedule' ? ' open' : ''}>
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">🗓️</span>
@@ -7677,7 +7696,7 @@ function renderAdminDashboard() {
       </details>
 
       <!-- 3. LINEUP & NETWORKING LEADS ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-networking" name="admin-section" ontoggle="if(this.open) loadAdminNetworkingData(true)">
+      <details class="admin-section-accordion" id="admin-sec-networking" name="admin-section"${openAccordionId === 'admin-sec-networking' ? ' open' : ''} ontoggle="if(this.open) loadAdminNetworkingData(true)">
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">🎸</span>
@@ -7728,7 +7747,7 @@ function renderAdminDashboard() {
       </details>
 
       <!-- 4. GUEST MANAGEMENT ACCORDION -->
-      <details class="admin-section-accordion" id="admin-sec-guests" name="admin-section">
+      <details class="admin-section-accordion" id="admin-sec-guests" name="admin-section"${openAccordionId === 'admin-sec-guests' ? ' open' : ''}>
         <summary class="admin-section-summary">
           <div class="admin-section-info">
             <span class="admin-section-icon">👥</span>
@@ -7756,14 +7775,69 @@ function renderAdminDashboard() {
   `;
   
   container.innerHTML = html;
+
+  // Defensive guarantee: make sure the previously open accordion element has the open attribute
+  if (openAccordionId) {
+    const restoredAcc = document.getElementById(openAccordionId);
+    if (restoredAcc && !restoredAcc.open) {
+      restoredAcc.setAttribute('open', '');
+    }
+  }
+
   if (adminData && adminData.announcements && adminData.announcements.length > 0) {
     renderAdminAnnouncementsList(adminData.announcements);
   } else {
     loadAdminAnnouncements();
   }
-  filterAdminGuests("");
+
+  // Restore guest search and filtered results
+  if (savedGuestSearch) {
+    const newGuestSearch = document.getElementById("admin-guest-search");
+    if (newGuestSearch) {
+      newGuestSearch.value = savedGuestSearch;
+      filterAdminGuests(savedGuestSearch);
+      if (isGuestSearchFocused) newGuestSearch.focus();
+    } else {
+      filterAdminGuests("");
+    }
+  } else {
+    filterAdminGuests("");
+  }
+
   loadAdminNetworkingData(false);
   initAdminProductionSchedule();
+
+  // Restore schedule search if user was searching
+  if (savedSchedSearch) {
+    const newSchedSearch = document.getElementById("admin-schedule-search");
+    if (newSchedSearch) {
+      newSchedSearch.value = savedSchedSearch;
+      if (typeof filterAdminProductionSchedule === 'function') {
+        filterAdminProductionSchedule(savedSchedSearch);
+      }
+      if (isSchedSearchFocused) newSchedSearch.focus();
+    }
+  }
+
+  // Restore networking search if user was searching
+  if (savedNetSearch) {
+    const newNetSearch = document.getElementById("admin-networking-search");
+    if (newNetSearch) {
+      newNetSearch.value = savedNetSearch;
+      if (typeof filterAdminNetworking === 'function') {
+        filterAdminNetworking(savedNetSearch);
+      }
+      if (isNetSearchFocused) newNetSearch.focus();
+    }
+  }
+
+  // Restore scroll in guest list
+  if (savedGuestListScroll) {
+    const newGuestList = document.getElementById("admin-guest-list");
+    if (newGuestList) {
+      newGuestList.scrollTop = savedGuestListScroll;
+    }
+  }
 }
 
 let adminProductionScheduleData = null; // map of date -> array of events
