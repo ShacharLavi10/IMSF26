@@ -642,7 +642,7 @@ function closeWelcomeModal() {
           const isPending = document.getElementById('guide-pending-container') && document.getElementById('guide-pending-container').style.display === 'block';
           if (!isPending) {
             if (guideDataCache) {
-              renderGuideCityContent(currentGuideCity);
+              renderGuideCityContent(currentGuideCity, false);
             }
             fetchGuideData();
           }
@@ -3332,7 +3332,7 @@ function closeWelcomeModal() {
         }
       }
       if (guideDataCache) {
-        renderGuideCityContent(currentGuideCity);
+        renderGuideCityContent(currentGuideCity, true);
       }
     }
 
@@ -3371,7 +3371,17 @@ function closeWelcomeModal() {
           }
         }
       });
-      renderGuideCityContent(city);
+      renderGuideCityContent(city, false);
+    }
+
+    function isFaqCategory(catName) {
+      const lower = (catName || '').toLowerCase().trim();
+      return lower.includes('faq') || 
+             lower.includes('q&a') || 
+             lower.includes('q & a') || 
+             lower.includes('שאלות') || 
+             lower.includes('questions') ||
+             lower.includes('תשובות');
     }
 
     function getGuideCategoryIcon(catName) {
@@ -3440,7 +3450,7 @@ function closeWelcomeModal() {
       return { url, btnLabel, isCustom };
     }
 
-    function renderGuideItemCards(catItems, defaultCity) {
+    function renderGuideItemCards(catItems, defaultCity, isFaq = false, openFaqNames = []) {
       return catItems.map(item => {
         const { url, btnLabel, isCustom } = resolveGuideItemLink(item, defaultCity);
 
@@ -3470,6 +3480,37 @@ function closeWelcomeModal() {
           `;
         }
 
+        const isItemFaq = isFaq || (item.tag && isFaqCategory(item.tag)) || (item.name && (item.name.toLowerCase().startsWith('q:') || item.name.toLowerCase().startsWith('faq:')));
+
+        if (isItemFaq) {
+          const itemName = item.name || '';
+          const isFaqOpen = (openFaqNames && openFaqNames.includes(itemName)) ? ' open' : '';
+          return `
+            <details class="guide-faq-item fade-up" name="guide-faq-sub" data-faq-name="${escapeHtml(itemName)}"${isFaqOpen}>
+              <summary class="guide-faq-question">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                  <span dir="auto" style="word-break: break-word;">${escapeHtml(itemName)}</span>
+                  ${item.tag ? `<span class="guide-item-tag">${escapeHtml(item.tag)}</span>` : ''}
+                </div>
+                <span class="faq-chevron">▾</span>
+              </summary>
+              <div class="guide-faq-answer">
+                ${item.description ? `<p dir="auto">${escapeHtml(item.description)}</p>` : ''}
+                ${item.address ? `
+                  <div class="guide-item-address" dir="auto" style="margin-top: 6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>${escapeHtml(item.address)}</span>
+                  </div>
+                ` : ''}
+                ${btnHtml ? `<div style="margin-top: 8px; display: flex; justify-content: flex-end;">${btnHtml}</div>` : ''}
+              </div>
+            </details>
+          `;
+        }
+
         return `
           <div class="guide-item-card fade-up">
             <div class="guide-item-main">
@@ -3494,13 +3535,23 @@ function closeWelcomeModal() {
       }).join('');
     }
 
-    function renderGuideCityContent(city) {
+    function renderGuideCityContent(city, preserveState = true) {
       const container = document.getElementById('guide-content-area');
       if (!container) return;
 
       if (!guideDataCache) {
         container.innerHTML = '<p class="empty-state">Loading recommendations...</p>';
         return;
+      }
+
+      // Capture currently open category accordion and open FAQ items before re-rendering
+      let openCategoryName = null;
+      let openFaqNames = [];
+      if (preserveState) {
+        const openCategoryAcc = container.querySelector('details.guide-category-accordion[open]');
+        openCategoryName = openCategoryAcc ? openCategoryAcc.getAttribute('data-category') : null;
+        const openFaqEls = container.querySelectorAll('details.guide-faq-item[open]');
+        openFaqNames = Array.from(openFaqEls).map(el => el.getAttribute('data-faq-name')).filter(Boolean);
       }
 
       let items = [];
@@ -3518,7 +3569,7 @@ function closeWelcomeModal() {
       }
 
       if (city === 'essentials') {
-        renderEssentialsContent(items, container);
+        renderEssentialsContent(items, container, openCategoryName, openFaqNames);
         return;
       }
 
@@ -3534,9 +3585,11 @@ function closeWelcomeModal() {
       Object.keys(categories).forEach(catName => {
         const catItems = categories[catName];
         const catIcon = getGuideCategoryIcon(catName);
+        const isOpen = (openCategoryName && openCategoryName === catName) ? ' open' : '';
+        const isFaq = isFaqCategory(catName);
 
         html += `
-          <details class="guide-category-accordion" name="guide-category">
+          <details class="guide-category-accordion" name="guide-category" data-category="${escapeHtml(catName)}"${isOpen}>
             <summary class="guide-category-summary">
               <div class="guide-category-info">
                 <span class="guide-category-icon">${catIcon}</span>
@@ -3552,8 +3605,8 @@ function closeWelcomeModal() {
               </div>
             </summary>
             <div class="guide-category-content">
-              <div class="guide-cards-list">
-                ${renderGuideItemCards(catItems, city)}
+              <div class="guide-cards-list ${isFaq ? 'guide-faq-accordion' : ''}">
+                ${renderGuideItemCards(catItems, city, isFaq, openFaqNames)}
               </div>
             </div>
           </details>
@@ -3561,9 +3614,25 @@ function closeWelcomeModal() {
       });
       html += '</div>';
       container.innerHTML = html;
+
+      // Defensive guarantee: ensure open category and open FAQ items have open attribute in DOM
+      if (openCategoryName) {
+        const restoredAcc = container.querySelector(`details.guide-category-accordion[data-category="${CSS.escape(openCategoryName)}"]`);
+        if (restoredAcc && !restoredAcc.open) {
+          restoredAcc.setAttribute('open', '');
+        }
+      }
+      if (openFaqNames && openFaqNames.length > 0) {
+        openFaqNames.forEach(fName => {
+          const restoredFaq = container.querySelector(`details.guide-faq-item[data-faq-name="${CSS.escape(fName)}"]`);
+          if (restoredFaq && !restoredFaq.open) {
+            restoredFaq.setAttribute('open', '');
+          }
+        });
+      }
     }
 
-    function renderEssentialsContent(items, container) {
+    function renderEssentialsContent(items, container, openCategoryName = null, openFaqNames = []) {
       // Group by Category (Q&A, Apps & Transit, Payments, etc.)
       const categories = {};
       items.forEach(item => {
@@ -3585,9 +3654,11 @@ function closeWelcomeModal() {
       Object.keys(categories).forEach(catName => {
         const catItems = categories[catName];
         const catIcon = getGuideCategoryIcon(catName);
+        const isOpen = (openCategoryName && openCategoryName === catName) ? ' open' : '';
+        const isFaq = isFaqCategory(catName);
 
         html += `
-          <details class="guide-category-accordion" name="guide-category">
+          <details class="guide-category-accordion" name="guide-category" data-category="${escapeHtml(catName)}"${isOpen}>
             <summary class="guide-category-summary">
               <div class="guide-category-info">
                 <span class="guide-category-icon">${catIcon}</span>
@@ -3603,8 +3674,8 @@ function closeWelcomeModal() {
               </div>
             </summary>
             <div class="guide-category-content">
-              <div class="guide-cards-list">
-                ${renderGuideItemCards(catItems, 'essentials')}
+              <div class="guide-cards-list ${isFaq ? 'guide-faq-accordion' : ''}">
+                ${renderGuideItemCards(catItems, 'essentials', isFaq, openFaqNames)}
               </div>
             </div>
           </details>
@@ -3612,6 +3683,22 @@ function closeWelcomeModal() {
       });
       html += '</div>';
       container.innerHTML = html;
+
+      // Defensive guarantee: ensure open category and open FAQ items have open attribute in DOM
+      if (openCategoryName) {
+        const restoredAcc = container.querySelector(`details.guide-category-accordion[data-category="${CSS.escape(openCategoryName)}"]`);
+        if (restoredAcc && !restoredAcc.open) {
+          restoredAcc.setAttribute('open', '');
+        }
+      }
+      if (openFaqNames && openFaqNames.length > 0) {
+        openFaqNames.forEach(fName => {
+          const restoredFaq = container.querySelector(`details.guide-faq-item[data-faq-name="${CSS.escape(fName)}"]`);
+          if (restoredFaq && !restoredFaq.open) {
+            restoredFaq.setAttribute('open', '');
+          }
+        });
+      }
     }
 
     // Exclusive accordion: only one category can be open at a time (Desktop & Mobile)
@@ -3625,6 +3712,25 @@ function closeWelcomeModal() {
         const container = acc.closest('#guide-content-area') || acc.parentElement;
         if (container) {
           container.querySelectorAll('details.guide-category-accordion[open]').forEach(other => {
+            if (other !== acc) {
+              other.removeAttribute('open');
+            }
+          });
+        }
+      }
+    });
+
+    // Exclusive accordion for FAQ sub-items inside Guide: only one question open at a time within its section
+    document.addEventListener('click', function(e) {
+      const summary = e.target.closest('.guide-faq-question');
+      if (!summary) return;
+      const acc = summary.closest('details.guide-faq-item');
+      if (!acc) return;
+
+      if (!acc.open) {
+        const parentList = acc.closest('.guide-faq-accordion') || acc.parentElement;
+        if (parentList) {
+          parentList.querySelectorAll('details.guide-faq-item[open]').forEach(other => {
             if (other !== acc) {
               other.removeAttribute('open');
             }
