@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>עוזר הפקה חכם | IMSF 2026 Ops Assistant</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 30, 49, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --user-bubble: #1e3a8a;
+      --user-border: #3b82f6;
+      --ai-bubble: rgba(30, 41, 59, 0.85);
+      --ai-border: rgba(255, 255, 255, 0.12);
+      --primary: #f59e0b;
+      --primary-hover: #d97706;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent-green: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Assistant', 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.25) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.15) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      z-index: 20;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .back-btn:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .header-title-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-status {
+      font-size: 11px;
+      color: var(--accent-green);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Chips container */
+    .quick-chips-wrapper {
+      padding: 8px 12px;
+      background: rgba(11, 15, 25, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      z-index: 10;
+    }
+    .quick-chips-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 16px;
+      margin-left: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip-btn:active {
+      transform: scale(0.95);
+      background: var(--primary);
+      color: #000;
+    }
+
+    /* Messages container */
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px 90px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 90%;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.user {
+      align-self: flex-start;
+    }
+
+    .message-row.ai {
+      align-self: flex-end;
+      width: 95%;
+      max-width: 95%;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .user .bubble {
+      background: var(--user-bubble);
+      border: 1px solid var(--user-border);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .ai .bubble {
+      background: var(--ai-bubble);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--ai-border);
+      color: #f1f5f9;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .ai .bubble h3 {
+      font-size: 15px;
+      margin-bottom: 8px;
+      color: #fcd34d;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 4px;
+    }
+
+    .ai .bubble p {
+      margin-bottom: 6px;
+    }
+
+    .ai .bubble ul {
+      margin: 6px 0;
+      padding-right: 18px;
+    }
+
+    .ai .bubble li {
+      margin-bottom: 6px;
+    }
+
+    .ai .bubble strong {
+      color: #ffffff;
+    }
+
+    .bubble-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover, .copy-btn:active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .msg-time {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+
+    /* Typing loader */
+    .typing-indicator {
+      display: none;
+      align-self: flex-end;
+      background: var(--ai-bubble);
+      border: 1px solid var(--ai-border);
+      border-radius: 18px;
+      padding: 10px 16px;
+      gap: 5px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .typing-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: typing 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typing {
+      0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Bottom input bar */
+    .input-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 10px 12px env(safe-area-inset-bottom, 12px);
+      background: rgba(11, 15, 25, 0.95);
+      backdrop-filter: blur(15px);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      z-index: 30;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 22px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    #user-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      max-height: 100px;
+      line-height: 1.4;
+      direction: rtl;
+    }
+
+    #user-input::placeholder {
+      color: #64748b;
+    }
+
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      background: var(--primary);
+      border: none;
+      border-radius: 50%;
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    }
+
+    .send-btn:active {
+      transform: scale(0.92);
+      background: var(--primary-hover);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .send-btn svg {
+      width: 18px;
+      height: 18px;
+      transform: rotate(180deg);
+    }
+
+    /* Modal for Passcode */
+    #passcode-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-box h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .modal-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .passcode-input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 16px;
+      text-align: center;
+      outline: none;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .modal-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #000;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-right">
+      <a href="/" class="back-btn" id="back-to-portal-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+        פורטל הפקה
+      </a>
+      <div class="header-title-box">
+        <div class="header-title">
+          <span>🤖</span> עוזר הפקה חכם
+        </div>
+        <div class="header-status">
+          <span class="status-dot"></span>
+          <span>מחובר ישירות לגיליונות חיים</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Messages -->
+  <main id="chat-messages">
+    <!-- Welcome message -->
+    <div class="message-row ai">
+      <div class="bubble">
+        <h3>שלום צוות ההפקה! 👋</h3>
+        <p>אני מחובר ישירות לכל הגיליונות החיים של הפסטיבל (טיסות, מלונות, רשימת אורחים, לו"ז הפקה ותוכנייה).</p>
+        <p>כתבו לי כל שאלה ושלפו נתוני אמת מיידיים (לדוגמה: "מי טס ב-23/11?", "מי חייב אקסטרה למלון?", "מה הטלפון של ענת?").</p>
+      </div>
+      <div class="msg-time">עוזר הפקה • עכשיו</div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" id="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  </main>
+
+  <!-- Input Bar -->
+  <footer class="input-bar">
+    <div class="input-wrapper">
+      <textarea id="user-input" rows="1" placeholder="שאל כל שאלה על טיסות, מלונות, אורחים..." onkeydown="handleKeyDown(event)"></textarea>
+    </div>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()" aria-label="שלח">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </footer>
+
+  <!-- Passcode Modal -->
+  <div id="passcode-modal">
+    <div class="modal-box">
+      <h2>🔐 זיהוי צוות הפקה</h2>
+      <p>הזן קוד הפקה לכניסה לעוזר החכם:</p>
+      <input type="password" id="passcode-input" class="passcode-input" placeholder="••••" autofocus>
+      <button class="modal-btn" onclick="verifyPasscode()">כניסה</button>
+    </div>
+  </div>
+
+  <script>
+    // Configuration & Endpoints
+    const PROD_GAS_URL = "https://script.google.com/macros/s/AKfycbyGjswDALICsGxU5wXzeeTLV8NfIA71-K1Z1tCUmS94IbTPqxjos5BACqcB3ezVw1fg5A/exec";
+    const SANDBOX_GAS_URL = "https://script.google.com/macros/s/AKfycbzK3tyvdqCU1UDLvYqC-6IvH2zFoLsOvEGGwXslGQQK0f7cuYgCb0U4MbISSuldV3RM/exec";
+
+    function resolveGasUrl() {
+      const host = window.location.hostname.toLowerCase();
+      if (host === "imsf26portal.vercel.app" || host.includes("imsf26portal-git-main") || host.startsWith("imsf26portal-")) {
+        return PROD_GAS_URL;
+      }
+      return SANDBOX_GAS_URL;
+    }
+
+    const GAS_URL = resolveGasUrl();
+    const chatContainer = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const conversationHistory = [];
+
+    // Simple Production Passcode check
+    const VALID_PASSCODES = ["imsf", "imsf2026", "2026", "1026"];
+    function checkPasscodeAuth() {
+      // If user came from admin portal with session or already saved pass
+      const savedPass = localStorage.getItem('imsf_ops_pass');
+      const hasGuestToken = localStorage.getItem('guestSessionToken');
+      if (savedPass && VALID_PASSCODES.includes(savedPass.toLowerCase())) {
+        return true;
+      }
+      // If guest token exists in localStorage, let them in automatically
+      if (hasGuestToken) {
+        return true;
+      }
+      document.getElementById('passcode-modal').style.display = 'flex';
+      return false;
+    }
+
+    function verifyPasscode() {
+      const val = document.getElementById('passcode-input').value.trim().toLowerCase();
+      if (VALID_PASSCODES.includes(val)) {
+        localStorage.setItem('imsf_ops_pass', val);
+        document.getElementById('passcode-modal').style.display = 'none';
+        userInput.focus();
+      } else {
+        alert("קוד שגוי. אנא נסה שוב.");
+      }
+    }
+
+    // Auto-resize textarea
+    userInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function sendQuickPrompt(promptText) {
+      userInput.value = promptText;
+      sendMessage();
+    }
+
+    // Format simple markdown into HTML
+    function formatMarkdown(text) {
+      if (!text) return "";
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // Headings
+      html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+      html = html.replace(/^# (.*$)/gim, '<h3>$1</h3>');
+
+      // Bold
+      html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+
+      // Lists
+      html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+      html = html.replace(/<\/li>\n<li>/gim, '</li><li>');
+      html = html.replace(/(<li>.*<\/li>)/sim, '<ul>$1</ul>');
+
+      // Line breaks
+      html = html.replace(/\n\n/g, '<br><br>');
+      html = html.replace(/\n/g, '<br>');
+
+      return html;
+    }
+
+    function appendMessage(text, role) {
+      const row = document.createElement('div');
+      row.className = `message-row ${role}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      
+      if (role === 'ai') {
+        bubble.innerHTML = formatMarkdown(text);
+        
+        // Add copy button
+        const actions = document.createElement('div');
+        actions.className = 'bubble-actions';
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          העתק לוואטסאפ
+        `;
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(text).then(() => {
+            copyBtn.innerHTML = '✅ הועתק!';
+            setTimeout(() => {
+              copyBtn.innerHTML = `
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                העתק לוואטסאפ
+              `;
+            }, 2000);
+          });
+        };
+        actions.appendChild(copyBtn);
+        bubble.appendChild(actions);
+      } else {
+        bubble.innerText = text;
+      }
+
+      row.appendChild(bubble);
+
+      const timeDiv = document.createElement('div');
+      timeDiv.className = 'msg-time';
+      const now = new Date();
+      timeDiv.innerText = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      row.appendChild(timeDiv);
+
+      chatContainer.insertBefore(row, typingIndicator);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      appendMessage(text, 'user');
+      conversationHistory.push({ role: 'user', text: text });
+      
+      userInput.value = '';
+      userInput.style.height = 'auto';
+      userInput.disabled = true;
+      sendBtn.disabled = true;
+      typingIndicator.style.display = 'flex';
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      try {
+        const response = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            method: 'askProductionAssistant',
+            args: [text, conversationHistory]
+          })
+        });
+
+        const resJson = await response.json();
+        typingIndicator.style.display = 'none';
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+
+        if (resJson.data && resJson.data.success) {
+          const aiText = resJson.data.answer;
+          appendMessage(aiText, 'ai');
+          conversationHistory.push({ role: 'model', text: aiText });
+        } else {
+          const errText = resJson.data ? resJson.data.answer : (resJson.error || "לא התקבלה תשובה תקינה מהשרת.");
+          appendMessage(`⚠️ ${errText}`, 'ai');
+        }
+
+      } catch (err) {
+        typingIndicator.style.display = 'none';
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        appendMessage(`⚠️ שגיאת תקשורת עם השרת: ${err.message}`, 'ai');
+      }
+
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      checkPasscodeAuth();
+    });
+  </script>
+</body>
+</html>
