@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>IMSF 2026 | פורטל אורחים ומשחק זיהוי</title>
+  <title>IMSF 2026 | Delegates & Guess the Guest</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,20 +11,23 @@
   <style>
     :root {
       --bg: #0b0c10;
+      --background-elevated: #161822;
       --card-bg: rgba(22, 25, 35, 0.78);
       --card-border: rgba(255, 255, 255, 0.08);
-      --card-hover: rgba(255, 255, 255, 0.14);
+      --border-default: rgba(255, 255, 255, 0.08);
       --text: #f1f5f9;
       --text-muted: #94a3b8;
+      --foreground-muted: #94a3b8;
       --accent: #38bdf8;
+      --accent-bright: #38bdf8;
       --accent-glow: rgba(56, 189, 248, 0.35);
       --success: #10b981;
       --success-glow: rgba(16, 185, 129, 0.4);
       --danger: #ef4444;
       --danger-glow: rgba(239, 68, 68, 0.45);
       --amber: #f59e0b;
-      --purple: #8b5cf6;
       --radius: 18px;
+      --radius-xl: 16px;
       --font-he: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --font-en: 'Outfit', sans-serif;
     }
@@ -51,10 +54,14 @@
       overflow-x: hidden;
     }
 
+    body.sheet-open {
+      overflow: hidden;
+    }
+
     /* Top Navigation Header */
     header {
       width: 100%;
-      max-width: 1380px;
+      max-width: 1280px;
       margin: 0 auto;
       padding: 14px 20px;
       display: flex;
@@ -96,7 +103,7 @@
       font-weight: 400;
     }
 
-    /* Top Tabs Switcher (Game vs Directory) */
+    /* Top View Switcher Tabs */
     .top-nav-tabs {
       display: flex;
       align-items: center;
@@ -165,7 +172,7 @@
     /* Container */
     main {
       width: 100%;
-      max-width: 1380px;
+      max-width: 1280px;
       margin: 0 auto;
       padding: 16px 20px 50px;
       flex: 1;
@@ -174,7 +181,6 @@
       gap: 20px;
     }
 
-    /* View containers */
     .view-section {
       display: none;
       flex-direction: column;
@@ -211,11 +217,7 @@
       font-weight: 500;
     }
 
-    .stat-value {
-      font-weight: 800;
-      color: #fff;
-    }
-
+    .stat-value { font-weight: 800; color: #fff; }
     .stat-value.highlight-amber { color: var(--amber); }
     .stat-value.highlight-green { color: var(--success); }
     .stat-value.highlight-red { color: var(--danger); }
@@ -481,10 +483,7 @@
       font-size: 0.9rem;
     }
 
-    .sort-actions {
-      display: flex;
-      gap: 6px;
-    }
+    .sort-actions { display: flex; gap: 6px; }
 
     .btn-pill {
       background: rgba(255, 255, 255, 0.05);
@@ -514,16 +513,8 @@
       padding-right: 4px;
     }
 
-    .names-cloud::-webkit-scrollbar {
-      width: 6px;
-    }
-    .names-cloud::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-    }
-    .names-cloud::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-    }
+    .names-cloud::-webkit-scrollbar { width: 6px; }
+    .names-cloud::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 10px; }
 
     .name-chip {
       background: rgba(255, 255, 255, 0.04);
@@ -552,16 +543,8 @@
       color: #fff;
     }
 
-    .name-chip:active {
-      cursor: grabbing;
-      transform: scale(0.97);
-    }
-
-    .name-chip.dragging {
-      opacity: 0.45;
-      transform: scale(0.95);
-      border-color: var(--accent);
-    }
+    .name-chip:active { cursor: grabbing; transform: scale(0.97); }
+    .name-chip.dragging { opacity: 0.45; transform: scale(0.95); border-color: var(--accent); }
 
     .name-chip.wrong-guess {
       animation: shake 0.45s ease-in-out;
@@ -586,246 +569,418 @@
       color: #a7f3d0;
     }
 
-    .name-chip.already-solved:hover {
-      opacity: 0.9;
-    }
-
-    .solved-check-icon {
-      font-size: 0.8rem;
-      color: var(--success);
-      font-weight: 800;
-    }
+    .solved-check-icon { font-size: 0.8rem; color: var(--success); font-weight: 800; }
 
     /* ======================================================== */
-    /* VIEW 2: FULL DIRECTORY VIEW STYLES                      */
+    /* VIEW 2: AUTHENTIC PORTAL DELEGATES TAB (EXACT SAME UI)   */
     /* ======================================================== */
-    .dir-filter-bar {
+    .portal-card-wrapper {
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-default);
+      backdrop-filter: blur(20px);
       border-radius: var(--radius);
-      padding: 16px 22px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      flex-direction: column;
+      gap: 16px;
     }
 
-    .dir-filter-group {
+    /* DIRECTORY FILTERS (MATCHING INDEX.HTML EXACTLY) */
+    .directory-filters {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 12px;
-      flex-wrap: wrap;
-      flex: 1;
+      margin-bottom: 4px;
     }
 
-    .dir-search-wrap {
+    @media (min-width: 600px) {
+      .directory-filters {
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+      }
+    }
+
+    .search-wrap {
       position: relative;
       flex: 1;
-      min-width: 240px;
-      max-width: 380px;
     }
 
-    .dir-search-input {
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 14px;
+      right: auto;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      color: var(--foreground-muted);
+      pointer-events: none;
+    }
+
+    .search-wrap input {
       width: 100%;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-default);
       border-radius: 12px;
-      padding: 10px 38px 10px 14px;
+      padding: 12px 14px 12px 42px;
       color: #fff;
-      font-family: var(--font-he);
-      font-size: 0.92rem;
+      font-family: var(--font-en, sans-serif);
+      font-size: 0.95rem;
       outline: none;
+      direction: ltr;
       transition: all 0.2s ease;
     }
 
-    .dir-search-input:focus {
-      border-color: var(--accent);
-      background: rgba(255, 255, 255, 0.09);
+    .search-wrap input:focus {
+      border-color: var(--accent-bright);
+      background: rgba(255, 255, 255, 0.08);
       box-shadow: 0 0 16px var(--accent-glow);
     }
 
-    .dir-select {
-      background: #141724;
-      border: 1px solid var(--card-border);
-      color: #f1f5f9;
-      padding: 10px 16px;
+    .clear-search-btn {
+      position: absolute;
+      right: 12px;
+      left: auto;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: var(--foreground-muted);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .clear-search-btn svg { width: 14px; height: 14px; }
+
+    .filter-selects {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    @media (min-width: 600px) {
+      .filter-selects {
+        width: auto;
+      }
+    }
+
+    .filter-selects select {
+      flex: 1;
+      background: #151824;
+      border: 1px solid var(--border-default);
+      color: #fff;
+      padding: 12px 16px;
       border-radius: 12px;
-      font-family: var(--font-he);
+      font-family: var(--font-en, sans-serif);
       font-size: 0.88rem;
       outline: none;
       cursor: pointer;
-      min-width: 160px;
+      direction: ltr;
+      min-width: 150px;
     }
 
-    .dir-select:focus {
-      border-color: var(--accent);
+    .filter-selects select:focus {
+      border-color: var(--accent-bright);
     }
 
-    .dir-count-badge {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      font-weight: 500;
+    .directory-status {
+      font-size: 0.85rem;
+      color: var(--foreground-muted);
+      margin-top: -4px;
+      margin-bottom: 8px;
+      direction: ltr;
+      text-align: left;
     }
 
-    /* Delegates Cards Grid */
-    .delegates-grid {
+    /* ARTISTS GRID & CARDS (MATCHING 09_OVERRIDES.CSS EXACTLY) */
+    .artists-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
       width: 100%;
     }
 
-    .delegate-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(16px);
-      border-radius: 16px;
+    @media (min-width: 600px) {
+      .artists-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+    }
+
+    @media (min-width: 960px) {
+      .artists-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .artists-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 20px;
+      }
+    }
+
+    .artist-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-xl);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
+      background-color: #1a1a1e;
+      background-size: cover;
+      background-position: center 20%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border: 1px solid var(--border-default);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     }
 
-    .delegate-card:hover {
+    .artist-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(56, 189, 248, 0.4);
-      box-shadow: 0 14px 34px rgba(0,0,0,0.45), 0 0 25px rgba(56, 189, 248, 0.15);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+      border-color: rgba(255, 255, 255, 0.25);
     }
 
-    .delegate-card-img-wrap {
-      width: 100%;
-      height: 240px;
-      position: relative;
-      background: #10131d;
-      overflow: hidden;
+    .artist-card:active {
+      transform: scale(0.97);
     }
 
-    .delegate-card-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center 25%;
-      transition: transform 0.4s ease;
+    .artist-card.angella-lee-card {
+      background-position: center 78% !important;
     }
 
-    .delegate-card-img.angella-focal {
-      object-position: center 78% !important;
-    }
-
-    .delegate-card:hover .delegate-card-img {
-      transform: scale(1.05);
-    }
-
-    .delegate-card-overlay {
+    .artist-card-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(11, 12, 16, 0.95) 0%, rgba(11, 12, 16, 0.3) 50%, transparent 100%);
+      background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 45%, transparent 100%);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      padding: 16px;
+      padding: 12px;
+      direction: ltr;
+      text-align: left;
     }
 
-    .delegate-card-name {
+    .artist-card-name {
+      color: #ffffff;
       font-family: var(--font-en);
-      font-size: 1.25rem;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+      line-height: 1.2;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      word-break: normal;
+      overflow-wrap: break-word;
+    }
+
+    .artist-card-genre {
+      color: var(--accent-bright);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      opacity: 0.95;
+    }
+
+    /* EMPTY CATEGORY CARD */
+    .empty-category-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border-default);
+      border-radius: var(--radius-xl);
+      padding: 48px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      grid-column: 1 / -1;
+      min-height: 220px;
+    }
+
+    .empty-category-icon {
+      width: 48px;
+      height: 48px;
+      color: var(--foreground-muted);
+      margin-bottom: 12px;
+    }
+
+    .empty-category-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* ======================================================== */
+    /* AUTHENTIC GUEST BOTTOM SHEET MODAL (EXACT SAME AS PORTAL)*/
+    /* ======================================================== */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .sheet-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .bottom-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--background-elevated);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      z-index: 1001;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      max-height: 90vh;
+      max-height: 90dvh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+      border-top: 1px solid var(--border-default);
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      overscroll-behavior: contain;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .bottom-sheet.active {
+      transform: translateY(0);
+    }
+
+    .sheet-handle {
+      width: 40px;
+      height: 5px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 3px;
+      margin: 12px auto;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .sheet-header-image {
+      width: 100%;
+      height: 220px;
+      background-size: cover;
+      background-position: center 20%;
+      position: relative;
+      flex-shrink: 0;
+      background-color: #11141e;
+    }
+
+    .sheet-header-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 50%, var(--background-elevated) 100%);
+    }
+
+    .sheet-close-btn {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      transition: all 0.2s ease;
+    }
+
+    .sheet-close-btn:hover {
+      background: rgba(0,0,0,0.85);
+      transform: scale(1.08);
+    }
+
+    .sheet-content {
+      padding: 0 24px calc(30px + env(safe-area-inset-bottom, 0px));
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .sheet-title-row {
+      display: flex;
+      margin-bottom: 20px;
+      margin-top: 4px;
+    }
+
+    .sheet-title-row h2 {
+      font-family: var(--font-en);
+      font-size: 1.6rem;
       font-weight: 800;
       color: #fff;
-      direction: ltr;
-      text-align: right;
       line-height: 1.2;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     }
 
-    .delegate-card-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 4px;
-      font-size: 0.85rem;
-    }
-
-    .delegate-card-country {
+    .sheet-genre {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--accent);
       color: var(--accent);
-      font-weight: 600;
-    }
-
-    .delegate-card-genre {
-      background: rgba(255, 255, 255, 0.12);
-      color: #e2e8f0;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 99px;
-      font-size: 0.72rem;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
 
-    .delegate-card-body {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex: 1;
+    .sheet-section {
+      margin-bottom: 22px;
     }
 
-    .delegate-role-comp {
-      font-size: 0.88rem;
+    .section-title {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--foreground-muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .sheet-bio {
       color: #e2e8f0;
-      font-weight: 500;
-      line-height: 1.35;
-      direction: ltr;
-      text-align: right;
+      font-size: 0.95rem;
+      line-height: 1.65;
+      white-space: pre-line;
+      margin-bottom: 0;
     }
 
-    .delegate-section-block {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 8px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .delegate-section-lbl {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .delegate-section-val {
-      font-size: 0.82rem;
+    .sheet-pill-tag {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-default);
       color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin: 3px 3px 3px 0;
       line-height: 1.35;
-      direction: ltr;
-      text-align: right;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
-    .delegate-card-footer {
-      padding: 12px 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.82rem;
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    /* ======================================================== */
-    /* MODAL POPUP STYLES (SHARED FOR GAME & DIRECTORY)        */
-    /* ======================================================== */
+    /* Modal for Game View */
     .guest-modal-backdrop {
       position: fixed;
       inset: 0;
@@ -840,18 +995,14 @@
       pointer-events: none;
       transition: opacity 0.3s ease;
     }
-
-    .guest-modal-backdrop.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .guest-modal-backdrop.visible { opacity: 1; pointer-events: auto; }
 
     .guest-modal-card {
       background: #131722;
       border: 1px solid rgba(16, 185, 129, 0.3);
       border-radius: 22px;
       padding: 24px 26px;
-      max-width: 580px;
+      max-width: 540px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -863,42 +1014,7 @@
       transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
     }
-
-    .guest-modal-card::-webkit-scrollbar {
-      width: 6px;
-    }
-    .guest-modal-card::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-    }
-
-    .guest-modal-backdrop.visible .guest-modal-card {
-      transform: scale(1) translateY(0);
-    }
-
-    .modal-close-btn {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.1rem;
-      transition: all 0.2s ease;
-    }
-
-    .modal-close-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
-      color: #fff;
-      transform: scale(1.08);
-    }
+    .guest-modal-backdrop.visible .guest-modal-card { transform: scale(1) translateY(0); }
 
     .modal-hero-row {
       display: flex;
@@ -918,12 +1034,7 @@
       flex-shrink: 0;
       background: #11141d;
     }
-
-    .modal-avatar-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .modal-avatar-img { width: 100%; height: 100%; object-fit: cover; }
 
     .modal-hero-info {
       display: flex;
@@ -944,7 +1055,6 @@
       font-size: 0.78rem;
       font-weight: 700;
       width: fit-content;
-      margin-bottom: 2px;
     }
 
     .modal-guest-name {
@@ -957,17 +1067,9 @@
       line-height: 1.2;
     }
 
-    .modal-guest-country {
-      font-size: 0.9rem;
-      color: var(--accent);
-      font-weight: 600;
-    }
+    .modal-guest-country { font-size: 0.9rem; color: var(--accent); font-weight: 600; }
 
-    .modal-details-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .modal-details-list { display: flex; flex-direction: column; gap: 12px; }
 
     .modal-detail-item {
       background: rgba(255, 255, 255, 0.03);
@@ -997,14 +1099,7 @@
       text-align: right;
     }
 
-    .goals-tags-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 4px;
-      direction: ltr;
-    }
-
+    .goals-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; direction: ltr; }
     .goal-tag {
       background: rgba(56, 189, 248, 0.12);
       border: 1px solid rgba(56, 189, 248, 0.25);
@@ -1013,27 +1108,6 @@
       border-radius: 8px;
       font-size: 0.8rem;
       font-weight: 500;
-      line-height: 1.3;
-    }
-
-    .bio-text-wrap {
-      font-size: 0.85rem;
-      color: #cbd5e1;
-      line-height: 1.6;
-      max-height: 160px;
-      overflow-y: auto;
-      padding-right: 6px;
-      white-space: pre-line;
-      direction: ltr;
-      text-align: left;
-    }
-
-    .bio-text-wrap::-webkit-scrollbar {
-      width: 4px;
-    }
-    .bio-text-wrap::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
     }
 
     .btn-modal-continue {
@@ -1058,7 +1132,6 @@
     .btn-modal-continue:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 25px var(--accent-glow);
-      filter: brightness(1.08);
     }
 
     /* Toast */
@@ -1087,12 +1160,7 @@
       transform: translateY(20px);
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
-    .toast.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
+    .toast.visible { opacity: 1; transform: translateY(0); }
     .toast.wrong { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
     .toast.info { border-color: var(--accent); color: #bae6fd; }
@@ -1112,11 +1180,7 @@
       pointer-events: none;
       transition: opacity 0.4s ease;
     }
-
-    .modal-backdrop.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
 
     .victory-card {
       background: #11141f;
@@ -1134,10 +1198,7 @@
       transform: scale(0.9);
       transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
-    .modal-backdrop.visible .victory-card {
-      transform: scale(1);
-    }
+    .modal-backdrop.visible .victory-card { transform: scale(1); }
 
     .trophy-badge {
       width: 80px;
@@ -1161,11 +1222,7 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .victory-desc {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
+    .victory-desc { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
 
     .victory-stats-grid {
       display: grid;
@@ -1182,17 +1239,8 @@
       padding: 12px;
     }
 
-    .victory-stat-num {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .victory-stat-lbl {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+    .victory-stat-num { font-size: 1.5rem; font-weight: 800; color: #fff; }
+    .victory-stat-lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
     .btn-restart-game {
       width: 100%;
@@ -1208,19 +1256,9 @@
       box-shadow: 0 8px 24px var(--accent-glow);
       transition: all 0.25s ease;
     }
+    .btn-restart-game:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
-    .btn-restart-game:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px var(--accent-glow);
-      filter: brightness(1.1);
-    }
-
-    #confetti-canvas {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 2500;
-    }
+    #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 2500; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes shake {
@@ -1230,19 +1268,9 @@
       60% { transform: translateX(-5px); }
       80% { transform: translateX(5px); }
     }
-    @keyframes pulseGreen {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes pulseGreen { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
@@ -1266,7 +1294,7 @@
       </button>
       <button class="nav-tab-btn" id="tab-dir-btn" onclick="switchView('directory')">
         <span>👥</span>
-        <span>רשימת האורחים</span>
+        <span>Delegates</span>
       </button>
     </div>
 
@@ -1385,122 +1413,138 @@
     </section>
 
     <!-- ======================================================== -->
-    <!-- VIEW 2: FULL DIRECTORY VIEW                              -->
+    <!-- VIEW 2: AUTHENTIC DELEGATES DIRECTORY (SAME AS PORTAL)  -->
     <!-- ======================================================== -->
     <section class="view-section" id="directory-view">
 
-      <!-- Directory Filters Bar -->
-      <div class="dir-filter-bar">
-        <div class="dir-filter-group">
-          <!-- Search input -->
-          <div class="dir-search-wrap">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="dir-search-input" id="dir-search" placeholder="חיפוש חופשי לפי שם, מדינה, חברה או תפקיד..." oninput="filterDirectory()">
+      <div class="portal-card-wrapper">
+
+        <!-- DIRECTORY FILTERS (MATCHING PORTAL HTML) -->
+        <div class="directory-filters">
+          <div class="search-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" id="guest-search" placeholder="Search delegates..." oninput="filterPortalDirectory()">
+            <button class="clear-search-btn" id="clear-search-btn" onclick="clearPortalSearch()" aria-label="Clear search">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-
-          <!-- Country Filter -->
-          <select class="dir-select" id="dir-country-filter" onchange="filterDirectory()">
-            <option value="All">כל המדינות (All Countries)</option>
-          </select>
-
-          <!-- Genre Filter -->
-          <select class="dir-select" id="dir-genre-filter" onchange="filterDirectory()">
-            <option value="All">כל הז'אנרים (All Genres)</option>
-            <option value="Rock, Indie & Electronic">Rock, Indie & Electronic</option>
-            <option value="Jazz/World music">Jazz / World Music</option>
-            <option value="Multi Genres">Multi Genres</option>
-          </select>
+          <div class="filter-selects">
+            <select id="guest-genre-filter" onchange="filterPortalDirectory()">
+              <option value="All">All Genres</option>
+              <option value="Rock, Indie & Electronic">Rock, Indie & Electronic</option>
+              <option value="Jazz & World Music">Jazz & World Music</option>
+            </select>
+            <select id="guest-country-filter" onchange="filterPortalDirectory()">
+              <option value="All">All Countries</option>
+            </select>
+          </div>
         </div>
 
-        <div class="dir-count-badge" id="dir-count-text">
-          מציג 34 אורחים
+        <div id="directory-status" class="directory-status">
+          Showing 34 delegates
         </div>
-      </div>
 
-      <!-- Delegates Cards Grid -->
-      <div class="delegates-grid" id="delegates-grid">
-        <!-- Generated by JS -->
+        <!-- ARTISTS-GRID (SQUARE CARDS MATCHING PORTAL) -->
+        <div class="artists-grid" id="directory-container">
+          <!-- Rendered dynamically -->
+        </div>
+
       </div>
 
     </section>
 
   </main>
 
-  <!-- === GUEST PROFILE DETAILS MODAL (SHARED FOR GAME & DIRECTORY) === -->
+  <!-- === AUTHENTIC GUEST BOTTOM SHEET (MATCHING PORTAL EXACTLY) === -->
+  <div id="guest-sheet-overlay" class="sheet-overlay" onclick="closeGuestSheet()"></div>
+  <div id="guest-bottom-sheet" class="bottom-sheet">
+    <div class="sheet-handle" onclick="closeGuestSheet()"></div>
+    <div class="sheet-header-image" id="sheet-guest-img">
+      <button class="sheet-close-btn" onclick="closeGuestSheet()" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="sheet-content">
+      <div class="sheet-title-row">
+        <div style="display: flex; flex-direction: column; width: 100%;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <h2 id="sheet-guest-name" style="margin-bottom: 0;">Guest Name</h2>
+            <span class="sheet-genre" id="sheet-guest-genre" style="margin-top: 0;">Genre</span>
+          </div>
+          <span id="sheet-guest-country" style="font-weight: 500; font-size: 0.9rem; color: var(--foreground-muted); margin-top: 4px;">Country</span>
+        </div>
+      </div>
+
+      <!-- COMPANY & ROLE -->
+      <div class="sheet-section">
+        <h4 class="section-title">Organization</h4>
+        <p id="sheet-guest-company" style="font-weight: 600; margin-bottom: 4px; font-size: 1.05rem; color: #fff;">Company Name</p>
+        <p id="sheet-guest-role" style="font-size: 0.92rem; color: var(--foreground-muted); margin-bottom: 0;">Role</p>
+      </div>
+
+      <!-- WHAT COMPANY DOES -->
+      <div class="sheet-section" id="sheet-guest-activity-section" style="display: none;">
+        <h4 class="section-title">What the company does</h4>
+        <p id="sheet-guest-activity" style="font-size: 0.95rem; color: #e2e8f0; line-height: 1.5; margin-bottom: 0;">Activity description</p>
+      </div>
+
+      <!-- FESTIVAL GOALS -->
+      <div class="sheet-section" id="sheet-guest-goals-section" style="display: none;">
+        <h4 class="section-title">Goals at the festival</h4>
+        <div id="sheet-guest-goals-tags" style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <!-- Goals tags -->
+        </div>
+      </div>
+
+      <!-- BIO -->
+      <div class="sheet-section">
+        <h4 class="section-title">About</h4>
+        <p class="sheet-bio" id="sheet-guest-bio">Biography text goes here...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- === GAME POPUP MODAL (UPON CORRECT GUESS IN GAME VIEW) === -->
   <div class="guest-modal-backdrop" id="guest-profile-modal">
     <div class="guest-modal-card">
-      <button class="modal-close-btn" onclick="closeGuestModal()" title="סגור">✕</button>
-
-      <!-- Hero Header -->
       <div class="modal-hero-row">
         <div class="modal-avatar-frame">
           <img src="" alt="Guest Avatar" id="modal-avatar-img" class="modal-avatar-img">
         </div>
         <div class="modal-hero-info">
-          <div class="modal-success-pill" id="modal-tag-pill">✓ אורח משלחת</div>
+          <div class="modal-success-pill">✓ זיהיתם נכון!</div>
           <div class="modal-guest-name" id="modal-guest-name">Benson Zhang</div>
           <div class="modal-guest-country" id="modal-guest-country">🌍 China</div>
         </div>
       </div>
 
-      <!-- Detail Items List -->
       <div class="modal-details-list">
-        
-        <!-- Role & Company -->
         <div class="modal-detail-item">
-          <div class="modal-detail-label">
-            <span>💼</span>
-            <span>תפקיד וחברה:</span>
-          </div>
-          <div class="modal-detail-value" id="modal-guest-role-company">
-            Director / CEO • Chapter 2 Entertainment
-          </div>
+          <div class="modal-detail-label"><span>💼</span><span>תפקיד וחברה:</span></div>
+          <div class="modal-detail-value" id="modal-guest-role-company">Director / CEO • Chapter 2 Entertainment</div>
         </div>
-
-        <!-- What Company Does -->
         <div class="modal-detail-item">
-          <div class="modal-detail-label">
-            <span>🏢</span>
-            <span>מה החברה עושה:</span>
-          </div>
-          <div class="modal-detail-value" id="modal-guest-what-company-does">
-            Booking Agency
-          </div>
+          <div class="modal-detail-label"><span>🏢</span><span>מה החברה עושה:</span></div>
+          <div class="modal-detail-value" id="modal-guest-what-company-does">Booking Agency</div>
         </div>
-
-        <!-- Festival Goal -->
         <div class="modal-detail-item">
-          <div class="modal-detail-label">
-            <span>🎯</span>
-            <span>מה המטרה שלכם בפסטיבל?</span>
-          </div>
-          <div class="goals-tags-wrap" id="modal-guest-goals-wrap">
-            <!-- Goal tags generated dynamically -->
-          </div>
+          <div class="modal-detail-label"><span>🎯</span><span>מה המטרה שלכם בפסטיבל?</span></div>
+          <div class="goals-tags-wrap" id="modal-guest-goals-wrap"></div>
         </div>
-
-        <!-- Biography (if available) -->
-        <div class="modal-detail-item" id="modal-bio-item">
-          <div class="modal-detail-label">
-            <span>📖</span>
-            <span>ביוגרפיה (Bio):</span>
-          </div>
-          <div class="bio-text-wrap" id="modal-guest-bio">
-            ...
-          </div>
-        </div>
-
       </div>
 
-      <!-- Action Button -->
-      <button class="btn-modal-continue" id="modal-continue-btn" onclick="closeGuestModal()">
-        <span>המשך</span>
+      <button class="btn-modal-continue" id="modal-continue-btn" onclick="closeGameModal()">
+        <span>המשך לאורח הבא</span>
         <span>➔</span>
       </button>
     </div>
   </div>
 
-  <!-- Feedback Toast -->
+  <!-- Toast -->
   <div class="toast-container">
     <div class="toast" id="toast">
       <span id="toast-icon">✨</span>
@@ -1513,10 +1557,7 @@
     <div class="victory-card">
       <div class="trophy-badge">🏆</div>
       <div class="victory-title">אלופים! סיימתם את המשחק!</div>
-      <div class="victory-desc">
-        זיהיתם בהצלחה את כל 33 האורחים של פסטיבל חשיפה 2026!
-      </div>
-
+      <div class="victory-desc">זיהיתם בהצלחה את כל 33 האורחים של פסטיבל חשיפה 2026!</div>
       <div class="victory-stats-grid">
         <div class="victory-stat-item">
           <div class="victory-stat-num" id="modal-total-time">01:45</div>
@@ -1535,10 +1576,7 @@
           <div class="victory-stat-lbl">שגיאות בסה"כ</div>
         </div>
       </div>
-
-      <button class="btn-restart-game" onclick="restartGame()">
-        🔁 שחקו שוב בסדר חדש
-      </button>
+      <button class="btn-restart-game" onclick="restartGame()">🔁 שחקו שוב בסדר חדש</button>
     </div>
   </div>
 
@@ -2081,16 +2119,32 @@
     "country": "Vietnam",
     "company": "Independent",
     "role": "אשתו של Huy",
-    "whatCompanyDoes": "N/A",
+    "whatCompanyDoes": "",
     "festivalGoal": "",
     "bio": "",
     "genre": "",
-    "photoUrl": "/polar-bear.png",
+    "photoUrl": "",
+    "hasRealPhoto": false,
+    "isAngella": false
+  },
+  {
+    "id": "david",
+    "fullName": "David",
+    "firstName": "David",
+    "lastName": "",
+    "country": "N/A",
+    "company": "Independent",
+    "role": "הפקה כללי",
+    "whatCompanyDoes": "",
+    "festivalGoal": "",
+    "bio": "",
+    "genre": "",
+    "photoUrl": "",
     "hasRealPhoto": false,
     "isAngella": false
   }
 ];
-    // Guests eligible for photo guessing game (33 guests with photos)
+    // 33 delegates with photos for game
     const GAME_GUESTS = [
   {
     "id": "benson_zhang",
@@ -2622,10 +2676,9 @@
   }
 ];
 
-    // Navigation State
-    let activeView = 'game'; // 'game' | 'directory'
+    let activeView = 'game';
 
-    // Game State
+    // Game state
     let guestsQueue = [];
     let currentGuest = null;
     let solvedGuestIds = new Set();
@@ -2639,9 +2692,8 @@
     let gameTimer = null;
     let secondsElapsed = 0;
     let isModalOpen = false;
-    let modalMode = 'game'; // 'game' | 'directory'
 
-    // Switch between Game and Directory
+    // View Navigation
     function switchView(targetView) {
       activeView = targetView;
       document.getElementById('tab-game-btn').classList.toggle('active', targetView === 'game');
@@ -2652,15 +2704,13 @@
 
       document.getElementById('shuffle-btn').style.display = (targetView === 'game') ? 'flex' : 'none';
 
-      // Update URL hash without reload
       history.replaceState(null, '', '#' + targetView);
 
       if (targetView === 'directory') {
-        renderDirectoryGrid();
+        filterPortalDirectory();
       }
     }
 
-    // Check URL Hash on load
     function initViewFromHash() {
       const hash = window.location.hash.replace('#', '').toLowerCase();
       if (hash === 'directory' || hash === 'delegates' || hash === 'list') {
@@ -2671,10 +2721,10 @@
     }
 
     // ========================================================
-    // DIRECTORY VIEW LOGIC
+    // AUTHENTIC PORTAL DIRECTORY RENDERING (EXACT SAME AS APP.JS)
     // ========================================================
-    function initDirectoryCountries() {
-      const select = document.getElementById('dir-country-filter');
+    function initPortalDirectoryCountries() {
+      const select = document.getElementById('guest-country-filter');
       const countries = Array.from(new Set(ALL_DELEGATES.map(g => g.country).filter(c => c && c !== 'N/A'))).sort();
       countries.forEach(c => {
         const opt = document.createElement('option');
@@ -2684,110 +2734,204 @@
       });
     }
 
-    function filterDirectory() {
-      const q = (document.getElementById('dir-search').value || '').toLowerCase().trim();
-      const countryVal = document.getElementById('dir-country-filter').value;
-      const genreVal = document.getElementById('dir-genre-filter').value;
+    function filterPortalDirectory() {
+      const searchTxt = (document.getElementById('guest-search').value || '').toLowerCase().trim();
+      const clearBtn = document.getElementById('clear-search-btn');
+      clearBtn.style.display = searchTxt ? 'flex' : 'none';
 
-      const filtered = ALL_DELEGATES.filter(g => {
+      const genreVal = document.getElementById('guest-genre-filter').value;
+      const countryVal = document.getElementById('guest-country-filter').value;
+
+      const filtered = ALL_DELEGATES.filter(guest => {
         // Search
-        const searchPool = [
-          g.fullName, g.country, g.company, g.role, g.whatCompanyDoes, g.festivalGoal, g.bio, g.genre
+        const searchStr = [
+          guest.fullName, guest.company, guest.role, guest.country, guest.bio, guest.genre, guest.whatCompanyDoes, guest.festivalGoal
         ].join(' ').toLowerCase();
+        const matchesSearch = !searchTxt || searchStr.includes(searchTxt);
 
-        const matchesSearch = !q || searchPool.includes(q);
-
-        // Country
-        const matchesCountry = (countryVal === 'All') || (g.country === countryVal);
-
-        // Genre
+        // Genre (exact same logic as app.js)
         let matchesGenre = true;
+        const guestGenre = (guest.genre || '').toLowerCase().trim();
         if (genreVal !== 'All') {
-          const gGenre = (g.genre || '').toLowerCase();
-          if (genreVal === 'Multi Genres') {
-            matchesGenre = gGenre.includes('multi') || gGenre.includes('both') || gGenre.includes('all');
-          } else if (genreVal.includes('Rock')) {
-            matchesGenre = gGenre.includes('rock') || gGenre.includes('indie') || gGenre.includes('electronic') || gGenre.includes('multi');
-          } else if (genreVal.includes('Jazz')) {
-            matchesGenre = gGenre.includes('jazz') || gGenre.includes('world') || gGenre.includes('multi');
+          const isMultiGenre = guestGenre.includes('multi') || guestGenre.includes('both') || guestGenre.includes('all') || guestGenre.includes('מולטי');
+          if (isMultiGenre) {
+            matchesGenre = true;
+          } else {
+            const isRockFilter = genreVal.toLowerCase().includes('rock') || genreVal.toLowerCase().includes('electronic');
+            const isJazzFilter = genreVal.toLowerCase().includes('jazz') || genreVal.toLowerCase().includes('world');
+
+            if (isRockFilter) {
+              matchesGenre = guestGenre.includes('rock') || guestGenre.includes('indie') || guestGenre.includes('electronic');
+            } else if (isJazzFilter) {
+              matchesGenre = guestGenre.includes('jazz') || guestGenre.includes('world');
+            } else {
+              matchesGenre = guestGenre.includes(genreVal.toLowerCase());
+            }
           }
         }
 
-        return matchesSearch && matchesCountry && matchesGenre;
+        // Country
+        let matchesCountry = true;
+        if (countryVal !== 'All') {
+          matchesCountry = (guest.country === countryVal);
+        }
+
+        return matchesSearch && matchesGenre && matchesCountry;
       });
 
-      renderFilteredDelegates(filtered);
+      renderPortalDirectoryCards(filtered);
+
+      const statusDiv = document.getElementById('directory-status');
+      statusDiv.innerHTML = `Showing ${filtered.length} of ${ALL_DELEGATES.length} delegates`;
+      if (filtered.length < ALL_DELEGATES.length) {
+        statusDiv.innerHTML += ` &nbsp;&middot;&nbsp; <a href="javascript:void(0)" onclick="resetPortalFilters()" style="color: var(--accent-bright); text-decoration: none; font-weight: 500;">Clear</a>`;
+      }
     }
 
-    function renderFilteredDelegates(list) {
-      const grid = document.getElementById('delegates-grid');
-      const countEl = document.getElementById('dir-count-text');
-      countEl.textContent = `מציג ${list.length} מתוך ${ALL_DELEGATES.length} אורחים`;
+    function clearPortalSearch() {
+      document.getElementById('guest-search').value = '';
+      filterPortalDirectory();
+    }
 
-      grid.innerHTML = '';
-      if (list.length === 0) {
-        grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
-            <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
-            <div style="font-size: 1.1rem; font-weight: 600; color: #fff;">לא נמצאו אורחים מתאימים לסינון</div>
-            <div style="font-size: 0.85rem; margin-top: 6px;">נסו לנקות את תיבת החיפוש או לבחור "כל המדינות"</div>
+    function resetPortalFilters() {
+      document.getElementById('guest-search').value = '';
+      document.getElementById('guest-genre-filter').value = 'All';
+      document.getElementById('guest-country-filter').value = 'All';
+      filterPortalDirectory();
+    }
+
+    function renderPortalDirectoryCards(filteredArray) {
+      const container = document.getElementById('directory-container');
+      if (filteredArray.length === 0) {
+        container.innerHTML = `
+          <div class="empty-category-card" style="grid-column: 1 / -1; min-height: 200px;">
+            <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <div class="empty-category-title">No delegates match your filters</div>
+            <button class="btn-pill" onclick="resetPortalFilters()" style="width: auto; margin-top: 10px; font-size: 0.85rem; color: #fff;">Clear Filters</button>
           </div>
         `;
         return;
       }
 
-      list.forEach(guest => {
-        const card = document.createElement('div');
-        card.className = 'delegate-card';
-        card.onclick = () => openGuestModal(guest, 'directory');
+      let html = '';
+      filteredArray.forEach((guest) => {
+        let genreText = guest.genre || '';
+        if (genreText.toLowerCase().includes('both') || genreText.toLowerCase().includes('multi')) genreText = 'All Genres';
 
-        const focalClass = guest.isAngella ? 'angella-focal' : '';
-        const roleCompText = [guest.role, guest.company].filter(Boolean).join(' • ');
+        const originalIndex = ALL_DELEGATES.indexOf(guest);
+        const cardClass = guest.isAngella ? 'artist-card angella-lee-card' : 'artist-card';
+        const bgPosStyle = guest.isAngella ? '; background-position: center 78% !important;' : '';
+        const bgStyle = guest.photoUrl ? `background-image: url('${guest.photoUrl}')${bgPosStyle}` : 'background-color: #1a1a1e';
 
-        card.innerHTML = `
-          <div class="delegate-card-img-wrap">
-            <img src="${guest.photoUrl}" alt="${guest.fullName}" class="delegate-card-img ${focalClass}" loading="lazy">
-            <div class="delegate-card-overlay">
-              <div class="delegate-card-name">${guest.fullName}</div>
-              <div class="delegate-card-meta">
-                <span class="delegate-card-country">🌍 ${guest.country}</span>
-                ${guest.genre ? `<span class="delegate-card-genre">${guest.genre}</span>` : ''}
+        html += `
+          <div class="${cardClass}" style="${bgStyle}" onclick="openGuestSheet(${originalIndex})">
+            <div class="artist-card-overlay">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 2px;">
+                <div class="artist-card-name" style="margin-bottom: 0;">${guest.fullName}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="color: #fff; font-size: 0.8rem; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${guest.country}</div>
+                <div style="color: #fff; font-size: 0.75rem; font-weight: 400; text-shadow: 0 1px 3px rgba(0,0,0,0.8); opacity: 0.9;">${genreText}</div>
               </div>
             </div>
           </div>
-          <div class="delegate-card-body">
-            <div class="delegate-role-comp">${roleCompText}</div>
-            
-            ${guest.whatCompanyDoes && guest.whatCompanyDoes !== 'N/A' ? `
-              <div class="delegate-section-block">
-                <span class="delegate-section-lbl"><span>🏢</span><span>פעילות:</span></span>
-                <span class="delegate-section-val">${guest.whatCompanyDoes}</span>
-              </div>
-            ` : ''}
-
-            ${guest.festivalGoal ? `
-              <div class="delegate-section-block">
-                <span class="delegate-section-lbl"><span>🎯</span><span>מטרה בפסטיבל:</span></span>
-                <span class="delegate-section-val">${guest.festivalGoal}</span>
-              </div>
-            ` : ''}
-          </div>
-          <div class="delegate-card-footer">
-            <span>לפרופיל מלא</span>
-            <span>➔</span>
-          </div>
         `;
-
-        grid.appendChild(card);
       });
-    }
 
-    function renderDirectoryGrid() {
-      filterDirectory();
+      container.innerHTML = html;
+      container.className = 'artists-grid';
     }
 
     // ========================================================
-    // GAME VIEW LOGIC
+    // AUTHENTIC BOTTOM SHEET (MATCHING APP.JS EXACTLY)
+    // ========================================================
+    function openGuestSheet(target) {
+      let guest = null;
+      if (typeof target === 'number') {
+        guest = ALL_DELEGATES[target];
+      } else if (target && typeof target === 'object') {
+        guest = target;
+      }
+      if (!guest) return;
+
+      const sheetEl = document.getElementById('guest-bottom-sheet');
+      if (sheetEl) sheetEl.scrollTop = 0;
+      const sheetContent = sheetEl.querySelector('.sheet-content');
+      if (sheetContent) sheetContent.scrollTop = 0;
+
+      const imgEl = document.getElementById('sheet-guest-img');
+      if (guest.photoUrl) {
+        imgEl.style.backgroundImage = `url('${guest.photoUrl}')`;
+        imgEl.style.backgroundColor = 'transparent';
+      } else {
+        imgEl.style.backgroundImage = 'none';
+        imgEl.style.backgroundColor = '#10131d';
+      }
+
+      if (guest.isAngella) {
+        imgEl.style.backgroundPosition = (window.innerWidth > 600) ? 'center 60%' : 'center 62%';
+      } else {
+        imgEl.style.backgroundPosition = 'center 20%';
+      }
+
+      let genreText = guest.genre || '';
+      if (genreText.toLowerCase().includes('both') || genreText.toLowerCase().includes('multi')) genreText = 'All Genres';
+
+      document.getElementById('sheet-guest-name').innerText = guest.fullName;
+      document.getElementById('sheet-guest-genre').innerText = genreText || 'Delegates';
+      document.getElementById('sheet-guest-country').innerText = guest.country || 'N/A';
+      document.getElementById('sheet-guest-company').innerText = guest.company || 'Independent';
+
+      const roleEl = document.getElementById('sheet-guest-role');
+      roleEl.innerText = guest.role || '';
+      roleEl.style.display = guest.role ? 'block' : 'none';
+
+      // Company activity ("מה החברה עושה")
+      const actSection = document.getElementById('sheet-guest-activity-section');
+      const actText = document.getElementById('sheet-guest-activity');
+      if (guest.whatCompanyDoes && guest.whatCompanyDoes.trim()) {
+        actSection.style.display = 'block';
+        actText.innerText = guest.whatCompanyDoes;
+      } else {
+        actSection.style.display = 'none';
+      }
+
+      // Festival goals ("מה המטרה שלכם בפסטיבל?")
+      const goalsSection = document.getElementById('sheet-guest-goals-section');
+      const goalsTags = document.getElementById('sheet-guest-goals-tags');
+      if (guest.festivalGoal && guest.festivalGoal.trim()) {
+        goalsSection.style.display = 'block';
+        goalsTags.innerHTML = '';
+        const list = guest.festivalGoal.split(/,(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
+        list.forEach(item => {
+          const pill = document.createElement('span');
+          pill.className = 'sheet-pill-tag';
+          pill.innerText = item;
+          goalsTags.appendChild(pill);
+        });
+      } else {
+        goalsSection.style.display = 'none';
+      }
+
+      // Bio
+      const bioEl = document.getElementById('sheet-guest-bio');
+      bioEl.innerText = guest.bio || 'Biography available soon.';
+
+      document.getElementById('guest-sheet-overlay').classList.add('active');
+      document.getElementById('guest-bottom-sheet').classList.add('active');
+      document.body.classList.add('sheet-open');
+    }
+
+    function closeGuestSheet() {
+      document.getElementById('guest-sheet-overlay').classList.remove('active');
+      document.getElementById('guest-bottom-sheet').classList.remove('active');
+      document.body.classList.remove('sheet-open');
+    }
+
+    // ========================================================
+    // GAME VIEW LOGIC (WITH SILENT CLICKS AND POPUP)
     // ========================================================
     function startTimer() {
       if (gameTimer) clearInterval(gameTimer);
@@ -2925,7 +3069,7 @@
           ${isSolved ? '<span class="solved-check-icon">✓</span>' : ''}
         `;
 
-        // Click handler: SILENT CLICK
+        // Click handler: ZERO sound
         chip.addEventListener('click', () => {
           handleGuess(guest.id, chip);
         });
@@ -2946,7 +3090,6 @@
       });
     }
 
-    // Drag & drop dropzone
     const dropZone = document.getElementById('photo-drop-zone');
     const stageCard = document.getElementById('photo-stage');
 
@@ -3002,8 +3145,8 @@
 
       updateStatsUI();
 
-      // Open Modal in game mode
-      openGuestModal(currentGuest, 'game');
+      // Open Game Modal
+      openGameModal(currentGuest);
     }
 
     function onWrongGuess(guessId, chipEl) {
@@ -3011,7 +3154,7 @@
       mistakesCount++;
       updateStatsUI();
 
-      // Strictly visual feedback - ZERO sound
+      // STRICTLY ZERO SOUND on wrong guess! Visual only
       const stageCard = document.getElementById('photo-stage');
       stageCard.classList.add('shake-wrong');
       setTimeout(() => stageCard.classList.remove('shake-wrong'), 500);
@@ -3028,32 +3171,18 @@
       showToast(`לא נכון... זה לא ${guessedName}, נסו שוב!`, 'wrong', '❌');
     }
 
-    // Modal logic (shared for Game and Directory)
-    function openGuestModal(guest, mode = 'game') {
+    function openGameModal(guest) {
       isModalOpen = true;
-      modalMode = mode;
 
-      document.getElementById('modal-avatar-img').src = guest.photoUrl;
+      document.getElementById('modal-avatar-img').src = guest.photoUrl || '/polar-bear.png';
       document.getElementById('modal-guest-name').textContent = guest.fullName;
       document.getElementById('modal-guest-country').textContent = `🌍 ${guest.country || 'International'}`;
-
-      const tagPill = document.getElementById('modal-tag-pill');
-      if (mode === 'game') {
-        tagPill.textContent = '✓ זיהיתם נכון!';
-        tagPill.style.display = 'inline-flex';
-        document.getElementById('modal-continue-btn').innerHTML = '<span>המשך לאורח הבא</span><span>➔</span>';
-      } else {
-        tagPill.textContent = guest.genre || 'אורח משלחת';
-        tagPill.style.display = 'inline-flex';
-        document.getElementById('modal-continue-btn').innerHTML = '<span>סגור</span>';
-      }
 
       const roleText = [guest.role, guest.company].filter(Boolean).join(' • ');
       document.getElementById('modal-guest-role-company').textContent = roleText || 'Independent';
 
       document.getElementById('modal-guest-what-company-does').textContent = guest.whatCompanyDoes || 'N/A';
 
-      // Goals tags
       const goalsWrap = document.getElementById('modal-guest-goals-wrap');
       goalsWrap.innerHTML = '';
       const rawGoals = guest.festivalGoal || '';
@@ -3073,16 +3202,6 @@
         goalsWrap.appendChild(tag);
       }
 
-      // Bio
-      const bioItem = document.getElementById('modal-bio-item');
-      const bioText = document.getElementById('modal-guest-bio');
-      if (guest.bio && guest.bio.trim()) {
-        bioItem.style.display = 'flex';
-        bioText.textContent = guest.bio;
-      } else {
-        bioItem.style.display = 'none';
-      }
-
       const modalEl = document.getElementById('guest-profile-modal');
       modalEl.classList.add('visible');
 
@@ -3092,30 +3211,31 @@
       }, 100);
     }
 
-    function closeGuestModal() {
+    function closeGameModal() {
       const modalEl = document.getElementById('guest-profile-modal');
       modalEl.classList.remove('visible');
       isModalOpen = false;
 
-      if (modalMode === 'game') {
-        setTimeout(() => {
-          loadNextGuest();
-        }, 250);
-      }
+      setTimeout(() => {
+        loadNextGuest();
+      }, 250);
     }
 
     window.addEventListener('keydown', (e) => {
       if (isModalOpen) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
           e.preventDefault();
-          closeGuestModal();
+          closeGameModal();
         }
+      }
+      if (e.key === 'Escape' && document.getElementById('guest-bottom-sheet').classList.contains('active')) {
+        closeGuestSheet();
       }
     });
 
     document.getElementById('guest-profile-modal').addEventListener('click', (e) => {
       if (e.target.id === 'guest-profile-modal') {
-        closeGuestModal();
+        closeGameModal();
       }
     });
 
@@ -3272,9 +3392,8 @@
       }
     }
 
-    // Auto-start on load
     window.addEventListener('DOMContentLoaded', () => {
-      initDirectoryCountries();
+      initPortalDirectoryCountries();
       initViewFromHash();
       initGame();
     });
