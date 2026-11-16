@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>זהה את האורח | IMSF 2026 Guess the Guest</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card-bg: rgba(22, 25, 35, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.12);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.4);
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.45);
+      --amber: #f59e0b;
+      --purple: #8b5cf6;
+      --radius: 18px;
+      --font-he: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-en: 'Outfit', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: var(--font-he);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation Header */
+    header {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-icon.active {
+      background: var(--accent-glow);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Container */
+    main {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 16px 20px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Stats & Progress Strip */
+    .stats-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: var(--radius);
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .stat-value.highlight-amber { color: var(--amber); }
+    .stat-value.highlight-green { color: var(--success); }
+    .stat-value.highlight-red { color: var(--danger); }
+    .stat-value.highlight-cyan { color: var(--accent); }
+
+    .progress-wrapper {
+      flex: 1;
+      min-width: 200px;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--success) 100%);
+      width: 0%;
+      border-radius: 99px;
+      transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* Main Arena: Grid 2 Columns */
+    .game-arena {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .game-arena {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Card: Guest Photo & Drop Target */
+    .photo-stage-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(20px);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      position: sticky;
+      top: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .photo-stage-card.drag-over {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 40px var(--accent-glow) !important;
+      transform: scale(1.02);
+    }
+
+    .photo-stage-card.shake-wrong {
+      animation: shake 0.45s ease-in-out;
+      border-color: var(--danger) !important;
+      box-shadow: 0 0 40px var(--danger-glow) !important;
+    }
+
+    .photo-stage-card.celebrate-success {
+      border-color: var(--success) !important;
+      box-shadow: 0 0 50px var(--success-glow) !important;
+    }
+
+    .photo-frame {
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 1 / 1.1;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      background: #11141d;
+      border: 2px dashed rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .guest-photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 25%;
+      transition: transform 0.4s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .guest-photo-img.loaded {
+      opacity: 1;
+    }
+
+    .photo-loader-spinner {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* Drag target hint overlay on image */
+    .drop-target-hint {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: rgba(11, 12, 16, 0.75);
+      backdrop-filter: blur(10px);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+
+    .photo-stage-card.drag-over .drop-target-hint {
+      background: rgba(56, 189, 248, 0.85);
+      color: #0b0c10;
+      font-weight: 700;
+      border-color: #fff;
+      transform: scale(1.05);
+    }
+
+    /* Revealed Profile Banner (Upon Success) */
+    .success-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(11, 12, 16, 0.95) 0%, rgba(16, 185, 129, 0.25) 50%, rgba(11, 12, 16, 0.4) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      transform: translateY(15px);
+    }
+
+    .success-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .success-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--success);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      align-self: flex-start;
+      box-shadow: 0 4px 14px var(--success-glow);
+    }
+
+    .success-guest-name {
+      font-family: var(--font-en);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      direction: ltr;
+      text-align: right;
+    }
+
+    .success-guest-meta {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.85);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      direction: ltr;
+      text-align: right;
+    }
+
+    /* Photo action buttons */
+    .photo-actions {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      font-family: var(--font-he);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn-action.hint-btn:hover {
+      color: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .btn-action.skip-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Hint Alert Card */
+    .hint-box {
+      width: 100%;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #fde68a;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      animation: fadeIn 0.3s ease;
+      direction: ltr;
+      text-align: left;
+    }
+
+    /* Right Card: Name Pool */
+    .names-stage-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(20px);
+      border-radius: var(--radius);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      min-height: 480px;
+    }
+
+    .names-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .names-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 280px;
+      min-width: 160px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 34px 8px 12px;
+      color: #fff;
+      font-family: var(--font-he);
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      font-size: 0.9rem;
+    }
+
+    .sort-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-pill:hover, .btn-pill.active {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Names Cloud / Grid */
+    .names-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-content: flex-start;
+      overflow-y: auto;
+      max-height: 60vh;
+      padding-right: 4px;
+    }
+
+    /* Custom Scrollbar */
+    .names-cloud::-webkit-scrollbar {
+      width: 6px;
+    }
+    .names-cloud::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .names-cloud::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+    }
+
+    /* Single Name Chip */
+    .name-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-family: var(--font-en);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      cursor: grab;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      direction: ltr;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      position: relative;
+    }
+
+    .name-chip:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      color: #fff;
+    }
+
+    .name-chip:active {
+      cursor: grabbing;
+      transform: scale(0.97);
+    }
+
+    .name-chip.dragging {
+      opacity: 0.45;
+      transform: scale(0.95);
+      border-color: var(--accent);
+    }
+
+    /* Incorrect Guess Animation */
+    .name-chip.wrong-guess {
+      animation: shake 0.45s ease-in-out;
+      background: rgba(239, 68, 68, 0.25) !important;
+      border-color: var(--danger) !important;
+      color: #fca5a5 !important;
+      box-shadow: 0 0 16px var(--danger-glow) !important;
+    }
+
+    /* Correct Guess State */
+    .name-chip.correct-guess {
+      background: rgba(16, 185, 129, 0.2) !important;
+      border-color: var(--success) !important;
+      color: #6ee7b7 !important;
+      box-shadow: 0 0 16px var(--success-glow) !important;
+      animation: pulseGreen 0.6s ease;
+    }
+
+    /* Completed Guest Badge in pool */
+    .name-chip.already-solved {
+      opacity: 0.65;
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.25);
+      color: #a7f3d0;
+    }
+
+    .name-chip.already-solved:hover {
+      opacity: 0.9;
+    }
+
+    .solved-check-icon {
+      font-size: 0.8rem;
+      color: var(--success);
+      font-weight: 800;
+    }
+
+    /* Floating Feedback Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      border-radius: 99px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.wrong {
+      border-color: var(--danger);
+      color: #fca5a5;
+    }
+
+    .toast.success {
+      border-color: var(--success);
+      color: #86efac;
+    }
+
+    .toast.info {
+      border-color: var(--accent);
+      color: #bae6fd;
+    }
+
+    /* Victory / Game Over Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .modal-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .victory-card {
+      background: #11141f;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 36px 32px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 80px rgba(56, 189, 248, 0.2);
+      transform: scale(0.9);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-backdrop.visible .victory-card {
+      transform: scale(1);
+    }
+
+    .trophy-badge {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
+      border: 2px solid var(--amber);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      box-shadow: 0 0 35px rgba(245, 158, 11, 0.35);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .victory-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .victory-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .victory-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    .victory-stat-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .victory-stat-num {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .victory-stat-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-restart-game {
+      width: 100%;
+      padding: 14px 24px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+      color: #0b0c10;
+      font-family: var(--font-he);
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 24px var(--accent-glow);
+      transition: all 0.25s ease;
+    }
+
+    .btn-restart-game:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px var(--accent-glow);
+      filter: brightness(1.1);
+    }
+
+    /* Confetti Canvas */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2500;
+    }
+
+    /* Animations */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+
+    @keyframes pulseGreen {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <header>
+    <a href="/" class="brand">
+      <img src="/polar-bear.png" alt="IMSF Mascot" onerror="this.src='/favicon.png'">
+      <div>
+        <div class="brand-title">זהה את האורח 🎵</div>
+        <div class="brand-subtitle">IMSF 2026 Guess the Guest Game</div>
+      </div>
+    </a>
+    <div class="header-actions">
+      <button class="btn-icon" id="sound-btn" title="הפעל/השתק צלילים" onclick="toggleSound()">🔊</button>
+      <button class="btn-icon" id="shuffle-btn" title="ערבב מחדש את סדר האורחים" onclick="restartGame()">🔀</button>
+      <a href="/" class="btn-icon" title="חזרה לפורטל הראשי" style="text-decoration:none;">🏠</a>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Stats & Progress Strip -->
+    <section class="stats-bar">
+      <div class="stat-item">
+        <span>🎯 התקדמות:</span>
+        <span class="stat-value highlight-cyan" id="progress-text">1 מתוך 32</span>
+      </div>
+
+      <div class="progress-wrapper">
+        <div class="progress-meta">
+          <span>הושלמו</span>
+          <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <span>🔥 רצף:</span>
+        <span class="stat-value highlight-amber" id="streak-count">0</span>
+      </div>
+
+      <div class="stat-item">
+        <span>❌ שגיאות:</span>
+        <span class="stat-value highlight-red" id="mistakes-count">0</span>
+      </div>
+
+      <div class="stat-item">
+        <span>⏱️ זמן:</span>
+        <span class="stat-value" id="timer-text">00:00</span>
+      </div>
+    </section>
+
+    <!-- Main Game Arena -->
+    <section class="game-arena">
+
+      <!-- Left Column: Guest Photo Card & Drop Zone -->
+      <div class="photo-stage-card" id="photo-stage">
+
+        <div class="photo-frame" id="photo-drop-zone">
+          <div class="photo-loader-spinner" id="photo-spinner"></div>
+          <img src="" alt="Guest Photo" id="current-guest-img" class="guest-photo-img">
+          
+          <div class="drop-target-hint">
+            <span>🎯</span>
+            <span id="drop-hint-text">גררו שם לכאן או לחצו עליו מימין</span>
+          </div>
+
+          <!-- Revealed upon correct guess -->
+          <div class="success-overlay" id="success-overlay">
+            <div class="success-badge">🎉 כל הכבוד! זיהיתם נכון!</div>
+            <div class="success-guest-name" id="success-guest-name">Benson Zhang</div>
+            <div class="success-guest-meta" id="success-guest-meta">
+              <span id="success-guest-country">🌍 China</span>
+              <span id="success-guest-company">💼 Chapter 2 Entertainment</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hint Banner -->
+        <div class="hint-box" id="hint-box">
+          <span>💡 <strong>רמז:</strong></span>
+          <span id="hint-text">...</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="photo-actions">
+          <button class="btn-action hint-btn" onclick="showHint()">
+            <span>💡</span>
+            <span>רמז</span>
+          </button>
+          <button class="btn-action skip-btn" onclick="skipCurrentGuest()">
+            <span>⏭️</span>
+            <span>דלג בינתיים</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Interactive Name Pool -->
+      <div class="names-stage-card">
+
+        <div class="names-header">
+          <div class="names-title">
+            <span>🏷️</span>
+            <span>בחרו או גררו את השם:</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="names-count-badge">(32 שמות)</span>
+          </div>
+
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="search-input" placeholder="חיפוש שם מהיר..." oninput="handleSearch(this.value)">
+          </div>
+
+          <div class="sort-actions">
+            <button class="btn-pill active" id="sort-random-btn" onclick="sortNames('random')">ערבב</button>
+            <button class="btn-pill" id="sort-alpha-btn" onclick="sortNames('alpha')">א'-ב'</button>
+          </div>
+        </div>
+
+        <!-- The Pool of All Names -->
+        <div class="names-cloud" id="names-cloud">
+          <!-- Populated by JS -->
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Feedback Toast -->
+  <div class="toast-container">
+    <div class="toast" id="toast">
+      <span id="toast-icon">✨</span>
+      <span id="toast-msg">הודעה</span>
+    </div>
+  </div>
+
+  <!-- Victory Modal -->
+  <div class="modal-backdrop" id="victory-modal">
+    <div class="victory-card">
+      <div class="trophy-badge">🏆</div>
+      <div class="victory-title">אלופים! סיימתם את המשחק!</div>
+      <div class="victory-desc">
+        זיהיתם בהצלחה את כל 32 האורחים של פסטיבל חשיפה 2026!
+      </div>
+
+      <div class="victory-stats-grid">
+        <div class="victory-stat-item">
+          <div class="victory-stat-num" id="modal-total-time">01:45</div>
+          <div class="victory-stat-lbl">זמן כולל</div>
+        </div>
+        <div class="victory-stat-item">
+          <div class="victory-stat-num" id="modal-accuracy">94%</div>
+          <div class="victory-stat-lbl">אחוז דיוק</div>
+        </div>
+        <div class="victory-stat-item">
+          <div class="victory-stat-num" id="modal-streak">12</div>
+          <div class="victory-stat-lbl">רצף שיא</div>
+        </div>
+        <div class="victory-stat-item">
+          <div class="victory-stat-num" id="modal-mistakes">2</div>
+          <div class="victory-stat-lbl">שגיאות בסה"כ</div>
+        </div>
+      </div>
+
+      <button class="btn-restart-game" onclick="restartGame()">
+        🔁 שחקו שוב בסדר חדש
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Embedded initial 32 guests data with Google Drive thumbnail images
+    const INITIAL_GUESTS = [
+  {
+    "id": "benson_zhang",
+    "fullName": "Benson Zhang",
+    "firstName": "Benson",
+    "lastName": "Zhang",
+    "country": "China",
+    "company": "Chapter 2 Entertainment",
+    "role": "Director / CEO",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_&sz=w800"
+  },
+  {
+    "id": "bojan_vuleti_",
+    "fullName": "Bojan Vuletić",
+    "firstName": "Bojan",
+    "lastName": "Vuletić",
+    "country": "Germany",
+    "company": "Asphalt Festival Düsseldorf",
+    "role": "Festival Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ&sz=w800"
+  },
+  {
+    "id": "carlos_pineda",
+    "fullName": "Carlos Pineda",
+    "firstName": "Carlos",
+    "lastName": "Pineda",
+    "country": "Canada",
+    "company": "MCMXVI",
+    "role": "Founder / CEO",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI&sz=w800"
+  },
+  {
+    "id": "eugenio_rubei",
+    "fullName": "Eugenio Rubei",
+    "firstName": "Eugenio",
+    "lastName": "Rubei",
+    "country": "Italy",
+    "company": "Alexanderplatz Jazz Club",
+    "role": "Artistic Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN&sz=w800"
+  },
+  {
+    "id": "huy_tuan_bui",
+    "fullName": "Huy Tuan Bui",
+    "firstName": "Huy Tuan",
+    "lastName": "Bui",
+    "country": "Vietnam",
+    "company": "HoZo Festival - Ho Chi Minh city International Music Festival",
+    "role": "Music & Art Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh&sz=w800"
+  },
+  {
+    "id": "isaac_green",
+    "fullName": "Isaac Green",
+    "firstName": "Isaac",
+    "lastName": "Green",
+    "country": "USA",
+    "company": "Warner Records",
+    "role": "Senior Vice President of A&R",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs&sz=w800"
+  },
+  {
+    "id": "johannes_graesser",
+    "fullName": "Johannes Graesser",
+    "firstName": "Johannes",
+    "lastName": "Graesser",
+    "country": "Germany",
+    "company": "Jewish-Israeli Culture Days Thuringia",
+    "role": "Artistic Director & Managing Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba&sz=w800"
+  },
+  {
+    "id": "jonathan_vyner",
+    "fullName": "Jonathan Vyner",
+    "firstName": "Jonathan",
+    "lastName": "Vyner",
+    "country": "UK",
+    "company": "The Underworld / Born Again Concerts",
+    "role": "Bookings Manager / Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii&sz=w800"
+  },
+  {
+    "id": "josh_blakk",
+    "fullName": "Josh Blakk",
+    "firstName": "Josh",
+    "lastName": "Blakk",
+    "country": "Ghana",
+    "company": "Blakknoters",
+    "role": "Singer, Writer, Producer, Founder, owner, lead artist and producer",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ&sz=w800"
+  },
+  {
+    "id": "kira_ozhgibesova",
+    "fullName": "Kira Ozhgibesova",
+    "firstName": "Kira",
+    "lastName": "Ozhgibesova",
+    "country": "Russia",
+    "company": "Perm  Triumph Private Philharmonic",
+    "role": "Assitant to Creative Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v&sz=w800"
+  },
+  {
+    "id": "krasimir_moskov_kirev",
+    "fullName": "Krasimir Moskov Kirev",
+    "firstName": "Krasimir",
+    "lastName": "Moskov Kirev",
+    "country": "Bulgaria",
+    "company": "Fest Team EOOD",
+    "role": "Head of Booking / Program Manager",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m&sz=w800"
+  },
+  {
+    "id": "marcus_tawanda_gora",
+    "fullName": "Marcus Tawanda Gora",
+    "firstName": "Marcus",
+    "lastName": "Tawanda Gora",
+    "country": "Zimbabue",
+    "company": "OMIFA",
+    "role": "Artistic Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY&sz=w800"
+  },
+  {
+    "id": "mark_kass",
+    "fullName": "Mark Kass",
+    "firstName": "Mark",
+    "lastName": "Kass",
+    "country": "UK",
+    "company": "National Jazz Archive UK\nEnterprise4Good",
+    "role": "Owner",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS&sz=w800"
+  },
+  {
+    "id": "matthias_mueller",
+    "fullName": "Matthias Mueller",
+    "firstName": "Matthias",
+    "lastName": "Mueller",
+    "country": "Germany",
+    "company": "Crazy Planet Records GmbH",
+    "role": "CEO",
+    "photoUrl": "https://drive.google.com/thumbnail?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1&sz=w800"
+  },
+  {
+    "id": "michele_amar",
+    "fullName": "Michele Amar",
+    "firstName": "Michele",
+    "lastName": "Amar",
+    "country": "USA",
+    "company": "FRANCE ROCKS",
+    "role": "owner",
+    "photoUrl": "https://drive.google.com/thumbnail?id=13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX&sz=w800"
+  },
+  {
+    "id": "peter__stedt",
+    "fullName": "Peter Åstedt",
+    "firstName": "Peter",
+    "lastName": "Åstedt",
+    "country": "Sweden",
+    "company": "Musichelp / Future Echoes",
+    "role": "Project Manager",
+    "photoUrl": "https://drive.google.com/thumbnail?id=19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W&sz=w800"
+  },
+  {
+    "id": "shunsuke_asakawa",
+    "fullName": "Shunsuke Asakawa",
+    "firstName": "Shunsuke",
+    "lastName": "Asakawa",
+    "country": "Japan",
+    "company": "Haremame Group",
+    "role": "Manager/Producer",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx&sz=w800"
+  },
+  {
+    "id": "michael_ginzburg",
+    "fullName": "Michael Ginzburg",
+    "firstName": "Michael",
+    "lastName": "Ginzburg",
+    "country": "Germany",
+    "company": "Ginzburg Live",
+    "role": "Founder",
+    "photoUrl": "https://drive.google.com/thumbnail?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W&sz=w800"
+  },
+  {
+    "id": "maciej_nestor",
+    "fullName": "Maciej Nestor",
+    "firstName": "Maciej",
+    "lastName": "Nestor",
+    "country": "Poland",
+    "company": "V Records / Jazz Premium",
+    "role": "Head of Label",
+    "photoUrl": "https://drive.google.com/thumbnail?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM&sz=w800"
+  },
+  {
+    "id": "simon_nasser",
+    "fullName": "Simon Nasser",
+    "firstName": "Simon",
+    "lastName": "Nasser",
+    "country": "Singapore",
+    "company": "Versed Talent Agency Pte",
+    "role": "Managing Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv&sz=w800"
+  },
+  {
+    "id": "ezekiel_keran",
+    "fullName": "Ezekiel Keran",
+    "firstName": "Ezekiel",
+    "lastName": "Keran",
+    "country": "Singapore",
+    "company": "A Strange Love Pte",
+    "role": "Managing Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l&sz=w800"
+  },
+  {
+    "id": "adam_sagir",
+    "fullName": "Adam Sagir",
+    "firstName": "Adam",
+    "lastName": "Sagir",
+    "country": "UK",
+    "company": "The Noise Cartel",
+    "role": "Founder and Managing Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq&sz=w800"
+  },
+  {
+    "id": "federico_martinez_penna",
+    "fullName": "Federico Martinez Penna",
+    "firstName": "Federico",
+    "lastName": "Martinez Penna",
+    "country": "Argentina",
+    "company": "Rolling Stone",
+    "role": "Freelance journalist",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW&sz=w800"
+  },
+  {
+    "id": "angella_lee",
+    "fullName": "Angella Lee",
+    "firstName": "Angella",
+    "lastName": "Lee",
+    "country": "South Korea",
+    "company": "Jarasum Jazz Festival",
+    "role": "PR & Marketing Manager",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK&sz=w800"
+  },
+  {
+    "id": "alexandra_miteran",
+    "fullName": "Alexandra Miteran",
+    "firstName": "Alexandra",
+    "lastName": "Miteran",
+    "country": "UAE",
+    "company": "SAMIT Event Group",
+    "role": "Owner, director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj&sz=w800"
+  },
+  {
+    "id": "ahuvah_berger_burcat",
+    "fullName": "Ahuvah Berger-Burcat",
+    "firstName": "Ahuvah",
+    "lastName": "Berger-Burcat",
+    "country": "Israel",
+    "company": "Revelator / WMG",
+    "role": "VP of Marketing for Revelator",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4&sz=w800"
+  },
+  {
+    "id": "golda_bitterli",
+    "fullName": "Golda Bitterli",
+    "firstName": "Golda",
+    "lastName": "Bitterli",
+    "country": "Israel",
+    "company": "Revelator / WMG",
+    "role": "VP of Business Development",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz&sz=w800"
+  },
+  {
+    "id": "robert_g_dek",
+    "fullName": "Robert Gądek",
+    "firstName": "Robert",
+    "lastName": "Gądek",
+    "country": "Poland",
+    "company": "Jewish Culture Festival in Krakow",
+    "role": "Director, CEO",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh&sz=w800"
+  },
+  {
+    "id": "laurence_haziza",
+    "fullName": "Laurence Haziza",
+    "firstName": "Laurence",
+    "lastName": "Haziza",
+    "country": "France",
+    "company": "Sacré Sound Festival / Festival Jazz'N'Klezmer",
+    "role": "Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd&sz=w800"
+  },
+  {
+    "id": "nigel_canin",
+    "fullName": "Nigel Canin",
+    "firstName": "Nigel",
+    "lastName": "Canin",
+    "country": "UK",
+    "company": "Parallel Skies Records,",
+    "role": "Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon&sz=w800"
+  },
+  {
+    "id": "raphael_perez",
+    "fullName": "Raphael Perez",
+    "firstName": "Raphael",
+    "lastName": "Perez",
+    "country": "France",
+    "company": "Israeli jazz",
+    "role": "President",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT&sz=w800"
+  },
+  {
+    "id": "jonathan_schwartz",
+    "fullName": "Jonathan Schwartz",
+    "firstName": "Jonathan",
+    "lastName": "Schwartz",
+    "country": "USA/Israel",
+    "company": "America-Israel Cultural Foundation (AICF)",
+    "role": "Artistic Director",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl&sz=w800"
+  }
+];
+
+    // Game State
+    let guestsQueue = [];
+    let currentGuest = null;
+    let solvedGuestIds = new Set();
+    let currentStreak = 0;
+    let maxStreak = 0;
+    let mistakesCount = 0;
+    let totalGuesses = 0;
+    let correctGuesses = 0;
+    let soundEnabled = true;
+    let currentSortMode = 'random';
+    let searchQuery = '';
+    let gameTimer = null;
+    let secondsElapsed = 0;
+    let isTransitioning = false;
+
+    // Web Audio Synthesizer (Zero dependencies, 100% reliable offline)
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        const now = ctx.currentTime;
+
+        if (type === 'correct') {
+          // Cheerful chime: C5, E5, G5, C6 arpeggio
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + idx * 0.08 + 0.35);
+          });
+        } else if (type === 'wrong') {
+          // Soft low error buzzer
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.linearRampToValueAtTime(90, now + 0.25);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'hint') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        } else if (type === 'victory') {
+          // Fanfare
+          const chords = [
+            [523.25, 659.25, 783.99],
+            [587.33, 739.99, 880.00],
+            [659.25, 830.61, 987.77],
+            [783.99, 987.77, 1174.66, 1567.98]
+          ];
+          chords.forEach((chord, step) => {
+            const time = now + step * 0.18;
+            chord.forEach(freq => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, time);
+              gain.gain.setValueAtTime(0.15, time);
+              gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(time);
+              osc.stop(time + 0.5);
+            });
+          });
+        }
+      } catch(e) {
+        // Audio policy or unsupported
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('sound-btn');
+      btn.textContent = soundEnabled ? '🔊' : '🔇';
+      btn.classList.toggle('active', soundEnabled);
+      showToast(soundEnabled ? 'צלילים הופעלו' : 'צלילים הושתקו', 'info', soundEnabled ? '🔊' : '🔇');
+    }
+
+    // Timer
+    function startTimer() {
+      if (gameTimer) clearInterval(gameTimer);
+      secondsElapsed = 0;
+      updateTimerDisplay();
+      gameTimer = setInterval(() => {
+        secondsElapsed++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+      const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+      document.getElementById('timer-text').textContent = `${mins}:${secs}`;
+    }
+
+    // Shuffle array helper
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    // Initialize or Restart Game
+    function initGame() {
+      guestsQueue = shuffle(INITIAL_GUESTS);
+      solvedGuestIds.clear();
+      currentStreak = 0;
+      maxStreak = 0;
+      mistakesCount = 0;
+      totalGuesses = 0;
+      correctGuesses = 0;
+      isTransitioning = false;
+
+      document.getElementById('victory-modal').classList.remove('visible');
+      document.getElementById('success-overlay').classList.remove('visible');
+      document.getElementById('hint-box').style.display = 'none';
+
+      updateStatsUI();
+      renderNamesPool();
+      loadNextGuest();
+      startTimer();
+    }
+
+    function restartGame() {
+      initGame();
+      showToast('המשחק אותחל מחדש בסדר אקראי!', 'info', '🔀');
+    }
+
+    // Load next unsolved guest from queue
+    function loadNextGuest() {
+      const unsolved = guestsQueue.filter(g => !solvedGuestIds.has(g.id));
+      if (unsolved.length === 0) {
+        onGameComplete();
+        return;
+      }
+
+      currentGuest = unsolved[0];
+      isTransitioning = false;
+
+      // Update Photo & Reset overlays
+      const imgEl = document.getElementById('current-guest-img');
+      const spinner = document.getElementById('photo-spinner');
+      const overlay = document.getElementById('success-overlay');
+      const stageCard = document.getElementById('photo-stage');
+      const hintBox = document.getElementById('hint-box');
+
+      overlay.classList.remove('visible');
+      stageCard.classList.remove('celebrate-success', 'shake-wrong');
+      hintBox.style.display = 'none';
+
+      imgEl.classList.remove('loaded');
+      spinner.style.display = 'block';
+
+      // Load image
+      const tempImg = new Image();
+      tempImg.onload = () => {
+        imgEl.src = currentGuest.photoUrl;
+        imgEl.classList.add('loaded');
+        spinner.style.display = 'none';
+      };
+      tempImg.onerror = () => {
+        // Fallback to placeholder if broken
+        imgEl.src = '/polar-bear.png';
+        imgEl.classList.add('loaded');
+        spinner.style.display = 'none';
+      };
+      tempImg.src = currentGuest.photoUrl;
+
+      updateStatsUI();
+      renderNamesPool(); // re-render to update search / sort state
+    }
+
+    function updateStatsUI() {
+      const total = INITIAL_GUESTS.length;
+      const solved = solvedGuestIds.size;
+      const progressPercent = Math.round((solved / total) * 100);
+
+      document.getElementById('progress-text').textContent = `${solved + 1 > total ? total : solved + 1} מתוך ${total}`;
+      document.getElementById('progress-percent').textContent = `${progressPercent}%`;
+      document.getElementById('progress-fill').style.width = `${progressPercent}%`;
+
+      document.getElementById('streak-count').textContent = currentStreak;
+      document.getElementById('mistakes-count').textContent = mistakesCount;
+    }
+
+    // Render the Pool of All Names
+    function renderNamesPool() {
+      const container = document.getElementById('names-cloud');
+      let list = [...INITIAL_GUESTS];
+
+      // Filter by search
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        list = list.filter(g => g.fullName.toLowerCase().includes(q) || (g.country && g.country.toLowerCase().includes(q)));
+      }
+
+      // Sort
+      if (currentSortMode === 'alpha') {
+        list.sort((a, b) => a.fullName.localeCompare(b.fullName));
+      }
+
+      document.getElementById('names-count-badge').textContent = `(${list.length} שמות)`;
+
+      container.innerHTML = '';
+      list.forEach(guest => {
+        const isSolved = solvedGuestIds.has(guest.id);
+        const chip = document.createElement('div');
+        chip.className = `name-chip ${isSolved ? 'already-solved' : ''}`;
+        chip.id = `chip-${guest.id}`;
+        chip.setAttribute('draggable', isSolved ? 'false' : 'true');
+        chip.dataset.guestId = guest.id;
+        chip.dataset.guestName = guest.fullName;
+
+        chip.innerHTML = `
+          <span>${guest.fullName}</span>
+          ${isSolved ? '<span class="solved-check-icon">✓</span>' : ''}
+        `;
+
+        // Click handler: click to match!
+        chip.addEventListener('click', () => {
+          handleGuess(guest.id, chip);
+        });
+
+        // Drag & Drop Handlers
+        chip.addEventListener('dragstart', (e) => {
+          if (isTransitioning) return;
+          chip.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', guest.id);
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        chip.addEventListener('dragend', () => {
+          chip.classList.remove('dragging');
+        });
+
+        container.appendChild(chip);
+      });
+    }
+
+    // Set up Drag & Drop on Photo Stage
+    const dropZone = document.getElementById('photo-drop-zone');
+    const stageCard = document.getElementById('photo-stage');
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      stageCard.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      stageCard.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      stageCard.classList.remove('drag-over');
+      if (isTransitioning) return;
+
+      const droppedGuestId = e.dataTransfer.getData('text/plain');
+      if (droppedGuestId) {
+        const chipEl = document.getElementById(`chip-${droppedGuestId}`);
+        handleGuess(droppedGuestId, chipEl);
+      }
+    });
+
+    // Check Guess Logic
+    function handleGuess(guessId, chipEl) {
+      if (!currentGuest || isTransitioning) return;
+
+      totalGuesses++;
+
+      if (guessId === currentGuest.id) {
+        // === CORRECT! ===
+        onCorrectGuess(chipEl);
+      } else {
+        // === INCORRECT! ===
+        onWrongGuess(guessId, chipEl);
+      }
+    }
+
+    function onCorrectGuess(chipEl) {
+      isTransitioning = true;
+      correctGuesses++;
+      currentStreak++;
+      if (currentStreak > maxStreak) maxStreak = currentStreak;
+
+      solvedGuestIds.add(currentGuest.id);
+
+      playSound('correct');
+      triggerConfettiParticles(25);
+
+      // Visual feedback on stage
+      const stageCard = document.getElementById('photo-stage');
+      stageCard.classList.add('celebrate-success');
+
+      if (chipEl) {
+        chipEl.classList.add('correct-guess');
+      }
+
+      // Show guest details overlay
+      const overlay = document.getElementById('success-overlay');
+      document.getElementById('success-guest-name').textContent = currentGuest.fullName;
+      document.getElementById('success-guest-country').textContent = `🌍 ${currentGuest.country || 'International'}`;
+      document.getElementById('success-guest-company').textContent = `💼 ${currentGuest.company || ''} ${currentGuest.role ? '• ' + currentGuest.role : ''}`.trim();
+      overlay.classList.add('visible');
+
+      updateStatsUI();
+
+      showToast(`נכון מאוד! זהו ${currentGuest.fullName} 🎉`, 'success', '✨');
+
+      // Advance after 1.25s delay so user enjoys the celebration
+      setTimeout(() => {
+        loadNextGuest();
+      }, 1250);
+    }
+
+    function onWrongGuess(guessId, chipEl) {
+      currentStreak = 0;
+      mistakesCount++;
+      updateStatsUI();
+
+      playSound('wrong');
+
+      const stageCard = document.getElementById('photo-stage');
+      stageCard.classList.add('shake-wrong');
+      setTimeout(() => stageCard.classList.remove('shake-wrong'), 500);
+
+      if (chipEl) {
+        chipEl.classList.add('wrong-guess');
+        setTimeout(() => {
+          chipEl.classList.remove('wrong-guess');
+        }, 550);
+      }
+
+      const guessedGuest = INITIAL_GUESTS.find(g => g.id === guessId);
+      const guessedName = guessedGuest ? guessedGuest.fullName : 'שם זה';
+      showToast(`לא נכון... זה לא ${guessedName}, נסו שוב!`, 'wrong', '❌');
+    }
+
+    // Hint function
+    function showHint() {
+      if (!currentGuest || isTransitioning) return;
+      playSound('hint');
+      const hintBox = document.getElementById('hint-box');
+      const hintText = document.getElementById('hint-text');
+
+      const hints = [];
+      if (currentGuest.country) hints.push(`מדינה: ${currentGuest.country}`);
+      if (currentGuest.company) hints.push(`ארגון: ${currentGuest.company}`);
+      hints.push(`אות ראשונה של השם: "${currentGuest.fullName.charAt(0)}"`);
+
+      hintText.textContent = hints.join(' | ');
+      hintBox.style.display = 'flex';
+      showToast('רמז נחשף למטה!', 'info', '💡');
+    }
+
+    // Skip current guest to end of queue
+    function skipCurrentGuest() {
+      if (!currentGuest || isTransitioning) return;
+      // Move to end of queue
+      const idx = guestsQueue.indexOf(currentGuest);
+      if (idx !== -1) {
+        guestsQueue.splice(idx, 1);
+        guestsQueue.push(currentGuest);
+      }
+      showToast('האורח הועבר לסוף התור', 'info', '⏭️');
+      loadNextGuest();
+    }
+
+    // Search and Sort
+    function handleSearch(val) {
+      searchQuery = val;
+      renderNamesPool();
+    }
+
+    function sortNames(mode) {
+      currentSortMode = mode;
+      document.getElementById('sort-random-btn').classList.toggle('active', mode === 'random');
+      document.getElementById('sort-alpha-btn').classList.toggle('active', mode === 'alpha');
+
+      if (mode === 'random') {
+        INITIAL_GUESTS.sort(() => Math.random() - 0.5);
+      }
+      renderNamesPool();
+    }
+
+    // Toast Notification Helper
+    let toastTimeout = null;
+    function showToast(msg, type = 'info', icon = '✨') {
+      const toast = document.getElementById('toast');
+      const iconEl = document.getElementById('toast-icon');
+      const msgEl = document.getElementById('toast-msg');
+
+      iconEl.textContent = icon;
+      msgEl.textContent = msg;
+
+      toast.className = `toast ${type} visible`;
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 2200);
+    }
+
+    // Game Completion
+    function onGameComplete() {
+      if (gameTimer) clearInterval(gameTimer);
+      playSound('victory');
+      triggerFullConfettiShower();
+
+      const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+      const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+      document.getElementById('modal-total-time').textContent = `${mins}:${secs}`;
+
+      const accuracy = totalGuesses > 0 ? Math.round((correctGuesses / totalGuesses) * 100) : 100;
+      document.getElementById('modal-accuracy').textContent = `${accuracy}%`;
+      document.getElementById('modal-streak').textContent = maxStreak;
+      document.getElementById('modal-mistakes').textContent = mistakesCount;
+
+      document.getElementById('victory-modal').classList.add('visible');
+    }
+
+    // Confetti Engine (Canvas based, super lightweight)
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let confettiParticles = [];
+    let confettiAnimation = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerConfettiParticles(count = 20) {
+      const colors = ['#38bdf8', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#ffffff'];
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: canvas.width * 0.35 + (Math.random() - 0.5) * 180,
+          y: canvas.height * 0.45,
+          vx: (Math.random() - 0.5) * 8,
+          vy: -Math.random() * 8 - 4,
+          size: Math.random() * 6 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 10,
+          life: 1
+        });
+      }
+      if (!confettiAnimation) animateConfetti();
+    }
+
+    function triggerFullConfettiShower() {
+      const colors = ['#38bdf8', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#ffffff', '#fbbf24'];
+      for (let i = 0; i < 180; i++) {
+        confettiParticles.push({
+          x: Math.random() * canvas.width,
+          y: -20 - Math.random() * 100,
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * 5 + 3,
+          size: Math.random() * 8 + 5,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 12,
+          life: 1
+        });
+      }
+      if (!confettiAnimation) animateConfetti();
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      confettiParticles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.2; // gravity
+        p.rotation += p.vRot;
+        p.life -= 0.012;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+
+        if (p.life <= 0 || p.y > canvas.height + 20) {
+          confettiParticles.splice(idx, 1);
+        }
+      });
+
+      if (confettiParticles.length > 0) {
+        confettiAnimation = requestAnimationFrame(animateConfetti);
+      } else {
+        confettiAnimation = null;
+      }
+    }
+
+    // Auto-start on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initGame();
+    });
+  </script>
+</body>
+</html>
