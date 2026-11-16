@@ -1108,10 +1108,11 @@ function getFestivalTimetableSchedule(forceRefresh) {
     if (!ssId) return { success: false, message: "Lineup spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v8_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v9_' + ssId;
     if (forceRefresh) {
       try { 
         cache.remove(cacheKey);
+        cache.remove('festival_timetable_schedule_v8_' + ssId);
         cache.remove('festival_timetable_schedule_v7_' + ssId);
         cache.remove('festival_timetable_schedule_latest');
       } catch(e) {}
@@ -1224,6 +1225,7 @@ function clearTimetableCache() {
     ids.forEach(id => {
       if (id) {
         try {
+          cache.remove('festival_timetable_schedule_v9_' + id);
           cache.remove('festival_timetable_schedule_v8_' + id);
           cache.remove('festival_timetable_schedule_v7_' + id);
           cache.remove('global_artists_data_v2_' + id);
@@ -1423,8 +1425,31 @@ function normalizeArtistString(str) {
     .trim();
 }
 
+/**
+ * Checks if a cell / event text represents an excluded meeting/panel talk
+ * (e.g. video clips competition panel or rock/punk panel session)
+ */
+function isExcludedTimetableEvent(text) {
+  if (!text) return false;
+  const s = String(text);
+  const sl = s.toLowerCase();
+  return (
+    s.includes('כמה רעש') ||
+    s.includes('הזאבות על רוק') ||
+    s.includes('ניצן פינקו') ||
+    s.includes('יפעת בלסיאנו') ||
+    s.includes('טליה ישי') ||
+    s.includes('תחרות הקליפים') ||
+    s.includes('Soundtrack') ||
+    sl.includes('soundtrack') ||
+    sl.includes('tiktok killed') ||
+    s.includes('מיטל נר') ||
+    s.includes('עומר אלוני')
+  );
+}
+
 function findMatchedArtistBackend(artistName, artistsList) {
-  if (!artistName) return null;
+  if (!artistName || isExcludedTimetableEvent(artistName)) return null;
   const queries = [artistName];
 
   for (const q of queries) {
@@ -1510,6 +1535,14 @@ function shouldKeepTimetableItem(show, artistsList) {
 
   const raw = String(show.artistName).trim();
   const lower = raw.toLowerCase();
+
+  // Excluded talks / meetings (per user request)
+  if (isExcludedTimetableEvent(raw)) return false;
+  if (show.aliases && Array.isArray(show.aliases)) {
+    for (const al of show.aliases) {
+      if (isExcludedTimetableEvent(al)) return false;
+    }
+  }
 
   const matched = findMatchedArtistBackend(raw, artistsList);
   const namedDJ = isNamedDJ(raw, matched);
@@ -1666,6 +1699,11 @@ function parseLineupGrid(grid, artistsList) {
 
       // Prices / info notes
       if (cellArtist.includes('ש"ח כניסה') || cellArtist.includes('כרטיס משולב') || cellArtist.includes('כניסה חופשית בהרשמה') || cellArtist.includes('כחלק מפסטיבל הג\'אז')) {
+        continue;
+      }
+
+      // Excluded talks / meetings (per user request)
+      if (isExcludedTimetableEvent(cellArtist)) {
         continue;
       }
 

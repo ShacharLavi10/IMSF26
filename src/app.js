@@ -6028,8 +6028,33 @@ function closeWelcomeModal() {
     const matchedArtistCache = new Map();
     window.matchedArtistCache = matchedArtistCache;
 
+    function isExcludedTimetableEvent(text) {
+      if (!text) return false;
+      const s = String(text);
+      const sl = s.toLowerCase();
+      return (
+        s.includes('כמה רעש') ||
+        s.includes('הזאבות על רוק') ||
+        s.includes('ניצן פינקו') ||
+        s.includes('יפעת בלסיאנו') ||
+        s.includes('טליה ישי') ||
+        s.includes('תחרות הקליפים') ||
+        s.includes('Soundtrack') ||
+        sl.includes('soundtrack') ||
+        sl.includes('tiktok killed') ||
+        s.includes('מיטל נר') ||
+        s.includes('עומר אלוני')
+      );
+    }
+
     function findMatchedArtist(artistName, aliases) {
       if (!artistName) return null;
+      if (isExcludedTimetableEvent(artistName)) return null;
+      if (aliases && Array.isArray(aliases)) {
+        for (const al of aliases) {
+          if (isExcludedTimetableEvent(al)) return null;
+        }
+      }
       const cacheKey = String(artistName).trim() + '__' + ((aliases && aliases.length) ? aliases.join('|') : '');
       if (matchedArtistCache.has(cacheKey)) {
         return matchedArtistCache.get(cacheKey);
@@ -6135,6 +6160,14 @@ function closeWelcomeModal() {
       const raw = String(show.artistName).trim();
       const lower = raw.toLowerCase();
 
+      // Excluded talks / meetings (per user request)
+      if (isExcludedTimetableEvent(raw)) return false;
+      if (show.aliases && Array.isArray(show.aliases)) {
+        for (const al of show.aliases) {
+          if (isExcludedTimetableEvent(al)) return false;
+        }
+      }
+
       const matched = findMatchedArtist(raw, show.aliases);
       const namedDJ = isNamedDJ(raw, matched);
 
@@ -6210,7 +6243,7 @@ function closeWelcomeModal() {
       return false;
     }
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v13';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v14';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {
