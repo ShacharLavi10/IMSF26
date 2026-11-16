@@ -586,7 +586,6 @@
       gap: 16px;
     }
 
-    /* DIRECTORY FILTERS (MATCHING INDEX.HTML EXACTLY) */
     .directory-filters {
       display: flex;
       flex-direction: column;
@@ -698,7 +697,6 @@
       text-align: left;
     }
 
-    /* ARTISTS GRID & CARDS (MATCHING 09_OVERRIDES.CSS EXACTLY) */
     .artists-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -787,7 +785,6 @@
       opacity: 0.95;
     }
 
-    /* EMPTY CATEGORY CARD */
     .empty-category-card {
       background: rgba(255, 255, 255, 0.02);
       border: 1px dashed var(--border-default);
@@ -1445,7 +1442,7 @@
         </div>
 
         <div id="directory-status" class="directory-status">
-          Showing 34 delegates
+          Showing 33 delegates
         </div>
 
         <!-- ARTISTS-GRID (SQUARE CARDS MATCHING PORTAL) -->
@@ -1581,7 +1578,7 @@
   </div>
 
   <script>
-    // All 34 delegates data
+    // Strictly filtered 33 delegates
     const ALL_DELEGATES = [
   {
     "id": "benson_zhang",
@@ -2110,41 +2107,8 @@
     "photoUrl": "https://drive.google.com/thumbnail?id=1yRThDQd3uk1Sc0ao69f80JTqID_7hEzx&sz=w800",
     "hasRealPhoto": true,
     "isAngella": false
-  },
-  {
-    "id": "thi_quynh_vu",
-    "fullName": "Thi Quynh Vu",
-    "firstName": "Thi Quynh",
-    "lastName": "Vu",
-    "country": "Vietnam",
-    "company": "Independent",
-    "role": "אשתו של Huy",
-    "whatCompanyDoes": "",
-    "festivalGoal": "",
-    "bio": "",
-    "genre": "",
-    "photoUrl": "",
-    "hasRealPhoto": false,
-    "isAngella": false
-  },
-  {
-    "id": "david",
-    "fullName": "David",
-    "firstName": "David",
-    "lastName": "",
-    "country": "N/A",
-    "company": "Independent",
-    "role": "הפקה כללי",
-    "whatCompanyDoes": "",
-    "festivalGoal": "",
-    "bio": "",
-    "genre": "",
-    "photoUrl": "",
-    "hasRealPhoto": false,
-    "isAngella": false
   }
 ];
-    // 33 delegates with photos for game
     const GAME_GUESTS = [
   {
     "id": "benson_zhang",
@@ -2931,7 +2895,7 @@
     }
 
     // ========================================================
-    // GAME VIEW LOGIC (WITH SILENT CLICKS AND POPUP)
+    // GAME VIEW LOGIC
     // ========================================================
     function startTimer() {
       if (gameTimer) clearInterval(gameTimer);
@@ -3154,7 +3118,7 @@
       mistakesCount++;
       updateStatsUI();
 
-      // STRICTLY ZERO SOUND on wrong guess! Visual only
+      // ZERO SOUND on wrong guess - visual only
       const stageCard = document.getElementById('photo-stage');
       stageCard.classList.add('shake-wrong');
       setTimeout(() => stageCard.classList.remove('shake-wrong'), 500);
