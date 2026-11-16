@@ -2521,7 +2521,7 @@
       if (guest.festivalGoal && guest.festivalGoal.trim()) {
         goalsSection.style.display = 'block';
         goalsTags.innerHTML = '';
-        const list = guest.festivalGoal.split(/,(?![^()]*))/).map(s => s.trim()).filter(Boolean);
+        const list = guest.festivalGoal.split(',').map(s => s.trim()).filter(Boolean);
         list.forEach(item => {
           const pill = document.createElement('span');
           pill.className = 'sheet-pill-tag';
@@ -2796,7 +2796,7 @@
       const goalsWrap = document.getElementById('modal-guest-goals-wrap');
       goalsWrap.innerHTML = '';
       const rawGoals = guest.festivalGoal || '';
-      const goalsList = rawGoals.split(/,(?![^()]*))/).map(s => s.trim()).filter(Boolean);
+      const goalsList = rawGoals.split(',').map(s => s.trim()).filter(Boolean);
 
       if (goalsList.length > 0) {
         goalsList.forEach(goal => {
