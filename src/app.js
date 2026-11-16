@@ -2335,7 +2335,8 @@ function closeWelcomeModal() {
       globalDirectoryData = (directoryArray || []).filter(guest => {
         const guestEmail = String(guest["Email"] || "").trim();
         const guestRole = String(guest["Role / Title"] || "").trim();
-        return guestEmail !== "" && guestRole !== "הפקה חשיפה" && Boolean((guest["First Name"] || "").trim() || (guest["Last Name"] || "").trim());
+        const isProdRole = guestRole === "הפקה חשיפה" || guestRole === "הפקה כללי" || guestRole.includes("הפקה");
+        return guestEmail !== "" && !isProdRole && Boolean((guest["First Name"] || "").trim() || (guest["Last Name"] || "").trim());
       });
       const container = document.getElementById("directory-container");
       
@@ -7605,9 +7606,9 @@ function renderAdminDashboard() {
     // Skip empty or invalid emails (must contain @)
     if (!email || !email.includes("@")) continue;
     
-    // Ignore admins
+    // Ignore admins and production staff
     const cleanRole = role.replace(/\s+/g, ' ').trim();
-    if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה")) continue;
+    if (cleanRole === "הפקה חשיפה" || cleanRole === "הפקה כללי" || cleanRole.includes("הפקה")) continue;
     
     totalGuests++;
     
@@ -9493,10 +9494,10 @@ function filterAdminGuests(query) {
     const company = companyIdx !== -1 ? String(row[companyIdx] || "").trim() : "";
 
     // Same filter as the Guests tab (Directory):
-    // Must have a name, must have a valid email with '@', and role must not be or contain "הפקה חשיפה"
+    // Must have a name, must have a valid email with '@', and role must not be or contain production roles ("הפקה חשיפה", "הפקה כללי", "הפקה")
     if (!fname && !lname) continue;
     if (!email || !email.includes("@")) continue;
-    if (cleanRole === "הפקה חשיפה" || cleanRole.includes("הפקה חשיפה")) continue;
+    if (cleanRole === "הפקה חשיפה" || cleanRole === "הפקה כללי" || cleanRole.includes("הפקה")) continue;
     
     const fullName = (fname + " " + lname).trim();
     
