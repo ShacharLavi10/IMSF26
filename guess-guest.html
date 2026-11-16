@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>זהה את האורח | IMSF 2026 Guess the Guest</title>
+  <title>IMSF 2026 | פורטל אורחים ומשחק זיהוי</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
       --bg: #0b0c10;
       --card-bg: rgba(22, 25, 35, 0.78);
       --card-border: rgba(255, 255, 255, 0.08);
-      --card-hover: rgba(255, 255, 255, 0.12);
+      --card-hover: rgba(255, 255, 255, 0.14);
       --text: #f1f5f9;
       --text-muted: #94a3b8;
       --accent: #38bdf8;
@@ -54,14 +54,15 @@
     /* Top Navigation Header */
     header {
       width: 100%;
-      max-width: 1280px;
+      max-width: 1380px;
       margin: 0 auto;
-      padding: 16px 20px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
       border-bottom: 1px solid var(--card-border);
+      flex-wrap: wrap;
     }
 
     .brand {
@@ -73,15 +74,15 @@
     }
 
     .brand img {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       border-radius: 12px;
       object-fit: cover;
       box-shadow: 0 4px 14px rgba(0,0,0,0.4);
     }
 
     .brand-title {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 800;
       background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
       -webkit-background-clip: text;
@@ -90,62 +91,115 @@
     }
 
     .brand-subtitle {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       font-weight: 400;
+    }
+
+    /* Top Tabs Switcher (Game vs Directory) */
+    .top-nav-tabs {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 4px;
+      border-radius: 99px;
+      gap: 4px;
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-he);
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 99px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-tab-btn.active {
+      background: linear-gradient(135deg, var(--accent) 0%, rgba(56, 189, 248, 0.8) 100%);
+      color: #0b0c10;
+      font-weight: 800;
+      box-shadow: 0 4px 16px var(--accent-glow);
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn-icon {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--card-border);
       color: var(--text);
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 1.1rem;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 1.05rem;
+      transition: all 0.2s ease;
+      text-decoration: none;
     }
 
     .btn-icon:hover {
       background: rgba(255, 255, 255, 0.12);
-      border-color: rgba(255, 255, 255, 0.2);
       transform: translateY(-2px);
     }
 
     /* Container */
     main {
       width: 100%;
-      max-width: 1280px;
+      max-width: 1380px;
       margin: 0 auto;
-      padding: 16px 20px 40px;
+      padding: 16px 20px 50px;
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
 
-    /* Stats & Progress Strip */
+    /* View containers */
+    .view-section {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .view-section.active {
+      display: flex;
+    }
+
+    /* ======================================================== */
+    /* VIEW 1: GAME VIEW STYLES                                  */
+    /* ======================================================== */
     .stats-bar {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       backdrop-filter: blur(16px);
       border-radius: var(--radius);
-      padding: 14px 22px;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 14px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.25);
     }
 
@@ -153,7 +207,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 500;
     }
 
@@ -169,8 +223,8 @@
 
     .progress-wrapper {
       flex: 1;
-      min-width: 200px;
-      max-width: 380px;
+      min-width: 180px;
+      max-width: 340px;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -179,7 +233,7 @@
     .progress-meta {
       display: flex;
       justify-content: space-between;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
     }
 
@@ -201,10 +255,9 @@
       box-shadow: 0 0 12px var(--accent-glow);
     }
 
-    /* Main Arena: Grid 2 Columns */
     .game-arena {
       display: grid;
-      grid-template-columns: 460px 1fr;
+      grid-template-columns: 440px 1fr;
       gap: 24px;
       align-items: start;
     }
@@ -215,20 +268,19 @@
       }
     }
 
-    /* Left Card: Guest Photo & Drop Target */
     .photo-stage-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       backdrop-filter: blur(20px);
       border-radius: var(--radius);
-      padding: 20px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       box-shadow: 0 12px 40px rgba(0,0,0,0.35);
       position: sticky;
-      top: 20px;
+      top: 16px;
       transition: all 0.3s ease;
     }
 
@@ -279,15 +331,14 @@
 
     .photo-loader-spinner {
       position: absolute;
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       border: 3px solid rgba(255, 255, 255, 0.1);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
 
-    /* Drag target hint overlay on image */
     .drop-target-hint {
       position: absolute;
       bottom: 12px;
@@ -316,7 +367,6 @@
       transform: scale(1.05);
     }
 
-    /* Photo action buttons */
     .photo-actions {
       width: 100%;
       display: flex;
@@ -325,20 +375,20 @@
 
     .btn-action {
       flex: 1;
-      padding: 10px 14px;
+      padding: 9px 12px;
       border-radius: 12px;
       border: 1px solid var(--card-border);
       background: rgba(255, 255, 255, 0.05);
       color: var(--text);
       font-family: var(--font-he);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
     }
 
     .btn-action:hover {
@@ -347,17 +397,6 @@
       transform: translateY(-1px);
     }
 
-    .btn-action.hint-btn:hover {
-      color: var(--amber);
-      border-color: var(--amber);
-    }
-
-    .btn-action.skip-btn:hover {
-      color: var(--accent);
-      border-color: var(--accent);
-    }
-
-    /* Hint Alert Card */
     .hint-box {
       width: 100%;
       background: rgba(245, 158, 11, 0.1);
@@ -374,7 +413,6 @@
       text-align: left;
     }
 
-    /* Right Card: Name Pool */
     .names-stage-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -410,8 +448,8 @@
     .search-wrapper {
       position: relative;
       flex: 1;
-      max-width: 280px;
-      min-width: 160px;
+      max-width: 260px;
+      min-width: 150px;
     }
 
     .search-input {
@@ -466,7 +504,6 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
-    /* Names Cloud / Grid */
     .names-cloud {
       display: flex;
       flex-wrap: wrap;
@@ -477,7 +514,6 @@
       padding-right: 4px;
     }
 
-    /* Custom Scrollbar */
     .names-cloud::-webkit-scrollbar {
       width: 6px;
     }
@@ -489,7 +525,6 @@
       border-radius: 10px;
     }
 
-    /* Single Name Chip */
     .name-chip {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.09);
@@ -528,7 +563,6 @@
       border-color: var(--accent);
     }
 
-    /* Incorrect Guess Animation (Visual only, NO sound!) */
     .name-chip.wrong-guess {
       animation: shake 0.45s ease-in-out;
       background: rgba(239, 68, 68, 0.25) !important;
@@ -537,7 +571,6 @@
       box-shadow: 0 0 16px var(--danger-glow) !important;
     }
 
-    /* Correct Guess State */
     .name-chip.correct-guess {
       background: rgba(16, 185, 129, 0.2) !important;
       border-color: var(--success) !important;
@@ -546,7 +579,6 @@
       animation: pulseGreen 0.6s ease;
     }
 
-    /* Completed Guest Badge in pool */
     .name-chip.already-solved {
       opacity: 0.65;
       background: rgba(16, 185, 129, 0.08);
@@ -564,11 +596,240 @@
       font-weight: 800;
     }
 
-    /* === GUEST DETAILS MODAL POPUP === */
+    /* ======================================================== */
+    /* VIEW 2: FULL DIRECTORY VIEW STYLES                      */
+    /* ======================================================== */
+    .dir-filter-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: var(--radius);
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+
+    .dir-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .dir-search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+      max-width: 380px;
+    }
+
+    .dir-search-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 38px 10px 14px;
+      color: #fff;
+      font-family: var(--font-he);
+      font-size: 0.92rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .dir-search-input:focus {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .dir-select {
+      background: #141724;
+      border: 1px solid var(--card-border);
+      color: #f1f5f9;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-family: var(--font-he);
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+      min-width: 160px;
+    }
+
+    .dir-select:focus {
+      border-color: var(--accent);
+    }
+
+    .dir-count-badge {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Delegates Cards Grid */
+    .delegates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 20px;
+      width: 100%;
+    }
+
+    .delegate-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .delegate-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 14px 34px rgba(0,0,0,0.45), 0 0 25px rgba(56, 189, 248, 0.15);
+    }
+
+    .delegate-card-img-wrap {
+      width: 100%;
+      height: 240px;
+      position: relative;
+      background: #10131d;
+      overflow: hidden;
+    }
+
+    .delegate-card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 25%;
+      transition: transform 0.4s ease;
+    }
+
+    .delegate-card-img.angella-focal {
+      object-position: center 78% !important;
+    }
+
+    .delegate-card:hover .delegate-card-img {
+      transform: scale(1.05);
+    }
+
+    .delegate-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(11, 12, 16, 0.95) 0%, rgba(11, 12, 16, 0.3) 50%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+    }
+
+    .delegate-card-name {
+      font-family: var(--font-en);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      direction: ltr;
+      text-align: right;
+      line-height: 1.2;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .delegate-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 0.85rem;
+    }
+
+    .delegate-card-country {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .delegate-card-genre {
+      background: rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 0.72rem;
+    }
+
+    .delegate-card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .delegate-role-comp {
+      font-size: 0.88rem;
+      color: #e2e8f0;
+      font-weight: 500;
+      line-height: 1.35;
+      direction: ltr;
+      text-align: right;
+    }
+
+    .delegate-section-block {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .delegate-section-lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .delegate-section-val {
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      line-height: 1.35;
+      direction: ltr;
+      text-align: right;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .delegate-card-footer {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ======================================================== */
+    /* MODAL POPUP STYLES (SHARED FOR GAME & DIRECTORY)        */
+    /* ======================================================== */
     .guest-modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.82);
       backdrop-filter: blur(14px);
       z-index: 1500;
       display: flex;
@@ -589,16 +850,26 @@
       background: #131722;
       border: 1px solid rgba(16, 185, 129, 0.3);
       border-radius: 22px;
-      padding: 26px 28px;
-      max-width: 520px;
+      padding: 24px 26px;
+      max-width: 580px;
       width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 18px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 50px rgba(16, 185, 129, 0.2);
+      gap: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.85), 0 0 50px rgba(16, 185, 129, 0.2);
       transform: scale(0.92) translateY(10px);
       transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
+    }
+
+    .guest-modal-card::-webkit-scrollbar {
+      width: 6px;
+    }
+    .guest-modal-card::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
     }
 
     .guest-modal-backdrop.visible .guest-modal-card {
@@ -638,13 +909,14 @@
     }
 
     .modal-avatar-frame {
-      width: 74px;
-      height: 74px;
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
       overflow: hidden;
       border: 2px solid var(--success);
       box-shadow: 0 0 16px var(--success-glow);
       flex-shrink: 0;
+      background: #11141d;
     }
 
     .modal-avatar-img {
@@ -656,7 +928,7 @@
     .modal-hero-info {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       flex: 1;
     }
 
@@ -691,7 +963,6 @@
       font-weight: 600;
     }
 
-    /* Modal Info Rows */
     .modal-details-list {
       display: flex;
       flex-direction: column;
@@ -718,20 +989,14 @@
     }
 
     .modal-detail-value {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: #f1f5f9;
       font-weight: 500;
-      line-height: 1.4;
+      line-height: 1.45;
       direction: ltr;
       text-align: right;
     }
 
-    .modal-detail-value.hebrew-text {
-      direction: rtl;
-      text-align: right;
-    }
-
-    /* Goals Tags */
     .goals-tags-wrap {
       display: flex;
       flex-wrap: wrap;
@@ -751,15 +1016,35 @@
       line-height: 1.3;
     }
 
+    .bio-text-wrap {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      max-height: 160px;
+      overflow-y: auto;
+      padding-right: 6px;
+      white-space: pre-line;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .bio-text-wrap::-webkit-scrollbar {
+      width: 4px;
+    }
+    .bio-text-wrap::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+    }
+
     .btn-modal-continue {
       width: 100%;
-      padding: 13px 20px;
+      padding: 12px 20px;
       border-radius: 14px;
       border: none;
       background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
       color: #0b0c10;
       font-family: var(--font-he);
-      font-size: 1.05rem;
+      font-size: 1.02rem;
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 6px 20px var(--accent-glow);
@@ -776,18 +1061,18 @@
       filter: brightness(1.08);
     }
 
-    /* Floating Feedback Toast */
+    /* Toast */
     .toast-container {
       position: fixed;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 1000;
+      z-index: 2000;
       pointer-events: none;
     }
 
     .toast {
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(15, 23, 42, 0.94);
       backdrop-filter: blur(14px);
       border: 1px solid var(--card-border);
       border-radius: 99px;
@@ -808,22 +1093,11 @@
       transform: translateY(0);
     }
 
-    .toast.wrong {
-      border-color: var(--danger);
-      color: #fca5a5;
-    }
+    .toast.wrong { border-color: var(--danger); color: #fca5a5; }
+    .toast.success { border-color: var(--success); color: #86efac; }
+    .toast.info { border-color: var(--accent); color: #bae6fd; }
 
-    .toast.success {
-      border-color: var(--success);
-      color: #86efac;
-    }
-
-    .toast.info {
-      border-color: var(--accent);
-      color: #bae6fd;
-    }
-
-    /* Victory / Game Over Modal */
+    /* Victory Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -941,7 +1215,6 @@
       filter: brightness(1.1);
     }
 
-    /* Confetti Canvas */
     #confetti-canvas {
       position: fixed;
       inset: 0;
@@ -949,11 +1222,7 @@
       z-index: 2500;
     }
 
-    /* Animations */
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
+    @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       20% { transform: translateX(-8px); }
@@ -961,18 +1230,15 @@
       60% { transform: translateX(-5px); }
       80% { transform: translateX(5px); }
     }
-
     @keyframes pulseGreen {
       0% { transform: scale(1); }
       50% { transform: scale(1.08); }
       100% { transform: scale(1); }
     }
-
     @keyframes float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-4px); }
       to { opacity: 1; transform: translateY(0); }
@@ -987,131 +1253,191 @@
     <a href="/" class="brand">
       <img src="/polar-bear.png" alt="IMSF Mascot" onerror="this.src='/favicon.png'">
       <div>
-        <div class="brand-title">זהה את האורח 🎵</div>
-        <div class="brand-subtitle">IMSF 2026 Guess the Guest Game</div>
+        <div class="brand-title">IMSF 2026 Delegates</div>
+        <div class="brand-subtitle">פסטיבל חשיפה בינלאומית למוזיקה</div>
       </div>
     </a>
+
+    <!-- Top View Switcher Tabs -->
+    <div class="top-nav-tabs">
+      <button class="nav-tab-btn active" id="tab-game-btn" onclick="switchView('game')">
+        <span>🎮</span>
+        <span>זהה את האורח</span>
+      </button>
+      <button class="nav-tab-btn" id="tab-dir-btn" onclick="switchView('directory')">
+        <span>👥</span>
+        <span>רשימת האורחים</span>
+      </button>
+    </div>
+
     <div class="header-actions">
-      <button class="btn-icon" id="shuffle-btn" title="ערבב מחדש את סדר האורחים" onclick="restartGame()">🔀</button>
-      <a href="/" class="btn-icon" title="חזרה לפורטל הראשי" style="text-decoration:none;">🏠</a>
+      <button class="btn-icon" id="shuffle-btn" title="ערבב מחדש את סדר המשחק" onclick="restartGame()">🔀</button>
+      <a href="/" class="btn-icon" title="חזרה לפורטל הראשי">🏠</a>
     </div>
   </header>
 
   <main>
 
-    <!-- Stats & Progress Strip -->
-    <section class="stats-bar">
-      <div class="stat-item">
-        <span>🎯 התקדמות:</span>
-        <span class="stat-value highlight-cyan" id="progress-text">1 מתוך 33</span>
-      </div>
+    <!-- ======================================================== -->
+    <!-- VIEW 1: GAME SECTION                                     -->
+    <!-- ======================================================== -->
+    <section class="view-section active" id="game-view">
 
-      <div class="progress-wrapper">
-        <div class="progress-meta">
-          <span>הושלמו</span>
-          <span id="progress-percent">0%</span>
+      <!-- Stats & Progress Strip -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span>🎯 התקדמות:</span>
+          <span class="stat-value highlight-cyan" id="progress-text">1 מתוך 33</span>
         </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progress-fill"></div>
+
+        <div class="progress-wrapper">
+          <div class="progress-meta">
+            <span>הושלמו</span>
+            <span id="progress-percent">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="stat-item">
+          <span>🔥 רצף:</span>
+          <span class="stat-value highlight-amber" id="streak-count">0</span>
+        </div>
+
+        <div class="stat-item">
+          <span>❌ שגיאות:</span>
+          <span class="stat-value highlight-red" id="mistakes-count">0</span>
+        </div>
+
+        <div class="stat-item">
+          <span>⏱️ זמן:</span>
+          <span class="stat-value" id="timer-text">00:00</span>
         </div>
       </div>
 
-      <div class="stat-item">
-        <span>🔥 רצף:</span>
-        <span class="stat-value highlight-amber" id="streak-count">0</span>
+      <!-- Main Game Arena -->
+      <div class="game-arena">
+
+        <!-- Left Column: Guest Photo Card & Drop Zone -->
+        <div class="photo-stage-card" id="photo-stage">
+
+          <div class="photo-frame" id="photo-drop-zone">
+            <div class="photo-loader-spinner" id="photo-spinner"></div>
+            <img src="" alt="Guest Photo" id="current-guest-img" class="guest-photo-img">
+            
+            <div class="drop-target-hint">
+              <span>🎯</span>
+              <span id="drop-hint-text">גררו שם לכאן או לחצו עליו מימין</span>
+            </div>
+          </div>
+
+          <!-- Hint Banner -->
+          <div class="hint-box" id="hint-box">
+            <span>💡 <strong>רמז:</strong></span>
+            <span id="hint-text">...</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="photo-actions">
+            <button class="btn-action hint-btn" onclick="showHint()">
+              <span>💡</span>
+              <span>רמז</span>
+            </button>
+            <button class="btn-action skip-btn" onclick="skipCurrentGuest()">
+              <span>⏭️</span>
+              <span>דלג בינתיים</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Interactive Name Pool -->
+        <div class="names-stage-card">
+
+          <div class="names-header">
+            <div class="names-title">
+              <span>🏷️</span>
+              <span>בחרו או גררו את השם:</span>
+              <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="names-count-badge">(33 שמות)</span>
+            </div>
+
+            <div class="search-wrapper">
+              <span class="search-icon">🔍</span>
+              <input type="text" class="search-input" id="search-input" placeholder="חיפוש שם מהיר..." oninput="handleSearch(this.value)">
+            </div>
+
+            <div class="sort-actions">
+              <button class="btn-pill active" id="sort-random-btn" onclick="sortNames('random')">ערבב</button>
+              <button class="btn-pill" id="sort-alpha-btn" onclick="sortNames('alpha')">א'-ב'</button>
+            </div>
+          </div>
+
+          <!-- The Pool of All Names -->
+          <div class="names-cloud" id="names-cloud">
+            <!-- Populated by JS -->
+          </div>
+
+        </div>
+
       </div>
 
-      <div class="stat-item">
-        <span>❌ שגיאות:</span>
-        <span class="stat-value highlight-red" id="mistakes-count">0</span>
-      </div>
-
-      <div class="stat-item">
-        <span>⏱️ זמן:</span>
-        <span class="stat-value" id="timer-text">00:00</span>
-      </div>
     </section>
 
-    <!-- Main Game Arena -->
-    <section class="game-arena">
+    <!-- ======================================================== -->
+    <!-- VIEW 2: FULL DIRECTORY VIEW                              -->
+    <!-- ======================================================== -->
+    <section class="view-section" id="directory-view">
 
-      <!-- Left Column: Guest Photo Card & Drop Zone -->
-      <div class="photo-stage-card" id="photo-stage">
-
-        <div class="photo-frame" id="photo-drop-zone">
-          <div class="photo-loader-spinner" id="photo-spinner"></div>
-          <img src="" alt="Guest Photo" id="current-guest-img" class="guest-photo-img">
-          
-          <div class="drop-target-hint">
-            <span>🎯</span>
-            <span id="drop-hint-text">גררו שם לכאן או לחצו עליו מימין</span>
+      <!-- Directory Filters Bar -->
+      <div class="dir-filter-bar">
+        <div class="dir-filter-group">
+          <!-- Search input -->
+          <div class="dir-search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="dir-search-input" id="dir-search" placeholder="חיפוש חופשי לפי שם, מדינה, חברה או תפקיד..." oninput="filterDirectory()">
           </div>
+
+          <!-- Country Filter -->
+          <select class="dir-select" id="dir-country-filter" onchange="filterDirectory()">
+            <option value="All">כל המדינות (All Countries)</option>
+          </select>
+
+          <!-- Genre Filter -->
+          <select class="dir-select" id="dir-genre-filter" onchange="filterDirectory()">
+            <option value="All">כל הז'אנרים (All Genres)</option>
+            <option value="Rock, Indie & Electronic">Rock, Indie & Electronic</option>
+            <option value="Jazz/World music">Jazz / World Music</option>
+            <option value="Multi Genres">Multi Genres</option>
+          </select>
         </div>
 
-        <!-- Hint Banner -->
-        <div class="hint-box" id="hint-box">
-          <span>💡 <strong>רמז:</strong></span>
-          <span id="hint-text">...</span>
+        <div class="dir-count-badge" id="dir-count-text">
+          מציג 34 אורחים
         </div>
-
-        <!-- Action Buttons -->
-        <div class="photo-actions">
-          <button class="btn-action hint-btn" onclick="showHint()">
-            <span>💡</span>
-            <span>רמז</span>
-          </button>
-          <button class="btn-action skip-btn" onclick="skipCurrentGuest()">
-            <span>⏭️</span>
-            <span>דלג בינתיים</span>
-          </button>
-        </div>
-
       </div>
 
-      <!-- Right Column: Interactive Name Pool -->
-      <div class="names-stage-card">
-
-        <div class="names-header">
-          <div class="names-title">
-            <span>🏷️</span>
-            <span>בחרו או גררו את השם:</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="names-count-badge">(33 שמות)</span>
-          </div>
-
-          <div class="search-wrapper">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="search-input" placeholder="חיפוש שם מהיר..." oninput="handleSearch(this.value)">
-          </div>
-
-          <div class="sort-actions">
-            <button class="btn-pill active" id="sort-random-btn" onclick="sortNames('random')">ערבב</button>
-            <button class="btn-pill" id="sort-alpha-btn" onclick="sortNames('alpha')">א'-ב'</button>
-          </div>
-        </div>
-
-        <!-- The Pool of All Names -->
-        <div class="names-cloud" id="names-cloud">
-          <!-- Populated by JS -->
-        </div>
-
+      <!-- Delegates Cards Grid -->
+      <div class="delegates-grid" id="delegates-grid">
+        <!-- Generated by JS -->
       </div>
 
     </section>
 
   </main>
 
-  <!-- === GUEST PROFILE DETAILS MODAL (POPUP UPON CORRECT GUESS) === -->
+  <!-- === GUEST PROFILE DETAILS MODAL (SHARED FOR GAME & DIRECTORY) === -->
   <div class="guest-modal-backdrop" id="guest-profile-modal">
     <div class="guest-modal-card">
       <button class="modal-close-btn" onclick="closeGuestModal()" title="סגור">✕</button>
 
-      <!-- Hero Header: Avatar + Name + Country -->
+      <!-- Hero Header -->
       <div class="modal-hero-row">
         <div class="modal-avatar-frame">
           <img src="" alt="Guest Avatar" id="modal-avatar-img" class="modal-avatar-img">
         </div>
         <div class="modal-hero-info">
-          <div class="modal-success-pill">✓ זיהיתם נכון!</div>
+          <div class="modal-success-pill" id="modal-tag-pill">✓ אורח משלחת</div>
           <div class="modal-guest-name" id="modal-guest-name">Benson Zhang</div>
           <div class="modal-guest-country" id="modal-guest-country">🌍 China</div>
         </div>
@@ -1153,11 +1479,22 @@
           </div>
         </div>
 
+        <!-- Biography (if available) -->
+        <div class="modal-detail-item" id="modal-bio-item">
+          <div class="modal-detail-label">
+            <span>📖</span>
+            <span>ביוגרפיה (Bio):</span>
+          </div>
+          <div class="bio-text-wrap" id="modal-guest-bio">
+            ...
+          </div>
+        </div>
+
       </div>
 
-      <!-- Continue Button -->
+      <!-- Action Button -->
       <button class="btn-modal-continue" id="modal-continue-btn" onclick="closeGuestModal()">
-        <span>המשך לאורח הבא</span>
+        <span>המשך</span>
         <span>➔</span>
       </button>
     </div>
@@ -1206,8 +1543,8 @@
   </div>
 
   <script>
-    // Embedded 33 guests data with full fields
-    const INITIAL_GUESTS = [
+    // All 34 delegates data
+    const ALL_DELEGATES = [
   {
     "id": "benson_zhang",
     "fullName": "Benson Zhang",
@@ -1215,10 +1552,14 @@
     "lastName": "Zhang",
     "country": "China",
     "company": "Chapter 2 Entertainment",
-    "whatCompanyDoes": "Booking Agancy",
     "role": "Director / CEO",
+    "whatCompanyDoes": "Booking Agancy",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_&sz=w800"
+    "bio": "Benson Zhang is the CEO and founder of “chapter 2 entertainment” who has over 18 years of experience in media, entertainment, and the music industry. Operating through Madrid and China/Hong Kong, the company empowers international artists to conquer the Asian music market while facilitating the introduction and promotion of Asian talent in European and South American markets. \r\n\r\nThe company works in artist booking, PR and consulting. Their mission is to bridge cultures and genres, fostering collaboration and sharing the richness of Latino and jazz music with audiences across Asia. By offering market-entry strategies and booking services, they help artists expand their fanbases and unlock new opportunities in unexplored markets.\r\n\r\nZhang's involvement in the Asian market is spread wide:  Serving as the General Manager at Billboard in China, and being part of the content team for YouTube Music in Taiwan. TV Presenter at Hong Kong-TVB and a Radio DJ at Phoenix TV.\r\nZhang is a key player in the local industry, with essential connections and experience. \r\n\r\n\r\nZhang has got Israeli Jazz musician Ron Minis and his band invited by Shanghai Arts Festival, and they performed in both Beijing and Shanghai.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "bojan_vuleti_",
@@ -1227,10 +1568,14 @@
     "lastName": "Vuletić",
     "country": "Germany",
     "company": "Asphalt Festival Düsseldorf",
-    "whatCompanyDoes": "Interdisciplinary Festival",
     "role": "Festival Director",
+    "whatCompanyDoes": "Interdisciplinary Festival",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ&sz=w800"
+    "bio": "Bojan Vuletić is a composer, guitarist and sound artist whose work spans contemporary music, jazz, theatre, dance and visual arts. He has collaborated with leading orchestras and ensembles and created music for dozens of theatre and dance productions. In 2012, he co-founded the Asphalt Festival in Düsseldorf and has served as its artistic director ever since.\r\nAsphalt Festival is an established interdisciplinary summer arts festival presenting music, theatre, dance, performance and visual arts at venues across Düsseldorf. \r\nIts 2026 edition welcomed more than 10,000 visitors and featured 70 events across six venues, with artists and productions from more than a dozen countries. Alongside its international guest programme, Asphalt has developed almost 100 co-productions since its founding, establishing itself as a platform for artistic exchange and the creation of new work.\r\nThe festival's programme includes contemporary jazz, indie and psychedelic rock, soul, experimental music and interdisciplinary performance, making it a potentially valuable platform for Israeli artists working across contemporary music and the performing arts.\r\nUnder Bojan Vuletić’s artistic leadership, the Asphalt Festival has also become one of Germany’s most important platforms for Israeli artists and musicians. For many years, Israeli composers, performers, authors, and ensembles, such as Omer Moskovich, LIRAZ, Omer Klein and many more have been an integral part of the festival’s program.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "carlos_pineda",
@@ -1239,10 +1584,14 @@
     "lastName": "Pineda",
     "country": "Canada",
     "company": "MCMXVI",
-    "whatCompanyDoes": "Management",
     "role": "Founder / CEO",
+    "whatCompanyDoes": "Management",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI&sz=w800"
+    "bio": "Carlos Pineda is a Toronto-based music executive and artist manager with over a decade of experience in the music industry. For more then decade he ran the career of the known canadian rapper Kardinal Offishall. Recently He founded MCMXVI, an independent artist management and record company focused on artist development, music production, and building sustainable careers for emerging talent.\r\nHis roster includes Polaris Prize-winning rapper Haviah Mighty, among other independent artists and producers.\r\nIn 2025, Pineda was named to Billboard Canada's “Music Managers to Watch”  list, recognizing his growing influence in the Canadian music industry.\r\nIn 2026, Carlos launched his independent record label distributed through Universal Music, further expanding his footprint in artist development and recorded music. Recantly he has started Working with Shaked Miller, who he heard of through a coullege that participated in IMSF25",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "eugenio_rubei",
@@ -1251,10 +1600,14 @@
     "lastName": "Rubei",
     "country": "Italy",
     "company": "Alexanderplatz Jazz Club",
-    "whatCompanyDoes": "Venue",
     "role": "Artistic Director",
+    "whatCompanyDoes": "Venue",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
-    "photoUrl": "https://drive.google.com/thumbnail?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN&sz=w800"
+    "bio": "Eugenio Rubei is an Italian jazz promoter and artistic director with decades of experience in live music programming, festival production and international cultural exchange. He leads Rome’s legendary Alexanderplatz Jazz Club, founded in 1984 by his father, Giampiero Rubei, and widely recognized as one of Italy’s most important jazz venues. The club has hosted generations of leading Italian and international jazz musicians and has been included by DownBeat magazine among the world’s 100 most important jazz clubs.\nBeyond the club, Rubei has played a significant role in Italy’s jazz scene through a range of festivals and cultural initiatives. He directed Casa del Jazz in Rome, and has been involved in the long-running Jazz & Image festival, which brings live music to distinctive outdoor locations in the Italian capital. He is also the artistic director of Jazz & Wine in Montalcino, an established international festival that combines jazz performances with the cultural heritage of Tuscany. Its programmes have featured internationally acclaimed artists including Kenny Barron, Enrico Pieranunzi, Malika Ayane, Nicola Piovani and Avishai Cohen.\nThrough his work at the club and across these festivals, Eugenio Committed to fostering cross-border artistic collaboration, he has actively bridged the Italian, European, and American jazz scenes, notably expanding Alexanderplatz's footprint internationally by establishing a pioneering cultural hub in Brussels. \nHis work reflects a strong commitment to the jazz community and to creating opportunities for musicians to meet, collaborate and reach new audiences.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "huy_tuan_bui",
@@ -1263,10 +1616,14 @@
     "lastName": "Bui",
     "country": "Vietnam",
     "company": "HoZo Festival - Ho Chi Minh city International Music Festival",
-    "whatCompanyDoes": "- Programming concerts and music events\n- Discovering and promoting new talent\n- Producing albums and live performances\n- Working with festivals, broadcasters, record labels, and artists\n- Building international music collaborations",
     "role": "Music & Art Director",
+    "whatCompanyDoes": "- Programming concerts and music events\n- Discovering and promoting new talent\n- Producing albums and live performances\n- Working with festivals, broadcasters, record labels, and artists\n- Building international music collaborations",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh&sz=w800"
+    "bio": "Huy Tuan is one of Vietnam's leading top-tier music producers, composers, and music directors, with over 30 years of experience in the music industry.\n\nHe has played a key role in shaping modern Vietnamese pop music, producing and mentoring many of Vietnam's most successful artists (including legendary divas and some of the most well-known young artists). He has served as Music Director and judge for major television programs such as Vietnam Idol and Vietnam's Got Talent, and has directed numerous large-scale concerts, music programs and international cultural events in the country.\n\nA music producer with 30 years of experience in the Vietnamese music industry. He is the founder and organizer of leading music festivals in Vietnam, such as Vietnam Jazz Heritage Festival, Hue Wonderverse Music Fest, and Hozo International Music Festival. Additionally, he serves as a music producer for top Vietnamese artists today, including My Linh, Van Mai Huong, and Hoa Minzy.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "isaac_green",
@@ -1275,10 +1632,14 @@
     "lastName": "Green",
     "country": "USA",
     "company": "Warner Records",
-    "whatCompanyDoes": "Label",
     "role": "Senior Vice President of A&R",
+    "whatCompanyDoes": "Label",
     "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs&sz=w800"
+    "bio": "Isaac Green is the Senior Vice President of A&R at Warner Records. \r\nHe is a music executive and talent scout who has built a career identifying, signing and developing distinctive artists across alternative, indie, pop, rock and country music. He joined Warner Records in 2021 as Senior Vice President of A&R, where his work has included signing country artists Warren Zeiders, The Castellows and Gavin Adcock, as well as newer acts such as Penelope Road, Laila! and Heathers.\r\nBefore joining Warner, Green spent more than a decade at Columbia Records, where he worked with a diverse roster of artists including Foster the People, Passion Pit, Peter Bjorn and John, Madeon, COIN, LCD SOUNDSYSTEM, Wet, Natalie Prass, The Reconture, Bully and Lewis Del Mar.\r\nGreen began his career in 2000 by founding the independent label StarTime International. The label helped launch the careers of artists including The Walkmen and French Kicks, and Green’s early work in the independent music scene was briefly chronicled in “Meet Me in the Bathroom”, Lizzy Goodman’s book about New York’s indie-rock scene in the early 2000s.\r\nWith experience spanning independent labels and major-record-company A&R, Green brings a strong track record in discovering emerging talent and helping artists build lasting careers.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "johannes_graesser",
@@ -1287,10 +1648,14 @@
     "lastName": "Graesser",
     "country": "Germany",
     "company": "Jewish-Israeli Culture Days Thuringia",
-    "whatCompanyDoes": "Festival",
     "role": "Artistic Director & Managing Director",
+    "whatCompanyDoes": "Festival",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba&sz=w800"
+    "bio": "Johannes Gräßer is a cultural manager and artistic director who has been active in Jewish culture in Germany for more than 25 years. He leads the Jewish-Israeli Cultural Days of Thuringia, an established festival dedicated to Jewish and Israeli culture, bringing music, literature, film, talks and exhibitions to audiences across the region.\r\nHeld annually over approximately three weeks, the festival presents more than 50 events in cities and towns throughout Thuringia. Under Gräßer’s leadership, it has become an important platform for Israeli artists in Germany, combining concerts by Israeli musicians with programmes exploring Jewish history, identity and contemporary culture.\r\nThrough his work, Gräßer creates opportunities for Israeli artists to perform for German audiences and encourages cultural exchange through music and the arts. His experience in festival management and his sustained commitment to presenting Israeli and Jewish culture make him a relevant contact for international music showcases and touring opportunities.\r\nThe festival has welcomed a wide range of Israeli artists and ensembles, including the Yamma Ensemble, Sharon Mansur, Nigun Quartet, Yogev Shetrit, OLAMA Band, Hadar Maoz, Adam Chichportiche Trio, Ariel & Meira Trio,  Flora (Liron Meshulam), Yael Eisenberg, Achinoam Nini  (NOA), Yagel Harouch, Yair Dalal, Mandy Cahan, Israel Klezmer Orchestra, whose music blends Persian and Jewish traditions with contemporary influences.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "jonathan_vyner",
@@ -1299,10 +1664,14 @@
     "lastName": "Vyner",
     "country": "UK",
     "company": "The Underworld / Born Again Concerts",
-    "whatCompanyDoes": "Music Venue / Promoter",
     "role": "Bookings Manager / Director",
+    "whatCompanyDoes": "Music Venue / Promoter",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii&sz=w800"
+    "bio": "Jon Vyner is a veteran venue manager and promoter with nearly three decades of experience shaping the UK's live music landscape. \r\n\r\nAs Booking Manager of The Underworld for 28 years, he oversees an eclectic programming policy at the iconic Camden venue, having hosted major international acts such as Foo Fighters,Slash, Mötley Crüe, and My Chemical Romance. \r\n\r\nIn addition, as Director of Born Again Concerts, he has spent 28 years promoting external national tours across the UK in venues ranging from 100 to 5,000 capacity,working with artists across diverse genres including Ministry, Heilung, Sunn O))), and various Asian pop acts.\r\n\r\nThroughout his career, Vyner has maintained consistent working relationships with Israeli acts. He currently works with Orphaned Land, Kobi Farhi, and Noa Gruman's Scardust, and has promoted a variety of Israeli artists over the years, including Alma Zohar, Betzefer, and Useless ID.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "josh_blakk",
@@ -1311,10 +1680,14 @@
     "lastName": "Blakk",
     "country": "Ghana",
     "company": "Blakknoters",
-    "whatCompanyDoes": "Record Label, Band, Live Events & Music Software",
     "role": "Singer, Writer, Producer, Founder, owner, lead artist and producer",
+    "whatCompanyDoes": "Record Label, Band, Live Events & Music Software",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Writing and recording with Israeli artists, bringing Highlife and Soul into their sound",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ&sz=w800"
+    "bio": "Josh Blakk is an Accra-based artist, songwriter, producer, and founder of Blakknoters - a music company, live band, and developer of the AKINRAH AI mixing engine. He originated \"High Soul,\" a fusion of Ghanaian Highlife and Soul, and operates a record label, commercial studio, management outfit, and flagship events such as Ghana Sunday Service, where people cook and eat together then make music the old way, and an annual orphanage charity concert.  \r\n\r\nA multi-instrumentalist nominated for seven awards, he released O.N.E (2023) and Catch-22 (2025), with a 16-date European tour, a set at Reeperbahn Festival, and a fourth album arriving in November 2026.  \r\n\r\nBlakk collaborates regularly with Israeli artists and diplomatic institutions in Accra. Arranged via the Embassy of Israel, he partnered with violinist Tania Vinokur in 2026 for Israel's 78th Independence Day reception and a joint headline show at +233 Jazz Bar and Grill, where his band performed her Israeli repertoire alongside his own set. He previously performed with the Yogev Shetrit Trio in May 2025 and has played multiple events at the Israeli Ambassador's residence.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "kira_ozhgibesova",
@@ -1323,10 +1696,14 @@
     "lastName": "Ozhgibesova",
     "country": "Russia",
     "company": "Perm  Triumph Private Philharmonic",
-    "whatCompanyDoes": "Venue",
     "role": "Assitant to Creative Director",
+    "whatCompanyDoes": "Venue",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v&sz=w800"
+    "bio": "Kira Ozhgibesova is the Assistant Creative Director at Triumph, Russia's only private philharmonic, located in Perm.\r\n Triumph is a multidisciplinary cultural venue hosting concerts, film screenings, festivals, performances, lectures, and exhibitions, with a program featuring artists from Russia and around the world across a wide range of genres.  \r\n\r\nIn her role, Ozhgibesova is actively involved in shaping the program, selecting artists, and building and maintaining relationships with partners and sponsors. Her professional background encompasses developing and coordinating concerts at Triumph as well as other venues - including a chamber hall in a Lutheran church, post-industrial cultural hubs, and art galleries - working alongside international and Russian artists, orchestras, choirs, and guest lecturers, while also assisting directors through productions. \r\n\r\nHer key projects include \"World Jazz\", bringing international jazz musicians to Perm; Perm's largest choral concert, featuring over 150 performers on a single stage; and a festival celebrating the life and music of composer Leonid Desyatnikov.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "krasimir_moskov_kirev",
@@ -1335,10 +1712,14 @@
     "lastName": "Moskov Kirev",
     "country": "Bulgaria",
     "company": "Fest Team EOOD",
-    "whatCompanyDoes": "Promoter (Concerts Orgenizer)",
     "role": "Head of Booking / Program Manager",
+    "whatCompanyDoes": "Promoter (Concerts Orgenizer)",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m&sz=w800"
+    "bio": "Krasimir Moskov is the Head of Booking at Fest Team in Bulgaria, having served in the role since 2022 leading the booking department and managing most of the company's concerts. In addition to overseeing company concert operations, he acts as the program manager for Fest Team's two major summer festivals - Hills of Rock - where there are bands like Smashing Pumpkins, Slash and Sabaton, and on the other hand, PhillGood Festival with acts like Gorillaz, The Cure and more.\r\n\r\nPrior to his current occupation in live entertainment and artist booking, Moskov was a well known Bulgarian music journalist and radio personality. His career in music media included 19 years as a radio host on Z-Rock - one of the country's biggest rock radio stations - where he hosted a major daily programme alongside the specialist music show The Hour of the Different Choice.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "marcus_tawanda_gora",
@@ -1347,10 +1728,14 @@
     "lastName": "Tawanda Gora",
     "country": "Zimbabue",
     "company": "OMIFA",
-    "whatCompanyDoes": "Music festival",
     "role": "Artistic Director",
+    "whatCompanyDoes": "Music festival",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY&sz=w800"
+    "bio": "Marcus Tawanda Gora is a band manager for Zimbabwean touring music group MOKOOMBA and co-founder and director of FIRST FLOOR GALLERY; an art gallery as well as a cultural and creative platform with spaces in Harare and Victoria Falls. Currently vice-chairperson on the board of the NATIONAL ARTS COUNCIL OF ZIMBABWE.\r\n\r\nOMIFA is a community festival held at the Pakare Paye arts centre, founded by the legendary artist Oliver Mtukudzi. The event brings together artists across various disciplines and serves as an instrument for social cohesion. As the founding creative director, Marcus role aligns with his work as a creative strategist managing touring bands like Mokoomba and chairing the Board for the Music In Africa Foundation.\r\n\r\nCurrently in conversations with several Israeli artists and professionals to do creative exchange and find the means and opportunities to do so in Southern Africa.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "mark_kass",
@@ -1359,10 +1744,14 @@
     "lastName": "Kass",
     "country": "UK",
     "company": "National Jazz Archive UK\nEnterprise4Good",
-    "whatCompanyDoes": "Jazz Development Agency and Cultural Hub",
     "role": "Owner",
+    "whatCompanyDoes": "Jazz Development Agency and Cultural Hub",
     "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS&sz=w800"
+    "bio": "Jazz East is a UK based Jazz Development Agency and Cultural Hub and partners with the National Jazz Archive UK to protect, preserve and promote the art, culture, heritage and commercial interests of jazz in the UK.\r\nMark Kass is the founder and Creative Director of the London East Jazz Network CIC, which curates Jazz East, which is responsible for curating and promoting live jazz and improvised music across East London. His path into jazz began with presenting jazz radio on East London Radio before moving into live music event promotion. \r\nIn December 2022 he was appointed Executive Chair of Trustees and Chief Executive Officer of the National Jazz Archive. He conceived the Archive’s first Jazz Hub at Loughton Library, a grassroots live music venue with exhibition space, a vintage jazz record and book shop and research workstations. He also sits on the Board of the Jazz Promotion Network, the UK’s trade body for the jazz sector. \r\nMark is looking to Coordinate PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities, and is currently developing relationships with the Cultural Team at the Israeli Embassy in the UK.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "matthias_mueller",
@@ -1371,10 +1760,14 @@
     "lastName": "Mueller",
     "country": "Germany",
     "company": "Crazy Planet Records GmbH",
-    "whatCompanyDoes": "Label, Publisher, Agency, Management",
     "role": "CEO",
+    "whatCompanyDoes": "Label, Publisher, Agency, Management",
     "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities, New things in the Industry",
-    "photoUrl": "https://drive.google.com/thumbnail?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1&sz=w800"
+    "bio": "Matthias Mueller is the Founder and CEO of Crazy Planet Records. For nearly three decades, he has been shaping the global music industry with deep expertise across label and publishing, booking, and artist management. Known as a continental bridge-builder, he connects markets, cultures, and creative talent across borders with strategic clarity and long-term vision. \r\n\r\nBeyond the music business, his career is marked by deep hands-on experience in stage and event technology, including productions in music clubs, multifunctional arenas, theatres, and opera houses worldwide. This technical depth allows him to seamlessly unite artistic ambition with technological precision, ensuring that creative visions translate powerfully onto the stage.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "michele_amar",
@@ -1383,10 +1776,14 @@
     "lastName": "Amar",
     "country": "USA",
     "company": "FRANCE ROCKS",
-    "whatCompanyDoes": "Promotion & Marketing",
     "role": "owner",
+    "whatCompanyDoes": "Promotion & Marketing",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX&sz=w800"
+    "bio": "Michele Amar is a New York-based music executive, entrepreneur, and consultant with over 30 years of experience in the international music industry, and extensive expertise in global business development and export strategy for culture and music tech companies. As the founder and CEO of France Rocks, Inc., she has played a pivotal role in fostering international music collaborations and expanding the global reach of French and international music in the US, promoting it through touring, artist development, strategic partnerships, and cultural exchange. She created the France Rocks Music Fest, a New York festival celebrating international talent, where she played a key role in connecting international artists and industry professionals with the U.S. market. She also created and led the French Music Export Office USA, helping artists expand internationally.\n\nHer career highlights include serving as Head of International Content Acquisition for the Independent Online Distribution Alliance, where she spearheaded partnerships to expand global digital distribution. She also led the international department at Putumayo World Music, successfully building a distribution network in over 90 countries. Throughout her career she has held senior positions in music distribution, content acquisition, and business development, working with major labels, independent artists, music-tech companies, and cultural institutions. Her recent projects include music diplomacy and international partnerships in 2025, and business development for music-tech and sync companies in 2026.\n\nBeyond her strategic roles, Amar founded an independent record label in New York City and worked as a musician, producer, engineer, and programmer in Europe and the U.S., contributing to numerous recordings as a performer and composer. In New York's alternative music scene she collaborated with New Order, The Young Gods, The The, and Debbie Harry. Her multifaceted career reflects a deep passion for music and a commitment to advancing the global music industry. Passionate about music diplomacy, she is excited to develop partnerships with Israeli artists and music professionals.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "peter__stedt",
@@ -1395,10 +1792,14 @@
     "lastName": "Åstedt",
     "country": "Sweden",
     "company": "Musichelp / Future Echoes",
-    "whatCompanyDoes": "Festival / Label / Supervisor / Manager",
     "role": "Project Manager",
+    "whatCompanyDoes": "Festival / Label / Supervisor / Manager",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W&sz=w800"
+    "bio": "Peter Åstedt has been working in the music industry for over 30 years. He started his own record label, Dead Frog Records, at the age of 15 in 1990. Over the years he has started several companies in different fields in the music industry like PR, Publishing, Distribution, Sync placements, Management, Festivals, and Artist Development. \n\nToday he oversees several of the departments on Musichelp which is an umbrella company of different companies in the music industry. Musichelp is an umbrella company with different sub companies. Over 15000 artists have passed our organisation in one way or another. He also founded a showcase festival ‘Future Echoes’.\n\nOver the years he has booked several Israeli artists to different showcases and festivals he's been working on.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "shunsuke_asakawa",
@@ -1407,10 +1808,14 @@
     "lastName": "Asakawa",
     "country": "Japan",
     "company": "Haremame Group",
-    "whatCompanyDoes": "Event production",
     "role": "Manager/Producer",
+    "whatCompanyDoes": "Event production",
     "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx&sz=w800"
+    "bio": "Shunsuke Asakawa is a Tokyo-based freelance concert producer, venue manager, and event booker. He spent two decades managing prominent Tokyo live venues - including Tsukimiru Kimi Omoi and Yagi ni Kiku - before transitioning to independent freelance concert production.\n\nThroughout his career, Shunsuke has focused on bringing international acts to Japan and producing cross-cultural tours. His production credits feature major international tours for artists such as Vincent Gallo, Chicano Batman, Jojo Mayer, Bomba Estéreo, and Nik Bärtsch's Ronin, alongside booking for events like the Sense of Wonder Art & Music Festival.\n\nOperating independently, his work also features strong creative connections with Israeli independent music culture. He has organized Japan tours for acts such as Boom Pam, Ouzo Bazooka, Yemen Blues, Quarter To Africa and Flora, including booking Boom Pam for the Fuji Rock Festival, and maintains a long-standing professional relationship with Tzach Bar of Fortuna Records.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "michael_ginzburg",
@@ -1419,10 +1824,14 @@
     "lastName": "Ginzburg",
     "country": "Germany",
     "company": "Ginzburg Live",
-    "whatCompanyDoes": "Booking Agency",
     "role": "Founder",
+    "whatCompanyDoes": "Booking Agency",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W&sz=w800"
+    "bio": "Michael Ginzburg is a booking agent, talent buyer and live entertainment consultant specializing in international touring and global market development. He has held senior roles at Universal Music Group and Semmel Concerts (CTS Eventim), where he worked on projects including The World of Hans Zimmer and major touring exhibitions. \r\n\r\nOver his career, he has booked talent for global events such as Formula 1 Grand Prix and FIFA World Cup and works with artists and promoters across Europe, the Middle East and Asia.\r\n\r\nMichael is actively building bridges between Israel and Europe, booking Israeli and Jewish artists, most recently Noam Bettan, for private and public performances across Europe. He advocates for Israel and stands firmly against BDS within the international music and live entertainment industry.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "maciej_nestor",
@@ -1431,10 +1840,14 @@
     "lastName": "Nestor",
     "country": "Poland",
     "company": "V Records / Jazz Premium",
-    "whatCompanyDoes": "Label",
     "role": "Head of Label",
+    "whatCompanyDoes": "Label",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM&sz=w800"
+    "bio": "Maciej Nestor runs V Records, an independent Polish record label focused on jazz, contemporary and crossover music. He also leads Jazz Premium, which focuses on transferring knowledge, skills and creative approaches from the cultural and creative sectors into business through workshops, training and collaborative projects.\r\n\r\nHe's spent over 15 years working at the intersection of music, culture and business. He's collaborated with Polish jazz icons such as Kuba Stankiewicz and Piotr Baron, and produced concerts, tours across Poland, Europe, Canada and Japan, as well as festivals, recordings and cultural projects. He's always interested in discovering new artists, connecting people and turning good musical ideas into real international collaborations.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "simon_nasser",
@@ -1443,10 +1856,14 @@
     "lastName": "Nasser",
     "country": "Singapore",
     "company": "Versed Talent Agency Pte",
-    "whatCompanyDoes": "Agency",
     "role": "Managing Director",
+    "whatCompanyDoes": "Agency",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv&sz=w800"
+    "bio": "With over three decades in the music industry, Simon Nasser has consistently strived for excellence and innovation. \r\n\r\nSimon currently leads talent operations at Versed, having previously served as Managing Director of Universal Music Singapore and Head of Live across Southeast Asia. Prior to UMG, he spent 15 years at Warner Music Singapore - ultimately serving as Managing Director - where he aligned local execution with broader regional strategy.\r\n\r\nHis track record features major milestones: breaking both emerging and established artists, pioneering live music initiatives, and building new revenue streams through brand partnerships and sponsorships. Simon also served as Chairman of RIAS (Inland Revenue Authority of Singapore) across five terms (2018 - 2023), championing industry rights throughout Singapore and the region. \r\n\r\nDriven by a lifelong passion for music, Simon is always looking to open up new territories in entertainment and collaborate on bold, forward-thinking projects.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "ezekiel_keran",
@@ -1455,10 +1872,14 @@
     "lastName": "Keran",
     "country": "Singapore",
     "company": "A Strange Love Pte",
-    "whatCompanyDoes": "Label",
     "role": "Managing Director",
+    "whatCompanyDoes": "Label",
     "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l&sz=w800"
+    "bio": "astrangelove (formerly M03 Records) is a Singapore-based independent record label founded in 2017 by producer and A&R Ezekiel Keran, known professionally as Flightsch. Conceived as a boundary-pushing platform, it emerged as Singapore’s first multi-lingual hip-hop imprint - bridging cultures and genres that had long existed in silos.  \r\n\r\nFrom its inception, the label signed now-renowned artists Fariz Jabba and Yung Raja, and within six months entered a joint venture with Kartel Records (Sony Music Malaysia). By 2019, astrangelove became the first locally-run label to unite Tamil-English and Malay-English hip-hop alongside rock and indie-pop, reflecting the region’s cultural diversity.\r\n\r\nEzekiel has amassed global recognition for his artists and records - from mentions by Jimmy Fallon on The Tonight Show to charting positions in India, Malaysia, and Singapore, Ezekiel’s astute ability to trendset artists has carved successful careers for each label, artist, and songwriter the A&R maverick has lent his services to.\r\n\r\nHe launched Singapore’s first successful multi-lingual hip hop label, set up Def Jam Singapore, and led the Universal Music Singapore Domestic label to regional success.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "adam_sagir",
@@ -1467,10 +1888,14 @@
     "lastName": "Sagir",
     "country": "UK",
     "company": "The Noise Cartel",
-    "whatCompanyDoes": "PR Agency",
     "role": "Founder and Managing Director",
+    "whatCompanyDoes": "PR Agency",
     "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities, Planning to discuss a rock/metak focused program for next year",
-    "photoUrl": "https://drive.google.com/thumbnail?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq&sz=w800"
+    "bio": "Adam Sagir is a music industry entrepreneur, publicist and artist manager with more than two decades of experience. He is the Founder and Managing Director of The Noise Cartel, a leading UK music PR and marketing agency specialising in rock, metal and alternative music.\r\n\r\nBeginning his career at Century Media Records aged 19, Adam spent seven years at the label, becoming Head of its UK office before founding The Noise Cartel. He has since delivered campaigns for internationally recognised artists, festivals, labels and entertainment brands.\r\nAlongside his PR work, Adam opened the UK branch of Finnish company Backbone Management Ltd, managing SikTh, Bones UK and Vexed.\r\nAn advocate for music industry education, he also developed a course for Point Blank Music School and has delivered guest lectures and masterclasses for BIMM, ACM and Syracuse University.\r\n\r\nSagir currently works with two Israeli bands -  Orphaned Land and Walkways, alongside Meshugga, Ghost, Baby Metal, Papa Roach, Rise Against and more",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "federico_martinez_penna",
@@ -1479,10 +1904,14 @@
     "lastName": "Martinez Penna",
     "country": "Argentina",
     "company": "Rolling Stone",
-    "whatCompanyDoes": "Media",
     "role": "Freelance journalist",
+    "whatCompanyDoes": "Media",
     "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Also networking with other media related people, but also producers, bookers, musicians and managers, specially the ones with focus on music activities and music project activations in Europe and South America",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW&sz=w800"
+    "bio": "He has 13 years of experience working as a freelance journalist, writing pieces, interviews and reviews for Rolling Stone, Billboard, Noisey and Vice. He has also hosted and produced radio shows for Worldwide FM, J-Wave and Radio Colmena Argentina. He is currently focusing on audiovisual content, producing E2E reels and videos about specific music stories on short and long form content in his own Social Medias, and he also does multimedia and graphic design for music themed projects that can be checked on his personal website. Federico also has a long-standing career in corporate communications and advertising, developing comms strategy and coordinating digital marketing projects for several brands.\r\n\r\nBased in Buenos Aires, he also DJs regularly in local bars and clubs and runs a curated playlist account on Spotify and Mixcloud. He has been writing for La Nación since 2018, covering live music, nightlife and the music industry.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "angella_lee",
@@ -1491,10 +1920,14 @@
     "lastName": "Lee",
     "country": "South Korea",
     "company": "Jarasum Jazz Festival",
-    "whatCompanyDoes": "Music festival",
     "role": "PR & Marketing Manager",
+    "whatCompanyDoes": "Music festival",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK&sz=w800"
+    "bio": "Angella Lee is a trilingual PR and marketing professional with extensive experience in international artist management, festival operations, and brand campaigns. Serving as the PR & Marketing Manager for the Jarasum Jazz Festival, she has a long-standing history with the festival, previously working as a musician liaison managing global jazz acts like the Joanna Duda Trio, Norma Winstone, and Daniel Zamir. Her background also includes tour management for the Ministry of Foreign Affairs in South Korea and performing arts promotion.\r\nThe Jarasum Jazz Festival has a 23-year history as the representative jazz festival in Korea, and she is in charge of PR and marketing as well as working with the programming team. She has diverse on-site experience from various work experience in MICE events, music festival events and outdoor events. Her key projects were the 23rd Jarasum Jazz Festival and the South Korea Queer Festival and Parade for 3 years.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": true
   },
   {
     "id": "alexandra_miteran",
@@ -1503,10 +1936,14 @@
     "lastName": "Miteran",
     "country": "UAE",
     "company": "SAMIT Event Group",
-    "whatCompanyDoes": "Cultural event management company",
     "role": "Owner, director",
+    "whatCompanyDoes": "Cultural event management company",
     "festivalGoal": "Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, governmental collaboration",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj&sz=w800"
+    "bio": "Alexandra Miteran is the Founder & CEO of SAMIT Event Group, an international company founded in 2021 in Dubai, specialising in strategic projects across culture, tourism and live experiences across the UAE and GCC. Working closely with embassies, cultural institutions and private patrons, she produces diplomatic cultural events, private concerts, ballet and opera productions, orchestral tours, international festivals and music competitions.\n\nIn 2020 she launched VIP Classical, an intimate concert series in Dubai that brings together the worlds of arts, business and diplomacy. Today SAMIT delivers programmes from first concept to stage, with a focus on cultural exchange and partnerships with diplomatic missions.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "ahuvah_berger_burcat",
@@ -1515,10 +1952,14 @@
     "lastName": "Berger-Burcat",
     "country": "Israel",
     "company": "Revelator / WMG",
-    "whatCompanyDoes": "Label / Distributor",
     "role": "VP of Marketing for Revelator",
+    "whatCompanyDoes": "Label / Distributor",
     "festivalGoal": "Establishing global music distribution and marketing",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4&sz=w800"
+    "bio": "Ahuva Berger-Burcat is the VP of Marketing at Revelator, where she leads marketing strategy, brand positioning, product marketing, and communications. Recently acquired by Warner Music Group, Revelator provides the technology powering WMG's music distribution operations.\nWith over 20 years of experience in B2B technology marketing, she has helped startups and growing companies find their voice, connect with customers, and bring innovative products to market. Her focus has always been on building brands, developing go-to-market strategies, and turning complex technology into compelling, relatable stories.\nWhile her career didn't begin in the music industry, music has always been a huge part of her life. At Revelator, she has found the perfect intersection of her passion for music, her love of technology, and her belief in empathetic marketing. For her, it's about more than promoting products. It's about creating meaningful connections between technology and people, and helping the businesses and people behind the music thrive.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "golda_bitterli",
@@ -1527,10 +1968,14 @@
     "lastName": "Bitterli",
     "country": "Israel",
     "company": "Revelator / WMG",
-    "whatCompanyDoes": "Label / Distributor",
     "role": "VP of Business Development",
+    "whatCompanyDoes": "Label / Distributor",
     "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz&sz=w800"
+    "bio": "Golda Bitterli has spent nearly two decades at the intersection of music, technology, and business, helping independent artists, labels, and distributors build sustainable companies.\r\nAs VP of Business Development at Revelator, she works with independent music companies to give them the tools, transparency, and financial clarity they need to compete. She believes the independent music community deserves infrastructure as sophisticated as the majors.\r\nBefore moving into music tech, she led global marketing and sales campaigns for top independent labels. That operator's perspective shapes everything she does.\r\nFor over two years, she served on the board of Merlin, the global digital rights agency representing the world's leading independent labels.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "robert_g_dek",
@@ -1539,10 +1984,14 @@
     "lastName": "Gądek",
     "country": "Poland",
     "company": "Jewish Culture Festival in Krakow",
-    "whatCompanyDoes": "interdisciplinary festival built around musical program",
     "role": "Director, CEO",
+    "whatCompanyDoes": "interdisciplinary festival built around musical program",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh&sz=w800"
+    "bio": "After working 10 years as a Director of the Center for Jewish Culture in Krakow, in 2005 Robert Gądek joined the Jewish Culture Festival in Krakow as the Deputy Director, responsible for PR, external relations, fundraising and programming.\r\n\r\nHe was awarded the Honoris Gratia medal by the Mayor of Krakow for promoting the city’s Jewish heritage. He has lectured internationally on contemporary Polish-Jewish relations and, in 2015, was appointed to the U.S. Ambassador’s Policy Advisory Council in Poland.\r\n\r\nJewish Culture Festival in Krakow has been the oldest and largest presentation of contemporary Jewish Culture from Israel and the Diaspora. The Festival reports “more than 22,000 participants” across 176 events. \r\n\r\nIsraeli artists who have performed there include, in 2024, Yemen Blues (Ravid Kahalani), Maya Belsitzman & Matan Ephrat, the Maqamat Master with Elad Levi, Nissim Lugasi and others, vocalist Karen Malka; the “Shalom on Szeroka Street” finale featured Boom Pam with guests Liraz, Neta Elkayam, Kutiman, and Shai Tsabari.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "laurence_haziza",
@@ -1551,10 +2000,14 @@
     "lastName": "Haziza",
     "country": "France",
     "company": "Sacré Sound Festival / Festival Jazz'N'Klezmer",
-    "whatCompanyDoes": "Music festival",
     "role": "Director",
+    "whatCompanyDoes": "Music festival",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd&sz=w800"
+    "bio": "Laurence Haziza is a music promoter and cultural connector who aims to strengthen dialogue between cultures, audiences, and generations through music, blending diverse spiritual and musical traditions with contemporary sounds. \nShe began her career as an actress in theaters across Europe, followed by ten years in the French public sector, before moving into promotion and PR for Jazz and World music.\n\nSince 2008, Haziza has served as the director of the Jazz'N'Klezmer Festival, a festival that celebrates the fusion of Jazz and Jewish musical traditions. In 2023, she became the director of the Sacré Sound Festival, known for its innovative programming in World and contemporary music. In addition, she contributes as a journalist for Akadem, Radio J, and Radio France International.\n\nFounding director of the Sacré Sound Festival and director of the Jazz'N'Klezmer festival - as well as a journalist and producer - Laurence Haziza has been curating jazz and world music programs for twenty years; she has discovered numerous jazz talents and played an active role in raising the profile of the Israeli jazz scene. \n\nThrough her festivals, Laurence actively bridges French and Israeli music scenes by featuring and advocating for contemporary Israeli artists like Omri Mor, Yonathan Avishai, A-WA, Mayu Shviro and more, across jazz, klezmer, and world music fusion.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "nigel_canin",
@@ -1563,10 +2016,14 @@
     "lastName": "Canin",
     "country": "UK",
     "company": "Parallel Skies Records,",
-    "whatCompanyDoes": "Label and Publisher.",
     "role": "Director",
+    "whatCompanyDoes": "Label and Publisher.",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon&sz=w800"
+    "bio": "Nigel Canin is a director of Parallel Skies Records, Publishing & Promotions, a UK-based music company founded in collaboration with the band Oi Va Voi in late 2024. \nThe company was established with the aim of supporting and promoting Jewish and Israeli artists, developing emerging talent and creating opportunities for their music to reach wider audiences.\nParallel Skies operates across record releases, music publishing, artist development and live promotions. Its work includes releases by Oi Va Voi, as well as emerging artists such as Benji Miller. The company was also featured at WOMEX 2024, where it presented its work as a platform connecting different musical cultures and traditions.\nCanin is the founder of Lemon Soul, a publishing company focused on books of Jewish interest. Its recent publications include The Jewish Muezzin, the memoir of Kobi Farhi, lead singer of Israeli band Orphaned Land.\nThrough these two ventures, Canin is active in both music and Jewish cultural publishing, with a particular focus on creating platforms and opportunities for Jewish and Israeli voices.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "raphael_perez",
@@ -1575,10 +2032,14 @@
     "lastName": "Perez",
     "country": "France",
     "company": "Israeli jazz",
-    "whatCompanyDoes": "Nonprofit promoting Israeli jazz and world music / concerts",
     "role": "President",
+    "whatCompanyDoes": "Nonprofit promoting Israeli jazz and world music / concerts",
     "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT&sz=w800"
+    "bio": "Initiated as a photography project has grown into IsraeliJazz, a community of 25,000 members, offering content and hosting events both online and in person.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "jonathan_schwartz",
@@ -1587,10 +2048,14 @@
     "lastName": "Schwartz",
     "country": "USA/Israel",
     "company": "America-Israel Cultural Foundation (AICF)",
-    "whatCompanyDoes": "Founded in 1939, the America-Israel Cultural Foundation (AICF) is a nonprofit that supports Israeli artists and cultural institutions and connects them with audiences around the world.",
     "role": "Artistic Director",
+    "whatCompanyDoes": "Founded in 1939, the America-Israel Cultural Foundation (AICF) is a nonprofit that supports Israeli artists and cultural institutions and connects them with audiences around the world.",
     "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl&sz=w800"
+    "bio": "Jonathan Schwartz is a 25+ year international music industry veteran, with experience in artist management, marketing, label management, event production and business development. Currently, Jonathan is an artist manager for the Regime Music Group. Based in Malibu, California, Regime represents a diverse range of artists from the worlds of Jazz, Hip Hop, Rock, Blues, electronic and everything in between.\nAdditionally, Jonathan hosts a daily radio show heard throughout the United States and Canada on SiriusXM Radio. \nIn recent years, Schwartz has been living in Israel, dividing time between Pardes Hana and the United States.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
   },
   {
     "id": "na_ama_zisser",
@@ -1599,12 +2064,566 @@
     "lastName": "Zisser",
     "country": "UK",
     "company": "JMI",
-    "whatCompanyDoes": "Arts/Music organisation",
     "role": "CEO",
+    "whatCompanyDoes": "Arts/Music organisation",
     "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1yRThDQd3uk1Sc0ao69f80JTqID_7hEzx&sz=w800"
+    "bio": "Na'ama is the CEO of the Jewish Music Institute in London, we preserve promote and develop Jewish Music and artists in all of its forms. She is also a composer and musician.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1yRThDQd3uk1Sc0ao69f80JTqID_7hEzx&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "thi_quynh_vu",
+    "fullName": "Thi Quynh Vu",
+    "firstName": "Thi Quynh",
+    "lastName": "Vu",
+    "country": "Vietnam",
+    "company": "Independent",
+    "role": "אשתו של Huy",
+    "whatCompanyDoes": "N/A",
+    "festivalGoal": "",
+    "bio": "",
+    "genre": "",
+    "photoUrl": "/polar-bear.png",
+    "hasRealPhoto": false,
+    "isAngella": false
   }
 ];
+    // Guests eligible for photo guessing game (33 guests with photos)
+    const GAME_GUESTS = [
+  {
+    "id": "benson_zhang",
+    "fullName": "Benson Zhang",
+    "firstName": "Benson",
+    "lastName": "Zhang",
+    "country": "China",
+    "company": "Chapter 2 Entertainment",
+    "role": "Director / CEO",
+    "whatCompanyDoes": "Booking Agancy",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Benson Zhang is the CEO and founder of “chapter 2 entertainment” who has over 18 years of experience in media, entertainment, and the music industry. Operating through Madrid and China/Hong Kong, the company empowers international artists to conquer the Asian music market while facilitating the introduction and promotion of Asian talent in European and South American markets. \r\n\r\nThe company works in artist booking, PR and consulting. Their mission is to bridge cultures and genres, fostering collaboration and sharing the richness of Latino and jazz music with audiences across Asia. By offering market-entry strategies and booking services, they help artists expand their fanbases and unlock new opportunities in unexplored markets.\r\n\r\nZhang's involvement in the Asian market is spread wide:  Serving as the General Manager at Billboard in China, and being part of the content team for YouTube Music in Taiwan. TV Presenter at Hong Kong-TVB and a Radio DJ at Phoenix TV.\r\nZhang is a key player in the local industry, with essential connections and experience. \r\n\r\n\r\nZhang has got Israeli Jazz musician Ron Minis and his band invited by Shanghai Arts Festival, and they performed in both Beijing and Shanghai.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "bojan_vuleti_",
+    "fullName": "Bojan Vuletić",
+    "firstName": "Bojan",
+    "lastName": "Vuletić",
+    "country": "Germany",
+    "company": "Asphalt Festival Düsseldorf",
+    "role": "Festival Director",
+    "whatCompanyDoes": "Interdisciplinary Festival",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Bojan Vuletić is a composer, guitarist and sound artist whose work spans contemporary music, jazz, theatre, dance and visual arts. He has collaborated with leading orchestras and ensembles and created music for dozens of theatre and dance productions. In 2012, he co-founded the Asphalt Festival in Düsseldorf and has served as its artistic director ever since.\r\nAsphalt Festival is an established interdisciplinary summer arts festival presenting music, theatre, dance, performance and visual arts at venues across Düsseldorf. \r\nIts 2026 edition welcomed more than 10,000 visitors and featured 70 events across six venues, with artists and productions from more than a dozen countries. Alongside its international guest programme, Asphalt has developed almost 100 co-productions since its founding, establishing itself as a platform for artistic exchange and the creation of new work.\r\nThe festival's programme includes contemporary jazz, indie and psychedelic rock, soul, experimental music and interdisciplinary performance, making it a potentially valuable platform for Israeli artists working across contemporary music and the performing arts.\r\nUnder Bojan Vuletić’s artistic leadership, the Asphalt Festival has also become one of Germany’s most important platforms for Israeli artists and musicians. For many years, Israeli composers, performers, authors, and ensembles, such as Omer Moskovich, LIRAZ, Omer Klein and many more have been an integral part of the festival’s program.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "carlos_pineda",
+    "fullName": "Carlos Pineda",
+    "firstName": "Carlos",
+    "lastName": "Pineda",
+    "country": "Canada",
+    "company": "MCMXVI",
+    "role": "Founder / CEO",
+    "whatCompanyDoes": "Management",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Carlos Pineda is a Toronto-based music executive and artist manager with over a decade of experience in the music industry. For more then decade he ran the career of the known canadian rapper Kardinal Offishall. Recently He founded MCMXVI, an independent artist management and record company focused on artist development, music production, and building sustainable careers for emerging talent.\r\nHis roster includes Polaris Prize-winning rapper Haviah Mighty, among other independent artists and producers.\r\nIn 2025, Pineda was named to Billboard Canada's “Music Managers to Watch”  list, recognizing his growing influence in the Canadian music industry.\r\nIn 2026, Carlos launched his independent record label distributed through Universal Music, further expanding his footprint in artist development and recorded music. Recantly he has started Working with Shaked Miller, who he heard of through a coullege that participated in IMSF25",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "eugenio_rubei",
+    "fullName": "Eugenio Rubei",
+    "firstName": "Eugenio",
+    "lastName": "Rubei",
+    "country": "Italy",
+    "company": "Alexanderplatz Jazz Club",
+    "role": "Artistic Director",
+    "whatCompanyDoes": "Venue",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
+    "bio": "Eugenio Rubei is an Italian jazz promoter and artistic director with decades of experience in live music programming, festival production and international cultural exchange. He leads Rome’s legendary Alexanderplatz Jazz Club, founded in 1984 by his father, Giampiero Rubei, and widely recognized as one of Italy’s most important jazz venues. The club has hosted generations of leading Italian and international jazz musicians and has been included by DownBeat magazine among the world’s 100 most important jazz clubs.\nBeyond the club, Rubei has played a significant role in Italy’s jazz scene through a range of festivals and cultural initiatives. He directed Casa del Jazz in Rome, and has been involved in the long-running Jazz & Image festival, which brings live music to distinctive outdoor locations in the Italian capital. He is also the artistic director of Jazz & Wine in Montalcino, an established international festival that combines jazz performances with the cultural heritage of Tuscany. Its programmes have featured internationally acclaimed artists including Kenny Barron, Enrico Pieranunzi, Malika Ayane, Nicola Piovani and Avishai Cohen.\nThrough his work at the club and across these festivals, Eugenio Committed to fostering cross-border artistic collaboration, he has actively bridged the Italian, European, and American jazz scenes, notably expanding Alexanderplatz's footprint internationally by establishing a pioneering cultural hub in Brussels. \nHis work reflects a strong commitment to the jazz community and to creating opportunities for musicians to meet, collaborate and reach new audiences.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "huy_tuan_bui",
+    "fullName": "Huy Tuan Bui",
+    "firstName": "Huy Tuan",
+    "lastName": "Bui",
+    "country": "Vietnam",
+    "company": "HoZo Festival - Ho Chi Minh city International Music Festival",
+    "role": "Music & Art Director",
+    "whatCompanyDoes": "- Programming concerts and music events\n- Discovering and promoting new talent\n- Producing albums and live performances\n- Working with festivals, broadcasters, record labels, and artists\n- Building international music collaborations",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Huy Tuan is one of Vietnam's leading top-tier music producers, composers, and music directors, with over 30 years of experience in the music industry.\n\nHe has played a key role in shaping modern Vietnamese pop music, producing and mentoring many of Vietnam's most successful artists (including legendary divas and some of the most well-known young artists). He has served as Music Director and judge for major television programs such as Vietnam Idol and Vietnam's Got Talent, and has directed numerous large-scale concerts, music programs and international cultural events in the country.\n\nA music producer with 30 years of experience in the Vietnamese music industry. He is the founder and organizer of leading music festivals in Vietnam, such as Vietnam Jazz Heritage Festival, Hue Wonderverse Music Fest, and Hozo International Music Festival. Additionally, he serves as a music producer for top Vietnamese artists today, including My Linh, Van Mai Huong, and Hoa Minzy.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "isaac_green",
+    "fullName": "Isaac Green",
+    "firstName": "Isaac",
+    "lastName": "Green",
+    "country": "USA",
+    "company": "Warner Records",
+    "role": "Senior Vice President of A&R",
+    "whatCompanyDoes": "Label",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Isaac Green is the Senior Vice President of A&R at Warner Records. \r\nHe is a music executive and talent scout who has built a career identifying, signing and developing distinctive artists across alternative, indie, pop, rock and country music. He joined Warner Records in 2021 as Senior Vice President of A&R, where his work has included signing country artists Warren Zeiders, The Castellows and Gavin Adcock, as well as newer acts such as Penelope Road, Laila! and Heathers.\r\nBefore joining Warner, Green spent more than a decade at Columbia Records, where he worked with a diverse roster of artists including Foster the People, Passion Pit, Peter Bjorn and John, Madeon, COIN, LCD SOUNDSYSTEM, Wet, Natalie Prass, The Reconture, Bully and Lewis Del Mar.\r\nGreen began his career in 2000 by founding the independent label StarTime International. The label helped launch the careers of artists including The Walkmen and French Kicks, and Green’s early work in the independent music scene was briefly chronicled in “Meet Me in the Bathroom”, Lizzy Goodman’s book about New York’s indie-rock scene in the early 2000s.\r\nWith experience spanning independent labels and major-record-company A&R, Green brings a strong track record in discovering emerging talent and helping artists build lasting careers.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "johannes_graesser",
+    "fullName": "Johannes Graesser",
+    "firstName": "Johannes",
+    "lastName": "Graesser",
+    "country": "Germany",
+    "company": "Jewish-Israeli Culture Days Thuringia",
+    "role": "Artistic Director & Managing Director",
+    "whatCompanyDoes": "Festival",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Johannes Gräßer is a cultural manager and artistic director who has been active in Jewish culture in Germany for more than 25 years. He leads the Jewish-Israeli Cultural Days of Thuringia, an established festival dedicated to Jewish and Israeli culture, bringing music, literature, film, talks and exhibitions to audiences across the region.\r\nHeld annually over approximately three weeks, the festival presents more than 50 events in cities and towns throughout Thuringia. Under Gräßer’s leadership, it has become an important platform for Israeli artists in Germany, combining concerts by Israeli musicians with programmes exploring Jewish history, identity and contemporary culture.\r\nThrough his work, Gräßer creates opportunities for Israeli artists to perform for German audiences and encourages cultural exchange through music and the arts. His experience in festival management and his sustained commitment to presenting Israeli and Jewish culture make him a relevant contact for international music showcases and touring opportunities.\r\nThe festival has welcomed a wide range of Israeli artists and ensembles, including the Yamma Ensemble, Sharon Mansur, Nigun Quartet, Yogev Shetrit, OLAMA Band, Hadar Maoz, Adam Chichportiche Trio, Ariel & Meira Trio,  Flora (Liron Meshulam), Yael Eisenberg, Achinoam Nini  (NOA), Yagel Harouch, Yair Dalal, Mandy Cahan, Israel Klezmer Orchestra, whose music blends Persian and Jewish traditions with contemporary influences.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "jonathan_vyner",
+    "fullName": "Jonathan Vyner",
+    "firstName": "Jonathan",
+    "lastName": "Vyner",
+    "country": "UK",
+    "company": "The Underworld / Born Again Concerts",
+    "role": "Bookings Manager / Director",
+    "whatCompanyDoes": "Music Venue / Promoter",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
+    "bio": "Jon Vyner is a veteran venue manager and promoter with nearly three decades of experience shaping the UK's live music landscape. \r\n\r\nAs Booking Manager of The Underworld for 28 years, he oversees an eclectic programming policy at the iconic Camden venue, having hosted major international acts such as Foo Fighters,Slash, Mötley Crüe, and My Chemical Romance. \r\n\r\nIn addition, as Director of Born Again Concerts, he has spent 28 years promoting external national tours across the UK in venues ranging from 100 to 5,000 capacity,working with artists across diverse genres including Ministry, Heilung, Sunn O))), and various Asian pop acts.\r\n\r\nThroughout his career, Vyner has maintained consistent working relationships with Israeli acts. He currently works with Orphaned Land, Kobi Farhi, and Noa Gruman's Scardust, and has promoted a variety of Israeli artists over the years, including Alma Zohar, Betzefer, and Useless ID.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "josh_blakk",
+    "fullName": "Josh Blakk",
+    "firstName": "Josh",
+    "lastName": "Blakk",
+    "country": "Ghana",
+    "company": "Blakknoters",
+    "role": "Singer, Writer, Producer, Founder, owner, lead artist and producer",
+    "whatCompanyDoes": "Record Label, Band, Live Events & Music Software",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Writing and recording with Israeli artists, bringing Highlife and Soul into their sound",
+    "bio": "Josh Blakk is an Accra-based artist, songwriter, producer, and founder of Blakknoters - a music company, live band, and developer of the AKINRAH AI mixing engine. He originated \"High Soul,\" a fusion of Ghanaian Highlife and Soul, and operates a record label, commercial studio, management outfit, and flagship events such as Ghana Sunday Service, where people cook and eat together then make music the old way, and an annual orphanage charity concert.  \r\n\r\nA multi-instrumentalist nominated for seven awards, he released O.N.E (2023) and Catch-22 (2025), with a 16-date European tour, a set at Reeperbahn Festival, and a fourth album arriving in November 2026.  \r\n\r\nBlakk collaborates regularly with Israeli artists and diplomatic institutions in Accra. Arranged via the Embassy of Israel, he partnered with violinist Tania Vinokur in 2026 for Israel's 78th Independence Day reception and a joint headline show at +233 Jazz Bar and Grill, where his band performed her Israeli repertoire alongside his own set. He previously performed with the Yogev Shetrit Trio in May 2025 and has played multiple events at the Israeli Ambassador's residence.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "kira_ozhgibesova",
+    "fullName": "Kira Ozhgibesova",
+    "firstName": "Kira",
+    "lastName": "Ozhgibesova",
+    "country": "Russia",
+    "company": "Perm  Triumph Private Philharmonic",
+    "role": "Assitant to Creative Director",
+    "whatCompanyDoes": "Venue",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Kira Ozhgibesova is the Assistant Creative Director at Triumph, Russia's only private philharmonic, located in Perm.\r\n Triumph is a multidisciplinary cultural venue hosting concerts, film screenings, festivals, performances, lectures, and exhibitions, with a program featuring artists from Russia and around the world across a wide range of genres.  \r\n\r\nIn her role, Ozhgibesova is actively involved in shaping the program, selecting artists, and building and maintaining relationships with partners and sponsors. Her professional background encompasses developing and coordinating concerts at Triumph as well as other venues - including a chamber hall in a Lutheran church, post-industrial cultural hubs, and art galleries - working alongside international and Russian artists, orchestras, choirs, and guest lecturers, while also assisting directors through productions. \r\n\r\nHer key projects include \"World Jazz\", bringing international jazz musicians to Perm; Perm's largest choral concert, featuring over 150 performers on a single stage; and a festival celebrating the life and music of composer Leonid Desyatnikov.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "krasimir_moskov_kirev",
+    "fullName": "Krasimir Moskov Kirev",
+    "firstName": "Krasimir",
+    "lastName": "Moskov Kirev",
+    "country": "Bulgaria",
+    "company": "Fest Team EOOD",
+    "role": "Head of Booking / Program Manager",
+    "whatCompanyDoes": "Promoter (Concerts Orgenizer)",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Krasimir Moskov is the Head of Booking at Fest Team in Bulgaria, having served in the role since 2022 leading the booking department and managing most of the company's concerts. In addition to overseeing company concert operations, he acts as the program manager for Fest Team's two major summer festivals - Hills of Rock - where there are bands like Smashing Pumpkins, Slash and Sabaton, and on the other hand, PhillGood Festival with acts like Gorillaz, The Cure and more.\r\n\r\nPrior to his current occupation in live entertainment and artist booking, Moskov was a well known Bulgarian music journalist and radio personality. His career in music media included 19 years as a radio host on Z-Rock - one of the country's biggest rock radio stations - where he hosted a major daily programme alongside the specialist music show The Hour of the Different Choice.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "marcus_tawanda_gora",
+    "fullName": "Marcus Tawanda Gora",
+    "firstName": "Marcus",
+    "lastName": "Tawanda Gora",
+    "country": "Zimbabue",
+    "company": "OMIFA",
+    "role": "Artistic Director",
+    "whatCompanyDoes": "Music festival",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Marcus Tawanda Gora is a band manager for Zimbabwean touring music group MOKOOMBA and co-founder and director of FIRST FLOOR GALLERY; an art gallery as well as a cultural and creative platform with spaces in Harare and Victoria Falls. Currently vice-chairperson on the board of the NATIONAL ARTS COUNCIL OF ZIMBABWE.\r\n\r\nOMIFA is a community festival held at the Pakare Paye arts centre, founded by the legendary artist Oliver Mtukudzi. The event brings together artists across various disciplines and serves as an instrument for social cohesion. As the founding creative director, Marcus role aligns with his work as a creative strategist managing touring bands like Mokoomba and chairing the Board for the Music In Africa Foundation.\r\n\r\nCurrently in conversations with several Israeli artists and professionals to do creative exchange and find the means and opportunities to do so in Southern Africa.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "mark_kass",
+    "fullName": "Mark Kass",
+    "firstName": "Mark",
+    "lastName": "Kass",
+    "country": "UK",
+    "company": "National Jazz Archive UK\nEnterprise4Good",
+    "role": "Owner",
+    "whatCompanyDoes": "Jazz Development Agency and Cultural Hub",
+    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Jazz East is a UK based Jazz Development Agency and Cultural Hub and partners with the National Jazz Archive UK to protect, preserve and promote the art, culture, heritage and commercial interests of jazz in the UK.\r\nMark Kass is the founder and Creative Director of the London East Jazz Network CIC, which curates Jazz East, which is responsible for curating and promoting live jazz and improvised music across East London. His path into jazz began with presenting jazz radio on East London Radio before moving into live music event promotion. \r\nIn December 2022 he was appointed Executive Chair of Trustees and Chief Executive Officer of the National Jazz Archive. He conceived the Archive’s first Jazz Hub at Loughton Library, a grassroots live music venue with exhibition space, a vintage jazz record and book shop and research workstations. He also sits on the Board of the Jazz Promotion Network, the UK’s trade body for the jazz sector. \r\nMark is looking to Coordinate PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities, and is currently developing relationships with the Cultural Team at the Israeli Embassy in the UK.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "matthias_mueller",
+    "fullName": "Matthias Mueller",
+    "firstName": "Matthias",
+    "lastName": "Mueller",
+    "country": "Germany",
+    "company": "Crazy Planet Records GmbH",
+    "role": "CEO",
+    "whatCompanyDoes": "Label, Publisher, Agency, Management",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities, New things in the Industry",
+    "bio": "Matthias Mueller is the Founder and CEO of Crazy Planet Records. For nearly three decades, he has been shaping the global music industry with deep expertise across label and publishing, booking, and artist management. Known as a continental bridge-builder, he connects markets, cultures, and creative talent across borders with strategic clarity and long-term vision. \r\n\r\nBeyond the music business, his career is marked by deep hands-on experience in stage and event technology, including productions in music clubs, multifunctional arenas, theatres, and opera houses worldwide. This technical depth allows him to seamlessly unite artistic ambition with technological precision, ensuring that creative visions translate powerfully onto the stage.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "michele_amar",
+    "fullName": "Michele Amar",
+    "firstName": "Michele",
+    "lastName": "Amar",
+    "country": "USA",
+    "company": "FRANCE ROCKS",
+    "role": "owner",
+    "whatCompanyDoes": "Promotion & Marketing",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Michele Amar is a New York-based music executive, entrepreneur, and consultant with over 30 years of experience in the international music industry, and extensive expertise in global business development and export strategy for culture and music tech companies. As the founder and CEO of France Rocks, Inc., she has played a pivotal role in fostering international music collaborations and expanding the global reach of French and international music in the US, promoting it through touring, artist development, strategic partnerships, and cultural exchange. She created the France Rocks Music Fest, a New York festival celebrating international talent, where she played a key role in connecting international artists and industry professionals with the U.S. market. She also created and led the French Music Export Office USA, helping artists expand internationally.\n\nHer career highlights include serving as Head of International Content Acquisition for the Independent Online Distribution Alliance, where she spearheaded partnerships to expand global digital distribution. She also led the international department at Putumayo World Music, successfully building a distribution network in over 90 countries. Throughout her career she has held senior positions in music distribution, content acquisition, and business development, working with major labels, independent artists, music-tech companies, and cultural institutions. Her recent projects include music diplomacy and international partnerships in 2025, and business development for music-tech and sync companies in 2026.\n\nBeyond her strategic roles, Amar founded an independent record label in New York City and worked as a musician, producer, engineer, and programmer in Europe and the U.S., contributing to numerous recordings as a performer and composer. In New York's alternative music scene she collaborated with New Order, The Young Gods, The The, and Debbie Harry. Her multifaceted career reflects a deep passion for music and a commitment to advancing the global music industry. Passionate about music diplomacy, she is excited to develop partnerships with Israeli artists and music professionals.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "peter__stedt",
+    "fullName": "Peter Åstedt",
+    "firstName": "Peter",
+    "lastName": "Åstedt",
+    "country": "Sweden",
+    "company": "Musichelp / Future Echoes",
+    "role": "Project Manager",
+    "whatCompanyDoes": "Festival / Label / Supervisor / Manager",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Peter Åstedt has been working in the music industry for over 30 years. He started his own record label, Dead Frog Records, at the age of 15 in 1990. Over the years he has started several companies in different fields in the music industry like PR, Publishing, Distribution, Sync placements, Management, Festivals, and Artist Development. \n\nToday he oversees several of the departments on Musichelp which is an umbrella company of different companies in the music industry. Musichelp is an umbrella company with different sub companies. Over 15000 artists have passed our organisation in one way or another. He also founded a showcase festival ‘Future Echoes’.\n\nOver the years he has booked several Israeli artists to different showcases and festivals he's been working on.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "shunsuke_asakawa",
+    "fullName": "Shunsuke Asakawa",
+    "firstName": "Shunsuke",
+    "lastName": "Asakawa",
+    "country": "Japan",
+    "company": "Haremame Group",
+    "role": "Manager/Producer",
+    "whatCompanyDoes": "Event production",
+    "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Shunsuke Asakawa is a Tokyo-based freelance concert producer, venue manager, and event booker. He spent two decades managing prominent Tokyo live venues - including Tsukimiru Kimi Omoi and Yagi ni Kiku - before transitioning to independent freelance concert production.\n\nThroughout his career, Shunsuke has focused on bringing international acts to Japan and producing cross-cultural tours. His production credits feature major international tours for artists such as Vincent Gallo, Chicano Batman, Jojo Mayer, Bomba Estéreo, and Nik Bärtsch's Ronin, alongside booking for events like the Sense of Wonder Art & Music Festival.\n\nOperating independently, his work also features strong creative connections with Israeli independent music culture. He has organized Japan tours for acts such as Boom Pam, Ouzo Bazooka, Yemen Blues, Quarter To Africa and Flora, including booking Boom Pam for the Fuji Rock Festival, and maintains a long-standing professional relationship with Tzach Bar of Fortuna Records.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "michael_ginzburg",
+    "fullName": "Michael Ginzburg",
+    "firstName": "Michael",
+    "lastName": "Ginzburg",
+    "country": "Germany",
+    "company": "Ginzburg Live",
+    "role": "Founder",
+    "whatCompanyDoes": "Booking Agency",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Michael Ginzburg is a booking agent, talent buyer and live entertainment consultant specializing in international touring and global market development. He has held senior roles at Universal Music Group and Semmel Concerts (CTS Eventim), where he worked on projects including The World of Hans Zimmer and major touring exhibitions. \r\n\r\nOver his career, he has booked talent for global events such as Formula 1 Grand Prix and FIFA World Cup and works with artists and promoters across Europe, the Middle East and Asia.\r\n\r\nMichael is actively building bridges between Israel and Europe, booking Israeli and Jewish artists, most recently Noam Bettan, for private and public performances across Europe. He advocates for Israel and stands firmly against BDS within the international music and live entertainment industry.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "maciej_nestor",
+    "fullName": "Maciej Nestor",
+    "firstName": "Maciej",
+    "lastName": "Nestor",
+    "country": "Poland",
+    "company": "V Records / Jazz Premium",
+    "role": "Head of Label",
+    "whatCompanyDoes": "Label",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Maciej Nestor runs V Records, an independent Polish record label focused on jazz, contemporary and crossover music. He also leads Jazz Premium, which focuses on transferring knowledge, skills and creative approaches from the cultural and creative sectors into business through workshops, training and collaborative projects.\r\n\r\nHe's spent over 15 years working at the intersection of music, culture and business. He's collaborated with Polish jazz icons such as Kuba Stankiewicz and Piotr Baron, and produced concerts, tours across Poland, Europe, Canada and Japan, as well as festivals, recordings and cultural projects. He's always interested in discovering new artists, connecting people and turning good musical ideas into real international collaborations.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "simon_nasser",
+    "fullName": "Simon Nasser",
+    "firstName": "Simon",
+    "lastName": "Nasser",
+    "country": "Singapore",
+    "company": "Versed Talent Agency Pte",
+    "role": "Managing Director",
+    "whatCompanyDoes": "Agency",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "With over three decades in the music industry, Simon Nasser has consistently strived for excellence and innovation. \r\n\r\nSimon currently leads talent operations at Versed, having previously served as Managing Director of Universal Music Singapore and Head of Live across Southeast Asia. Prior to UMG, he spent 15 years at Warner Music Singapore - ultimately serving as Managing Director - where he aligned local execution with broader regional strategy.\r\n\r\nHis track record features major milestones: breaking both emerging and established artists, pioneering live music initiatives, and building new revenue streams through brand partnerships and sponsorships. Simon also served as Chairman of RIAS (Inland Revenue Authority of Singapore) across five terms (2018 - 2023), championing industry rights throughout Singapore and the region. \r\n\r\nDriven by a lifelong passion for music, Simon is always looking to open up new territories in entertainment and collaborate on bold, forward-thinking projects.",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "ezekiel_keran",
+    "fullName": "Ezekiel Keran",
+    "firstName": "Ezekiel",
+    "lastName": "Keran",
+    "country": "Singapore",
+    "company": "A Strange Love Pte",
+    "role": "Managing Director",
+    "whatCompanyDoes": "Label",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "astrangelove (formerly M03 Records) is a Singapore-based independent record label founded in 2017 by producer and A&R Ezekiel Keran, known professionally as Flightsch. Conceived as a boundary-pushing platform, it emerged as Singapore’s first multi-lingual hip-hop imprint - bridging cultures and genres that had long existed in silos.  \r\n\r\nFrom its inception, the label signed now-renowned artists Fariz Jabba and Yung Raja, and within six months entered a joint venture with Kartel Records (Sony Music Malaysia). By 2019, astrangelove became the first locally-run label to unite Tamil-English and Malay-English hip-hop alongside rock and indie-pop, reflecting the region’s cultural diversity.\r\n\r\nEzekiel has amassed global recognition for his artists and records - from mentions by Jimmy Fallon on The Tonight Show to charting positions in India, Malaysia, and Singapore, Ezekiel’s astute ability to trendset artists has carved successful careers for each label, artist, and songwriter the A&R maverick has lent his services to.\r\n\r\nHe launched Singapore’s first successful multi-lingual hip hop label, set up Def Jam Singapore, and led the Universal Music Singapore Domestic label to regional success.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "adam_sagir",
+    "fullName": "Adam Sagir",
+    "firstName": "Adam",
+    "lastName": "Sagir",
+    "country": "UK",
+    "company": "The Noise Cartel",
+    "role": "Founder and Managing Director",
+    "whatCompanyDoes": "PR Agency",
+    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities, Planning to discuss a rock/metak focused program for next year",
+    "bio": "Adam Sagir is a music industry entrepreneur, publicist and artist manager with more than two decades of experience. He is the Founder and Managing Director of The Noise Cartel, a leading UK music PR and marketing agency specialising in rock, metal and alternative music.\r\n\r\nBeginning his career at Century Media Records aged 19, Adam spent seven years at the label, becoming Head of its UK office before founding The Noise Cartel. He has since delivered campaigns for internationally recognised artists, festivals, labels and entertainment brands.\r\nAlongside his PR work, Adam opened the UK branch of Finnish company Backbone Management Ltd, managing SikTh, Bones UK and Vexed.\r\nAn advocate for music industry education, he also developed a course for Point Blank Music School and has delivered guest lectures and masterclasses for BIMM, ACM and Syracuse University.\r\n\r\nSagir currently works with two Israeli bands -  Orphaned Land and Walkways, alongside Meshugga, Ghost, Baby Metal, Papa Roach, Rise Against and more",
+    "genre": "Rock/Indie music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "federico_martinez_penna",
+    "fullName": "Federico Martinez Penna",
+    "firstName": "Federico",
+    "lastName": "Martinez Penna",
+    "country": "Argentina",
+    "company": "Rolling Stone",
+    "role": "Freelance journalist",
+    "whatCompanyDoes": "Media",
+    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Also networking with other media related people, but also producers, bookers, musicians and managers, specially the ones with focus on music activities and music project activations in Europe and South America",
+    "bio": "He has 13 years of experience working as a freelance journalist, writing pieces, interviews and reviews for Rolling Stone, Billboard, Noisey and Vice. He has also hosted and produced radio shows for Worldwide FM, J-Wave and Radio Colmena Argentina. He is currently focusing on audiovisual content, producing E2E reels and videos about specific music stories on short and long form content in his own Social Medias, and he also does multimedia and graphic design for music themed projects that can be checked on his personal website. Federico also has a long-standing career in corporate communications and advertising, developing comms strategy and coordinating digital marketing projects for several brands.\r\n\r\nBased in Buenos Aires, he also DJs regularly in local bars and clubs and runs a curated playlist account on Spotify and Mixcloud. He has been writing for La Nación since 2018, covering live music, nightlife and the music industry.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "angella_lee",
+    "fullName": "Angella Lee",
+    "firstName": "Angella",
+    "lastName": "Lee",
+    "country": "South Korea",
+    "company": "Jarasum Jazz Festival",
+    "role": "PR & Marketing Manager",
+    "whatCompanyDoes": "Music festival",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Angella Lee is a trilingual PR and marketing professional with extensive experience in international artist management, festival operations, and brand campaigns. Serving as the PR & Marketing Manager for the Jarasum Jazz Festival, she has a long-standing history with the festival, previously working as a musician liaison managing global jazz acts like the Joanna Duda Trio, Norma Winstone, and Daniel Zamir. Her background also includes tour management for the Ministry of Foreign Affairs in South Korea and performing arts promotion.\r\nThe Jarasum Jazz Festival has a 23-year history as the representative jazz festival in Korea, and she is in charge of PR and marketing as well as working with the programming team. She has diverse on-site experience from various work experience in MICE events, music festival events and outdoor events. Her key projects were the 23rd Jarasum Jazz Festival and the South Korea Queer Festival and Parade for 3 years.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": true
+  },
+  {
+    "id": "alexandra_miteran",
+    "fullName": "Alexandra Miteran",
+    "firstName": "Alexandra",
+    "lastName": "Miteran",
+    "country": "UAE",
+    "company": "SAMIT Event Group",
+    "role": "Owner, director",
+    "whatCompanyDoes": "Cultural event management company",
+    "festivalGoal": "Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, governmental collaboration",
+    "bio": "Alexandra Miteran is the Founder & CEO of SAMIT Event Group, an international company founded in 2021 in Dubai, specialising in strategic projects across culture, tourism and live experiences across the UAE and GCC. Working closely with embassies, cultural institutions and private patrons, she produces diplomatic cultural events, private concerts, ballet and opera productions, orchestral tours, international festivals and music competitions.\n\nIn 2020 she launched VIP Classical, an intimate concert series in Dubai that brings together the worlds of arts, business and diplomacy. Today SAMIT delivers programmes from first concept to stage, with a focus on cultural exchange and partnerships with diplomatic missions.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "ahuvah_berger_burcat",
+    "fullName": "Ahuvah Berger-Burcat",
+    "firstName": "Ahuvah",
+    "lastName": "Berger-Burcat",
+    "country": "Israel",
+    "company": "Revelator / WMG",
+    "role": "VP of Marketing for Revelator",
+    "whatCompanyDoes": "Label / Distributor",
+    "festivalGoal": "Establishing global music distribution and marketing",
+    "bio": "Ahuva Berger-Burcat is the VP of Marketing at Revelator, where she leads marketing strategy, brand positioning, product marketing, and communications. Recently acquired by Warner Music Group, Revelator provides the technology powering WMG's music distribution operations.\nWith over 20 years of experience in B2B technology marketing, she has helped startups and growing companies find their voice, connect with customers, and bring innovative products to market. Her focus has always been on building brands, developing go-to-market strategies, and turning complex technology into compelling, relatable stories.\nWhile her career didn't begin in the music industry, music has always been a huge part of her life. At Revelator, she has found the perfect intersection of her passion for music, her love of technology, and her belief in empathetic marketing. For her, it's about more than promoting products. It's about creating meaningful connections between technology and people, and helping the businesses and people behind the music thrive.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "golda_bitterli",
+    "fullName": "Golda Bitterli",
+    "firstName": "Golda",
+    "lastName": "Bitterli",
+    "country": "Israel",
+    "company": "Revelator / WMG",
+    "role": "VP of Business Development",
+    "whatCompanyDoes": "Label / Distributor",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Golda Bitterli has spent nearly two decades at the intersection of music, technology, and business, helping independent artists, labels, and distributors build sustainable companies.\r\nAs VP of Business Development at Revelator, she works with independent music companies to give them the tools, transparency, and financial clarity they need to compete. She believes the independent music community deserves infrastructure as sophisticated as the majors.\r\nBefore moving into music tech, she led global marketing and sales campaigns for top independent labels. That operator's perspective shapes everything she does.\r\nFor over two years, she served on the board of Merlin, the global digital rights agency representing the world's leading independent labels.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "robert_g_dek",
+    "fullName": "Robert Gądek",
+    "firstName": "Robert",
+    "lastName": "Gądek",
+    "country": "Poland",
+    "company": "Jewish Culture Festival in Krakow",
+    "role": "Director, CEO",
+    "whatCompanyDoes": "interdisciplinary festival built around musical program",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
+    "bio": "After working 10 years as a Director of the Center for Jewish Culture in Krakow, in 2005 Robert Gądek joined the Jewish Culture Festival in Krakow as the Deputy Director, responsible for PR, external relations, fundraising and programming.\r\n\r\nHe was awarded the Honoris Gratia medal by the Mayor of Krakow for promoting the city’s Jewish heritage. He has lectured internationally on contemporary Polish-Jewish relations and, in 2015, was appointed to the U.S. Ambassador’s Policy Advisory Council in Poland.\r\n\r\nJewish Culture Festival in Krakow has been the oldest and largest presentation of contemporary Jewish Culture from Israel and the Diaspora. The Festival reports “more than 22,000 participants” across 176 events. \r\n\r\nIsraeli artists who have performed there include, in 2024, Yemen Blues (Ravid Kahalani), Maya Belsitzman & Matan Ephrat, the Maqamat Master with Elad Levi, Nissim Lugasi and others, vocalist Karen Malka; the “Shalom on Szeroka Street” finale featured Boom Pam with guests Liraz, Neta Elkayam, Kutiman, and Shai Tsabari.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "laurence_haziza",
+    "fullName": "Laurence Haziza",
+    "firstName": "Laurence",
+    "lastName": "Haziza",
+    "country": "France",
+    "company": "Sacré Sound Festival / Festival Jazz'N'Klezmer",
+    "role": "Director",
+    "whatCompanyDoes": "Music festival",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Laurence Haziza is a music promoter and cultural connector who aims to strengthen dialogue between cultures, audiences, and generations through music, blending diverse spiritual and musical traditions with contemporary sounds. \nShe began her career as an actress in theaters across Europe, followed by ten years in the French public sector, before moving into promotion and PR for Jazz and World music.\n\nSince 2008, Haziza has served as the director of the Jazz'N'Klezmer Festival, a festival that celebrates the fusion of Jazz and Jewish musical traditions. In 2023, she became the director of the Sacré Sound Festival, known for its innovative programming in World and contemporary music. In addition, she contributes as a journalist for Akadem, Radio J, and Radio France International.\n\nFounding director of the Sacré Sound Festival and director of the Jazz'N'Klezmer festival - as well as a journalist and producer - Laurence Haziza has been curating jazz and world music programs for twenty years; she has discovered numerous jazz talents and played an active role in raising the profile of the Israeli jazz scene. \n\nThrough her festivals, Laurence actively bridges French and Israeli music scenes by featuring and advocating for contemporary Israeli artists like Omri Mor, Yonathan Avishai, A-WA, Mayu Shviro and more, across jazz, klezmer, and world music fusion.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "nigel_canin",
+    "fullName": "Nigel Canin",
+    "firstName": "Nigel",
+    "lastName": "Canin",
+    "country": "UK",
+    "company": "Parallel Skies Records,",
+    "role": "Director",
+    "whatCompanyDoes": "Label and Publisher.",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Nigel Canin is a director of Parallel Skies Records, Publishing & Promotions, a UK-based music company founded in collaboration with the band Oi Va Voi in late 2024. \nThe company was established with the aim of supporting and promoting Jewish and Israeli artists, developing emerging talent and creating opportunities for their music to reach wider audiences.\nParallel Skies operates across record releases, music publishing, artist development and live promotions. Its work includes releases by Oi Va Voi, as well as emerging artists such as Benji Miller. The company was also featured at WOMEX 2024, where it presented its work as a platform connecting different musical cultures and traditions.\nCanin is the founder of Lemon Soul, a publishing company focused on books of Jewish interest. Its recent publications include The Jewish Muezzin, the memoir of Kobi Farhi, lead singer of Israeli band Orphaned Land.\nThrough these two ventures, Canin is active in both music and Jewish cultural publishing, with a particular focus on creating platforms and opportunities for Jewish and Israeli voices.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "raphael_perez",
+    "fullName": "Raphael Perez",
+    "firstName": "Raphael",
+    "lastName": "Perez",
+    "country": "France",
+    "company": "Israeli jazz",
+    "role": "President",
+    "whatCompanyDoes": "Nonprofit promoting Israeli jazz and world music / concerts",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing",
+    "bio": "Initiated as a photography project has grown into IsraeliJazz, a community of 25,000 members, offering content and hosting events both online and in person.",
+    "genre": "Jazz/World music",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "jonathan_schwartz",
+    "fullName": "Jonathan Schwartz",
+    "firstName": "Jonathan",
+    "lastName": "Schwartz",
+    "country": "USA/Israel",
+    "company": "America-Israel Cultural Foundation (AICF)",
+    "role": "Artistic Director",
+    "whatCompanyDoes": "Founded in 1939, the America-Israel Cultural Foundation (AICF) is a nonprofit that supports Israeli artists and cultural institutions and connects them with audiences around the world.",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Jonathan Schwartz is a 25+ year international music industry veteran, with experience in artist management, marketing, label management, event production and business development. Currently, Jonathan is an artist manager for the Regime Music Group. Based in Malibu, California, Regime represents a diverse range of artists from the worlds of Jazz, Hip Hop, Rock, Blues, electronic and everything in between.\nAdditionally, Jonathan hosts a daily radio show heard throughout the United States and Canada on SiriusXM Radio. \nIn recent years, Schwartz has been living in Israel, dividing time between Pardes Hana and the United States.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  },
+  {
+    "id": "na_ama_zisser",
+    "fullName": "Na'ama Zisser",
+    "firstName": "Na'ama",
+    "lastName": "Zisser",
+    "country": "UK",
+    "company": "JMI",
+    "role": "CEO",
+    "whatCompanyDoes": "Arts/Music organisation",
+    "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
+    "bio": "Na'ama is the CEO of the Jewish Music Institute in London, we preserve promote and develop Jewish Music and artists in all of its forms. She is also a composer and musician.",
+    "genre": "Multi Genres",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1yRThDQd3uk1Sc0ao69f80JTqID_7hEzx&sz=w800",
+    "hasRealPhoto": true,
+    "isAngella": false
+  }
+];
+
+    // Navigation State
+    let activeView = 'game'; // 'game' | 'directory'
 
     // Game State
     let guestsQueue = [];
@@ -1620,8 +2639,156 @@
     let gameTimer = null;
     let secondsElapsed = 0;
     let isModalOpen = false;
+    let modalMode = 'game'; // 'game' | 'directory'
 
-    // Timer
+    // Switch between Game and Directory
+    function switchView(targetView) {
+      activeView = targetView;
+      document.getElementById('tab-game-btn').classList.toggle('active', targetView === 'game');
+      document.getElementById('tab-dir-btn').classList.toggle('active', targetView === 'directory');
+
+      document.getElementById('game-view').classList.toggle('active', targetView === 'game');
+      document.getElementById('directory-view').classList.toggle('active', targetView === 'directory');
+
+      document.getElementById('shuffle-btn').style.display = (targetView === 'game') ? 'flex' : 'none';
+
+      // Update URL hash without reload
+      history.replaceState(null, '', '#' + targetView);
+
+      if (targetView === 'directory') {
+        renderDirectoryGrid();
+      }
+    }
+
+    // Check URL Hash on load
+    function initViewFromHash() {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (hash === 'directory' || hash === 'delegates' || hash === 'list') {
+        switchView('directory');
+      } else {
+        switchView('game');
+      }
+    }
+
+    // ========================================================
+    // DIRECTORY VIEW LOGIC
+    // ========================================================
+    function initDirectoryCountries() {
+      const select = document.getElementById('dir-country-filter');
+      const countries = Array.from(new Set(ALL_DELEGATES.map(g => g.country).filter(c => c && c !== 'N/A'))).sort();
+      countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        select.appendChild(opt);
+      });
+    }
+
+    function filterDirectory() {
+      const q = (document.getElementById('dir-search').value || '').toLowerCase().trim();
+      const countryVal = document.getElementById('dir-country-filter').value;
+      const genreVal = document.getElementById('dir-genre-filter').value;
+
+      const filtered = ALL_DELEGATES.filter(g => {
+        // Search
+        const searchPool = [
+          g.fullName, g.country, g.company, g.role, g.whatCompanyDoes, g.festivalGoal, g.bio, g.genre
+        ].join(' ').toLowerCase();
+
+        const matchesSearch = !q || searchPool.includes(q);
+
+        // Country
+        const matchesCountry = (countryVal === 'All') || (g.country === countryVal);
+
+        // Genre
+        let matchesGenre = true;
+        if (genreVal !== 'All') {
+          const gGenre = (g.genre || '').toLowerCase();
+          if (genreVal === 'Multi Genres') {
+            matchesGenre = gGenre.includes('multi') || gGenre.includes('both') || gGenre.includes('all');
+          } else if (genreVal.includes('Rock')) {
+            matchesGenre = gGenre.includes('rock') || gGenre.includes('indie') || gGenre.includes('electronic') || gGenre.includes('multi');
+          } else if (genreVal.includes('Jazz')) {
+            matchesGenre = gGenre.includes('jazz') || gGenre.includes('world') || gGenre.includes('multi');
+          }
+        }
+
+        return matchesSearch && matchesCountry && matchesGenre;
+      });
+
+      renderFilteredDelegates(filtered);
+    }
+
+    function renderFilteredDelegates(list) {
+      const grid = document.getElementById('delegates-grid');
+      const countEl = document.getElementById('dir-count-text');
+      countEl.textContent = `מציג ${list.length} מתוך ${ALL_DELEGATES.length} אורחים`;
+
+      grid.innerHTML = '';
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: #fff;">לא נמצאו אורחים מתאימים לסינון</div>
+            <div style="font-size: 0.85rem; margin-top: 6px;">נסו לנקות את תיבת החיפוש או לבחור "כל המדינות"</div>
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(guest => {
+        const card = document.createElement('div');
+        card.className = 'delegate-card';
+        card.onclick = () => openGuestModal(guest, 'directory');
+
+        const focalClass = guest.isAngella ? 'angella-focal' : '';
+        const roleCompText = [guest.role, guest.company].filter(Boolean).join(' • ');
+
+        card.innerHTML = `
+          <div class="delegate-card-img-wrap">
+            <img src="${guest.photoUrl}" alt="${guest.fullName}" class="delegate-card-img ${focalClass}" loading="lazy">
+            <div class="delegate-card-overlay">
+              <div class="delegate-card-name">${guest.fullName}</div>
+              <div class="delegate-card-meta">
+                <span class="delegate-card-country">🌍 ${guest.country}</span>
+                ${guest.genre ? `<span class="delegate-card-genre">${guest.genre}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="delegate-card-body">
+            <div class="delegate-role-comp">${roleCompText}</div>
+            
+            ${guest.whatCompanyDoes && guest.whatCompanyDoes !== 'N/A' ? `
+              <div class="delegate-section-block">
+                <span class="delegate-section-lbl"><span>🏢</span><span>פעילות:</span></span>
+                <span class="delegate-section-val">${guest.whatCompanyDoes}</span>
+              </div>
+            ` : ''}
+
+            ${guest.festivalGoal ? `
+              <div class="delegate-section-block">
+                <span class="delegate-section-lbl"><span>🎯</span><span>מטרה בפסטיבל:</span></span>
+                <span class="delegate-section-val">${guest.festivalGoal}</span>
+              </div>
+            ` : ''}
+          </div>
+          <div class="delegate-card-footer">
+            <span>לפרופיל מלא</span>
+            <span>➔</span>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderDirectoryGrid() {
+      filterDirectory();
+    }
+
+    // ========================================================
+    // GAME VIEW LOGIC
+    // ========================================================
     function startTimer() {
       if (gameTimer) clearInterval(gameTimer);
       secondsElapsed = 0;
@@ -1638,7 +2805,6 @@
       document.getElementById('timer-text').textContent = `${mins}:${secs}`;
     }
 
-    // Shuffle helper
     function shuffle(arr) {
       const copy = [...arr];
       for (let i = copy.length - 1; i > 0; i--) {
@@ -1648,9 +2814,8 @@
       return copy;
     }
 
-    // Initialize or Restart Game
     function initGame() {
-      guestsQueue = shuffle(INITIAL_GUESTS);
+      guestsQueue = shuffle(GAME_GUESTS);
       solvedGuestIds.clear();
       currentStreak = 0;
       maxStreak = 0;
@@ -1674,7 +2839,6 @@
       showToast('המשחק אותחל מחדש בסדר אקראי!', 'info', '🔀');
     }
 
-    // Load next unsolved guest from queue
     function loadNextGuest() {
       const unsolved = guestsQueue.filter(g => !solvedGuestIds.has(g.id));
       if (unsolved.length === 0) {
@@ -1684,7 +2848,6 @@
 
       currentGuest = unsolved[0];
 
-      // Update Photo & Reset overlays
       const imgEl = document.getElementById('current-guest-img');
       const spinner = document.getElementById('photo-spinner');
       const stageCard = document.getElementById('photo-stage');
@@ -1696,7 +2859,12 @@
       imgEl.classList.remove('loaded');
       spinner.style.display = 'block';
 
-      // Load image
+      if (currentGuest.isAngella) {
+        imgEl.style.objectPosition = 'center 78%';
+      } else {
+        imgEl.style.objectPosition = 'center 25%';
+      }
+
       const tempImg = new Image();
       tempImg.onload = () => {
         imgEl.src = currentGuest.photoUrl;
@@ -1715,7 +2883,7 @@
     }
 
     function updateStatsUI() {
-      const total = INITIAL_GUESTS.length;
+      const total = GAME_GUESTS.length;
       const solved = solvedGuestIds.size;
       const progressPercent = Math.round((solved / total) * 100);
 
@@ -1727,18 +2895,15 @@
       document.getElementById('mistakes-count').textContent = mistakesCount;
     }
 
-    // Render the Pool of All Names
     function renderNamesPool() {
       const container = document.getElementById('names-cloud');
-      let list = [...INITIAL_GUESTS];
+      let list = [...GAME_GUESTS];
 
-      // Filter by search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         list = list.filter(g => g.fullName.toLowerCase().includes(q) || (g.country && g.country.toLowerCase().includes(q)));
       }
 
-      // Sort
       if (currentSortMode === 'alpha') {
         list.sort((a, b) => a.fullName.localeCompare(b.fullName));
       }
@@ -1760,12 +2925,12 @@
           ${isSolved ? '<span class="solved-check-icon">✓</span>' : ''}
         `;
 
-        // Click handler: ZERO sound on click
+        // Click handler: SILENT CLICK
         chip.addEventListener('click', () => {
           handleGuess(guest.id, chip);
         });
 
-        // Drag & Drop Handlers
+        // Drag handlers
         chip.addEventListener('dragstart', (e) => {
           if (isModalOpen) return;
           chip.classList.add('dragging');
@@ -1781,7 +2946,7 @@
       });
     }
 
-    // Set up Drag & Drop on Photo Stage
+    // Drag & drop dropzone
     const dropZone = document.getElementById('photo-drop-zone');
     const stageCard = document.getElementById('photo-stage');
 
@@ -1807,17 +2972,14 @@
       }
     });
 
-    // Check Guess Logic
     function handleGuess(guessId, chipEl) {
       if (!currentGuest || isModalOpen) return;
 
       totalGuesses++;
 
       if (guessId === currentGuest.id) {
-        // === CORRECT GUESS ===
         onCorrectGuess(chipEl);
       } else {
-        // === WRONG GUESS - ZERO SOUND ===
         onWrongGuess(guessId, chipEl);
       }
     }
@@ -1831,7 +2993,6 @@
 
       triggerConfettiParticles(25);
 
-      // Visual feedback on stage & chip
       const stageCard = document.getElementById('photo-stage');
       stageCard.classList.add('celebrate-success');
 
@@ -1841,8 +3002,8 @@
 
       updateStatsUI();
 
-      // Open the Guest Details Popup Modal!
-      openGuestModal(currentGuest);
+      // Open Modal in game mode
+      openGuestModal(currentGuest, 'game');
     }
 
     function onWrongGuess(guessId, chipEl) {
@@ -1850,7 +3011,7 @@
       mistakesCount++;
       updateStatsUI();
 
-      // STRICTLY ZERO SOUND on wrong guess! Only visual shake & red highlight
+      // Strictly visual feedback - ZERO sound
       const stageCard = document.getElementById('photo-stage');
       stageCard.classList.add('shake-wrong');
       setTimeout(() => stageCard.classList.remove('shake-wrong'), 500);
@@ -1862,33 +3023,40 @@
         }, 550);
       }
 
-      const guessedGuest = INITIAL_GUESTS.find(g => g.id === guessId);
+      const guessedGuest = GAME_GUESTS.find(g => g.id === guessId);
       const guessedName = guessedGuest ? guessedGuest.fullName : 'שם זה';
       showToast(`לא נכון... זה לא ${guessedName}, נסו שוב!`, 'wrong', '❌');
     }
 
-    // Open Guest Profile Details Modal
-    function openGuestModal(guest) {
+    // Modal logic (shared for Game and Directory)
+    function openGuestModal(guest, mode = 'game') {
       isModalOpen = true;
+      modalMode = mode;
 
-      // Populate hero
       document.getElementById('modal-avatar-img').src = guest.photoUrl;
       document.getElementById('modal-guest-name').textContent = guest.fullName;
       document.getElementById('modal-guest-country').textContent = `🌍 ${guest.country || 'International'}`;
 
-      // Role & Company
+      const tagPill = document.getElementById('modal-tag-pill');
+      if (mode === 'game') {
+        tagPill.textContent = '✓ זיהיתם נכון!';
+        tagPill.style.display = 'inline-flex';
+        document.getElementById('modal-continue-btn').innerHTML = '<span>המשך לאורח הבא</span><span>➔</span>';
+      } else {
+        tagPill.textContent = guest.genre || 'אורח משלחת';
+        tagPill.style.display = 'inline-flex';
+        document.getElementById('modal-continue-btn').innerHTML = '<span>סגור</span>';
+      }
+
       const roleText = [guest.role, guest.company].filter(Boolean).join(' • ');
       document.getElementById('modal-guest-role-company').textContent = roleText || 'Independent';
 
-      // What company does
       document.getElementById('modal-guest-what-company-does').textContent = guest.whatCompanyDoes || 'N/A';
 
-      // Festival Goal Tags
+      // Goals tags
       const goalsWrap = document.getElementById('modal-guest-goals-wrap');
       goalsWrap.innerHTML = '';
       const rawGoals = guest.festivalGoal || '';
-      
-      // Parse goals (split by comma if multiple)
       const goalsList = rawGoals.split(/,(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
 
       if (goalsList.length > 0) {
@@ -1905,10 +3073,19 @@
         goalsWrap.appendChild(tag);
       }
 
+      // Bio
+      const bioItem = document.getElementById('modal-bio-item');
+      const bioText = document.getElementById('modal-guest-bio');
+      if (guest.bio && guest.bio.trim()) {
+        bioItem.style.display = 'flex';
+        bioText.textContent = guest.bio;
+      } else {
+        bioItem.style.display = 'none';
+      }
+
       const modalEl = document.getElementById('guest-profile-modal');
       modalEl.classList.add('visible');
 
-      // Focus continue button
       setTimeout(() => {
         const btn = document.getElementById('modal-continue-btn');
         if (btn) btn.focus();
@@ -1920,13 +3097,13 @@
       modalEl.classList.remove('visible');
       isModalOpen = false;
 
-      // Load next guest smoothly
-      setTimeout(() => {
-        loadNextGuest();
-      }, 250);
+      if (modalMode === 'game') {
+        setTimeout(() => {
+          loadNextGuest();
+        }, 250);
+      }
     }
 
-    // Keyboard support: Enter / Space / Escape closes modal to continue
     window.addEventListener('keydown', (e) => {
       if (isModalOpen) {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
@@ -1936,14 +3113,12 @@
       }
     });
 
-    // Close modal when clicking on backdrop
     document.getElementById('guest-profile-modal').addEventListener('click', (e) => {
       if (e.target.id === 'guest-profile-modal') {
         closeGuestModal();
       }
     });
 
-    // Hint function
     function showHint() {
       if (!currentGuest || isModalOpen) return;
       const hintBox = document.getElementById('hint-box');
@@ -1959,7 +3134,6 @@
       showToast('רמז נחשף למטה!', 'info', '💡');
     }
 
-    // Skip current guest to end of queue
     function skipCurrentGuest() {
       if (!currentGuest || isModalOpen) return;
       const idx = guestsQueue.indexOf(currentGuest);
@@ -1971,7 +3145,6 @@
       loadNextGuest();
     }
 
-    // Search and Sort
     function handleSearch(val) {
       searchQuery = val;
       renderNamesPool();
@@ -1983,12 +3156,11 @@
       document.getElementById('sort-alpha-btn').classList.toggle('active', mode === 'alpha');
 
       if (mode === 'random') {
-        INITIAL_GUESTS.sort(() => Math.random() - 0.5);
+        GAME_GUESTS.sort(() => Math.random() - 0.5);
       }
       renderNamesPool();
     }
 
-    // Toast Notification Helper
     let toastTimeout = null;
     function showToast(msg, type = 'info', icon = '✨') {
       const toast = document.getElementById('toast');
@@ -2006,7 +3178,6 @@
       }, 2200);
     }
 
-    // Game Completion
     function onGameComplete() {
       if (gameTimer) clearInterval(gameTimer);
       triggerFullConfettiShower();
@@ -2103,6 +3274,8 @@
 
     // Auto-start on load
     window.addEventListener('DOMContentLoaded', () => {
+      initDirectoryCountries();
+      initViewFromHash();
       initGame();
     });
   </script>
