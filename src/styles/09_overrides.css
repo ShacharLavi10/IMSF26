@@ -507,6 +507,26 @@ body.light-mode .live-show-card.is-fav {
   fill: #ef4444;
 }
 
+body.light-mode .fav-filter-btn {
+  background: #ffffff;
+  color: #475569;
+  border: 1.5px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+}
+body.light-mode .fav-filter-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+body.light-mode .fav-filter-btn.active {
+  background: #fee2e2;
+  border-color: #000000;
+  color: #dc2626;
+  box-shadow: 2px 2px 0px #000000;
+}
+body.light-mode .fav-filter-btn.active svg {
+  fill: #dc2626;
+}
+
 /* ========================================================= */
 /* BOTTOM SHEET MODAL                                        */
 /* ========================================================= */
@@ -4742,25 +4762,36 @@ body.light-mode .timetable-show-card.is-live-now {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--card-bg, #ffffff);
-  color: var(--foreground, #000000);
+  background: #ffffff;
+  color: #0f172a !important;
   border: 2px solid #000000;
   box-shadow: 3px 3px 0px #000000;
   border-radius: 6px;
   padding: 8px 16px;
   font-family: 'Oswald', sans-serif;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.3px;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   width: auto;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.timetable-calendar-sync-btn svg {
+  stroke: #0f172a !important;
+  color: #0f172a !important;
+}
+
+.timetable-calendar-sync-btn span {
+  color: #0f172a !important;
 }
 
 .timetable-calendar-sync-btn:hover {
   transform: translate(-1px, -1px);
   box-shadow: 4px 4px 0px #000000;
-  background: rgba(241, 169, 160, 0.18);
+  background: #ffe3df;
 }
 
 .timetable-calendar-sync-btn:active {
@@ -4770,18 +4801,50 @@ body.light-mode .timetable-show-card.is-live-now {
 
 body.light-mode .timetable-calendar-sync-btn {
   background: #ffffff;
-  color: #0f172a;
+  color: #0f172a !important;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+body.light-mode .timetable-calendar-sync-btn svg {
+  stroke: #0f172a !important;
+  color: #0f172a !important;
+}
+
+body.light-mode .timetable-calendar-sync-btn span {
+  color: #0f172a !important;
 }
 
 .calendar-sync-badge {
   background: var(--accent, #F1A9A0);
-  color: #000000;
+  color: #000000 !important;
   border: 1px solid #000000;
   border-radius: 12px;
   padding: 1px 7px;
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.2;
+}
+
+/* Modal Stat Chips (Used in Briefcase and Calendar Sync modals) */
+.modal-stat-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.light-mode .modal-stat-chip {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1.5px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
 }
 
 /* Live Banner Show Items */

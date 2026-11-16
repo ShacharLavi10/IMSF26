@@ -3,6 +3,7 @@ body.light-mode {
     --background-deep: #D6EAF8; /* Ice Blue */
     --background-base: #E8F4FA;
     --background-elevated: #ffffff;
+    --card-bg: #ffffff;
     --surface: rgba(0, 0, 0, 0.02);
     --surface-hover: rgba(0, 0, 0, 0.04);
     

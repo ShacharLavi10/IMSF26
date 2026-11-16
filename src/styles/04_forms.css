@@ -59,6 +59,9 @@
     font-family: var(--font-stack);
     touch-action: manipulation;
     user-select: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
   }
   button.primary {
     background: var(--accent);
