@@ -2,6 +2,8 @@ let currentGuestEmail = "";
 let currentGuestData = null;
 let globalDirectoryData = [];
 let isCurrentGuestAdmin = false;
+let isCurrentGuestGeneralProd = false;
+let hasProductionTabAccess = false;
 
 let currentTourTab = null;
 let currentTabStepIndex = 0;
@@ -567,12 +569,16 @@ function closeWelcomeModal() {
         if (cached) {
           try {
             const parsedCached = JSON.parse(cached);
-            isCurrentGuestAdmin = !!(parsedCached && parsedCached.guestInfo && (parsedCached.guestInfo.isAdmin === true || parsedCached.guestInfo.role === 'הפקה חשיפה'));
+            const userRole = (parsedCached && parsedCached.guestInfo && parsedCached.guestInfo.role) ? String(parsedCached.guestInfo.role).trim() : '';
+            isCurrentGuestAdmin = !!(parsedCached && parsedCached.guestInfo && (parsedCached.guestInfo.isAdmin === true || userRole === 'הפקה חשיפה'));
+            isCurrentGuestGeneralProd = (userRole === 'הפקה כללי');
+            hasProductionTabAccess = isCurrentGuestAdmin || isCurrentGuestGeneralProd;
+
             const resetBtn = document.getElementById("admin-reset-cache-btn");
             const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
             if (resetBtn) resetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
             if (panelResetBtn) panelResetBtn.style.display = isCurrentGuestAdmin ? "inline-flex" : "none";
-            if (tabAdminInit) tabAdminInit.style.display = isCurrentGuestAdmin ? "flex" : "none";
+            if (tabAdminInit) tabAdminInit.style.display = hasProductionTabAccess ? "flex" : "none";
             onLoginSuccess(parsedCached, true);
           } catch(e) {
             document.getElementById("login-loader").style.display = "block";
@@ -600,7 +606,7 @@ function closeWelcomeModal() {
     }
 
     function switchCategoryTab(tabName) {
-      if (tabName === 'admin' && !isCurrentGuestAdmin) {
+      if (tabName === 'admin' && !hasProductionTabAccess) {
         tabName = 'schedule';
       }
       if (tabName === 'flights' || tabName === 'hotels') {
@@ -627,11 +633,11 @@ function closeWelcomeModal() {
           card.style.display = (t === tabName) ? 'block' : 'none';
         }
         if (t === 'admin' && tabName === 'admin') {
-          if (isCurrentGuestAdmin) {
+          if (hasProductionTabAccess) {
             loadAdminDashboard();
             loadAdminNetworkingData(true);
             const adminContainer = document.getElementById("admin-dashboard-container");
-            if (adminContainer) {
+            if (adminContainer && isCurrentGuestAdmin) {
               adminContainer.querySelectorAll('details.admin-section-accordion[open]').forEach(acc => {
                 acc.removeAttribute('open');
               });
@@ -756,6 +762,8 @@ function closeWelcomeModal() {
       document.getElementById("guest-otp").value = "";
       document.getElementById("login-error").style.display = "none";
       isCurrentGuestAdmin = false;
+      isCurrentGuestGeneralProd = false;
+      hasProductionTabAccess = false;
       const tabAdmin = document.getElementById("tab-admin");
       if (tabAdmin) tabAdmin.style.display = "none";
       const adminCard = document.getElementById("admin-card");
@@ -790,7 +798,10 @@ function closeWelcomeModal() {
       currentGuestEmail = response.guestInfo.email;
       currentGuestData = response.guestInfo;
       
-      isCurrentGuestAdmin = !!(response.guestInfo && (response.guestInfo.isAdmin === true || response.guestInfo.role === 'הפקה חשיפה'));
+      const userRole = (response.guestInfo && response.guestInfo.role) ? String(response.guestInfo.role).trim() : '';
+      isCurrentGuestAdmin = !!(response.guestInfo && (response.guestInfo.isAdmin === true || userRole === 'הפקה חשיפה'));
+      isCurrentGuestGeneralProd = (userRole === 'הפקה כללי');
+      hasProductionTabAccess = isCurrentGuestAdmin || isCurrentGuestGeneralProd;
       
       const resetBtn = document.getElementById("admin-reset-cache-btn");
       const panelResetBtn = document.getElementById("admin-panel-reset-cache-btn");
@@ -799,11 +810,11 @@ function closeWelcomeModal() {
 
       const tabAdmin = document.getElementById("tab-admin");
       if (tabAdmin) {
-        tabAdmin.style.display = isCurrentGuestAdmin ? "flex" : "none";
+        tabAdmin.style.display = hasProductionTabAccess ? "flex" : "none";
       }
 
       const adminCard = document.getElementById("admin-card");
-      if (adminCard && !isCurrentGuestAdmin) {
+      if (adminCard && !hasProductionTabAccess) {
         adminCard.style.display = "none";
       }
 
@@ -854,7 +865,7 @@ function closeWelcomeModal() {
         const restoreTab = sessionStorage.getItem('imsf_restore_tab');
         if (restoreTab) {
           sessionStorage.removeItem('imsf_restore_tab');
-          if (restoreTab === 'admin' && !isCurrentGuestAdmin) {
+          if (restoreTab === 'admin' && !hasProductionTabAccess) {
             switchCategoryTab('schedule');
           } else {
             switchCategoryTab(restoreTab);
@@ -7554,7 +7565,68 @@ let adminData = null;
 function renderAdminDashboard() {
   const container = document.getElementById("admin-dashboard-container");
   if (!adminData || !adminData.guests) return;
-  
+
+  const isGeneralProdUser = isCurrentGuestGeneralProd || (currentGuestData && currentGuestData.role === 'הפקה כללי') || (adminData && adminData.role === 'הפקה כללי');
+  const titleEl = document.getElementById("admin-card-title");
+  if (titleEl) {
+    titleEl.innerText = isGeneralProdUser ? "Lineup & Networking Leads" : "Production Dashboard";
+  }
+
+  const netSearchEl = document.getElementById("admin-networking-search");
+  const savedNetSearch = netSearchEl ? netSearchEl.value : "";
+  const isNetSearchFocused = (document.activeElement && document.activeElement.id === "admin-networking-search");
+
+  // For 'הפקה כללי': show directly and strictly ONLY the Lineup & Networking Leads section (zero accordions, open directly)
+  if (isGeneralProdUser) {
+    container.innerHTML = `
+      <div class="admin-sections-wrapper" style="max-width: 100%;">
+        <div style="background: var(--surface); padding: 18px; border-radius: 12px; border: 2px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+            <p style="font-size: 0.85rem; color: var(--foreground-muted); margin: 0;">Real-time delegate interest, booking inquiries, and tour matching across artists.</p>
+            <div style="display: flex; gap: 8px;">
+              <button class="secondary" style="font-size: 0.8rem; padding: 6px 12px;" onclick="loadAdminNetworkingData(true)">Refresh</button>
+              <button class="primary" style="font-size: 0.8rem; padding: 6px 12px;" onclick="triggerFullLeadsSync()">⚡ Run Full Sync</button>
+            </div>
+          </div>
+          
+          <!-- Slide Toggle for Artists / Guests -->
+          <div class="networking-toggle-container">
+            <div class="networking-slide-toggle">
+              <button type="button" id="networking-toggle-artists" class="networking-toggle-btn active" onclick="switchAdminNetworkingTab('artists')">
+                🎸 Artists <span id="networking-artists-count" class="networking-toggle-badge">0</span>
+              </button>
+              <button type="button" id="networking-toggle-guests" class="networking-toggle-btn" onclick="switchAdminNetworkingTab('guests')">
+                👥 Guests <span id="networking-guests-count" class="networking-toggle-badge">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic KPI Overview Cards -->
+          <div id="admin-networking-kpis" class="networking-kpis-grid"></div>
+
+          <div style="margin-bottom: 12px; position: relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="position: absolute; left: 12px; top: 11px; color: var(--foreground-muted);"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="admin-networking-search" placeholder="Search artists..." style="width: 100%; padding: 10px 12px 10px 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--foreground); box-sizing: border-box;" onkeyup="filterAdminNetworking(this.value)">
+          </div>
+
+          <div id="admin-networking-list" class="networking-cubes-grid">
+            <p style="color: var(--foreground-muted); text-align: center; padding: 15px; grid-column: 1 / -1;">Loading networking insights...</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (savedNetSearch) {
+      const newNetSearch = document.getElementById("admin-networking-search");
+      if (newNetSearch) {
+        newNetSearch.value = savedNetSearch;
+        if (isNetSearchFocused) newNetSearch.focus();
+      }
+    }
+    loadAdminNetworkingData(false);
+    return;
+  }
+
   // Capture current user interaction state before replacing DOM (preserves open accordion on background SWR fetch)
   const openAccordion = container ? container.querySelector('details.admin-section-accordion[open]') : null;
   const openAccordionId = openAccordion ? openAccordion.id : null;
@@ -7566,10 +7638,6 @@ function renderAdminDashboard() {
   const schedSearchEl = document.getElementById("admin-schedule-search");
   const savedSchedSearch = schedSearchEl ? schedSearchEl.value : "";
   const isSchedSearchFocused = (document.activeElement && document.activeElement.id === "admin-schedule-search");
-
-  const netSearchEl = document.getElementById("admin-networking-search");
-  const savedNetSearch = netSearchEl ? netSearchEl.value : "";
-  const isNetSearchFocused = (document.activeElement && document.activeElement.id === "admin-networking-search");
 
   const guestListEl = document.getElementById("admin-guest-list");
   const savedGuestListScroll = guestListEl ? guestListEl.scrollTop : 0;
