@@ -19,6 +19,9 @@
    * 🧭 **לשונית מדריך והמלצות (Guide Tab):** קונסיירז' דיגיטלי הכולל מתגים ל-Jerusalem, Tel Aviv, ו-Essentials (ברים, מסעדות, לוקיישנים, אפליקציות מוניות, קישורי תשלום ו-FAQ) עם קישור ישיר ל-Google Maps (`#tab-guide`, `#guide-card`, `#guide-pending-container`). מותנה בסימון עמודת 'אישור כללי' בגיליון אורחים.
    * 🤝 **לשונית אורחים (Delegates Tab):** מנוע חיפוש וסינון רשימת כלל האורחים בפסטיבל (`#tab-directory`, `#directory-card`).
    * 🎸 **לשונית אמנים (Artists Tab):** אזור להצגת ליין-אפ האמנים, ז'אנרים, מועדפים והערות אישיות (`#tab-artists`, `#artists-card`).
+   * ⚙️ **לשונית הפקה (Production Dashboard Tab):** מוצגת בלעדית לצוות ההפקה (`#tab-admin`, `#admin-card`, כותרת `#admin-card-title`):
+     - **`הפקה חשיפה` (מנהל ראשי):** דשבורד מלא עם 4 אקורדיונים נפרדים (התראות, לוח הפקה, ניהול אורחים/התחזות, ולידים/ליינאפ).
+     - **`הפקה כללי` (צוות כללי):** תצוגה ממוקדת של Lineup & Networking Leads המוצגת ישירות ללא אקורדיונים מקופלים, ללא כלי ניהול/שידורים/התחזות.
 
 4. **🪟 חלוניות צפות ומודאלים (Modals & Bottom Sheets)**
    * 👤 **חלונית פרופיל אורח (Guest Bottom Sheet):** חלונית תחתונה מודרנית הנפתחת הן מלשונית האורחים והן בלחיצה על נוסע בשאטל, ומציגה פרטי קשר, תמונה, תפקיד, חברה וביוגרפיה (`#guest-bottom-sheet`, `#guest-sheet-overlay`).
@@ -38,6 +41,9 @@
    * **מזוודת ייצוא אישית (Artist Briefcase PDF):** `#export-briefcase-container`, `#export-briefcase-btn`, מודאל ייצוא `#artist-briefcase-modal` (כולל שליחה למייל `sendBriefcaseToEmail`, הורדה ישירה `downloadBriefcasePdf`, וצפייה בדפדפן `previewBriefcasePdf`). רישום מועד ההורדה מתועד בעמודת 'מי הוריד PDF' ע"י `recordBriefcaseDownload()`.
 
 6. **📊 רכיבי דשבורד הפקה לנטוורקינג (Admin Lineup & Networking Leads)**
+   * **הפרדה בין תפקידי הפקה (`הפקה חשיפה` לעומת `הפקה כללי`):**
+     - **`הפקה חשיפה` (Full Admin):** לשונית ההפקה מציגה 4 אקורדיונים נפרדים (`<details class="admin-section-accordion" name="admin-section">`), כאשר רובריקת הלידים היא האקורדיון הרביעי (`#admin-sec-networking`). כותרת הלשונית: `Production Dashboard`.
+     - **`הפקה כללי` (General Production):** הקונטיינר `#admin-dashboard-container` מרנדר ישירות את תוכן הלידים ללא תגית `<details>` וללא אקורדיונים מקופלים. כותרת הלשונית משתנה דינמית ל-`Lineup & Networking Leads`. כל שאר חלקי הניהול (התראות, לו"ז הפקה פנימי, אורחים/התחזות) אינם מרונדרים כלל ונחסמים בצד השרת.
    * **רובריקת כרטיסי סיכום ו-KPIs:** `#admin-networking-kpis` (כולל בורר `Artists / Guests`, כרטיסיות `Lineup Coverage` / `Delegate Engagement` ודירוגי `Top In-Demand / Active`).
    * **מתג מעבר אומנים/אורחים:** `#admin-networking-switcher` (או כפתורי הבורר המשולבים).
    * **תיבת חיפוש וסינון לידים:** `#admin-networking-search` (חיפוש לפי אמן, ז'אנר, מדינה, בוקר או הערה).
@@ -244,4 +250,5 @@
     * **סטטוס תוצאות:** `#directory-status` (מציג `Showing X of Y delegates` וכפתור `Clear` לאיפוס מסננים `resetFilters()`).
     * **גריד כרטיסיות אורחים:** `#directory-container` (`.artists-grid`, `.artist-card`).
     * **לוגיקת התאמת Multi-genre (`filterDirectory()`):** אורחים שמוגדרים בגיליון עם `Multi genre` (או `multi`, `both`, `all`, `מולטי`, `הכל`, או שילוב רוק וג'אז) מוצגים **תמיד בכל סינוני הז'אנר** (גם בסינון רוק וגם בסינון ג'אז) מתוך הבנה שהם רלוונטיים לכלל הז'אנרים בפסטיבל.
+    * **משחק Guess the Guest:** הוסר מכותרת הלשונית בפורטל הרשמי ואינו מוצג לאורחים; הגישה למשחק מתבצעת בלעדית דרך הנתיב הישיר `/guess-guest.html`.
 
