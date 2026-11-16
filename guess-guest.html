@@ -11,7 +11,7 @@
   <style>
     :root {
       --bg: #0b0c10;
-      --card-bg: rgba(22, 25, 35, 0.75);
+      --card-bg: rgba(22, 25, 35, 0.78);
       --card-border: rgba(255, 255, 255, 0.08);
       --card-hover: rgba(255, 255, 255, 0.12);
       --text: #f1f5f9;
@@ -120,12 +120,6 @@
       background: rgba(255, 255, 255, 0.12);
       border-color: rgba(255, 255, 255, 0.2);
       transform: translateY(-2px);
-    }
-
-    .btn-icon.active {
-      background: var(--accent-glow);
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     /* Container */
@@ -320,63 +314,6 @@
       font-weight: 700;
       border-color: #fff;
       transform: scale(1.05);
-    }
-
-    /* Revealed Profile Banner (Upon Success) */
-    .success-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(11, 12, 16, 0.95) 0%, rgba(16, 185, 129, 0.25) 50%, rgba(11, 12, 16, 0.4) 100%);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: 24px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.35s ease, transform 0.35s ease;
-      transform: translateY(15px);
-    }
-
-    .success-overlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-
-    .success-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--success);
-      color: #fff;
-      padding: 4px 12px;
-      border-radius: 99px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      align-self: flex-start;
-      box-shadow: 0 4px 14px var(--success-glow);
-    }
-
-    .success-guest-name {
-      font-family: var(--font-en);
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 4px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-      direction: ltr;
-      text-align: right;
-    }
-
-    .success-guest-meta {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.85);
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      direction: ltr;
-      text-align: right;
     }
 
     /* Photo action buttons */
@@ -591,7 +528,7 @@
       border-color: var(--accent);
     }
 
-    /* Incorrect Guess Animation */
+    /* Incorrect Guess Animation (Visual only, NO sound!) */
     .name-chip.wrong-guess {
       animation: shake 0.45s ease-in-out;
       background: rgba(239, 68, 68, 0.25) !important;
@@ -625,6 +562,218 @@
       font-size: 0.8rem;
       color: var(--success);
       font-weight: 800;
+    }
+
+    /* === GUEST DETAILS MODAL POPUP === */
+    .guest-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(14px);
+      z-index: 1500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .guest-modal-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .guest-modal-card {
+      background: #131722;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 22px;
+      padding: 26px 28px;
+      max-width: 520px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 50px rgba(16, 185, 129, 0.2);
+      transform: scale(0.92) translateY(10px);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .guest-modal-backdrop.visible .guest-modal-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      transform: scale(1.08);
+    }
+
+    .modal-hero-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 16px;
+    }
+
+    .modal-avatar-frame {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid var(--success);
+      box-shadow: 0 0 16px var(--success-glow);
+      flex-shrink: 0;
+    }
+
+    .modal-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .modal-hero-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .modal-success-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success);
+      color: #6ee7b7;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      width: fit-content;
+      margin-bottom: 2px;
+    }
+
+    .modal-guest-name {
+      font-family: var(--font-en);
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #fff;
+      direction: ltr;
+      text-align: right;
+      line-height: 1.2;
+    }
+
+    .modal-guest-country {
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Modal Info Rows */
+    .modal-details-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-detail-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .modal-detail-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-detail-value {
+      font-size: 0.95rem;
+      color: #f1f5f9;
+      font-weight: 500;
+      line-height: 1.4;
+      direction: ltr;
+      text-align: right;
+    }
+
+    .modal-detail-value.hebrew-text {
+      direction: rtl;
+      text-align: right;
+    }
+
+    /* Goals Tags */
+    .goals-tags-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+      direction: ltr;
+    }
+
+    .goal-tag {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #bae6fd;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .btn-modal-continue {
+      width: 100%;
+      padding: 13px 20px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
+      color: #0b0c10;
+      font-family: var(--font-he);
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 20px var(--accent-glow);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-modal-continue:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px var(--accent-glow);
+      filter: brightness(1.08);
     }
 
     /* Floating Feedback Toast */
@@ -843,7 +992,6 @@
       </div>
     </a>
     <div class="header-actions">
-      <button class="btn-icon" id="sound-btn" title="הפעל/השתק צלילים" onclick="toggleSound()">🔊</button>
       <button class="btn-icon" id="shuffle-btn" title="ערבב מחדש את סדר האורחים" onclick="restartGame()">🔀</button>
       <a href="/" class="btn-icon" title="חזרה לפורטל הראשי" style="text-decoration:none;">🏠</a>
     </div>
@@ -855,7 +1003,7 @@
     <section class="stats-bar">
       <div class="stat-item">
         <span>🎯 התקדמות:</span>
-        <span class="stat-value highlight-cyan" id="progress-text">1 מתוך 32</span>
+        <span class="stat-value highlight-cyan" id="progress-text">1 מתוך 33</span>
       </div>
 
       <div class="progress-wrapper">
@@ -898,16 +1046,6 @@
             <span>🎯</span>
             <span id="drop-hint-text">גררו שם לכאן או לחצו עליו מימין</span>
           </div>
-
-          <!-- Revealed upon correct guess -->
-          <div class="success-overlay" id="success-overlay">
-            <div class="success-badge">🎉 כל הכבוד! זיהיתם נכון!</div>
-            <div class="success-guest-name" id="success-guest-name">Benson Zhang</div>
-            <div class="success-guest-meta" id="success-guest-meta">
-              <span id="success-guest-country">🌍 China</span>
-              <span id="success-guest-company">💼 Chapter 2 Entertainment</span>
-            </div>
-          </div>
         </div>
 
         <!-- Hint Banner -->
@@ -937,7 +1075,7 @@
           <div class="names-title">
             <span>🏷️</span>
             <span>בחרו או גררו את השם:</span>
-            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="names-count-badge">(32 שמות)</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="names-count-badge">(33 שמות)</span>
           </div>
 
           <div class="search-wrapper">
@@ -962,6 +1100,69 @@
 
   </main>
 
+  <!-- === GUEST PROFILE DETAILS MODAL (POPUP UPON CORRECT GUESS) === -->
+  <div class="guest-modal-backdrop" id="guest-profile-modal">
+    <div class="guest-modal-card">
+      <button class="modal-close-btn" onclick="closeGuestModal()" title="סגור">✕</button>
+
+      <!-- Hero Header: Avatar + Name + Country -->
+      <div class="modal-hero-row">
+        <div class="modal-avatar-frame">
+          <img src="" alt="Guest Avatar" id="modal-avatar-img" class="modal-avatar-img">
+        </div>
+        <div class="modal-hero-info">
+          <div class="modal-success-pill">✓ זיהיתם נכון!</div>
+          <div class="modal-guest-name" id="modal-guest-name">Benson Zhang</div>
+          <div class="modal-guest-country" id="modal-guest-country">🌍 China</div>
+        </div>
+      </div>
+
+      <!-- Detail Items List -->
+      <div class="modal-details-list">
+        
+        <!-- Role & Company -->
+        <div class="modal-detail-item">
+          <div class="modal-detail-label">
+            <span>💼</span>
+            <span>תפקיד וחברה:</span>
+          </div>
+          <div class="modal-detail-value" id="modal-guest-role-company">
+            Director / CEO • Chapter 2 Entertainment
+          </div>
+        </div>
+
+        <!-- What Company Does -->
+        <div class="modal-detail-item">
+          <div class="modal-detail-label">
+            <span>🏢</span>
+            <span>מה החברה עושה:</span>
+          </div>
+          <div class="modal-detail-value" id="modal-guest-what-company-does">
+            Booking Agency
+          </div>
+        </div>
+
+        <!-- Festival Goal -->
+        <div class="modal-detail-item">
+          <div class="modal-detail-label">
+            <span>🎯</span>
+            <span>מה המטרה שלכם בפסטיבל?</span>
+          </div>
+          <div class="goals-tags-wrap" id="modal-guest-goals-wrap">
+            <!-- Goal tags generated dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Continue Button -->
+      <button class="btn-modal-continue" id="modal-continue-btn" onclick="closeGuestModal()">
+        <span>המשך לאורח הבא</span>
+        <span>➔</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Feedback Toast -->
   <div class="toast-container">
     <div class="toast" id="toast">
@@ -976,7 +1177,7 @@
       <div class="trophy-badge">🏆</div>
       <div class="victory-title">אלופים! סיימתם את המשחק!</div>
       <div class="victory-desc">
-        זיהיתם בהצלחה את כל 32 האורחים של פסטיבל חשיפה 2026!
+        זיהיתם בהצלחה את כל 33 האורחים של פסטיבל חשיפה 2026!
       </div>
 
       <div class="victory-stats-grid">
@@ -1005,7 +1206,7 @@
   </div>
 
   <script>
-    // Embedded initial 32 guests data with Google Drive thumbnail images
+    // Embedded 33 guests data with full fields
     const INITIAL_GUESTS = [
   {
     "id": "benson_zhang",
@@ -1014,7 +1215,9 @@
     "lastName": "Zhang",
     "country": "China",
     "company": "Chapter 2 Entertainment",
+    "whatCompanyDoes": "Booking Agancy",
     "role": "Director / CEO",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_&sz=w800"
   },
   {
@@ -1024,7 +1227,9 @@
     "lastName": "Vuletić",
     "country": "Germany",
     "company": "Asphalt Festival Düsseldorf",
+    "whatCompanyDoes": "Interdisciplinary Festival",
     "role": "Festival Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ&sz=w800"
   },
   {
@@ -1034,7 +1239,9 @@
     "lastName": "Pineda",
     "country": "Canada",
     "company": "MCMXVI",
+    "whatCompanyDoes": "Management",
     "role": "Founder / CEO",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI&sz=w800"
   },
   {
@@ -1044,7 +1251,9 @@
     "lastName": "Rubei",
     "country": "Italy",
     "company": "Alexanderplatz Jazz Club",
+    "whatCompanyDoes": "Venue",
     "role": "Artistic Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
     "photoUrl": "https://drive.google.com/thumbnail?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN&sz=w800"
   },
   {
@@ -1054,7 +1263,9 @@
     "lastName": "Bui",
     "country": "Vietnam",
     "company": "HoZo Festival - Ho Chi Minh city International Music Festival",
+    "whatCompanyDoes": "- Programming concerts and music events\n- Discovering and promoting new talent\n- Producing albums and live performances\n- Working with festivals, broadcasters, record labels, and artists\n- Building international music collaborations",
     "role": "Music & Art Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh&sz=w800"
   },
   {
@@ -1064,7 +1275,9 @@
     "lastName": "Green",
     "country": "USA",
     "company": "Warner Records",
+    "whatCompanyDoes": "Label",
     "role": "Senior Vice President of A&R",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs&sz=w800"
   },
   {
@@ -1074,7 +1287,9 @@
     "lastName": "Graesser",
     "country": "Germany",
     "company": "Jewish-Israeli Culture Days Thuringia",
+    "whatCompanyDoes": "Festival",
     "role": "Artistic Director & Managing Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba&sz=w800"
   },
   {
@@ -1084,7 +1299,9 @@
     "lastName": "Vyner",
     "country": "UK",
     "company": "The Underworld / Born Again Concerts",
+    "whatCompanyDoes": "Music Venue / Promoter",
     "role": "Bookings Manager / Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
     "photoUrl": "https://drive.google.com/thumbnail?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii&sz=w800"
   },
   {
@@ -1094,7 +1311,9 @@
     "lastName": "Blakk",
     "country": "Ghana",
     "company": "Blakknoters",
+    "whatCompanyDoes": "Record Label, Band, Live Events & Music Software",
     "role": "Singer, Writer, Producer, Founder, owner, lead artist and producer",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Writing and recording with Israeli artists, bringing Highlife and Soul into their sound",
     "photoUrl": "https://drive.google.com/thumbnail?id=1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ&sz=w800"
   },
   {
@@ -1104,7 +1323,9 @@
     "lastName": "Ozhgibesova",
     "country": "Russia",
     "company": "Perm  Triumph Private Philharmonic",
+    "whatCompanyDoes": "Venue",
     "role": "Assitant to Creative Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v&sz=w800"
   },
   {
@@ -1114,7 +1335,9 @@
     "lastName": "Moskov Kirev",
     "country": "Bulgaria",
     "company": "Fest Team EOOD",
+    "whatCompanyDoes": "Promoter (Concerts Orgenizer)",
     "role": "Head of Booking / Program Manager",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m&sz=w800"
   },
   {
@@ -1124,7 +1347,9 @@
     "lastName": "Tawanda Gora",
     "country": "Zimbabue",
     "company": "OMIFA",
+    "whatCompanyDoes": "Music festival",
     "role": "Artistic Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY&sz=w800"
   },
   {
@@ -1134,7 +1359,9 @@
     "lastName": "Kass",
     "country": "UK",
     "company": "National Jazz Archive UK\nEnterprise4Good",
+    "whatCompanyDoes": "Jazz Development Agency and Cultural Hub",
     "role": "Owner",
+    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS&sz=w800"
   },
   {
@@ -1144,7 +1371,9 @@
     "lastName": "Mueller",
     "country": "Germany",
     "company": "Crazy Planet Records GmbH",
+    "whatCompanyDoes": "Label, Publisher, Agency, Management",
     "role": "CEO",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities, New things in the Industry",
     "photoUrl": "https://drive.google.com/thumbnail?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1&sz=w800"
   },
   {
@@ -1154,7 +1383,9 @@
     "lastName": "Amar",
     "country": "USA",
     "company": "FRANCE ROCKS",
+    "whatCompanyDoes": "Promotion & Marketing",
     "role": "owner",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX&sz=w800"
   },
   {
@@ -1164,7 +1395,9 @@
     "lastName": "Åstedt",
     "country": "Sweden",
     "company": "Musichelp / Future Echoes",
+    "whatCompanyDoes": "Festival / Label / Supervisor / Manager",
     "role": "Project Manager",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W&sz=w800"
   },
   {
@@ -1174,7 +1407,9 @@
     "lastName": "Asakawa",
     "country": "Japan",
     "company": "Haremame Group",
+    "whatCompanyDoes": "Event production",
     "role": "Manager/Producer",
+    "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx&sz=w800"
   },
   {
@@ -1184,7 +1419,9 @@
     "lastName": "Ginzburg",
     "country": "Germany",
     "company": "Ginzburg Live",
+    "whatCompanyDoes": "Booking Agency",
     "role": "Founder",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W&sz=w800"
   },
   {
@@ -1194,7 +1431,9 @@
     "lastName": "Nestor",
     "country": "Poland",
     "company": "V Records / Jazz Premium",
+    "whatCompanyDoes": "Label",
     "role": "Head of Label",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM&sz=w800"
   },
   {
@@ -1204,7 +1443,9 @@
     "lastName": "Nasser",
     "country": "Singapore",
     "company": "Versed Talent Agency Pte",
+    "whatCompanyDoes": "Agency",
     "role": "Managing Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv&sz=w800"
   },
   {
@@ -1214,7 +1455,9 @@
     "lastName": "Keran",
     "country": "Singapore",
     "company": "A Strange Love Pte",
+    "whatCompanyDoes": "Label",
     "role": "Managing Director",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l&sz=w800"
   },
   {
@@ -1224,7 +1467,9 @@
     "lastName": "Sagir",
     "country": "UK",
     "company": "The Noise Cartel",
+    "whatCompanyDoes": "PR Agency",
     "role": "Founder and Managing Director",
+    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities, Planning to discuss a rock/metak focused program for next year",
     "photoUrl": "https://drive.google.com/thumbnail?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq&sz=w800"
   },
   {
@@ -1234,7 +1479,9 @@
     "lastName": "Martinez Penna",
     "country": "Argentina",
     "company": "Rolling Stone",
+    "whatCompanyDoes": "Media",
     "role": "Freelance journalist",
+    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Also networking with other media related people, but also producers, bookers, musicians and managers, specially the ones with focus on music activities and music project activations in Europe and South America",
     "photoUrl": "https://drive.google.com/thumbnail?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW&sz=w800"
   },
   {
@@ -1244,7 +1491,9 @@
     "lastName": "Lee",
     "country": "South Korea",
     "company": "Jarasum Jazz Festival",
+    "whatCompanyDoes": "Music festival",
     "role": "PR & Marketing Manager",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK&sz=w800"
   },
   {
@@ -1254,7 +1503,9 @@
     "lastName": "Miteran",
     "country": "UAE",
     "company": "SAMIT Event Group",
+    "whatCompanyDoes": "Cultural event management company",
     "role": "Owner, director",
+    "festivalGoal": "Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, governmental collaboration",
     "photoUrl": "https://drive.google.com/thumbnail?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj&sz=w800"
   },
   {
@@ -1264,7 +1515,9 @@
     "lastName": "Berger-Burcat",
     "country": "Israel",
     "company": "Revelator / WMG",
+    "whatCompanyDoes": "Label / Distributor",
     "role": "VP of Marketing for Revelator",
+    "festivalGoal": "Establishing global music distribution and marketing",
     "photoUrl": "https://drive.google.com/thumbnail?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4&sz=w800"
   },
   {
@@ -1274,7 +1527,9 @@
     "lastName": "Bitterli",
     "country": "Israel",
     "company": "Revelator / WMG",
+    "whatCompanyDoes": "Label / Distributor",
     "role": "VP of Business Development",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz&sz=w800"
   },
   {
@@ -1284,7 +1539,9 @@
     "lastName": "Gądek",
     "country": "Poland",
     "company": "Jewish Culture Festival in Krakow",
+    "whatCompanyDoes": "interdisciplinary festival built around musical program",
     "role": "Director, CEO",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
     "photoUrl": "https://drive.google.com/thumbnail?id=1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh&sz=w800"
   },
   {
@@ -1294,7 +1551,9 @@
     "lastName": "Haziza",
     "country": "France",
     "company": "Sacré Sound Festival / Festival Jazz'N'Klezmer",
+    "whatCompanyDoes": "Music festival",
     "role": "Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd&sz=w800"
   },
   {
@@ -1304,7 +1563,9 @@
     "lastName": "Canin",
     "country": "UK",
     "company": "Parallel Skies Records,",
+    "whatCompanyDoes": "Label and Publisher.",
     "role": "Director",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon&sz=w800"
   },
   {
@@ -1314,7 +1575,9 @@
     "lastName": "Perez",
     "country": "France",
     "company": "Israeli jazz",
+    "whatCompanyDoes": "Nonprofit promoting Israeli jazz and world music / concerts",
     "role": "President",
+    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing",
     "photoUrl": "https://drive.google.com/thumbnail?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT&sz=w800"
   },
   {
@@ -1324,8 +1587,22 @@
     "lastName": "Schwartz",
     "country": "USA/Israel",
     "company": "America-Israel Cultural Foundation (AICF)",
+    "whatCompanyDoes": "Founded in 1939, the America-Israel Cultural Foundation (AICF) is a nonprofit that supports Israeli artists and cultural institutions and connects them with audiences around the world.",
     "role": "Artistic Director",
+    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
     "photoUrl": "https://drive.google.com/thumbnail?id=1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl&sz=w800"
+  },
+  {
+    "id": "na_ama_zisser",
+    "fullName": "Na'ama Zisser",
+    "firstName": "Na'ama",
+    "lastName": "Zisser",
+    "country": "UK",
+    "company": "JMI",
+    "whatCompanyDoes": "Arts/Music organisation",
+    "role": "CEO",
+    "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
+    "photoUrl": "https://drive.google.com/thumbnail?id=1yRThDQd3uk1Sc0ao69f80JTqID_7hEzx&sz=w800"
   }
 ];
 
@@ -1338,107 +1615,11 @@
     let mistakesCount = 0;
     let totalGuesses = 0;
     let correctGuesses = 0;
-    let soundEnabled = true;
     let currentSortMode = 'random';
     let searchQuery = '';
     let gameTimer = null;
     let secondsElapsed = 0;
-    let isTransitioning = false;
-
-    // Web Audio Synthesizer (Zero dependencies, 100% reliable offline)
-    let audioCtx = null;
-    function getAudioCtx() {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      return audioCtx;
-    }
-
-    function playSound(type) {
-      if (!soundEnabled) return;
-      try {
-        const ctx = getAudioCtx();
-        const now = ctx.currentTime;
-
-        if (type === 'correct') {
-          // Cheerful chime: C5, E5, G5, C6 arpeggio
-          const notes = [523.25, 659.25, 783.99, 1046.50];
-          notes.forEach((freq, idx) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-            gain.gain.setValueAtTime(0.18, now + idx * 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now + idx * 0.08);
-            osc.stop(now + idx * 0.08 + 0.35);
-          });
-        } else if (type === 'wrong') {
-          // Soft low error buzzer
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(140, now);
-          osc.frequency.linearRampToValueAtTime(90, now + 0.25);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.25);
-        } else if (type === 'hint') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, now);
-          gain.gain.setValueAtTime(0.12, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.2);
-        } else if (type === 'victory') {
-          // Fanfare
-          const chords = [
-            [523.25, 659.25, 783.99],
-            [587.33, 739.99, 880.00],
-            [659.25, 830.61, 987.77],
-            [783.99, 987.77, 1174.66, 1567.98]
-          ];
-          chords.forEach((chord, step) => {
-            const time = now + step * 0.18;
-            chord.forEach(freq => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'triangle';
-              osc.frequency.setValueAtTime(freq, time);
-              gain.gain.setValueAtTime(0.15, time);
-              gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-              osc.start(time);
-              osc.stop(time + 0.5);
-            });
-          });
-        }
-      } catch(e) {
-        // Audio policy or unsupported
-      }
-    }
-
-    function toggleSound() {
-      soundEnabled = !soundEnabled;
-      const btn = document.getElementById('sound-btn');
-      btn.textContent = soundEnabled ? '🔊' : '🔇';
-      btn.classList.toggle('active', soundEnabled);
-      showToast(soundEnabled ? 'צלילים הופעלו' : 'צלילים הושתקו', 'info', soundEnabled ? '🔊' : '🔇');
-    }
+    let isModalOpen = false;
 
     // Timer
     function startTimer() {
@@ -1457,7 +1638,7 @@
       document.getElementById('timer-text').textContent = `${mins}:${secs}`;
     }
 
-    // Shuffle array helper
+    // Shuffle helper
     function shuffle(arr) {
       const copy = [...arr];
       for (let i = copy.length - 1; i > 0; i--) {
@@ -1476,10 +1657,10 @@
       mistakesCount = 0;
       totalGuesses = 0;
       correctGuesses = 0;
-      isTransitioning = false;
+      isModalOpen = false;
 
       document.getElementById('victory-modal').classList.remove('visible');
-      document.getElementById('success-overlay').classList.remove('visible');
+      document.getElementById('guest-profile-modal').classList.remove('visible');
       document.getElementById('hint-box').style.display = 'none';
 
       updateStatsUI();
@@ -1502,16 +1683,13 @@
       }
 
       currentGuest = unsolved[0];
-      isTransitioning = false;
 
       // Update Photo & Reset overlays
       const imgEl = document.getElementById('current-guest-img');
       const spinner = document.getElementById('photo-spinner');
-      const overlay = document.getElementById('success-overlay');
       const stageCard = document.getElementById('photo-stage');
       const hintBox = document.getElementById('hint-box');
 
-      overlay.classList.remove('visible');
       stageCard.classList.remove('celebrate-success', 'shake-wrong');
       hintBox.style.display = 'none';
 
@@ -1526,7 +1704,6 @@
         spinner.style.display = 'none';
       };
       tempImg.onerror = () => {
-        // Fallback to placeholder if broken
         imgEl.src = '/polar-bear.png';
         imgEl.classList.add('loaded');
         spinner.style.display = 'none';
@@ -1534,7 +1711,7 @@
       tempImg.src = currentGuest.photoUrl;
 
       updateStatsUI();
-      renderNamesPool(); // re-render to update search / sort state
+      renderNamesPool();
     }
 
     function updateStatsUI() {
@@ -1583,14 +1760,14 @@
           ${isSolved ? '<span class="solved-check-icon">✓</span>' : ''}
         `;
 
-        // Click handler: click to match!
+        // Click handler: ZERO sound on click
         chip.addEventListener('click', () => {
           handleGuess(guest.id, chip);
         });
 
         // Drag & Drop Handlers
         chip.addEventListener('dragstart', (e) => {
-          if (isTransitioning) return;
+          if (isModalOpen) return;
           chip.classList.add('dragging');
           e.dataTransfer.setData('text/plain', guest.id);
           e.dataTransfer.effectAllowed = 'move';
@@ -1621,7 +1798,7 @@
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       stageCard.classList.remove('drag-over');
-      if (isTransitioning) return;
+      if (isModalOpen) return;
 
       const droppedGuestId = e.dataTransfer.getData('text/plain');
       if (droppedGuestId) {
@@ -1632,31 +1809,29 @@
 
     // Check Guess Logic
     function handleGuess(guessId, chipEl) {
-      if (!currentGuest || isTransitioning) return;
+      if (!currentGuest || isModalOpen) return;
 
       totalGuesses++;
 
       if (guessId === currentGuest.id) {
-        // === CORRECT! ===
+        // === CORRECT GUESS ===
         onCorrectGuess(chipEl);
       } else {
-        // === INCORRECT! ===
+        // === WRONG GUESS - ZERO SOUND ===
         onWrongGuess(guessId, chipEl);
       }
     }
 
     function onCorrectGuess(chipEl) {
-      isTransitioning = true;
       correctGuesses++;
       currentStreak++;
       if (currentStreak > maxStreak) maxStreak = currentStreak;
 
       solvedGuestIds.add(currentGuest.id);
 
-      playSound('correct');
       triggerConfettiParticles(25);
 
-      // Visual feedback on stage
+      // Visual feedback on stage & chip
       const stageCard = document.getElementById('photo-stage');
       stageCard.classList.add('celebrate-success');
 
@@ -1664,21 +1839,10 @@
         chipEl.classList.add('correct-guess');
       }
 
-      // Show guest details overlay
-      const overlay = document.getElementById('success-overlay');
-      document.getElementById('success-guest-name').textContent = currentGuest.fullName;
-      document.getElementById('success-guest-country').textContent = `🌍 ${currentGuest.country || 'International'}`;
-      document.getElementById('success-guest-company').textContent = `💼 ${currentGuest.company || ''} ${currentGuest.role ? '• ' + currentGuest.role : ''}`.trim();
-      overlay.classList.add('visible');
-
       updateStatsUI();
 
-      showToast(`נכון מאוד! זהו ${currentGuest.fullName} 🎉`, 'success', '✨');
-
-      // Advance after 1.25s delay so user enjoys the celebration
-      setTimeout(() => {
-        loadNextGuest();
-      }, 1250);
+      // Open the Guest Details Popup Modal!
+      openGuestModal(currentGuest);
     }
 
     function onWrongGuess(guessId, chipEl) {
@@ -1686,8 +1850,7 @@
       mistakesCount++;
       updateStatsUI();
 
-      playSound('wrong');
-
+      // STRICTLY ZERO SOUND on wrong guess! Only visual shake & red highlight
       const stageCard = document.getElementById('photo-stage');
       stageCard.classList.add('shake-wrong');
       setTimeout(() => stageCard.classList.remove('shake-wrong'), 500);
@@ -1704,10 +1867,85 @@
       showToast(`לא נכון... זה לא ${guessedName}, נסו שוב!`, 'wrong', '❌');
     }
 
+    // Open Guest Profile Details Modal
+    function openGuestModal(guest) {
+      isModalOpen = true;
+
+      // Populate hero
+      document.getElementById('modal-avatar-img').src = guest.photoUrl;
+      document.getElementById('modal-guest-name').textContent = guest.fullName;
+      document.getElementById('modal-guest-country').textContent = `🌍 ${guest.country || 'International'}`;
+
+      // Role & Company
+      const roleText = [guest.role, guest.company].filter(Boolean).join(' • ');
+      document.getElementById('modal-guest-role-company').textContent = roleText || 'Independent';
+
+      // What company does
+      document.getElementById('modal-guest-what-company-does').textContent = guest.whatCompanyDoes || 'N/A';
+
+      // Festival Goal Tags
+      const goalsWrap = document.getElementById('modal-guest-goals-wrap');
+      goalsWrap.innerHTML = '';
+      const rawGoals = guest.festivalGoal || '';
+      
+      // Parse goals (split by comma if multiple)
+      const goalsList = rawGoals.split(/,(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
+
+      if (goalsList.length > 0) {
+        goalsList.forEach(goal => {
+          const tag = document.createElement('span');
+          tag.className = 'goal-tag';
+          tag.textContent = goal;
+          goalsWrap.appendChild(tag);
+        });
+      } else {
+        const tag = document.createElement('span');
+        tag.className = 'goal-tag';
+        tag.textContent = rawGoals || 'Scouting & Networking';
+        goalsWrap.appendChild(tag);
+      }
+
+      const modalEl = document.getElementById('guest-profile-modal');
+      modalEl.classList.add('visible');
+
+      // Focus continue button
+      setTimeout(() => {
+        const btn = document.getElementById('modal-continue-btn');
+        if (btn) btn.focus();
+      }, 100);
+    }
+
+    function closeGuestModal() {
+      const modalEl = document.getElementById('guest-profile-modal');
+      modalEl.classList.remove('visible');
+      isModalOpen = false;
+
+      // Load next guest smoothly
+      setTimeout(() => {
+        loadNextGuest();
+      }, 250);
+    }
+
+    // Keyboard support: Enter / Space / Escape closes modal to continue
+    window.addEventListener('keydown', (e) => {
+      if (isModalOpen) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+          e.preventDefault();
+          closeGuestModal();
+        }
+      }
+    });
+
+    // Close modal when clicking on backdrop
+    document.getElementById('guest-profile-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'guest-profile-modal') {
+        closeGuestModal();
+      }
+    });
+
     // Hint function
     function showHint() {
-      if (!currentGuest || isTransitioning) return;
-      playSound('hint');
+      if (!currentGuest || isModalOpen) return;
       const hintBox = document.getElementById('hint-box');
       const hintText = document.getElementById('hint-text');
 
@@ -1723,8 +1961,7 @@
 
     // Skip current guest to end of queue
     function skipCurrentGuest() {
-      if (!currentGuest || isTransitioning) return;
-      // Move to end of queue
+      if (!currentGuest || isModalOpen) return;
       const idx = guestsQueue.indexOf(currentGuest);
       if (idx !== -1) {
         guestsQueue.splice(idx, 1);
@@ -1772,7 +2009,6 @@
     // Game Completion
     function onGameComplete() {
       if (gameTimer) clearInterval(gameTimer);
-      playSound('victory');
       triggerFullConfettiShower();
 
       const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
@@ -1787,7 +2023,7 @@
       document.getElementById('victory-modal').classList.add('visible');
     }
 
-    // Confetti Engine (Canvas based, super lightweight)
+    // Confetti Engine
     const canvas = document.getElementById('confetti-canvas');
     const ctx = canvas.getContext('2d');
     let confettiParticles = [];
@@ -1841,7 +2077,7 @@
       confettiParticles.forEach((p, idx) => {
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.2; // gravity
+        p.vy += 0.2;
         p.rotation += p.vRot;
         p.life -= 0.012;
 

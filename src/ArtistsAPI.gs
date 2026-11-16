@@ -757,7 +757,7 @@ function getAdminArtistsNetworkingData() {
         else if (s.includes("raw")) lMap.raw = idx;
       });
 
-      const adminKeywords = ["הפקה חשיפה", "הפקה", "shacharlavi10@gmail.com", "exposubmarine@gmail.com", "shachar lavi", "ido hamelch"];
+      const adminKeywords = ["הפקה חשיפה", "הפקה כללי", "הפקה", "shacharlavi10@gmail.com", "exposubmarine@gmail.com", "shachar lavi", "ido hamelch"];
       const isLeadAdmin = function(str) {
         if (!str) return false;
         const low = String(str).toLowerCase().trim();

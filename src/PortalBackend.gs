@@ -213,16 +213,24 @@ function getGuestPortalData(sessionToken) {
     }
     checklist.generalMissingItems = missingItemsArray;
     
-    const isComplete = checklist.hasFlightForm && 
+    let isComplete = checklist.hasFlightForm && 
                        checklist.hasHotelForm && 
                        checklist.hasBio && 
                        checklist.hasPassport && 
                        checklist.hasPhoto && 
                        !checklist.generalMissing;
                        
-    const isAdmin = String(getColVal("תפקיד") || "").trim() === "הפקה חשיפה";
-    if (isAdmin) {
+    const userRole = String(getColVal("תפקיד") || "").trim();
+    const isAdmin = userRole === "הפקה חשיפה";
+    const isGeneralProd = userRole === "הפקה כללי";
+    const isProductionUser = isAdmin || isGeneralProd || userRole.includes("הפקה");
+
+    if (isProductionUser) {
       checklist.approvalSchedule = true;
+      checklist.approvalDirectory = true;
+      checklist.approvalArtists = true;
+      checklist.approvalGuide = true;
+      isComplete = true;
     }
     const firstName = String(getColVal(CONFIG.FIRST_NAME_COL) || "");
     const lastName = String(getColVal(CONFIG.LAST_NAME_COL) || "");
@@ -581,9 +589,10 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
 
       const guestEmail = String(guestObj["Email"] || "").trim();
       const guestRole = String(guestObj["Role / Title"] || "").trim();
+      const isProdRole = guestRole === "הפקה חשיפה" || guestRole === "הפקה כללי" || guestRole.includes("הפקה");
 
       // חובה שיהיה מייל אורח; אם לא רשום מייל - לא מציגים בשום מצב. לאחר מכן נבדק התפקיד ושם
-      if (guestEmail && guestRole !== "הפקה חשיפה" && ((guestObj["First Name"] || "").trim() || (guestObj["Last Name"] || "").trim())) {
+      if (guestEmail && !isProdRole && ((guestObj["First Name"] || "").trim() || (guestObj["Last Name"] || "").trim())) {
         guestsList.push(guestObj);
       }
     }
