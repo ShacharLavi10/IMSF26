@@ -213,16 +213,24 @@ function getGuestPortalData(sessionToken) {
     }
     checklist.generalMissingItems = missingItemsArray;
     
-    const isComplete = checklist.hasFlightForm && 
+    let isComplete = checklist.hasFlightForm && 
                        checklist.hasHotelForm && 
                        checklist.hasBio && 
                        checklist.hasPassport && 
                        checklist.hasPhoto && 
                        !checklist.generalMissing;
                        
-    const isAdmin = String(getColVal("תפקיד") || "").trim() === "הפקה חשיפה";
-    if (isAdmin) {
+    const userRole = String(getColVal("תפקיד") || "").trim();
+    const isAdmin = userRole === "הפקה חשיפה";
+    const isGeneralProd = userRole === "הפקה כללי";
+    const isProductionUser = isAdmin || isGeneralProd || userRole.includes("הפקה");
+
+    if (isProductionUser) {
       checklist.approvalSchedule = true;
+      checklist.approvalDirectory = true;
+      checklist.approvalArtists = true;
+      checklist.approvalGuide = true;
+      isComplete = true;
     }
     const firstName = String(getColVal(CONFIG.FIRST_NAME_COL) || "");
     const lastName = String(getColVal(CONFIG.LAST_NAME_COL) || "");
@@ -581,9 +589,10 @@ function fetchAllGuestsDirectory(masterData, mappingArray) {
 
       const guestEmail = String(guestObj["Email"] || "").trim();
       const guestRole = String(guestObj["Role / Title"] || "").trim();
+      const isProdRole = guestRole === "הפקה חשיפה" || guestRole === "הפקה כללי" || guestRole.includes("הפקה");
 
       // חובה שיהיה מייל אורח; אם לא רשום מייל - לא מציגים בשום מצב. לאחר מכן נבדק התפקיד ושם
-      if (guestEmail && guestRole !== "הפקה חשיפה" && ((guestObj["First Name"] || "").trim() || (guestObj["Last Name"] || "").trim())) {
+      if (guestEmail && !isProdRole && ((guestObj["First Name"] || "").trim() || (guestObj["Last Name"] || "").trim())) {
         guestsList.push(guestObj);
       }
     }
@@ -1189,16 +1198,20 @@ function getAdminDashboardData(sessionToken) {
     const roleIdx = headers.indexOf("תפקיד");
     
     let isAdmin = false;
+    let isGeneralProd = false;
     for (let i = headerRowIdx + 1; i < masterData.length; i++) {
       if (masterData[i][emailIdx] && String(masterData[i][emailIdx]).trim().toLowerCase() === cleanEmail) {
-        if (roleIdx !== -1 && String(masterData[i][roleIdx]).trim() === "הפקה חשיפה") {
+        const role = roleIdx !== -1 ? String(masterData[i][roleIdx]).trim() : "";
+        if (role === "הפקה חשיפה") {
           isAdmin = true;
+        } else if (role === "הפקה כללי") {
+          isGeneralProd = true;
         }
         break;
       }
     }
     
-    if (!isAdmin) return { success: false, message: 'Unauthorized. Admins only.' };
+    if (!isAdmin && !isGeneralProd) return { success: false, message: 'Unauthorized. Admins only.' };
     
     // Fetch full data for admin
     const tz = ss.getSpreadsheetTimeZone();
@@ -1224,13 +1237,14 @@ function getAdminDashboardData(sessionToken) {
     
     return {
       success: true,
+      role: isAdmin ? "הפקה חשיפה" : "הפקה כללי",
       guests: getSheetData(CONFIG.MASTER_SHEET),
-      flights: getSheetData(CONFIG.FLIGHTS_SHEET),
-      flightsUpdates: getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME),
-      hotelJlm: getSheetData(CONFIG.JERUSALEM_SHEET),
-      hotelTlv: getSheetData(CONFIG.TELAVIV_SHEET),
-      announcements: getAdminAnnouncementsList(ss),
-      productionSchedule: getSheetData("לוז הפקה") || getSheetData("לו\"ז הפקה")
+      flights: isAdmin ? getSheetData(CONFIG.FLIGHTS_SHEET) : null,
+      flightsUpdates: isAdmin ? (getSheetData("טיסות - שיקוף") || getSheetData(CONFIG.ANAT_SHEET_NAME)) : null,
+      hotelJlm: isAdmin ? getSheetData(CONFIG.JERUSALEM_SHEET) : null,
+      hotelTlv: isAdmin ? getSheetData(CONFIG.TELAVIV_SHEET) : null,
+      announcements: isAdmin ? getAdminAnnouncementsList(ss) : [],
+      productionSchedule: isAdmin ? (getSheetData("לוז הפקה") || getSheetData("לו\"ז הפקה")) : null
     };
   } catch (err) {
     console.error("Error in getAdminDashboardData:", err);

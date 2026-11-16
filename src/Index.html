@@ -1447,7 +1447,8 @@
       globalDirectoryData = (directoryArray || []).filter(guest => {
         const guestEmail = String(guest["Email"] || "").trim();
         const guestRole = String(guest["Role / Title"] || "").trim();
-        return guestEmail !== "" && guestRole !== "הפקה חשיפה" && Boolean((guest["First Name"] || "").trim() || (guest["Last Name"] || "").trim());
+        const isProdRole = guestRole === "הפקה חשיפה" || guestRole === "הפקה כללי" || guestRole.includes("הפקה");
+        return guestEmail !== "" && !isProdRole && Boolean((guest["First Name"] || "").trim() || (guest["Last Name"] || "").trim());
       });
       const container = document.getElementById("directory-container");
       

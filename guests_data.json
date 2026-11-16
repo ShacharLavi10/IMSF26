@@ -1,0 +1,602 @@
+{
+  "totalGuests": 34,
+  "withPhotosCount": 32,
+  "withPhotos": [
+    {
+      "fullName": "Benson Zhang",
+      "firstName": "Benson",
+      "lastName": "Zhang",
+      "photo": "https://drive.google.com/open?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_",
+      "country": "China",
+      "company": "Chapter 2 Entertainment",
+      "role": "Director / CEO"
+    },
+    {
+      "fullName": "Bojan Vuletić",
+      "firstName": "Bojan",
+      "lastName": "Vuletić",
+      "photo": "https://drive.google.com/open?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ",
+      "country": "Germany",
+      "company": "Asphalt Festival Düsseldorf",
+      "role": "Festival Director"
+    },
+    {
+      "fullName": "Carlos Pineda",
+      "firstName": "Carlos",
+      "lastName": "Pineda",
+      "photo": "https://drive.google.com/open?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI",
+      "country": "Canada",
+      "company": "MCMXVI",
+      "role": "Founder / CEO"
+    },
+    {
+      "fullName": "Eugenio Rubei",
+      "firstName": "Eugenio",
+      "lastName": "Rubei",
+      "photo": "https://drive.google.com/open?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN",
+      "country": "Italy",
+      "company": "Alexanderplatz Jazz Club",
+      "role": "Artistic Director"
+    },
+    {
+      "fullName": "Huy Tuan Bui",
+      "firstName": "Huy Tuan",
+      "lastName": "Bui",
+      "photo": "https://drive.google.com/open?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh",
+      "country": "Vietnam",
+      "company": "HoZo Festival - Ho Chi Minh city International Music Festival",
+      "role": "Music & Art Director"
+    },
+    {
+      "fullName": "Isaac Green",
+      "firstName": "Isaac",
+      "lastName": "Green",
+      "photo": "https://drive.google.com/open?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs",
+      "country": "USA",
+      "company": "Warner Records",
+      "role": "Senior Vice President of A&R"
+    },
+    {
+      "fullName": "Johannes Graesser",
+      "firstName": "Johannes",
+      "lastName": "Graesser",
+      "photo": "https://drive.google.com/open?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba",
+      "country": "Germany",
+      "company": "Jewish-Israeli Culture Days Thuringia",
+      "role": "Artistic Director & Managing Director"
+    },
+    {
+      "fullName": "Jonathan Vyner",
+      "firstName": "Jonathan",
+      "lastName": "Vyner",
+      "photo": "https://drive.google.com/open?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii",
+      "country": "UK",
+      "company": "The Underworld / Born Again Concerts",
+      "role": "Bookings Manager / Director"
+    },
+    {
+      "fullName": "Josh Blakk",
+      "firstName": "Josh",
+      "lastName": "Blakk",
+      "photo": "https://drive.google.com/file/d/1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ/view?usp=drive_link",
+      "country": "Ghana",
+      "company": "Blakknoters",
+      "role": "Singer, Writer, Producer, Founder, owner, lead artist and producer"
+    },
+    {
+      "fullName": "Kira Ozhgibesova",
+      "firstName": "Kira",
+      "lastName": "Ozhgibesova",
+      "photo": "https://drive.google.com/open?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v",
+      "country": "Russia",
+      "company": "Perm  Triumph Private Philharmonic",
+      "role": "Assitant to Creative Director"
+    },
+    {
+      "fullName": "Krasimir Moskov Kirev",
+      "firstName": "Krasimir",
+      "lastName": "Moskov Kirev",
+      "photo": "https://drive.google.com/open?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m",
+      "country": "Bulgaria",
+      "company": "Fest Team EOOD",
+      "role": "Head of Booking / Program Manager"
+    },
+    {
+      "fullName": "Marcus Tawanda Gora",
+      "firstName": "Marcus",
+      "lastName": "Tawanda Gora",
+      "photo": "https://drive.google.com/open?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY",
+      "country": "Zimbabue",
+      "company": "OMIFA",
+      "role": "Artistic Director"
+    },
+    {
+      "fullName": "Mark Kass",
+      "firstName": "Mark",
+      "lastName": "Kass",
+      "photo": "https://drive.google.com/file/d/1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS/view?usp=drive_link",
+      "country": "UK",
+      "company": "National Jazz Archive UK\nEnterprise4Good",
+      "role": "Owner"
+    },
+    {
+      "fullName": "Matthias Mueller",
+      "firstName": "Matthias",
+      "lastName": "Mueller",
+      "photo": "https://drive.google.com/open?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1",
+      "country": "Germany",
+      "company": "Crazy Planet Records GmbH",
+      "role": "CEO"
+    },
+    {
+      "fullName": "Michele Amar",
+      "firstName": "Michele",
+      "lastName": "Amar",
+      "photo": "https://drive.google.com/file/d/13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX/view?usp=drive_link",
+      "country": "USA",
+      "company": "FRANCE ROCKS",
+      "role": "owner"
+    },
+    {
+      "fullName": "Peter Åstedt",
+      "firstName": "Peter",
+      "lastName": "Åstedt",
+      "photo": "https://drive.google.com/file/d/19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W/view?usp=drive_link",
+      "country": "Sweden",
+      "company": "Musichelp / Future Echoes",
+      "role": "Project Manager"
+    },
+    {
+      "fullName": "Shunsuke Asakawa",
+      "firstName": "Shunsuke",
+      "lastName": "Asakawa",
+      "photo": "https://drive.google.com/open?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx",
+      "country": "Japan",
+      "company": "Haremame Group",
+      "role": "Manager/Producer"
+    },
+    {
+      "fullName": "Michael Ginzburg",
+      "firstName": "Michael",
+      "lastName": "Ginzburg",
+      "photo": "https://drive.google.com/open?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W",
+      "country": "Germany",
+      "company": "Ginzburg Live",
+      "role": "Founder"
+    },
+    {
+      "fullName": "Maciej Nestor",
+      "firstName": "Maciej",
+      "lastName": "Nestor",
+      "photo": "https://drive.google.com/open?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM",
+      "country": "Poland",
+      "company": "V Records / Jazz Premium",
+      "role": "Head of Label"
+    },
+    {
+      "fullName": "Simon Nasser",
+      "firstName": "Simon",
+      "lastName": "Nasser",
+      "photo": "https://drive.google.com/file/d/1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv/view?usp=drive_link",
+      "country": "Singapore",
+      "company": "Versed Talent Agency Pte",
+      "role": "Managing Director"
+    },
+    {
+      "fullName": "Ezekiel Keran",
+      "firstName": "Ezekiel",
+      "lastName": "Keran",
+      "photo": "https://drive.google.com/open?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l",
+      "country": "Singapore",
+      "company": "A Strange Love Pte",
+      "role": "Managing Director"
+    },
+    {
+      "fullName": "Adam Sagir",
+      "firstName": "Adam",
+      "lastName": "Sagir",
+      "photo": "https://drive.google.com/open?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq",
+      "country": "UK",
+      "company": "The Noise Cartel",
+      "role": "Founder and Managing Director"
+    },
+    {
+      "fullName": "Federico Martinez Penna",
+      "firstName": "Federico",
+      "lastName": "Martinez Penna",
+      "photo": "https://drive.google.com/open?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW",
+      "country": "Argentina",
+      "company": "Rolling Stone",
+      "role": "Freelance journalist"
+    },
+    {
+      "fullName": "Angella Lee",
+      "firstName": "Angella",
+      "lastName": "Lee",
+      "photo": "https://drive.google.com/file/d/1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK/view?usp=drive_link",
+      "country": "South Korea",
+      "company": "Jarasum Jazz Festival",
+      "role": "PR & Marketing Manager"
+    },
+    {
+      "fullName": "Alexandra Miteran",
+      "firstName": "Alexandra",
+      "lastName": "Miteran",
+      "photo": "https://drive.google.com/open?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj",
+      "country": "UAE",
+      "company": "SAMIT Event Group",
+      "role": "Owner, director"
+    },
+    {
+      "fullName": "Ahuvah Berger-Burcat",
+      "firstName": "Ahuvah",
+      "lastName": "Berger-Burcat",
+      "photo": "https://drive.google.com/open?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4",
+      "country": "Israel",
+      "company": "Revelator / WMG",
+      "role": "VP of Marketing for Revelator"
+    },
+    {
+      "fullName": "Golda Bitterli",
+      "firstName": "Golda",
+      "lastName": "Bitterli",
+      "photo": "https://drive.google.com/open?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz",
+      "country": "Israel",
+      "company": "Revelator / WMG",
+      "role": "VP of Business Development"
+    },
+    {
+      "fullName": "Robert Gądek",
+      "firstName": "Robert",
+      "lastName": "Gądek",
+      "photo": "https://drive.google.com/file/d/1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh/view?usp=drive_link",
+      "country": "Poland",
+      "company": "Jewish Culture Festival in Krakow",
+      "role": "Director, CEO"
+    },
+    {
+      "fullName": "Laurence Haziza",
+      "firstName": "Laurence",
+      "lastName": "Haziza",
+      "photo": "https://drive.google.com/open?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd",
+      "country": "France",
+      "company": "Sacré Sound Festival / Festival Jazz'N'Klezmer",
+      "role": "Director"
+    },
+    {
+      "fullName": "Nigel Canin",
+      "firstName": "Nigel",
+      "lastName": "Canin",
+      "photo": "https://drive.google.com/open?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon",
+      "country": "UK",
+      "company": "Parallel Skies Records,",
+      "role": "Director"
+    },
+    {
+      "fullName": "Raphael Perez",
+      "firstName": "Raphael",
+      "lastName": "Perez",
+      "photo": "https://drive.google.com/open?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT",
+      "country": "France",
+      "company": "Israeli jazz",
+      "role": "President"
+    },
+    {
+      "fullName": "Jonathan Schwartz",
+      "firstName": "Jonathan",
+      "lastName": "Schwartz",
+      "photo": "https://drive.google.com/file/d/1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl/view?usp=drive_link",
+      "country": "USA/Israel",
+      "company": "America-Israel Cultural Foundation (AICF)",
+      "role": "Artistic Director"
+    }
+  ],
+  "allGuests": [
+    {
+      "fullName": "Benson Zhang",
+      "firstName": "Benson",
+      "lastName": "Zhang",
+      "photo": "https://drive.google.com/open?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_",
+      "country": "China",
+      "company": "Chapter 2 Entertainment",
+      "role": "Director / CEO"
+    },
+    {
+      "fullName": "Bojan Vuletić",
+      "firstName": "Bojan",
+      "lastName": "Vuletić",
+      "photo": "https://drive.google.com/open?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ",
+      "country": "Germany",
+      "company": "Asphalt Festival Düsseldorf",
+      "role": "Festival Director"
+    },
+    {
+      "fullName": "Carlos Pineda",
+      "firstName": "Carlos",
+      "lastName": "Pineda",
+      "photo": "https://drive.google.com/open?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI",
+      "country": "Canada",
+      "company": "MCMXVI",
+      "role": "Founder / CEO"
+    },
+    {
+      "fullName": "Eugenio Rubei",
+      "firstName": "Eugenio",
+      "lastName": "Rubei",
+      "photo": "https://drive.google.com/open?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN",
+      "country": "Italy",
+      "company": "Alexanderplatz Jazz Club",
+      "role": "Artistic Director"
+    },
+    {
+      "fullName": "Huy Tuan Bui",
+      "firstName": "Huy Tuan",
+      "lastName": "Bui",
+      "photo": "https://drive.google.com/open?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh",
+      "country": "Vietnam",
+      "company": "HoZo Festival - Ho Chi Minh city International Music Festival",
+      "role": "Music & Art Director"
+    },
+    {
+      "fullName": "Isaac Green",
+      "firstName": "Isaac",
+      "lastName": "Green",
+      "photo": "https://drive.google.com/open?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs",
+      "country": "USA",
+      "company": "Warner Records",
+      "role": "Senior Vice President of A&R"
+    },
+    {
+      "fullName": "Johannes Graesser",
+      "firstName": "Johannes",
+      "lastName": "Graesser",
+      "photo": "https://drive.google.com/open?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba",
+      "country": "Germany",
+      "company": "Jewish-Israeli Culture Days Thuringia",
+      "role": "Artistic Director & Managing Director"
+    },
+    {
+      "fullName": "Jonathan Vyner",
+      "firstName": "Jonathan",
+      "lastName": "Vyner",
+      "photo": "https://drive.google.com/open?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii",
+      "country": "UK",
+      "company": "The Underworld / Born Again Concerts",
+      "role": "Bookings Manager / Director"
+    },
+    {
+      "fullName": "Josh Blakk",
+      "firstName": "Josh",
+      "lastName": "Blakk",
+      "photo": "https://drive.google.com/file/d/1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ/view?usp=drive_link",
+      "country": "Ghana",
+      "company": "Blakknoters",
+      "role": "Singer, Writer, Producer, Founder, owner, lead artist and producer"
+    },
+    {
+      "fullName": "Kira Ozhgibesova",
+      "firstName": "Kira",
+      "lastName": "Ozhgibesova",
+      "photo": "https://drive.google.com/open?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v",
+      "country": "Russia",
+      "company": "Perm  Triumph Private Philharmonic",
+      "role": "Assitant to Creative Director"
+    },
+    {
+      "fullName": "Krasimir Moskov Kirev",
+      "firstName": "Krasimir",
+      "lastName": "Moskov Kirev",
+      "photo": "https://drive.google.com/open?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m",
+      "country": "Bulgaria",
+      "company": "Fest Team EOOD",
+      "role": "Head of Booking / Program Manager"
+    },
+    {
+      "fullName": "Marcus Tawanda Gora",
+      "firstName": "Marcus",
+      "lastName": "Tawanda Gora",
+      "photo": "https://drive.google.com/open?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY",
+      "country": "Zimbabue",
+      "company": "OMIFA",
+      "role": "Artistic Director"
+    },
+    {
+      "fullName": "Mark Kass",
+      "firstName": "Mark",
+      "lastName": "Kass",
+      "photo": "https://drive.google.com/file/d/1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS/view?usp=drive_link",
+      "country": "UK",
+      "company": "National Jazz Archive UK\nEnterprise4Good",
+      "role": "Owner"
+    },
+    {
+      "fullName": "Matthias Mueller",
+      "firstName": "Matthias",
+      "lastName": "Mueller",
+      "photo": "https://drive.google.com/open?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1",
+      "country": "Germany",
+      "company": "Crazy Planet Records GmbH",
+      "role": "CEO"
+    },
+    {
+      "fullName": "Michele Amar",
+      "firstName": "Michele",
+      "lastName": "Amar",
+      "photo": "https://drive.google.com/file/d/13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX/view?usp=drive_link",
+      "country": "USA",
+      "company": "FRANCE ROCKS",
+      "role": "owner"
+    },
+    {
+      "fullName": "Peter Åstedt",
+      "firstName": "Peter",
+      "lastName": "Åstedt",
+      "photo": "https://drive.google.com/file/d/19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W/view?usp=drive_link",
+      "country": "Sweden",
+      "company": "Musichelp / Future Echoes",
+      "role": "Project Manager"
+    },
+    {
+      "fullName": "Shunsuke Asakawa",
+      "firstName": "Shunsuke",
+      "lastName": "Asakawa",
+      "photo": "https://drive.google.com/open?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx",
+      "country": "Japan",
+      "company": "Haremame Group",
+      "role": "Manager/Producer"
+    },
+    {
+      "fullName": "Michael Ginzburg",
+      "firstName": "Michael",
+      "lastName": "Ginzburg",
+      "photo": "https://drive.google.com/open?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W",
+      "country": "Germany",
+      "company": "Ginzburg Live",
+      "role": "Founder"
+    },
+    {
+      "fullName": "Maciej Nestor",
+      "firstName": "Maciej",
+      "lastName": "Nestor",
+      "photo": "https://drive.google.com/open?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM",
+      "country": "Poland",
+      "company": "V Records / Jazz Premium",
+      "role": "Head of Label"
+    },
+    {
+      "fullName": "Simon Nasser",
+      "firstName": "Simon",
+      "lastName": "Nasser",
+      "photo": "https://drive.google.com/file/d/1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv/view?usp=drive_link",
+      "country": "Singapore",
+      "company": "Versed Talent Agency Pte",
+      "role": "Managing Director"
+    },
+    {
+      "fullName": "Ezekiel Keran",
+      "firstName": "Ezekiel",
+      "lastName": "Keran",
+      "photo": "https://drive.google.com/open?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l",
+      "country": "Singapore",
+      "company": "A Strange Love Pte",
+      "role": "Managing Director"
+    },
+    {
+      "fullName": "Adam Sagir",
+      "firstName": "Adam",
+      "lastName": "Sagir",
+      "photo": "https://drive.google.com/open?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq",
+      "country": "UK",
+      "company": "The Noise Cartel",
+      "role": "Founder and Managing Director"
+    },
+    {
+      "fullName": "Federico Martinez Penna",
+      "firstName": "Federico",
+      "lastName": "Martinez Penna",
+      "photo": "https://drive.google.com/open?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW",
+      "country": "Argentina",
+      "company": "Rolling Stone",
+      "role": "Freelance journalist"
+    },
+    {
+      "fullName": "Angella Lee",
+      "firstName": "Angella",
+      "lastName": "Lee",
+      "photo": "https://drive.google.com/file/d/1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK/view?usp=drive_link",
+      "country": "South Korea",
+      "company": "Jarasum Jazz Festival",
+      "role": "PR & Marketing Manager"
+    },
+    {
+      "fullName": "Alexandra Miteran",
+      "firstName": "Alexandra",
+      "lastName": "Miteran",
+      "photo": "https://drive.google.com/open?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj",
+      "country": "UAE",
+      "company": "SAMIT Event Group",
+      "role": "Owner, director"
+    },
+    {
+      "fullName": "Ahuvah Berger-Burcat",
+      "firstName": "Ahuvah",
+      "lastName": "Berger-Burcat",
+      "photo": "https://drive.google.com/open?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4",
+      "country": "Israel",
+      "company": "Revelator / WMG",
+      "role": "VP of Marketing for Revelator"
+    },
+    {
+      "fullName": "Golda Bitterli",
+      "firstName": "Golda",
+      "lastName": "Bitterli",
+      "photo": "https://drive.google.com/open?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz",
+      "country": "Israel",
+      "company": "Revelator / WMG",
+      "role": "VP of Business Development"
+    },
+    {
+      "fullName": "Robert Gądek",
+      "firstName": "Robert",
+      "lastName": "Gądek",
+      "photo": "https://drive.google.com/file/d/1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh/view?usp=drive_link",
+      "country": "Poland",
+      "company": "Jewish Culture Festival in Krakow",
+      "role": "Director, CEO"
+    },
+    {
+      "fullName": "Laurence Haziza",
+      "firstName": "Laurence",
+      "lastName": "Haziza",
+      "photo": "https://drive.google.com/open?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd",
+      "country": "France",
+      "company": "Sacré Sound Festival / Festival Jazz'N'Klezmer",
+      "role": "Director"
+    },
+    {
+      "fullName": "Nigel Canin",
+      "firstName": "Nigel",
+      "lastName": "Canin",
+      "photo": "https://drive.google.com/open?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon",
+      "country": "UK",
+      "company": "Parallel Skies Records,",
+      "role": "Director"
+    },
+    {
+      "fullName": "Raphael Perez",
+      "firstName": "Raphael",
+      "lastName": "Perez",
+      "photo": "https://drive.google.com/open?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT",
+      "country": "France",
+      "company": "Israeli jazz",
+      "role": "President"
+    },
+    {
+      "fullName": "Jonathan Schwartz",
+      "firstName": "Jonathan",
+      "lastName": "Schwartz",
+      "photo": "https://drive.google.com/file/d/1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl/view?usp=drive_link",
+      "country": "USA/Israel",
+      "company": "America-Israel Cultural Foundation (AICF)",
+      "role": "Artistic Director"
+    },
+    {
+      "fullName": "Thi Quynh Vu",
+      "firstName": "Thi Quynh",
+      "lastName": "Vu",
+      "photo": "",
+      "country": "Vietnam",
+      "company": "",
+      "role": "אשתו של Huy"
+    },
+    {
+      "fullName": "הערות",
+      "firstName": "",
+      "lastName": "הערות",
+      "photo": "",
+      "country": "",
+      "company": "",
+      "role": ""
+    }
+  ]
+}
