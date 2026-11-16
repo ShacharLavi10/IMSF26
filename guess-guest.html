@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>IMSF 2026 | Delegates & Guess the Guest</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,7 +67,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
       border-bottom: 1px solid var(--card-border);
       flex-wrap: wrap;
     }
@@ -76,8 +76,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      text-decoration: none;
-      color: inherit;
+      user-select: none;
     }
 
     .brand img {
@@ -89,7 +88,7 @@
     }
 
     .brand-title {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 800;
       background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
       -webkit-background-clip: text;
@@ -98,7 +97,7 @@
     }
 
     .brand-subtitle {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
       font-weight: 400;
     }
@@ -161,7 +160,6 @@
       cursor: pointer;
       font-size: 1.05rem;
       transition: all 0.2s ease;
-      text-decoration: none;
     }
 
     .btn-icon:hover {
@@ -178,13 +176,13 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     .view-section {
       display: none;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
       animation: fadeIn 0.3s ease;
     }
 
@@ -257,17 +255,12 @@
       box-shadow: 0 0 12px var(--accent-glow);
     }
 
+    /* Game Arena */
     .game-arena {
       display: grid;
-      grid-template-columns: 440px 1fr;
-      gap: 24px;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
       align-items: start;
-    }
-
-    @media (max-width: 960px) {
-      .game-arena {
-        grid-template-columns: 1fr;
-      }
     }
 
     .photo-stage-card {
@@ -305,7 +298,7 @@
 
     .photo-frame {
       width: 100%;
-      max-width: 400px;
+      max-width: 380px;
       aspect-ratio: 1 / 1.1;
       border-radius: 16px;
       overflow: hidden;
@@ -361,12 +354,15 @@
       transition: all 0.25s ease;
     }
 
-    .photo-stage-card.drag-over .drop-target-hint {
-      background: rgba(56, 189, 248, 0.85);
-      color: #0b0c10;
-      font-weight: 700;
-      border-color: #fff;
-      transform: scale(1.05);
+    .photo-stage-side {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mobile-prompt-text {
+      display: none;
     }
 
     .photo-actions {
@@ -377,7 +373,7 @@
 
     .btn-action {
       flex: 1;
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-radius: 12px;
       border: 1px solid var(--card-border);
       background: rgba(255, 255, 255, 0.05);
@@ -391,6 +387,7 @@
       justify-content: center;
       gap: 6px;
       transition: all 0.2s ease;
+      touch-action: manipulation;
     }
 
     .btn-action:hover {
@@ -399,10 +396,14 @@
       transform: translateY(-1px);
     }
 
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
     .hint-box {
       width: 100%;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
       border-radius: 12px;
       padding: 10px 14px;
       font-size: 0.85rem;
@@ -415,15 +416,16 @@
       text-align: left;
     }
 
+    /* Names Stage Card */
     .names-stage-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       backdrop-filter: blur(20px);
       border-radius: var(--radius);
-      padding: 22px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       box-shadow: 0 12px 40px rgba(0,0,0,0.35);
       min-height: 480px;
     }
@@ -433,13 +435,13 @@
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       padding-bottom: 12px;
       border-bottom: 1px solid var(--card-border);
     }
 
     .names-title {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: #fff;
       display: flex;
@@ -451,7 +453,7 @@
       position: relative;
       flex: 1;
       max-width: 260px;
-      min-width: 150px;
+      min-width: 140px;
     }
 
     .search-input {
@@ -459,10 +461,10 @@
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--card-border);
       border-radius: 10px;
-      padding: 8px 34px 8px 12px;
+      padding: 8px 34px 8px 30px;
       color: #fff;
       font-family: var(--font-he);
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       outline: none;
       transition: all 0.2s ease;
     }
@@ -480,7 +482,25 @@
       transform: translateY(-50%);
       color: var(--text-muted);
       pointer-events: none;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+    }
+
+    .clear-game-search {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: #cbd5e1;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
     }
 
     .sort-actions { display: flex; gap: 6px; }
@@ -491,7 +511,7 @@
       color: var(--text-muted);
       padding: 6px 12px;
       border-radius: 99px;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -525,14 +545,17 @@
       font-size: 0.95rem;
       font-weight: 600;
       color: #e2e8f0;
-      cursor: grab;
+      cursor: pointer;
       user-select: none;
+      -webkit-user-select: none;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       direction: ltr;
       transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       position: relative;
+      touch-action: manipulation;
     }
 
     .name-chip:hover {
@@ -543,7 +566,11 @@
       color: #fff;
     }
 
-    .name-chip:active { cursor: grabbing; transform: scale(0.97); }
+    .name-chip:active {
+      transform: scale(0.96);
+      background: rgba(56, 189, 248, 0.18);
+    }
+
     .name-chip.dragging { opacity: 0.45; transform: scale(0.95); border-color: var(--accent); }
 
     .name-chip.wrong-guess {
@@ -572,6 +599,180 @@
     .solved-check-icon { font-size: 0.8rem; color: var(--success); font-weight: 800; }
 
     /* ======================================================== */
+    /* RESPONSIVE MOBILE ADAPTATIONS                            */
+    /* ======================================================== */
+    @media (max-width: 820px) {
+      header {
+        padding: 10px 14px;
+      }
+
+      main {
+        padding: 10px 12px 40px;
+        gap: 12px;
+      }
+
+      .game-arena {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      /* Compact Sticky Photo Stage on Mobile */
+      .photo-stage-card {
+        flex-direction: row;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 14px;
+        top: 8px;
+        z-index: 90;
+        background: rgba(15, 19, 30, 0.94);
+        backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65);
+        border-radius: 16px;
+      }
+
+      .photo-frame {
+        width: 105px;
+        height: 105px;
+        min-width: 105px;
+        max-width: 105px;
+        aspect-ratio: 1 / 1;
+        border-radius: 12px;
+        flex-shrink: 0;
+      }
+
+      .drop-target-hint {
+        display: none;
+      }
+
+      .photo-stage-side {
+        flex: 1;
+        min-width: 0;
+        gap: 6px;
+      }
+
+      .mobile-prompt-text {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.2;
+      }
+
+      .photo-actions {
+        gap: 8px;
+      }
+
+      .btn-action {
+        padding: 8px 10px;
+        font-size: 0.82rem;
+        border-radius: 10px;
+      }
+
+      .hint-box {
+        font-size: 0.78rem;
+        padding: 6px 10px;
+        max-height: 48px;
+        overflow-y: auto;
+      }
+
+      /* Names Stage Card & Cloud on Mobile */
+      .names-stage-card {
+        padding: 14px 12px;
+        min-height: auto;
+      }
+
+      .names-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .names-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .search-wrapper {
+        max-width: 100%;
+        width: 100%;
+      }
+
+      .search-input {
+        font-size: 16px; /* Prevents auto-zoom on iOS */
+        padding: 10px 36px 10px 32px;
+        border-radius: 12px;
+      }
+
+      /* Clean 2-column touch-friendly grid on mobile */
+      .names-cloud {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+      }
+
+      .name-chip {
+        width: 100%;
+        min-height: 48px;
+        padding: 10px 8px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border-radius: 12px;
+        word-break: break-word;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Compact 4-column Stats Bar on Mobile */
+      .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 10px 8px;
+        gap: 6px;
+        border-radius: 14px;
+      }
+
+      .stat-item {
+        flex-direction: column;
+        gap: 2px;
+        text-align: center;
+        font-size: 0.72rem;
+      }
+
+      .stat-value {
+        font-size: 1.05rem;
+      }
+
+      .progress-wrapper {
+        grid-column: 1 / -1;
+        max-width: 100%;
+        order: -1;
+        margin-bottom: 2px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .names-cloud {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+
+      .name-chip {
+        font-size: 0.84rem;
+        padding: 8px 6px;
+        min-height: 46px;
+      }
+    }
+
+    /* ======================================================== */
     /* VIEW 2: AUTHENTIC PORTAL DELEGATES TAB (EXACT SAME UI)   */
     /* ======================================================== */
     .portal-card-wrapper {
@@ -579,8 +780,8 @@
       border: 1px solid var(--border-default);
       backdrop-filter: blur(20px);
       border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+      padding: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -590,7 +791,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      margin-bottom: 4px;
+      width: 100%;
     }
 
     @media (min-width: 600px) {
@@ -626,7 +827,7 @@
       padding: 12px 14px 12px 42px;
       color: #fff;
       font-family: var(--font-en, sans-serif);
-      font-size: 0.95rem;
+      font-size: 16px; /* 16px avoids iOS zoom */
       outline: none;
       direction: ltr;
       transition: all 0.2s ease;
@@ -677,11 +878,11 @@
       padding: 12px 16px;
       border-radius: 12px;
       font-family: var(--font-en, sans-serif);
-      font-size: 0.88rem;
+      font-size: 16px; /* 16px avoids iOS zoom */
       outline: none;
       cursor: pointer;
       direction: ltr;
-      min-width: 150px;
+      min-width: 140px;
     }
 
     .filter-selects select:focus {
@@ -714,53 +915,42 @@
     @media (min-width: 960px) {
       .artists-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 18px;
-      }
-    }
-
-    @media (min-width: 1200px) {
-      .artists-grid {
-        grid-template-columns: repeat(5, 1fr);
         gap: 20px;
       }
     }
 
     .artist-card {
-      position: relative;
       aspect-ratio: 1 / 1;
       border-radius: var(--radius-xl);
       overflow: hidden;
-      cursor: pointer;
-      background-color: #1a1a1e;
+      position: relative;
       background-size: cover;
-      background-position: center 20%;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      background-position: center;
+      background-color: var(--background-elevated);
+      cursor: pointer;
       border: 1px solid var(--border-default);
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      touch-action: manipulation;
     }
 
     .artist-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
-      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border-color: rgba(255,255,255,0.25);
     }
 
     .artist-card:active {
       transform: scale(0.97);
     }
 
-    .artist-card.angella-lee-card {
-      background-position: center 78% !important;
-    }
-
     .artist-card-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 45%, transparent 100%);
+      background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 40%, rgba(9,13,22,0.92) 100%);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      padding: 12px;
+      padding: 14px;
       direction: ltr;
       text-align: left;
     }
@@ -884,16 +1074,16 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 50%, var(--background-elevated) 100%);
+      background: linear-gradient(180deg, transparent 40%, var(--background-elevated) 100%);
     }
 
     .sheet-close-btn {
       position: absolute;
       top: 14px;
-      left: 14px;
+      right: 14px;
       background: rgba(0,0,0,0.6);
       backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
       color: #fff;
       width: 34px;
       height: 34px;
@@ -902,128 +1092,149 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 5;
-      transition: all 0.2s ease;
+      z-index: 10;
+      transition: transform 0.2s;
     }
-
-    .sheet-close-btn:hover {
-      background: rgba(0,0,0,0.85);
-      transform: scale(1.08);
-    }
+    .sheet-close-btn:active { transform: scale(0.9); }
+    .sheet-close-btn svg { width: 18px; height: 18px; }
 
     .sheet-content {
-      padding: 0 24px calc(30px + env(safe-area-inset-bottom, 0px));
+      padding: 0 20px 30px;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
-      flex: 1;
-      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .sheet-title-row {
-      display: flex;
-      margin-bottom: 20px;
-      margin-top: 4px;
+      margin-top: -30px;
+      position: relative;
+      z-index: 2;
     }
 
-    .sheet-title-row h2 {
+    .sheet-artist-name {
       font-family: var(--font-en);
       font-size: 1.6rem;
       font-weight: 800;
-      color: #fff;
-      line-height: 1.2;
+      color: #ffffff;
+      line-height: 1.15;
     }
 
-    .sheet-genre {
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      padding: 3px 10px;
-      border-radius: 99px;
-      font-size: 0.8rem;
+    .sheet-artist-genre {
+      font-size: 0.95rem;
+      color: var(--accent-bright);
       font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .sheet-artist-role {
+      font-size: 0.88rem;
+      color: var(--foreground-muted);
+      margin-top: 2px;
+      font-weight: 500;
     }
 
     .sheet-section {
-      margin-bottom: 22px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      padding: 14px 16px;
     }
 
     .section-title {
-      font-size: 0.82rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--foreground-muted);
+      font-size: 0.85rem;
       font-weight: 700;
+      color: #ffffff;
       margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .sheet-bio {
-      color: #e2e8f0;
-      font-size: 0.95rem;
-      line-height: 1.65;
-      white-space: pre-line;
-      margin-bottom: 0;
+    .section-desc {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .sheet-tags-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
     .sheet-pill-tag {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-default);
-      color: #cbd5e1;
-      padding: 5px 12px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #bae6fd;
+      padding: 4px 10px;
       border-radius: 8px;
-      font-size: 0.85rem;
-      margin: 3px 3px 3px 0;
-      line-height: 1.35;
+      font-size: 0.8rem;
+      font-weight: 500;
     }
 
-    /* Modal for Game View */
+    .sheet-bio {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    /* ======================================================== */
+    /* GAME POPUP MODAL (UPON CORRECT GUESS)                    */
+    /* ======================================================== */
     .guest-modal-backdrop {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.82);
       backdrop-filter: blur(14px);
-      z-index: 1500;
+      z-index: 2000;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 16px;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease;
     }
-    .guest-modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+    .guest-modal-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
     .guest-modal-card {
-      background: #131722;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 22px;
-      padding: 24px 26px;
-      max-width: 540px;
+      background: #111422;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 24px;
+      padding: 24px 20px;
+      max-width: 460px;
       width: 100%;
-      max-height: 90vh;
+      max-height: 85vh;
+      max-height: 85dvh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.85), 0 0 50px rgba(16, 185, 129, 0.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 50px rgba(56, 189, 248, 0.2);
       transform: scale(0.92) translateY(10px);
       transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
     }
     .guest-modal-backdrop.visible .guest-modal-card { transform: scale(1) translateY(0); }
 
     .modal-hero-row {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 16px;
+      padding-bottom: 14px;
     }
 
     .modal-avatar-frame {
-      width: 76px;
-      height: 76px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       overflow: hidden;
       border: 2px solid var(--success);
@@ -1036,7 +1247,7 @@
     .modal-hero-info {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
       flex: 1;
     }
 
@@ -1056,7 +1267,7 @@
 
     .modal-guest-name {
       font-family: var(--font-en);
-      font-size: 1.45rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: #fff;
       direction: ltr;
@@ -1064,22 +1275,22 @@
       line-height: 1.2;
     }
 
-    .modal-guest-country { font-size: 0.9rem; color: var(--accent); font-weight: 600; }
+    .modal-guest-country { font-size: 0.88rem; color: var(--accent); font-weight: 600; }
 
-    .modal-details-list { display: flex; flex-direction: column; gap: 12px; }
+    .modal-details-list { display: flex; flex-direction: column; gap: 10px; }
 
     .modal-detail-item {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 12px;
-      padding: 10px 14px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
 
     .modal-detail-label {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       font-weight: 600;
       display: flex;
@@ -1088,10 +1299,10 @@
     }
 
     .modal-detail-value {
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       color: #f1f5f9;
       font-weight: 500;
-      line-height: 1.45;
+      line-height: 1.4;
       direction: ltr;
       text-align: right;
     }
@@ -1103,7 +1314,7 @@
       color: #bae6fd;
       padding: 4px 10px;
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 500;
     }
 
@@ -1115,21 +1326,18 @@
       background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
       color: #0b0c10;
       font-family: var(--font-he);
-      font-size: 1.02rem;
+      font-size: 1rem;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 6px 20px var(--accent-glow);
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      box-shadow: 0 6px 20px var(--accent-glow);
+      transition: all 0.2s ease;
+      touch-action: manipulation;
     }
-
-    .btn-modal-continue:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px var(--accent-glow);
-    }
+    .btn-modal-continue:active { transform: scale(0.97); }
 
     /* Toast */
     .toast-container {
@@ -1137,7 +1345,7 @@
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 2000;
+      z-index: 2500;
       pointer-events: none;
     }
 
@@ -1172,7 +1380,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 16px;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.4s ease;
@@ -1183,14 +1391,14 @@
       background: #11141f;
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 24px;
-      padding: 36px 32px;
-      max-width: 500px;
+      padding: 32px 24px;
+      max-width: 480px;
       width: 100%;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 16px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 80px rgba(56, 189, 248, 0.2);
       transform: scale(0.9);
       transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1198,64 +1406,70 @@
     .modal-backdrop.visible .victory-card { transform: scale(1); }
 
     .trophy-badge {
-      width: 80px;
-      height: 80px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
       border: 2px solid var(--amber);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.8rem;
-      box-shadow: 0 0 35px rgba(245, 158, 11, 0.35);
+      font-size: 2.2rem;
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.35);
       animation: float 3s ease-in-out infinite;
     }
 
     .victory-title {
-      font-size: 1.8rem;
-      font-weight: 900;
+      font-size: 1.45rem;
+      font-weight: 800;
       background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .victory-desc { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+    .victory-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
 
     .victory-stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      margin: 8px 0;
+      margin: 4px 0;
     }
 
     .victory-stat-item {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--card-border);
       border-radius: 14px;
-      padding: 12px;
+      padding: 10px;
     }
 
-    .victory-stat-num { font-size: 1.5rem; font-weight: 800; color: #fff; }
+    .victory-stat-num { font-size: 1.4rem; font-weight: 800; color: #fff; }
     .victory-stat-lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
     .btn-restart-game {
       width: 100%;
-      padding: 14px 24px;
+      padding: 12px 20px;
       border-radius: 14px;
       border: none;
       background: linear-gradient(135deg, var(--accent) 0%, var(--success) 100%);
       color: #0b0c10;
       font-family: var(--font-he);
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 8px 24px var(--accent-glow);
       transition: all 0.25s ease;
+      touch-action: manipulation;
     }
     .btn-restart-game:hover { transform: translateY(-2px); filter: brightness(1.1); }
+    .btn-restart-game:active { transform: scale(0.97); }
 
-    #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 2500; }
+    #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 3000; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes shake {
@@ -1348,30 +1562,34 @@
 
           <div class="photo-frame" id="photo-drop-zone">
             <div class="photo-loader-spinner" id="photo-spinner"></div>
-            <img src="" alt="Guest Photo" id="current-guest-img" class="guest-photo-img">
+            <img src="" alt="Delegate Photo" id="current-guest-img" class="guest-photo-img">
             
             <div class="drop-target-hint">
               <span>🎯</span>
-              <span id="drop-hint-text">גררו שם לכאן או לחצו עליו מימין</span>
+              <span id="drop-hint-text">גררו שם לכאן או לחצו עליו</span>
             </div>
           </div>
 
-          <!-- Hint Banner -->
-          <div class="hint-box" id="hint-box">
-            <span>💡 <strong>רמז:</strong></span>
-            <span id="hint-text">...</span>
-          </div>
+          <div class="photo-stage-side">
+            <div class="mobile-prompt-text">🎯 מי האורח/ת שבתמונה?</div>
 
-          <!-- Action Buttons -->
-          <div class="photo-actions">
-            <button class="btn-action hint-btn" onclick="showHint()">
-              <span>💡</span>
-              <span>רמז</span>
-            </button>
-            <button class="btn-action skip-btn" onclick="skipCurrentGuest()">
-              <span>⏭️</span>
-              <span>דלג בינתיים</span>
-            </button>
+            <!-- Hint Banner -->
+            <div class="hint-box" id="hint-box">
+              <span>💡 <strong>רמז:</strong></span>
+              <span id="hint-text">...</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="photo-actions">
+              <button class="btn-action hint-btn" onclick="showHint()">
+                <span>💡</span>
+                <span>רמז</span>
+              </button>
+              <button class="btn-action skip-btn" onclick="skipCurrentGuest()">
+                <span>⏭️</span>
+                <span>דלג</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -1380,24 +1598,27 @@
         <div class="names-stage-card">
 
           <div class="names-header">
-            <div class="names-title">
-              <span>🏷️</span>
-              <span>בחרו או גררו את השם:</span>
-              <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="names-count-badge">(33 שמות)</span>
+            <div class="names-header-row">
+              <div class="names-title">
+                <span>🏷️</span>
+                <span>בחרו את השם:</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;" id="names-count-badge">(33 שמות)</span>
+              </div>
+
+              <div class="sort-actions">
+                <button class="btn-pill active" id="sort-random-btn" onclick="sortNames('random')">ערבב</button>
+                <button class="btn-pill" id="sort-alpha-btn" onclick="sortNames('alpha')">א'-ב'</button>
+              </div>
             </div>
 
             <div class="search-wrapper">
               <span class="search-icon">🔍</span>
-              <input type="text" class="search-input" id="search-input" placeholder="חיפוש שם מהיר..." oninput="handleSearch(this.value)">
-            </div>
-
-            <div class="sort-actions">
-              <button class="btn-pill active" id="sort-random-btn" onclick="sortNames('random')">ערבב</button>
-              <button class="btn-pill" id="sort-alpha-btn" onclick="sortNames('alpha')">א'-ב'</button>
+              <input type="text" class="search-input" id="search-input" placeholder="חיפוש שם מהיר..." oninput="handleSearch(this.value)" autocomplete="off">
+              <button class="clear-game-search" id="clear-game-search-btn" onclick="clearGameSearch()">✕</button>
             </div>
           </div>
 
-          <!-- The Pool of All Names -->
+          <!-- The Pool of All Names (2 columns on mobile, flow on desktop) -->
           <div class="names-cloud" id="names-cloud">
             <!-- Populated by JS -->
           </div>
@@ -1418,35 +1639,37 @@
         <!-- DIRECTORY FILTERS (MATCHING PORTAL HTML) -->
         <div class="directory-filters">
           <div class="search-wrap">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="search-icon">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="guest-search" placeholder="Search delegates..." oninput="filterPortalDirectory()">
-            <button class="clear-search-btn" id="clear-search-btn" onclick="clearPortalSearch()" aria-label="Clear search">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <input type="text" id="guest-search" placeholder="Search delegates by name, company, country, role..." oninput="filterPortalDirectory()">
+            <button class="clear-search-btn" id="clear-search-btn" onclick="clearPortalSearch()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
           </div>
+
           <div class="filter-selects">
             <select id="guest-genre-filter" onchange="filterPortalDirectory()">
-              <option value="All">All Genres</option>
-              <option value="Rock, Indie & Electronic">Rock, Indie & Electronic</option>
-              <option value="Jazz & World Music">Jazz & World Music</option>
+              <option value="All">All Focus Areas</option>
+              <option value="Rock/Indie/Electronic">Rock / Indie / Electronic</option>
+              <option value="Jazz/World music">Jazz / World Music</option>
             </select>
+
             <select id="guest-country-filter" onchange="filterPortalDirectory()">
               <option value="All">All Countries</option>
             </select>
           </div>
         </div>
 
-        <div id="directory-status" class="directory-status">
-          Showing 33 delegates
-        </div>
+        <div class="directory-status" id="directory-status">Showing 33 of 33 delegates</div>
 
-        <!-- ARTISTS-GRID (SQUARE CARDS MATCHING PORTAL) -->
-        <div class="artists-grid" id="directory-container">
-          <!-- Rendered dynamically -->
+        <!-- DELEGATES GRID (IDENTICAL TO PORTAL ARTISTS GRID) -->
+        <div class="artists-grid" id="delegates-grid">
+          <!-- Populated by JS -->
         </div>
 
       </div>
@@ -1456,47 +1679,36 @@
   </main>
 
   <!-- === AUTHENTIC GUEST BOTTOM SHEET (MATCHING PORTAL EXACTLY) === -->
-  <div id="guest-sheet-overlay" class="sheet-overlay" onclick="closeGuestSheet()"></div>
-  <div id="guest-bottom-sheet" class="bottom-sheet">
+  <div class="sheet-overlay" id="guest-sheet-overlay" onclick="closeGuestSheet()"></div>
+  <div class="bottom-sheet" id="guest-bottom-sheet">
     <div class="sheet-handle" onclick="closeGuestSheet()"></div>
-    <div class="sheet-header-image" id="sheet-guest-img">
+    
+    <div class="sheet-header-image" id="sheet-guest-image">
       <button class="sheet-close-btn" onclick="closeGuestSheet()" aria-label="Close">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
       </button>
     </div>
+
     <div class="sheet-content">
       <div class="sheet-title-row">
-        <div style="display: flex; flex-direction: column; width: 100%;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-            <h2 id="sheet-guest-name" style="margin-bottom: 0;">Guest Name</h2>
-            <span class="sheet-genre" id="sheet-guest-genre" style="margin-top: 0;">Genre</span>
-          </div>
-          <span id="sheet-guest-country" style="font-weight: 500; font-size: 0.9rem; color: var(--foreground-muted); margin-top: 4px;">Country</span>
-        </div>
+        <h2 class="sheet-artist-name" id="sheet-guest-name">Benson Zhang</h2>
+        <div class="sheet-artist-genre" id="sheet-guest-genre">🌍 China &nbsp;&middot;&nbsp; 🎵 Jazz/World music</div>
+        <div class="sheet-artist-role" id="sheet-guest-role">Director / CEO • Chapter 2 Entertainment</div>
       </div>
 
-      <!-- COMPANY & ROLE -->
-      <div class="sheet-section">
-        <h4 class="section-title">Organization</h4>
-        <p id="sheet-guest-company" style="font-weight: 600; margin-bottom: 4px; font-size: 1.05rem; color: #fff;">Company Name</p>
-        <p id="sheet-guest-role" style="font-size: 0.92rem; color: var(--foreground-muted); margin-bottom: 0;">Role</p>
+      <div class="sheet-section" id="sheet-guest-activity-section">
+        <h4 class="section-title">Company Activity</h4>
+        <p class="section-desc" id="sheet-guest-activity">Booking Agency</p>
       </div>
 
-      <!-- WHAT COMPANY DOES -->
-      <div class="sheet-section" id="sheet-guest-activity-section" style="display: none;">
-        <h4 class="section-title">What the company does</h4>
-        <p id="sheet-guest-activity" style="font-size: 0.95rem; color: #e2e8f0; line-height: 1.5; margin-bottom: 0;">Activity description</p>
+      <div class="sheet-section" id="sheet-guest-goals-section">
+        <h4 class="section-title">Festival Goals</h4>
+        <div class="sheet-tags-wrap" id="sheet-guest-goals-tags"></div>
       </div>
 
-      <!-- FESTIVAL GOALS -->
-      <div class="sheet-section" id="sheet-guest-goals-section" style="display: none;">
-        <h4 class="section-title">Goals at the festival</h4>
-        <div id="sheet-guest-goals-tags" style="display: flex; flex-wrap: wrap; gap: 6px;">
-          <!-- Goals tags -->
-        </div>
-      </div>
-
-      <!-- BIO -->
       <div class="sheet-section">
         <h4 class="section-title">About</h4>
         <p class="sheet-bio" id="sheet-guest-bio">Biography text goes here...</p>
@@ -1509,7 +1721,7 @@
     <div class="guest-modal-card">
       <div class="modal-hero-row">
         <div class="modal-avatar-frame">
-          <img src="" alt="Guest Avatar" id="modal-avatar-img" class="modal-avatar-img">
+          <img src="" alt="Delegate Avatar" id="modal-avatar-img" class="modal-avatar-img">
         </div>
         <div class="modal-hero-info">
           <div class="modal-success-pill">✓ זיהיתם נכון!</div>
@@ -1577,8 +1789,11 @@
   </div>
 
   <script>
-    // Strictly filtered 33 delegates
-    const ALL_DELEGATES = [
+  (() => {
+    'use strict';
+
+    // Strictly filtered 33 delegates - securely frozen in closure scope
+    const ALL_DELEGATES = Object.freeze([
   {
     "id": "benson_zhang",
     "fullName": "Benson Zhang",
@@ -2107,541 +2322,11 @@
     "hasRealPhoto": true,
     "isAngella": false
   }
-];
-    const GAME_GUESTS = [
-  {
-    "id": "benson_zhang",
-    "fullName": "Benson Zhang",
-    "firstName": "Benson",
-    "lastName": "Zhang",
-    "country": "China",
-    "company": "Chapter 2 Entertainment",
-    "role": "Director / CEO",
-    "whatCompanyDoes": "Booking Agancy",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Benson Zhang is the CEO and founder of “chapter 2 entertainment” who has over 18 years of experience in media, entertainment, and the music industry. Operating through Madrid and China/Hong Kong, the company empowers international artists to conquer the Asian music market while facilitating the introduction and promotion of Asian talent in European and South American markets. \r\n\r\nThe company works in artist booking, PR and consulting. Their mission is to bridge cultures and genres, fostering collaboration and sharing the richness of Latino and jazz music with audiences across Asia. By offering market-entry strategies and booking services, they help artists expand their fanbases and unlock new opportunities in unexplored markets.\r\n\r\nZhang's involvement in the Asian market is spread wide:  Serving as the General Manager at Billboard in China, and being part of the content team for YouTube Music in Taiwan. TV Presenter at Hong Kong-TVB and a Radio DJ at Phoenix TV.\r\nZhang is a key player in the local industry, with essential connections and experience. \r\n\r\n\r\nZhang has got Israeli Jazz musician Ron Minis and his band invited by Shanghai Arts Festival, and they performed in both Beijing and Shanghai.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1aesjm10Bl17fExc96dLsfdwBmDEQrkE_&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "bojan_vuleti_",
-    "fullName": "Bojan Vuletić",
-    "firstName": "Bojan",
-    "lastName": "Vuletić",
-    "country": "Germany",
-    "company": "Asphalt Festival Düsseldorf",
-    "role": "Festival Director",
-    "whatCompanyDoes": "Interdisciplinary Festival",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Bojan Vuletić is a composer, guitarist and sound artist whose work spans contemporary music, jazz, theatre, dance and visual arts. He has collaborated with leading orchestras and ensembles and created music for dozens of theatre and dance productions. In 2012, he co-founded the Asphalt Festival in Düsseldorf and has served as its artistic director ever since.\r\nAsphalt Festival is an established interdisciplinary summer arts festival presenting music, theatre, dance, performance and visual arts at venues across Düsseldorf. \r\nIts 2026 edition welcomed more than 10,000 visitors and featured 70 events across six venues, with artists and productions from more than a dozen countries. Alongside its international guest programme, Asphalt has developed almost 100 co-productions since its founding, establishing itself as a platform for artistic exchange and the creation of new work.\r\nThe festival's programme includes contemporary jazz, indie and psychedelic rock, soul, experimental music and interdisciplinary performance, making it a potentially valuable platform for Israeli artists working across contemporary music and the performing arts.\r\nUnder Bojan Vuletić’s artistic leadership, the Asphalt Festival has also become one of Germany’s most important platforms for Israeli artists and musicians. For many years, Israeli composers, performers, authors, and ensembles, such as Omer Moskovich, LIRAZ, Omer Klein and many more have been an integral part of the festival’s program.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1aEVG7jeAMD2GaVyWXHpxC_Y4JaM4cYiZ&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "carlos_pineda",
-    "fullName": "Carlos Pineda",
-    "firstName": "Carlos",
-    "lastName": "Pineda",
-    "country": "Canada",
-    "company": "MCMXVI",
-    "role": "Founder / CEO",
-    "whatCompanyDoes": "Management",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Carlos Pineda is a Toronto-based music executive and artist manager with over a decade of experience in the music industry. For more then decade he ran the career of the known canadian rapper Kardinal Offishall. Recently He founded MCMXVI, an independent artist management and record company focused on artist development, music production, and building sustainable careers for emerging talent.\r\nHis roster includes Polaris Prize-winning rapper Haviah Mighty, among other independent artists and producers.\r\nIn 2025, Pineda was named to Billboard Canada's “Music Managers to Watch”  list, recognizing his growing influence in the Canadian music industry.\r\nIn 2026, Carlos launched his independent record label distributed through Universal Music, further expanding his footprint in artist development and recorded music. Recantly he has started Working with Shaked Miller, who he heard of through a coullege that participated in IMSF25",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1ErEcgx9hu5QYYNYTrmaoZ7G0estv92bI&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "eugenio_rubei",
-    "fullName": "Eugenio Rubei",
-    "firstName": "Eugenio",
-    "lastName": "Rubei",
-    "country": "Italy",
-    "company": "Alexanderplatz Jazz Club",
-    "role": "Artistic Director",
-    "whatCompanyDoes": "Venue",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
-    "bio": "Eugenio Rubei is an Italian jazz promoter and artistic director with decades of experience in live music programming, festival production and international cultural exchange. He leads Rome’s legendary Alexanderplatz Jazz Club, founded in 1984 by his father, Giampiero Rubei, and widely recognized as one of Italy’s most important jazz venues. The club has hosted generations of leading Italian and international jazz musicians and has been included by DownBeat magazine among the world’s 100 most important jazz clubs.\nBeyond the club, Rubei has played a significant role in Italy’s jazz scene through a range of festivals and cultural initiatives. He directed Casa del Jazz in Rome, and has been involved in the long-running Jazz & Image festival, which brings live music to distinctive outdoor locations in the Italian capital. He is also the artistic director of Jazz & Wine in Montalcino, an established international festival that combines jazz performances with the cultural heritage of Tuscany. Its programmes have featured internationally acclaimed artists including Kenny Barron, Enrico Pieranunzi, Malika Ayane, Nicola Piovani and Avishai Cohen.\nThrough his work at the club and across these festivals, Eugenio Committed to fostering cross-border artistic collaboration, he has actively bridged the Italian, European, and American jazz scenes, notably expanding Alexanderplatz's footprint internationally by establishing a pioneering cultural hub in Brussels. \nHis work reflects a strong commitment to the jazz community and to creating opportunities for musicians to meet, collaborate and reach new audiences.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=11lfx2QB5LmrEZHbGLF-_sz2cDf1baWTN&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "huy_tuan_bui",
-    "fullName": "Huy Tuan Bui",
-    "firstName": "Huy Tuan",
-    "lastName": "Bui",
-    "country": "Vietnam",
-    "company": "HoZo Festival - Ho Chi Minh city International Music Festival",
-    "role": "Music & Art Director",
-    "whatCompanyDoes": "- Programming concerts and music events\n- Discovering and promoting new talent\n- Producing albums and live performances\n- Working with festivals, broadcasters, record labels, and artists\n- Building international music collaborations",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Huy Tuan is one of Vietnam's leading top-tier music producers, composers, and music directors, with over 30 years of experience in the music industry.\n\nHe has played a key role in shaping modern Vietnamese pop music, producing and mentoring many of Vietnam's most successful artists (including legendary divas and some of the most well-known young artists). He has served as Music Director and judge for major television programs such as Vietnam Idol and Vietnam's Got Talent, and has directed numerous large-scale concerts, music programs and international cultural events in the country.\n\nA music producer with 30 years of experience in the Vietnamese music industry. He is the founder and organizer of leading music festivals in Vietnam, such as Vietnam Jazz Heritage Festival, Hue Wonderverse Music Fest, and Hozo International Music Festival. Additionally, he serves as a music producer for top Vietnamese artists today, including My Linh, Van Mai Huong, and Hoa Minzy.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1QGGXKEjwSgQ3gzvfaDuzemkMFs7gKLDh&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "isaac_green",
-    "fullName": "Isaac Green",
-    "firstName": "Isaac",
-    "lastName": "Green",
-    "country": "USA",
-    "company": "Warner Records",
-    "role": "Senior Vice President of A&R",
-    "whatCompanyDoes": "Label",
-    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Isaac Green is the Senior Vice President of A&R at Warner Records. \r\nHe is a music executive and talent scout who has built a career identifying, signing and developing distinctive artists across alternative, indie, pop, rock and country music. He joined Warner Records in 2021 as Senior Vice President of A&R, where his work has included signing country artists Warren Zeiders, The Castellows and Gavin Adcock, as well as newer acts such as Penelope Road, Laila! and Heathers.\r\nBefore joining Warner, Green spent more than a decade at Columbia Records, where he worked with a diverse roster of artists including Foster the People, Passion Pit, Peter Bjorn and John, Madeon, COIN, LCD SOUNDSYSTEM, Wet, Natalie Prass, The Reconture, Bully and Lewis Del Mar.\r\nGreen began his career in 2000 by founding the independent label StarTime International. The label helped launch the careers of artists including The Walkmen and French Kicks, and Green’s early work in the independent music scene was briefly chronicled in “Meet Me in the Bathroom”, Lizzy Goodman’s book about New York’s indie-rock scene in the early 2000s.\r\nWith experience spanning independent labels and major-record-company A&R, Green brings a strong track record in discovering emerging talent and helping artists build lasting careers.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1lCTae-ME7NB572v1i7YMCSCyVW84ngGs&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "johannes_graesser",
-    "fullName": "Johannes Graesser",
-    "firstName": "Johannes",
-    "lastName": "Graesser",
-    "country": "Germany",
-    "company": "Jewish-Israeli Culture Days Thuringia",
-    "role": "Artistic Director & Managing Director",
-    "whatCompanyDoes": "Festival",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Johannes Gräßer is a cultural manager and artistic director who has been active in Jewish culture in Germany for more than 25 years. He leads the Jewish-Israeli Cultural Days of Thuringia, an established festival dedicated to Jewish and Israeli culture, bringing music, literature, film, talks and exhibitions to audiences across the region.\r\nHeld annually over approximately three weeks, the festival presents more than 50 events in cities and towns throughout Thuringia. Under Gräßer’s leadership, it has become an important platform for Israeli artists in Germany, combining concerts by Israeli musicians with programmes exploring Jewish history, identity and contemporary culture.\r\nThrough his work, Gräßer creates opportunities for Israeli artists to perform for German audiences and encourages cultural exchange through music and the arts. His experience in festival management and his sustained commitment to presenting Israeli and Jewish culture make him a relevant contact for international music showcases and touring opportunities.\r\nThe festival has welcomed a wide range of Israeli artists and ensembles, including the Yamma Ensemble, Sharon Mansur, Nigun Quartet, Yogev Shetrit, OLAMA Band, Hadar Maoz, Adam Chichportiche Trio, Ariel & Meira Trio,  Flora (Liron Meshulam), Yael Eisenberg, Achinoam Nini  (NOA), Yagel Harouch, Yair Dalal, Mandy Cahan, Israel Klezmer Orchestra, whose music blends Persian and Jewish traditions with contemporary influences.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1r8o07J0L7ANg0TwaWfgVcc_bMW6AAQba&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "jonathan_vyner",
-    "fullName": "Jonathan Vyner",
-    "firstName": "Jonathan",
-    "lastName": "Vyner",
-    "country": "UK",
-    "company": "The Underworld / Born Again Concerts",
-    "role": "Bookings Manager / Director",
-    "whatCompanyDoes": "Music Venue / Promoter",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
-    "bio": "Jon Vyner is a veteran venue manager and promoter with nearly three decades of experience shaping the UK's live music landscape. \r\n\r\nAs Booking Manager of The Underworld for 28 years, he oversees an eclectic programming policy at the iconic Camden venue, having hosted major international acts such as Foo Fighters,Slash, Mötley Crüe, and My Chemical Romance. \r\n\r\nIn addition, as Director of Born Again Concerts, he has spent 28 years promoting external national tours across the UK in venues ranging from 100 to 5,000 capacity,working with artists across diverse genres including Ministry, Heilung, Sunn O))), and various Asian pop acts.\r\n\r\nThroughout his career, Vyner has maintained consistent working relationships with Israeli acts. He currently works with Orphaned Land, Kobi Farhi, and Noa Gruman's Scardust, and has promoted a variety of Israeli artists over the years, including Alma Zohar, Betzefer, and Useless ID.",
-    "genre": "Rock/Indie music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1HTT1Btv34TiJVmj-NWXVuAjmbaNvPGii&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "josh_blakk",
-    "fullName": "Josh Blakk",
-    "firstName": "Josh",
-    "lastName": "Blakk",
-    "country": "Ghana",
-    "company": "Blakknoters",
-    "role": "Singer, Writer, Producer, Founder, owner, lead artist and producer",
-    "whatCompanyDoes": "Record Label, Band, Live Events & Music Software",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Writing and recording with Israeli artists, bringing Highlife and Soul into their sound",
-    "bio": "Josh Blakk is an Accra-based artist, songwriter, producer, and founder of Blakknoters - a music company, live band, and developer of the AKINRAH AI mixing engine. He originated \"High Soul,\" a fusion of Ghanaian Highlife and Soul, and operates a record label, commercial studio, management outfit, and flagship events such as Ghana Sunday Service, where people cook and eat together then make music the old way, and an annual orphanage charity concert.  \r\n\r\nA multi-instrumentalist nominated for seven awards, he released O.N.E (2023) and Catch-22 (2025), with a 16-date European tour, a set at Reeperbahn Festival, and a fourth album arriving in November 2026.  \r\n\r\nBlakk collaborates regularly with Israeli artists and diplomatic institutions in Accra. Arranged via the Embassy of Israel, he partnered with violinist Tania Vinokur in 2026 for Israel's 78th Independence Day reception and a joint headline show at +233 Jazz Bar and Grill, where his band performed her Israeli repertoire alongside his own set. He previously performed with the Yogev Shetrit Trio in May 2025 and has played multiple events at the Israeli Ambassador's residence.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1P_ietIhx8B0iL0n30XgXqzEQi_vjOIBZ&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "kira_ozhgibesova",
-    "fullName": "Kira Ozhgibesova",
-    "firstName": "Kira",
-    "lastName": "Ozhgibesova",
-    "country": "Russia",
-    "company": "Perm  Triumph Private Philharmonic",
-    "role": "Assitant to Creative Director",
-    "whatCompanyDoes": "Venue",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Kira Ozhgibesova is the Assistant Creative Director at Triumph, Russia's only private philharmonic, located in Perm.\r\n Triumph is a multidisciplinary cultural venue hosting concerts, film screenings, festivals, performances, lectures, and exhibitions, with a program featuring artists from Russia and around the world across a wide range of genres.  \r\n\r\nIn her role, Ozhgibesova is actively involved in shaping the program, selecting artists, and building and maintaining relationships with partners and sponsors. Her professional background encompasses developing and coordinating concerts at Triumph as well as other venues - including a chamber hall in a Lutheran church, post-industrial cultural hubs, and art galleries - working alongside international and Russian artists, orchestras, choirs, and guest lecturers, while also assisting directors through productions. \r\n\r\nHer key projects include \"World Jazz\", bringing international jazz musicians to Perm; Perm's largest choral concert, featuring over 150 performers on a single stage; and a festival celebrating the life and music of composer Leonid Desyatnikov.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1rDSRDMDsWuRuPXtCuo-qXtsCh28JMH_v&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "krasimir_moskov_kirev",
-    "fullName": "Krasimir Moskov Kirev",
-    "firstName": "Krasimir",
-    "lastName": "Moskov Kirev",
-    "country": "Bulgaria",
-    "company": "Fest Team EOOD",
-    "role": "Head of Booking / Program Manager",
-    "whatCompanyDoes": "Promoter (Concerts Orgenizer)",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Krasimir Moskov is the Head of Booking at Fest Team in Bulgaria, having served in the role since 2022 leading the booking department and managing most of the company's concerts. In addition to overseeing company concert operations, he acts as the program manager for Fest Team's two major summer festivals - Hills of Rock - where there are bands like Smashing Pumpkins, Slash and Sabaton, and on the other hand, PhillGood Festival with acts like Gorillaz, The Cure and more.\r\n\r\nPrior to his current occupation in live entertainment and artist booking, Moskov was a well known Bulgarian music journalist and radio personality. His career in music media included 19 years as a radio host on Z-Rock - one of the country's biggest rock radio stations - where he hosted a major daily programme alongside the specialist music show The Hour of the Different Choice.",
-    "genre": "Rock/Indie music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1mmOamP3qSGHwrmZYaHK3WGCst9rp8r-m&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "marcus_tawanda_gora",
-    "fullName": "Marcus Tawanda Gora",
-    "firstName": "Marcus",
-    "lastName": "Tawanda Gora",
-    "country": "Zimbabue",
-    "company": "OMIFA",
-    "role": "Artistic Director",
-    "whatCompanyDoes": "Music festival",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Marcus Tawanda Gora is a band manager for Zimbabwean touring music group MOKOOMBA and co-founder and director of FIRST FLOOR GALLERY; an art gallery as well as a cultural and creative platform with spaces in Harare and Victoria Falls. Currently vice-chairperson on the board of the NATIONAL ARTS COUNCIL OF ZIMBABWE.\r\n\r\nOMIFA is a community festival held at the Pakare Paye arts centre, founded by the legendary artist Oliver Mtukudzi. The event brings together artists across various disciplines and serves as an instrument for social cohesion. As the founding creative director, Marcus role aligns with his work as a creative strategist managing touring bands like Mokoomba and chairing the Board for the Music In Africa Foundation.\r\n\r\nCurrently in conversations with several Israeli artists and professionals to do creative exchange and find the means and opportunities to do so in Southern Africa.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1wvFzZwCD9tcRIuM288OBUVHLXDUCu3ZY&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "mark_kass",
-    "fullName": "Mark Kass",
-    "firstName": "Mark",
-    "lastName": "Kass",
-    "country": "UK",
-    "company": "National Jazz Archive UK\nEnterprise4Good",
-    "role": "Owner",
-    "whatCompanyDoes": "Jazz Development Agency and Cultural Hub",
-    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Jazz East is a UK based Jazz Development Agency and Cultural Hub and partners with the National Jazz Archive UK to protect, preserve and promote the art, culture, heritage and commercial interests of jazz in the UK.\r\nMark Kass is the founder and Creative Director of the London East Jazz Network CIC, which curates Jazz East, which is responsible for curating and promoting live jazz and improvised music across East London. His path into jazz began with presenting jazz radio on East London Radio before moving into live music event promotion. \r\nIn December 2022 he was appointed Executive Chair of Trustees and Chief Executive Officer of the National Jazz Archive. He conceived the Archive’s first Jazz Hub at Loughton Library, a grassroots live music venue with exhibition space, a vintage jazz record and book shop and research workstations. He also sits on the Board of the Jazz Promotion Network, the UK’s trade body for the jazz sector. \r\nMark is looking to Coordinate PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities, and is currently developing relationships with the Cultural Team at the Israeli Embassy in the UK.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1b7-J-I0K0-n0wtKQdunO7zr8a-3QyJkS&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "matthias_mueller",
-    "fullName": "Matthias Mueller",
-    "firstName": "Matthias",
-    "lastName": "Mueller",
-    "country": "Germany",
-    "company": "Crazy Planet Records GmbH",
-    "role": "CEO",
-    "whatCompanyDoes": "Label, Publisher, Agency, Management",
-    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities, New things in the Industry",
-    "bio": "Matthias Mueller is the Founder and CEO of Crazy Planet Records. For nearly three decades, he has been shaping the global music industry with deep expertise across label and publishing, booking, and artist management. Known as a continental bridge-builder, he connects markets, cultures, and creative talent across borders with strategic clarity and long-term vision. \r\n\r\nBeyond the music business, his career is marked by deep hands-on experience in stage and event technology, including productions in music clubs, multifunctional arenas, theatres, and opera houses worldwide. This technical depth allows him to seamlessly unite artistic ambition with technological precision, ensuring that creative visions translate powerfully onto the stage.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=15wQZdxVT5ZTdcSKmw6PpLHUwGfJWwIA1&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "michele_amar",
-    "fullName": "Michele Amar",
-    "firstName": "Michele",
-    "lastName": "Amar",
-    "country": "USA",
-    "company": "FRANCE ROCKS",
-    "role": "owner",
-    "whatCompanyDoes": "Promotion & Marketing",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Michele Amar is a New York-based music executive, entrepreneur, and consultant with over 30 years of experience in the international music industry, and extensive expertise in global business development and export strategy for culture and music tech companies. As the founder and CEO of France Rocks, Inc., she has played a pivotal role in fostering international music collaborations and expanding the global reach of French and international music in the US, promoting it through touring, artist development, strategic partnerships, and cultural exchange. She created the France Rocks Music Fest, a New York festival celebrating international talent, where she played a key role in connecting international artists and industry professionals with the U.S. market. She also created and led the French Music Export Office USA, helping artists expand internationally.\n\nHer career highlights include serving as Head of International Content Acquisition for the Independent Online Distribution Alliance, where she spearheaded partnerships to expand global digital distribution. She also led the international department at Putumayo World Music, successfully building a distribution network in over 90 countries. Throughout her career she has held senior positions in music distribution, content acquisition, and business development, working with major labels, independent artists, music-tech companies, and cultural institutions. Her recent projects include music diplomacy and international partnerships in 2025, and business development for music-tech and sync companies in 2026.\n\nBeyond her strategic roles, Amar founded an independent record label in New York City and worked as a musician, producer, engineer, and programmer in Europe and the U.S., contributing to numerous recordings as a performer and composer. In New York's alternative music scene she collaborated with New Order, The Young Gods, The The, and Debbie Harry. Her multifaceted career reflects a deep passion for music and a commitment to advancing the global music industry. Passionate about music diplomacy, she is excited to develop partnerships with Israeli artists and music professionals.",
-    "genre": "Rock/Indie music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=13HTqG8TD8CK2IrnrBXCt9IUHl4-2soNX&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "peter__stedt",
-    "fullName": "Peter Åstedt",
-    "firstName": "Peter",
-    "lastName": "Åstedt",
-    "country": "Sweden",
-    "company": "Musichelp / Future Echoes",
-    "role": "Project Manager",
-    "whatCompanyDoes": "Festival / Label / Supervisor / Manager",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Peter Åstedt has been working in the music industry for over 30 years. He started his own record label, Dead Frog Records, at the age of 15 in 1990. Over the years he has started several companies in different fields in the music industry like PR, Publishing, Distribution, Sync placements, Management, Festivals, and Artist Development. \n\nToday he oversees several of the departments on Musichelp which is an umbrella company of different companies in the music industry. Musichelp is an umbrella company with different sub companies. Over 15000 artists have passed our organisation in one way or another. He also founded a showcase festival ‘Future Echoes’.\n\nOver the years he has booked several Israeli artists to different showcases and festivals he's been working on.",
-    "genre": "Rock/Indie music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=19MT1Fzz36qQLC36m2HHnSDPswFt9Ac2W&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "shunsuke_asakawa",
-    "fullName": "Shunsuke Asakawa",
-    "firstName": "Shunsuke",
-    "lastName": "Asakawa",
-    "country": "Japan",
-    "company": "Haremame Group",
-    "role": "Manager/Producer",
-    "whatCompanyDoes": "Event production",
-    "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Shunsuke Asakawa is a Tokyo-based freelance concert producer, venue manager, and event booker. He spent two decades managing prominent Tokyo live venues - including Tsukimiru Kimi Omoi and Yagi ni Kiku - before transitioning to independent freelance concert production.\n\nThroughout his career, Shunsuke has focused on bringing international acts to Japan and producing cross-cultural tours. His production credits feature major international tours for artists such as Vincent Gallo, Chicano Batman, Jojo Mayer, Bomba Estéreo, and Nik Bärtsch's Ronin, alongside booking for events like the Sense of Wonder Art & Music Festival.\n\nOperating independently, his work also features strong creative connections with Israeli independent music culture. He has organized Japan tours for acts such as Boom Pam, Ouzo Bazooka, Yemen Blues, Quarter To Africa and Flora, including booking Boom Pam for the Fuji Rock Festival, and maintains a long-standing professional relationship with Tzach Bar of Fortuna Records.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1pzBQS9OI9Qo9dDTMyEYJ3gtrInOfiGOx&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "michael_ginzburg",
-    "fullName": "Michael Ginzburg",
-    "firstName": "Michael",
-    "lastName": "Ginzburg",
-    "country": "Germany",
-    "company": "Ginzburg Live",
-    "role": "Founder",
-    "whatCompanyDoes": "Booking Agency",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Michael Ginzburg is a booking agent, talent buyer and live entertainment consultant specializing in international touring and global market development. He has held senior roles at Universal Music Group and Semmel Concerts (CTS Eventim), where he worked on projects including The World of Hans Zimmer and major touring exhibitions. \r\n\r\nOver his career, he has booked talent for global events such as Formula 1 Grand Prix and FIFA World Cup and works with artists and promoters across Europe, the Middle East and Asia.\r\n\r\nMichael is actively building bridges between Israel and Europe, booking Israeli and Jewish artists, most recently Noam Bettan, for private and public performances across Europe. He advocates for Israel and stands firmly against BDS within the international music and live entertainment industry.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=10Rzm6eyL0sqblXjE7LpnR6Zyur4Lr49W&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "maciej_nestor",
-    "fullName": "Maciej Nestor",
-    "firstName": "Maciej",
-    "lastName": "Nestor",
-    "country": "Poland",
-    "company": "V Records / Jazz Premium",
-    "role": "Head of Label",
-    "whatCompanyDoes": "Label",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Maciej Nestor runs V Records, an independent Polish record label focused on jazz, contemporary and crossover music. He also leads Jazz Premium, which focuses on transferring knowledge, skills and creative approaches from the cultural and creative sectors into business through workshops, training and collaborative projects.\r\n\r\nHe's spent over 15 years working at the intersection of music, culture and business. He's collaborated with Polish jazz icons such as Kuba Stankiewicz and Piotr Baron, and produced concerts, tours across Poland, Europe, Canada and Japan, as well as festivals, recordings and cultural projects. He's always interested in discovering new artists, connecting people and turning good musical ideas into real international collaborations.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=18oPNA1BRQOiWCRGQMckpkZfc1RicOopM&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "simon_nasser",
-    "fullName": "Simon Nasser",
-    "firstName": "Simon",
-    "lastName": "Nasser",
-    "country": "Singapore",
-    "company": "Versed Talent Agency Pte",
-    "role": "Managing Director",
-    "whatCompanyDoes": "Agency",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "With over three decades in the music industry, Simon Nasser has consistently strived for excellence and innovation. \r\n\r\nSimon currently leads talent operations at Versed, having previously served as Managing Director of Universal Music Singapore and Head of Live across Southeast Asia. Prior to UMG, he spent 15 years at Warner Music Singapore - ultimately serving as Managing Director - where he aligned local execution with broader regional strategy.\r\n\r\nHis track record features major milestones: breaking both emerging and established artists, pioneering live music initiatives, and building new revenue streams through brand partnerships and sponsorships. Simon also served as Chairman of RIAS (Inland Revenue Authority of Singapore) across five terms (2018 - 2023), championing industry rights throughout Singapore and the region. \r\n\r\nDriven by a lifelong passion for music, Simon is always looking to open up new territories in entertainment and collaborate on bold, forward-thinking projects.",
-    "genre": "Rock/Indie music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1KNkhnx1V8IrJCD3XwvfA4Pk017wK4iJv&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "ezekiel_keran",
-    "fullName": "Ezekiel Keran",
-    "firstName": "Ezekiel",
-    "lastName": "Keran",
-    "country": "Singapore",
-    "company": "A Strange Love Pte",
-    "role": "Managing Director",
-    "whatCompanyDoes": "Label",
-    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "astrangelove (formerly M03 Records) is a Singapore-based independent record label founded in 2017 by producer and A&R Ezekiel Keran, known professionally as Flightsch. Conceived as a boundary-pushing platform, it emerged as Singapore’s first multi-lingual hip-hop imprint - bridging cultures and genres that had long existed in silos.  \r\n\r\nFrom its inception, the label signed now-renowned artists Fariz Jabba and Yung Raja, and within six months entered a joint venture with Kartel Records (Sony Music Malaysia). By 2019, astrangelove became the first locally-run label to unite Tamil-English and Malay-English hip-hop alongside rock and indie-pop, reflecting the region’s cultural diversity.\r\n\r\nEzekiel has amassed global recognition for his artists and records - from mentions by Jimmy Fallon on The Tonight Show to charting positions in India, Malaysia, and Singapore, Ezekiel’s astute ability to trendset artists has carved successful careers for each label, artist, and songwriter the A&R maverick has lent his services to.\r\n\r\nHe launched Singapore’s first successful multi-lingual hip hop label, set up Def Jam Singapore, and led the Universal Music Singapore Domestic label to regional success.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1NvRKeHew25l7hAUoTmFYfnvlgt_KOz_l&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "adam_sagir",
-    "fullName": "Adam Sagir",
-    "firstName": "Adam",
-    "lastName": "Sagir",
-    "country": "UK",
-    "company": "The Noise Cartel",
-    "role": "Founder and Managing Director",
-    "whatCompanyDoes": "PR Agency",
-    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities, Planning to discuss a rock/metak focused program for next year",
-    "bio": "Adam Sagir is a music industry entrepreneur, publicist and artist manager with more than two decades of experience. He is the Founder and Managing Director of The Noise Cartel, a leading UK music PR and marketing agency specialising in rock, metal and alternative music.\r\n\r\nBeginning his career at Century Media Records aged 19, Adam spent seven years at the label, becoming Head of its UK office before founding The Noise Cartel. He has since delivered campaigns for internationally recognised artists, festivals, labels and entertainment brands.\r\nAlongside his PR work, Adam opened the UK branch of Finnish company Backbone Management Ltd, managing SikTh, Bones UK and Vexed.\r\nAn advocate for music industry education, he also developed a course for Point Blank Music School and has delivered guest lectures and masterclasses for BIMM, ACM and Syracuse University.\r\n\r\nSagir currently works with two Israeli bands -  Orphaned Land and Walkways, alongside Meshugga, Ghost, Baby Metal, Papa Roach, Rise Against and more",
-    "genre": "Rock/Indie music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=16uA2UDa-GWCa7z7HAdLOZsd3YokHUiSq&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "federico_martinez_penna",
-    "fullName": "Federico Martinez Penna",
-    "firstName": "Federico",
-    "lastName": "Martinez Penna",
-    "country": "Argentina",
-    "company": "Rolling Stone",
-    "role": "Freelance journalist",
-    "whatCompanyDoes": "Media",
-    "festivalGoal": "Coordinating PR campaigns, media interviews, and press coverage, Also networking with other media related people, but also producers, bookers, musicians and managers, specially the ones with focus on music activities and music project activations in Europe and South America",
-    "bio": "He has 13 years of experience working as a freelance journalist, writing pieces, interviews and reviews for Rolling Stone, Billboard, Noisey and Vice. He has also hosted and produced radio shows for Worldwide FM, J-Wave and Radio Colmena Argentina. He is currently focusing on audiovisual content, producing E2E reels and videos about specific music stories on short and long form content in his own Social Medias, and he also does multimedia and graphic design for music themed projects that can be checked on his personal website. Federico also has a long-standing career in corporate communications and advertising, developing comms strategy and coordinating digital marketing projects for several brands.\r\n\r\nBased in Buenos Aires, he also DJs regularly in local bars and clubs and runs a curated playlist account on Spotify and Mixcloud. He has been writing for La Nación since 2018, covering live music, nightlife and the music industry.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1HXzUN196JlKmuEJ3AeWmmNPM87fkFgtW&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "angella_lee",
-    "fullName": "Angella Lee",
-    "firstName": "Angella",
-    "lastName": "Lee",
-    "country": "South Korea",
-    "company": "Jarasum Jazz Festival",
-    "role": "PR & Marketing Manager",
-    "whatCompanyDoes": "Music festival",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Angella Lee is a trilingual PR and marketing professional with extensive experience in international artist management, festival operations, and brand campaigns. Serving as the PR & Marketing Manager for the Jarasum Jazz Festival, she has a long-standing history with the festival, previously working as a musician liaison managing global jazz acts like the Joanna Duda Trio, Norma Winstone, and Daniel Zamir. Her background also includes tour management for the Ministry of Foreign Affairs in South Korea and performing arts promotion.\r\nThe Jarasum Jazz Festival has a 23-year history as the representative jazz festival in Korea, and she is in charge of PR and marketing as well as working with the programming team. She has diverse on-site experience from various work experience in MICE events, music festival events and outdoor events. Her key projects were the 23rd Jarasum Jazz Festival and the South Korea Queer Festival and Parade for 3 years.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1Jm9BsViKoRd7wgcLbQX1m6Gm1qv0zZSK&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": true
-  },
-  {
-    "id": "alexandra_miteran",
-    "fullName": "Alexandra Miteran",
-    "firstName": "Alexandra",
-    "lastName": "Miteran",
-    "country": "UAE",
-    "company": "SAMIT Event Group",
-    "role": "Owner, director",
-    "whatCompanyDoes": "Cultural event management company",
-    "festivalGoal": "Establishing global music distribution and marketing, Coordinating PR campaigns, media interviews, and press coverage, governmental collaboration",
-    "bio": "Alexandra Miteran is the Founder & CEO of SAMIT Event Group, an international company founded in 2021 in Dubai, specialising in strategic projects across culture, tourism and live experiences across the UAE and GCC. Working closely with embassies, cultural institutions and private patrons, she produces diplomatic cultural events, private concerts, ballet and opera productions, orchestral tours, international festivals and music competitions.\n\nIn 2020 she launched VIP Classical, an intimate concert series in Dubai that brings together the worlds of arts, business and diplomacy. Today SAMIT delivers programmes from first concept to stage, with a focus on cultural exchange and partnerships with diplomatic missions.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1RYypN6dHRGJEI6E2A_57BNjX78gd9kbj&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "ahuvah_berger_burcat",
-    "fullName": "Ahuvah Berger-Burcat",
-    "firstName": "Ahuvah",
-    "lastName": "Berger-Burcat",
-    "country": "Israel",
-    "company": "Revelator / WMG",
-    "role": "VP of Marketing for Revelator",
-    "whatCompanyDoes": "Label / Distributor",
-    "festivalGoal": "Establishing global music distribution and marketing",
-    "bio": "Ahuva Berger-Burcat is the VP of Marketing at Revelator, where she leads marketing strategy, brand positioning, product marketing, and communications. Recently acquired by Warner Music Group, Revelator provides the technology powering WMG's music distribution operations.\nWith over 20 years of experience in B2B technology marketing, she has helped startups and growing companies find their voice, connect with customers, and bring innovative products to market. Her focus has always been on building brands, developing go-to-market strategies, and turning complex technology into compelling, relatable stories.\nWhile her career didn't begin in the music industry, music has always been a huge part of her life. At Revelator, she has found the perfect intersection of her passion for music, her love of technology, and her belief in empathetic marketing. For her, it's about more than promoting products. It's about creating meaningful connections between technology and people, and helping the businesses and people behind the music thrive.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1sNLDfxvudKRc9ZvjL10amMkpKrWxyby4&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "golda_bitterli",
-    "fullName": "Golda Bitterli",
-    "firstName": "Golda",
-    "lastName": "Bitterli",
-    "country": "Israel",
-    "company": "Revelator / WMG",
-    "role": "VP of Business Development",
-    "whatCompanyDoes": "Label / Distributor",
-    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Establishing global music distribution and marketing, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Golda Bitterli has spent nearly two decades at the intersection of music, technology, and business, helping independent artists, labels, and distributors build sustainable companies.\r\nAs VP of Business Development at Revelator, she works with independent music companies to give them the tools, transparency, and financial clarity they need to compete. She believes the independent music community deserves infrastructure as sophisticated as the majors.\r\nBefore moving into music tech, she led global marketing and sales campaigns for top independent labels. That operator's perspective shapes everything she does.\r\nFor over two years, she served on the board of Merlin, the global digital rights agency representing the world's leading independent labels.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1gSK7UjNhGADajxQEdEmo5NBTVYn8YlUz&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "robert_g_dek",
-    "fullName": "Robert Gądek",
-    "firstName": "Robert",
-    "lastName": "Gądek",
-    "country": "Poland",
-    "company": "Jewish Culture Festival in Krakow",
-    "role": "Director, CEO",
-    "whatCompanyDoes": "interdisciplinary festival built around musical program",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates",
-    "bio": "After working 10 years as a Director of the Center for Jewish Culture in Krakow, in 2005 Robert Gądek joined the Jewish Culture Festival in Krakow as the Deputy Director, responsible for PR, external relations, fundraising and programming.\r\n\r\nHe was awarded the Honoris Gratia medal by the Mayor of Krakow for promoting the city’s Jewish heritage. He has lectured internationally on contemporary Polish-Jewish relations and, in 2015, was appointed to the U.S. Ambassador’s Policy Advisory Council in Poland.\r\n\r\nJewish Culture Festival in Krakow has been the oldest and largest presentation of contemporary Jewish Culture from Israel and the Diaspora. The Festival reports “more than 22,000 participants” across 176 events. \r\n\r\nIsraeli artists who have performed there include, in 2024, Yemen Blues (Ravid Kahalani), Maya Belsitzman & Matan Ephrat, the Maqamat Master with Elad Levi, Nissim Lugasi and others, vocalist Karen Malka; the “Shalom on Szeroka Street” finale featured Boom Pam with guests Liraz, Neta Elkayam, Kutiman, and Shai Tsabari.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1QlR6OhIXwbyLSpqHh9t8fzsWSjRa-oeh&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "laurence_haziza",
-    "fullName": "Laurence Haziza",
-    "firstName": "Laurence",
-    "lastName": "Haziza",
-    "country": "France",
-    "company": "Sacré Sound Festival / Festival Jazz'N'Klezmer",
-    "role": "Director",
-    "whatCompanyDoes": "Music festival",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Laurence Haziza is a music promoter and cultural connector who aims to strengthen dialogue between cultures, audiences, and generations through music, blending diverse spiritual and musical traditions with contemporary sounds. \nShe began her career as an actress in theaters across Europe, followed by ten years in the French public sector, before moving into promotion and PR for Jazz and World music.\n\nSince 2008, Haziza has served as the director of the Jazz'N'Klezmer Festival, a festival that celebrates the fusion of Jazz and Jewish musical traditions. In 2023, she became the director of the Sacré Sound Festival, known for its innovative programming in World and contemporary music. In addition, she contributes as a journalist for Akadem, Radio J, and Radio France International.\n\nFounding director of the Sacré Sound Festival and director of the Jazz'N'Klezmer festival - as well as a journalist and producer - Laurence Haziza has been curating jazz and world music programs for twenty years; she has discovered numerous jazz talents and played an active role in raising the profile of the Israeli jazz scene. \n\nThrough her festivals, Laurence actively bridges French and Israeli music scenes by featuring and advocating for contemporary Israeli artists like Omri Mor, Yonathan Avishai, A-WA, Mayu Shviro and more, across jazz, klezmer, and world music fusion.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1lTHqmw5Frj2MdxBaVHm5mmb_NDf00tRd&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "nigel_canin",
-    "fullName": "Nigel Canin",
-    "firstName": "Nigel",
-    "lastName": "Canin",
-    "country": "UK",
-    "company": "Parallel Skies Records,",
-    "role": "Director",
-    "whatCompanyDoes": "Label and Publisher.",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Nigel Canin is a director of Parallel Skies Records, Publishing & Promotions, a UK-based music company founded in collaboration with the band Oi Va Voi in late 2024. \nThe company was established with the aim of supporting and promoting Jewish and Israeli artists, developing emerging talent and creating opportunities for their music to reach wider audiences.\nParallel Skies operates across record releases, music publishing, artist development and live promotions. Its work includes releases by Oi Va Voi, as well as emerging artists such as Benji Miller. The company was also featured at WOMEX 2024, where it presented its work as a platform connecting different musical cultures and traditions.\nCanin is the founder of Lemon Soul, a publishing company focused on books of Jewish interest. Its recent publications include The Jewish Muezzin, the memoir of Kobi Farhi, lead singer of Israeli band Orphaned Land.\nThrough these two ventures, Canin is active in both music and Jewish cultural publishing, with a particular focus on creating platforms and opportunities for Jewish and Israeli voices.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1VxhQOKwxo3_1vksGXvQSeEKq9hFedIon&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "raphael_perez",
-    "fullName": "Raphael Perez",
-    "firstName": "Raphael",
-    "lastName": "Perez",
-    "country": "France",
-    "company": "Israeli jazz",
-    "role": "President",
-    "whatCompanyDoes": "Nonprofit promoting Israeli jazz and world music / concerts",
-    "festivalGoal": "Booking live performances, festival slots, and coordinating upcoming tour dates, Establishing global music distribution and marketing",
-    "bio": "Initiated as a photography project has grown into IsraeliJazz, a community of 25,000 members, offering content and hosting events both online and in person.",
-    "genre": "Jazz/World music",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1xX9EiJ0ObtCynsdEY2mLuJEy3Oxt62bT&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "jonathan_schwartz",
-    "fullName": "Jonathan Schwartz",
-    "firstName": "Jonathan",
-    "lastName": "Schwartz",
-    "country": "USA/Israel",
-    "company": "America-Israel Cultural Foundation (AICF)",
-    "role": "Artistic Director",
-    "whatCompanyDoes": "Founded in 1939, the America-Israel Cultural Foundation (AICF) is a nonprofit that supports Israeli artists and cultural institutions and connects them with audiences around the world.",
-    "festivalGoal": "Exploring record deals, publishing representation, and sync licensing opportunities, Coordinating PR campaigns, media interviews, and press coverage, Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Jonathan Schwartz is a 25+ year international music industry veteran, with experience in artist management, marketing, label management, event production and business development. Currently, Jonathan is an artist manager for the Regime Music Group. Based in Malibu, California, Regime represents a diverse range of artists from the worlds of Jazz, Hip Hop, Rock, Blues, electronic and everything in between.\nAdditionally, Jonathan hosts a daily radio show heard throughout the United States and Canada on SiriusXM Radio. \nIn recent years, Schwartz has been living in Israel, dividing time between Pardes Hana and the United States.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1AmdBE2dcvSZVoPcUkoXtSfcbEmC4NJIl&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  },
-  {
-    "id": "na_ama_zisser",
-    "fullName": "Na'ama Zisser",
-    "firstName": "Na'ama",
-    "lastName": "Zisser",
-    "country": "UK",
-    "company": "JMI",
-    "role": "CEO",
-    "whatCompanyDoes": "Arts/Music organisation",
-    "festivalGoal": "Scouting and discovering emerging local talent for future opportunities",
-    "bio": "Na'ama is the CEO of the Jewish Music Institute in London, we preserve promote and develop Jewish Music and artists in all of its forms. She is also a composer and musician.",
-    "genre": "Multi Genres",
-    "photoUrl": "https://drive.google.com/thumbnail?id=1yRThDQd3uk1Sc0ao69f80JTqID_7hEzx&sz=w800",
-    "hasRealPhoto": true,
-    "isAngella": false
-  }
-];
+].map(g => Object.freeze(g)));
 
     let activeView = 'game';
 
-    // Game state
+    // Private game state inside closure (cannot be accessed via window or console)
     let guestsQueue = [];
     let currentGuest = null;
     let solvedGuestIds = new Set();
@@ -2668,32 +2353,72 @@
       document.getElementById('shuffle-btn').style.display = (targetView === 'game') ? 'flex' : 'none';
 
       history.replaceState(null, '', '#' + targetView);
-
-      if (targetView === 'directory') {
-        filterPortalDirectory();
-      }
     }
 
     function initViewFromHash() {
-      const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (hash === 'directory' || hash === 'delegates' || hash === 'list') {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'directory') {
         switchView('directory');
       } else {
         switchView('game');
       }
     }
 
-    // ========================================================
-    // AUTHENTIC PORTAL DIRECTORY RENDERING (EXACT SAME AS APP.JS)
-    // ========================================================
+    // AUTHENTIC PORTAL DIRECTORY RENDERING
     function initPortalDirectoryCountries() {
       const select = document.getElementById('guest-country-filter');
-      const countries = Array.from(new Set(ALL_DELEGATES.map(g => g.country).filter(c => c && c !== 'N/A'))).sort();
+      const countries = Array.from(new Set(ALL_DELEGATES.map(g => g.country).filter(Boolean))).sort();
+      select.innerHTML = '<option value="All">All Countries</option>';
       countries.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c;
         opt.textContent = c;
         select.appendChild(opt);
+      });
+      renderPortalDirectoryCards(ALL_DELEGATES);
+    }
+
+    function renderPortalDirectoryCards(guests) {
+      const grid = document.getElementById('delegates-grid');
+      grid.innerHTML = '';
+
+      if (guests.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-category-card">
+            <svg class="empty-category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <div class="empty-category-title">No delegates found matching your filters</div>
+          </div>
+        `;
+        return;
+      }
+
+      guests.forEach(guest => {
+        const card = document.createElement('div');
+        card.className = 'artist-card';
+        card.style.backgroundImage = `url('${guest.photoUrl}')`;
+        if (guest.isAngella) {
+          card.style.backgroundPosition = 'center 78%';
+        } else {
+          card.style.backgroundPosition = 'center 20%';
+        }
+
+        const tagText = [guest.country, guest.genre].filter(Boolean).join(' • ');
+
+        card.innerHTML = `
+          <div class="artist-card-overlay">
+            <div class="artist-card-name">${guest.fullName}</div>
+            <div class="artist-card-genre">${tagText}</div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => {
+          openGuestSheet(guest);
+        });
+
+        grid.appendChild(card);
       });
     }
 
@@ -2706,13 +2431,11 @@
       const countryVal = document.getElementById('guest-country-filter').value;
 
       const filtered = ALL_DELEGATES.filter(guest => {
-        // Search
         const searchStr = [
           guest.fullName, guest.company, guest.role, guest.country, guest.bio, guest.genre, guest.whatCompanyDoes, guest.festivalGoal
         ].join(' ').toLowerCase();
         const matchesSearch = !searchTxt || searchStr.includes(searchTxt);
 
-        // Genre (exact same logic as app.js)
         let matchesGenre = true;
         const guestGenre = (guest.genre || '').toLowerCase().trim();
         if (genreVal !== 'All') {
@@ -2733,7 +2456,6 @@
           }
         }
 
-        // Country
         let matchesCountry = true;
         if (countryVal !== 'All') {
           matchesCountry = (guest.country === countryVal);
@@ -2763,95 +2485,28 @@
       filterPortalDirectory();
     }
 
-    function renderPortalDirectoryCards(filteredArray) {
-      const container = document.getElementById('directory-container');
-      if (filteredArray.length === 0) {
-        container.innerHTML = `
-          <div class="empty-category-card" style="grid-column: 1 / -1; min-height: 200px;">
-            <svg class="empty-category-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <div class="empty-category-title">No delegates match your filters</div>
-            <button class="btn-pill" onclick="resetPortalFilters()" style="width: auto; margin-top: 10px; font-size: 0.85rem; color: #fff;">Clear Filters</button>
-          </div>
-        `;
-        return;
-      }
-
-      let html = '';
-      filteredArray.forEach((guest) => {
-        let genreText = guest.genre || '';
-        if (genreText.toLowerCase().includes('both') || genreText.toLowerCase().includes('multi')) genreText = 'All Genres';
-
-        const originalIndex = ALL_DELEGATES.indexOf(guest);
-        const cardClass = guest.isAngella ? 'artist-card angella-lee-card' : 'artist-card';
-        const bgPosStyle = guest.isAngella ? '; background-position: center 78% !important;' : '';
-        const bgStyle = guest.photoUrl ? `background-image: url('${guest.photoUrl}')${bgPosStyle}` : 'background-color: #1a1a1e';
-
-        html += `
-          <div class="${cardClass}" style="${bgStyle}" onclick="openGuestSheet(${originalIndex})">
-            <div class="artist-card-overlay">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 2px;">
-                <div class="artist-card-name" style="margin-bottom: 0;">${guest.fullName}</div>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div style="color: #fff; font-size: 0.8rem; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${guest.country}</div>
-                <div style="color: #fff; font-size: 0.75rem; font-weight: 400; text-shadow: 0 1px 3px rgba(0,0,0,0.8); opacity: 0.9;">${genreText}</div>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-      container.className = 'artists-grid';
-    }
-
-    // ========================================================
-    // AUTHENTIC BOTTOM SHEET (MATCHING APP.JS EXACTLY)
-    // ========================================================
-    function openGuestSheet(target) {
-      let guest = null;
-      if (typeof target === 'number') {
-        guest = ALL_DELEGATES[target];
-      } else if (target && typeof target === 'object') {
-        guest = target;
-      }
-      if (!guest) return;
-
-      const sheetEl = document.getElementById('guest-bottom-sheet');
-      if (sheetEl) sheetEl.scrollTop = 0;
-      const sheetContent = sheetEl.querySelector('.sheet-content');
-      if (sheetContent) sheetContent.scrollTop = 0;
-
-      const imgEl = document.getElementById('sheet-guest-img');
-      if (guest.photoUrl) {
-        imgEl.style.backgroundImage = `url('${guest.photoUrl}')`;
-        imgEl.style.backgroundColor = 'transparent';
-      } else {
-        imgEl.style.backgroundImage = 'none';
-        imgEl.style.backgroundColor = '#10131d';
-      }
-
+    // AUTHENTIC BOTTOM SHEET
+    function openGuestSheet(guest) {
+      const imgDiv = document.getElementById('sheet-guest-image');
+      imgDiv.style.backgroundImage = `url('${guest.photoUrl}')`;
       if (guest.isAngella) {
-        imgEl.style.backgroundPosition = (window.innerWidth > 600) ? 'center 60%' : 'center 62%';
+        imgDiv.style.backgroundPosition = 'center 78%';
       } else {
-        imgEl.style.backgroundPosition = 'center 20%';
+        imgDiv.style.backgroundPosition = 'center 20%';
       }
-
-      let genreText = guest.genre || '';
-      if (genreText.toLowerCase().includes('both') || genreText.toLowerCase().includes('multi')) genreText = 'All Genres';
 
       document.getElementById('sheet-guest-name').innerText = guest.fullName;
-      document.getElementById('sheet-guest-genre').innerText = genreText || 'Delegates';
-      document.getElementById('sheet-guest-country').innerText = guest.country || 'N/A';
-      document.getElementById('sheet-guest-company').innerText = guest.company || 'Independent';
+
+      const subTags = [];
+      if (guest.country) subTags.push(`🌍 ${guest.country}`);
+      if (guest.genre) subTags.push(`🎵 ${guest.genre}`);
+      document.getElementById('sheet-guest-genre').innerText = subTags.join('   ·   ');
 
       const roleEl = document.getElementById('sheet-guest-role');
-      roleEl.innerText = guest.role || '';
-      roleEl.style.display = guest.role ? 'block' : 'none';
+      const roleText = [guest.role, guest.company].filter(Boolean).join(' • ');
+      roleEl.innerText = roleText || '';
+      roleEl.style.display = roleText ? 'block' : 'none';
 
-      // Company activity ("מה החברה עושה")
       const actSection = document.getElementById('sheet-guest-activity-section');
       const actText = document.getElementById('sheet-guest-activity');
       if (guest.whatCompanyDoes && guest.whatCompanyDoes.trim()) {
@@ -2861,13 +2516,12 @@
         actSection.style.display = 'none';
       }
 
-      // Festival goals ("מה המטרה שלכם בפסטיבל?")
       const goalsSection = document.getElementById('sheet-guest-goals-section');
       const goalsTags = document.getElementById('sheet-guest-goals-tags');
       if (guest.festivalGoal && guest.festivalGoal.trim()) {
         goalsSection.style.display = 'block';
         goalsTags.innerHTML = '';
-        const list = guest.festivalGoal.split(/,(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
+        const list = guest.festivalGoal.split(/,(?![^()]*))/).map(s => s.trim()).filter(Boolean);
         list.forEach(item => {
           const pill = document.createElement('span');
           pill.className = 'sheet-pill-tag';
@@ -2878,7 +2532,6 @@
         goalsSection.style.display = 'none';
       }
 
-      // Bio
       const bioEl = document.getElementById('sheet-guest-bio');
       bioEl.innerText = guest.bio || 'Biography available soon.';
 
@@ -2893,9 +2546,7 @@
       document.body.classList.remove('sheet-open');
     }
 
-    // ========================================================
     // GAME VIEW LOGIC
-    // ========================================================
     function startTimer() {
       if (gameTimer) clearInterval(gameTimer);
       secondsElapsed = 0;
@@ -2922,7 +2573,7 @@
     }
 
     function initGame() {
-      guestsQueue = shuffle(GAME_GUESTS);
+      guestsQueue = shuffle(ALL_DELEGATES);
       solvedGuestIds.clear();
       currentStreak = 0;
       maxStreak = 0;
@@ -2990,7 +2641,7 @@
     }
 
     function updateStatsUI() {
-      const total = GAME_GUESTS.length;
+      const total = ALL_DELEGATES.length;
       const solved = solvedGuestIds.size;
       const progressPercent = Math.round((solved / total) * 100);
 
@@ -3004,7 +2655,7 @@
 
     function renderNamesPool() {
       const container = document.getElementById('names-cloud');
-      let list = [...GAME_GUESTS];
+      let list = [...ALL_DELEGATES];
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -3024,20 +2675,18 @@
         chip.className = `name-chip ${isSolved ? 'already-solved' : ''}`;
         chip.id = `chip-${guest.id}`;
         chip.setAttribute('draggable', isSolved ? 'false' : 'true');
-        chip.dataset.guestId = guest.id;
-        chip.dataset.guestName = guest.fullName;
 
         chip.innerHTML = `
           <span>${guest.fullName}</span>
           ${isSolved ? '<span class="solved-check-icon">✓</span>' : ''}
         `;
 
-        // Click handler: ZERO sound
+        // Direct click handler - completely silent
         chip.addEventListener('click', () => {
           handleGuess(guest.id, chip);
         });
 
-        // Drag handlers
+        // Drag handlers for desktop
         chip.addEventListener('dragstart', (e) => {
           if (isModalOpen) return;
           chip.classList.add('dragging');
@@ -3107,8 +2756,6 @@
       }
 
       updateStatsUI();
-
-      // Open Game Modal
       openGameModal(currentGuest);
     }
 
@@ -3117,7 +2764,7 @@
       mistakesCount++;
       updateStatsUI();
 
-      // ZERO SOUND on wrong guess - visual only
+      // ZERO SOUND on wrong guess - visual feedback only
       const stageCard = document.getElementById('photo-stage');
       stageCard.classList.add('shake-wrong');
       setTimeout(() => stageCard.classList.remove('shake-wrong'), 500);
@@ -3129,7 +2776,7 @@
         }, 550);
       }
 
-      const guessedGuest = GAME_GUESTS.find(g => g.id === guessId);
+      const guessedGuest = ALL_DELEGATES.find(g => g.id === guessId);
       const guessedName = guessedGuest ? guessedGuest.fullName : 'שם זה';
       showToast(`לא נכון... זה לא ${guessedName}, נסו שוב!`, 'wrong', '❌');
     }
@@ -3149,7 +2796,7 @@
       const goalsWrap = document.getElementById('modal-guest-goals-wrap');
       goalsWrap.innerHTML = '';
       const rawGoals = guest.festivalGoal || '';
-      const goalsList = rawGoals.split(/,(?![^()]*\))/).map(s => s.trim()).filter(Boolean);
+      const goalsList = rawGoals.split(/,(?![^()]*))/).map(s => s.trim()).filter(Boolean);
 
       if (goalsList.length > 0) {
         goalsList.forEach(goal => {
@@ -3210,11 +2857,11 @@
       const hints = [];
       if (currentGuest.country) hints.push(`מדינה: ${currentGuest.country}`);
       if (currentGuest.company) hints.push(`ארגון: ${currentGuest.company}`);
-      hints.push(`אות ראשונה של השם: "${currentGuest.fullName.charAt(0)}"`);
+      hints.push(`אות ראשונה: "${currentGuest.fullName.charAt(0)}"`);
 
       hintText.textContent = hints.join(' | ');
       hintBox.style.display = 'flex';
-      showToast('רמז נחשף למטה!', 'info', '💡');
+      showToast('רמז נחשף למעלה!', 'info', '💡');
     }
 
     function skipCurrentGuest() {
@@ -3230,7 +2877,16 @@
 
     function handleSearch(val) {
       searchQuery = val;
+      const clearBtn = document.getElementById('clear-game-search-btn');
+      if (clearBtn) clearBtn.style.display = val ? 'flex' : 'none';
       renderNamesPool();
+    }
+
+    function clearGameSearch() {
+      const input = document.getElementById('search-input');
+      if (input) input.value = '';
+      handleSearch('');
+      if (input) input.focus();
     }
 
     function sortNames(mode) {
@@ -3239,7 +2895,7 @@
       document.getElementById('sort-alpha-btn').classList.toggle('active', mode === 'alpha');
 
       if (mode === 'random') {
-        GAME_GUESTS.sort(() => Math.random() - 0.5);
+        guestsQueue = shuffle(guestsQueue);
       }
       renderNamesPool();
     }
@@ -3355,11 +3011,26 @@
       }
     }
 
+    // Expose ONLY safe UI methods to window for HTML onclick attributes
+    window.switchView = switchView;
+    window.restartGame = restartGame;
+    window.showHint = showHint;
+    window.skipCurrentGuest = skipCurrentGuest;
+    window.handleSearch = handleSearch;
+    window.clearGameSearch = clearGameSearch;
+    window.sortNames = sortNames;
+    window.closeGameModal = closeGameModal;
+    window.closeGuestSheet = closeGuestSheet;
+    window.filterPortalDirectory = filterPortalDirectory;
+    window.clearPortalSearch = clearPortalSearch;
+    window.resetPortalFilters = resetPortalFilters;
+
     window.addEventListener('DOMContentLoaded', () => {
       initPortalDirectoryCountries();
       initViewFromHash();
       initGame();
     });
+  })();
   </script>
 </body>
 </html>
