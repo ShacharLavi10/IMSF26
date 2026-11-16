@@ -278,49 +278,36 @@
    * פיצ'רים של זמן אמת (כמו "עולה בעוד 5 דקות") יתווספו באמצעות אנדפוינט קטן ונפרד שלא משתמש ב-Cache הארוך, וילבשו באופן ויזואלי (Overlay) על גבי המידע הסטטי מה-Cache של האומנים.
 
 
-## 6. Production Dashboard (Admin Interface)
-The portal contains an internal Production Dashboard hidden from regular guests. It is accessible only to users marked with the role `הפקה חשיפה` (Production Exposure) in the Master Sheet. Admin users are also automatically excluded from the "Delegates" (Guest Directory) tab.
+## 6. Production Dashboard & Production Tiers (`הפקה חשיפה` vs `הפקה כללי`)
 
-**Key Features:**
-1. **Live Analytics (Overview):**
-   - Automatically calculates total non-admin delegates.
-   - Computes missing critical forms in real-time by inspecting the relevant checkbox columns in the Master Sheet (Hotel form, Flight form, Passport photo).
-2. **Alert Center & Personal Messages (Messaging & Notifications Suite):**
-   - **Global Announcements (Broadcast):**
-     - Admins can broadcast announcements to all delegates via `sendAdminAlert()`.
-     - Appends new announcements to `מידע כללי` under column `הודעה לכולם` without overwriting prior announcements.
-     - Supports full editing (`updateAdminAlert()`) and individual deletion (`deleteAdminAlert()`) by row index.
-     - Shown in the admin dashboard in a 2-column split grid (`.admin-msg-split-grid`) with an active list of all announcements and active count badge.
-   - **Personal Guest Messages:**
-     - Stored in sheet `אורחים` under column `הודעה אישית בפורטל` as a structured JSON array (`[{"id":"m_...","text":"...","timestamp":...,"timestampStr":"..."}]`).
-     - Backwards-compatible with legacy plain text strings via `parsePersonalMessages()`.
-     - Supports appending multiple personal messages per guest (`addPersonalMessage()`), editing specific messages (`updatePersonalMessageItem()`), and individual deletion (`deletePersonalMessageItem()`).
-     - Admin Guest Modal displays active messages on the right side of the split grid with individual ✏️ Edit and 🗑️ Delete buttons.
-   - **Live Updates & Unread Modal in Guest Portal:**
-     - **Unread Popup Modal (`#new-message-modal-overlay`):** Greets the guest upon entrance if any new unread messages exist, with animated ringing bell and a direct "READ" button that opens the notifications panel and marks all active updates as read in `localStorage`.
-     - **Safe Notification Cards (`.update-msg`):** Cards have `cursor: default` and no card-wide click handlers, preventing accidental dismissals while reading or scrolling on mobile.
-     - **Explicit Delete Button (`.update-msg-delete-btn`):** Located in the card footer (`.update-msg-footer`), featuring a red trash icon and the clear label "Delete" with `event.stopPropagation()` to dismiss notifications permanently.
-     - **מנגנון Polling חסכוני ומבוקר (3-Minute Polling with Visibility & OnLine Guards):**
-       - מרווח הפולינג לעדכונים חדשים מוגדר ל-3 דקות (`updatesPollingInterval = setInterval(fetchUpdates, 180000)`).
-       - **חסימת קריאות סרק ברקע ובאופליין:** הפונקציה `fetchUpdates` בודקת ש-`document.visibilityState === 'visible'` (רץ רק כשהטאב פתוח) וש-`navigator.onLine` (דולג באופליין).
-       - **התעוררות מיידית באירועי מערכת:** האזנה לאירועי `visibilitychange` ו-`online` מפעילה רענון מיידי ברגע שהמשתמש מחזיר את הפורטל לפוקוס או ברגע שהמכשיר מתחבר מחדש לרשת, ללא צורך להמתין למחזור ה-3 דקות הבא.
-3. **Logistics Summary:**
-   - Aggregates and displays total booked hotel nights for Tel Aviv vs Jerusalem directly from the hotel sheets.
-   - Summarizes total processed flight arrivals.
-4. **Guest Management & Search:**
-   - Real-time search across names, emails, and companies.
-   - Status indicators (Green/Orange) summarizing form completion.
-   - Clicking a guest opens the **Admin Modal** containing their full contact details, missing forms breakdown, a direct WhatsApp chat button, personal messages management, and the Impersonation feature.
-5. **View As (Impersonation):**
-   - Admins can temporarily view the portal strictly as a specific guest.
-   - It generates a cryptographic temporary token for the target user via `impersonateGuest()` in Apps Script, saves the admin's original token, and reloads the portal.
-   - A floating red banner remains active to allow instantly reverting to Admin mode.
+המערכת מגדירה שתי רמות הרשאה נפרדות לצוות ההפקה המנוהלות בעמודת `תפקיד` בגיליון המאסטר `אורחים`:
 
-**Technical Flow:**
-- **Frontend (`src/app.js`):** All admin logic (`renderAdminDashboard`, `filterAdminGuests`, `viewAdminGuestDetails`, `submitAdminAlert`, `deleteAdminAlert`, `savePersonalMessage`, `deletePersonalMessageItem`, `impersonateGuest`) is strictly encapsulated and dynamically injected into `#admin-card` to ensure rapid loading and visual separation.
-- **Backend (`src/PortalBackend.gs`):** 
-  - `getAdminDashboardData`: A unified endpoint fetching Master Sheet, Hotels, Flights, and Announcements data for local processing to avoid multiple round-trips.
-  - Role verification is strictly enforced server-side before executing any admin mutations (`sendAdminAlert`, `updateAdminAlert`, `deleteAdminAlert`, `addPersonalMessage`, `updatePersonalMessageItem`, `deletePersonalMessageItem`, `impersonateGuest`).
+### 👑 א. תפקיד `הפקה חשיפה` (Exposure Production - Full Admin)
+מנהלי ההפקה הראשיים בעלי הרשאות ניהול מלאות.
+* **לשונית ההפקה (Production Tab):** גישה לכל 4 הרובריקות הראשיות (באקורדיון בלעדי):
+  1. **Live Analytics & Overview:** ספירת צירים רשומים, טפסים חסרים, סיכום לילות מלונות וטיסות.
+  2. **Alert Center & Personal Messages:** הפצת הודעות שידור כלליות (`sendAdminAlert`), ניהול הודעות אישיות בפורטל.
+  3. **Production Schedule:** לו"ז הפקה ותפעול פנימי (שני עד שני) עם חיוג מהיר ו-WhatsApp.
+  4. **Lineup & Networking Leads:** מעקב מועדפים, לידים של אומנים וצירים, וחישוב מחדש.
+  5. **Guest Management & Impersonation:** חיפוש אורחים, פירוט טפסים, והתחזות זמנית לאורח (`impersonateGuest`).
+* **כלי ניהול נוספים:** כפתור איפוס מטמון מהיר בשרת (`admin-reset-cache-btn`).
+
+### 🛠️ ב. תפקיד `הפקה כללי` (General Production - Lineup & Leads Only)
+אנשי צוות הפקה כלליים הזקוקים לגישה מיידית לנתוני הנטוורקינג והאמנים, ללא גישה לכלי ניהול רגישים או שידורים:
+* **לשונית ההפקה (Production Tab):**
+  - הלשונית **מוצגת ונגישה** בסרגל הטאבים הראשי של הפורטל (`#tab-admin`).
+  - בכניסה ללשונית, מוצג **ישירות ובמלואו** המידע של רובריקת **Lineup & Networking Leads** (כותרת, בורר Artists/Guests, כרטיסיות KPI, שורת חיפוש, קוביות אומנים וצירים, כפתורי Refresh ו-⚡ Run Full Sync).
+  - **ללא רובריקה נפתחת / ללא אקורדיון:** המידע מוצג פתוח ומיידי ללא צורך בהקלקה על `<summary>`.
+  - שאר הרובריקות (אנליטיקה, שידורים, לו"ז פנימי, וניהול/התחזות לאורחים) **מוסתרות לחלוטין**.
+* **חוויית הפורטל הכללי:** כניסה חופשית לכל לשוניות האורחים (Itinerary, Guide, Artists) ללא חסימות של טופסי פרטים חסרים (`isComplete = true`).
+
+### 🛡️ ג. חוקי ליבה משותפים לשני תפקידי ההפקה (Data Isolation & Hygiene)
+1. **החרגה מספריית האורחים (Delegates Directory Exclusion):**
+   - משתמשים בעלי תפקיד `הפקה חשיפה`, `הפקה כללי`, או כל תפקיד המכיל `"הפקה"` **אינם מוצגים כלל** בלשונית הצירים (`#tab-directory`) – הן בסינון צד השרת (`fetchAllGuestsDirectory`) והן בסינון צד הלקוח (`renderDirectory`).
+2. **אי-הכללה בסיכומי לייקים ולידים (Artist Leads & Tour Match):**
+   - סימוני מועדפים (❤️), תגיות כוונות (Booking, Connect, Press) והערות של אנשי צוות ההפקה (`הפקה חשיפה` ו-`הפקה כללי`) מסוננים אוטומטית ממנוע הלידים (`syncArtistLeadsSheet` ו-`adminKeywords`). הם אינם נספרים כחלק מהביקוש הבינלאומי של האמנים.
+3. **מידור מוטציות שרת (Server-Side Mutation Guard):**
+   - פעולות שינוי אדמיניסטרטיביות (`sendAdminAlert`, `updateAdminAlert`, `deleteAdminAlert`, `addPersonalMessage`, `impersonateGuest`, `clearAppCache`) מאובטחות בצד השרת ודורשות בדיקת `checkIsAdminUser` קפדנית המאפשרת ביצוע אך ורק לבעלי תפקיד `הפקה חשיפה`.
 
 ---
 
