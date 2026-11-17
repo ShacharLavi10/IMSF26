@@ -252,3 +252,20 @@
     * **לוגיקת התאמת Multi-genre (`filterDirectory()`):** אורחים שמוגדרים בגיליון עם `Multi genre` (או `multi`, `both`, `all`, `מולטי`, `הכל`, או שילוב רוק וג'אז) מוצגים **תמיד בכל סינוני הז'אנר** (גם בסינון רוק וגם בסינון ג'אז) מתוך הבנה שהם רלוונטיים לכלל הז'אנרים בפסטיבל.
     * **משחק Guess the Guest:** הוסר מכותרת הלשונית בפורטל הרשמי ואינו מוצג לאורחים; הגישה למשחק מתבצעת בלעדית דרך הנתיב הישיר `/guess-guest.html`.
 
+15. 🕒 **רכיבי טיימטייבל פסטיבל וקפיצה מהירה (Festival Timetable & Quick Jump Navigation):**
+    * **תת-לשונית טיימטייבל:** `#subtab-artists-timetable`, `#artists-timetable-view`.
+    * **בורר ימי פסטיבל:** `#timetable-days-nav`, כפתור יום `.timetable-day-pill` (נושא קלאס `.active` ליום הנבחר).
+    * **באנר לוקיישן יומי:** `#timetable-venue-banner` (`.timetable-venue-strip`, כפתור שערי כניסה `.venue-doors-pill`).
+    * **בורר תצוגה ראשי (Full Timetable vs My Schedule):** `#timetable-master-switcher`, `.master-tab-btn`.
+    * **בורר במות:** `#timetable-stage-filter-wrapper`, תפריט בחירה `#timetable-stage-select`.
+    * **מיכל כרטיסיות הופעה:** `#timetable-shows-container`.
+    * **כרטיסיית מופע בלו"ז:** `.timetable-show-card` (כוללת מזהי DOM מובנים `id="timetable-card-${show.id}"`, `data-show-id="${show.id}"`, `data-artist-id="${artist.id}"`).
+    * **שורת מועד הופעה בחלונית אמן:** `.sheet-showtime-row.clickable` (מציגה תאריך, שעה, במה ולוקיישן; לחיצה עליה מפעילה `jumpToTimetableShow(dateStr, showId, artistId)`).
+    * **פונקציית קפיצה מהירה (`jumpToTimetableShow`):**
+      - מעבירה מיידית ללשונית אמנים ולתת-לשונית טיימטייבל.
+      - מפעילה `skipAutoInit: true` ומסמנת `timetableDateExplicitlyChosen = true` כדי למנוע מטיימרים אסינכרוניים לדרוס את היום הנבחר.
+      - בוחרת את התאריך המדויק של המופע ומציגה את כל הבמות (`currentSelectedStage = 'All'`).
+      - מאתרת את כרטיס המופע (לפי `showId` או ב-fallback לפי `artistId`), גוללת אליו באופן חלק (`scrollIntoView`) ומפעילה אפקט הדגשה בולט (`.highlight-pulse`).
+      - מעדכנת היסטוריה קדמית (`#timetable`) כך שלחיצה על כפתור חזור במכשיר נייד תחזיר את האורח ישירות לחלונית האמן (`#sheet`).
+
+

@@ -76,6 +76,10 @@
   - מודאל תזכורת מקדים ידידותי להשלמת סימון כל הלהקות לפני הסנכרון.
   - הפקת קובץ `.ics` תקני ליומן המכשיר (Apple Calendar / Google Calendar / Outlook).
   - התראת יומן מובנית 5 דקות לפני שעת תחילת כל מופע (`TRIGGER:-PT5M`).
-  - אפשרות לשליחת זימון ישיר למייל האורח.
-  - אפשרות למחיקה/הסרה מלאה מהיומן (`METHOD:CANCEL`) למניעת טעויות או סקרנות.
+- [x] **קפיצה מהירה מהחלונית של האמן למועד ההופעה בטיימטייבל (Seamless Timetable Jump):**
+  - תיקון דריסת התאריך: הוספת דגל `timetableDateExplicitlyChosen` ומניעת דריסה של התאריך הנבחר על ידי `initFestivalTimetableUI()` שרץ ב-Timer אסינכרוני.
+  - תמיכה בפרמטר `skipAutoInit: true` ב-`switchArtistsSubTab('timetable')` בעת קפיצה ישירה.
+  - מזהים מובנים `data-show-id` ו-`data-artist-id` בכל כרטיס מופע עם מנגנון fallback איתן לאיתור הכרטיס.
+  - גלילה חלקה (`scrollIntoView`) ואפקט הדגשה מונפש (`.highlight-pulse`) עם ניסיונות חוזרים להבטחת הצביעה ב-DOM.
+
 
