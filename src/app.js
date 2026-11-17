@@ -4530,8 +4530,12 @@ function closeWelcomeModal() {
             const locationStr = venueLabel ? `${venueLabel}${cityLabel ? ' (' + cityLabel + ')' : ''}` : '';
             const timeStr = s.startTime ? `${s.startTime}${s.endTime ? ' - ' + s.endTime : ''}` : 'DJ Set (Time TBA)';
 
+            const safeShowId = String(s.id || '').replace(/'/g, "\\'");
+            const safeArtistId = String(artist.id || '').replace(/'/g, "\\'");
+            const safeDate = String(s.date || '').replace(/'/g, "\\'");
+
             showtimesHtml += `
-              <div class="sheet-showtime-row clickable" onclick="jumpToTimetableShow('${s.date}', '${s.id}', '${artist.id}')" title="Tap to view in Festival Timetable">
+              <div class="sheet-showtime-row clickable" onclick="jumpToTimetableShow('${safeDate}', '${safeShowId}', '${safeArtistId}')" title="Tap to view in Festival Timetable">
                 <div class="sheet-showtime-accent-bar"></div>
                 <div class="sheet-showtime-info">
                   <div class="sheet-showtime-top">
@@ -5054,6 +5058,8 @@ function closeWelcomeModal() {
     let currentSelectedStage = 'All';
     let currentTimetableMode = 'all'; // 'all' | 'schedule'
     let timetableFavsOnly = false;
+    let timetableDateExplicitlyChosen = false;
+    let hasAutoSelectedTimetableToday = false;
 
     const FESTIVAL_TIMETABLE_DAYS = [
       {
@@ -6315,7 +6321,7 @@ function closeWelcomeModal() {
       }, 120000);
     }
 
-    function switchArtistsSubTab(subTabName) {
+    function switchArtistsSubTab(subTabName, options) {
       currentArtistsSubTab = subTabName;
       const dirBtn = document.getElementById('subtab-artists-directory');
       const ttBtn = document.getElementById('subtab-artists-timetable');
@@ -6338,6 +6344,10 @@ function closeWelcomeModal() {
           dirView.style.display = 'none';
           ttView.style.display = 'block';
           
+          if (options && options.skipAutoInit) {
+            return;
+          }
+
           // Immediate render response for instant INP paint (<16ms)
           requestAnimationFrame(function() {
             setTimeout(function() {
@@ -6351,15 +6361,18 @@ function closeWelcomeModal() {
     window.switchArtistsSubTab = switchArtistsSubTab;
 
     function initFestivalTimetableUI() {
-      // Auto-select today if within festival dates (evaluated in Israel Time)
-      try {
-        const targetDate = window.simulatedLiveFestivalTime || new Date();
-        const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(targetDate);
-        const isFestDay = FESTIVAL_TIMETABLE_DAYS.some(d => d.date === todayStr);
-        if (isFestDay && currentSelectedTimetableDate !== todayStr) {
-          currentSelectedTimetableDate = todayStr;
-        }
-      } catch (e) {}
+      // Auto-select today ONLY on initial boot if user/code hasn't explicitly chosen a date
+      if (!timetableDateExplicitlyChosen && !hasAutoSelectedTimetableToday) {
+        try {
+          const targetDate = window.simulatedLiveFestivalTime || new Date();
+          const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(targetDate);
+          const isFestDay = FESTIVAL_TIMETABLE_DAYS.some(d => d.date === todayStr);
+          if (isFestDay) {
+            currentSelectedTimetableDate = todayStr;
+            hasAutoSelectedTimetableToday = true;
+          }
+        } catch (e) {}
+      }
 
       renderTimetableDaysNav();
       renderTimetableVenueBanner();
@@ -6515,6 +6528,8 @@ function closeWelcomeModal() {
     window.updateTimetableFavCount = updateTimetableFavCount;
 
     function selectTimetableDate(dateStr) {
+      if (!dateStr) return;
+      timetableDateExplicitlyChosen = true;
       currentSelectedTimetableDate = dateStr;
       currentSelectedStage = 'All';
       renderTimetableDaysNav();
@@ -6538,35 +6553,59 @@ function closeWelcomeModal() {
         lastOpenedArtistId = currentOpenArtistId;
       }
 
+      timetableDateExplicitlyChosen = true;
+
       // 1. Visually close the artist bottom sheet WITHOUT popping history
       flushFeedbackAutoSave();
-      document.getElementById('artist-sheet-overlay').classList.remove('active');
-      document.getElementById('artist-bottom-sheet').classList.remove('active');
+      const overlay = document.getElementById('artist-sheet-overlay');
+      const sheet = document.getElementById('artist-bottom-sheet');
+      if (overlay) overlay.classList.remove('active');
+      if (sheet) sheet.classList.remove('active');
       document.body.style.overflow = '';
       currentOpenArtistId = null;
-      filterArtists();
+      if (typeof filterArtists === 'function') filterArtists();
 
-      // 2. Set new hash for timetable show to create a forward history entry AFTER #sheet
+      // 2. Ensure main category tab is Artists
+      if (typeof switchCategoryTab === 'function') {
+        switchCategoryTab('artists');
+      }
+
+      // 3. Set new hash for timetable show to create a forward history entry AFTER #sheet
       // When the user taps Back on their phone, it will return to #sheet!
       window.location.hash = "timetable";
 
-      // 3. Switch to Timetable subtab and select the date
-      switchArtistsSubTab('timetable');
+      // 4. Switch to Timetable subtab and select the date
+      switchArtistsSubTab('timetable', { skipAutoInit: true });
       currentTimetableMode = 'all';
       currentSelectedStage = 'All';
+      if (typeof clearTimetableSearch === 'function') {
+        clearTimetableSearch();
+      }
       selectTimetableDate(dateStr);
       
-      // 4. Smooth scroll and super-bold highlight pulse
-      setTimeout(() => {
-        const showCard = document.getElementById(`timetable-card-${showId}`);
+      // 5. Smooth scroll and super-bold highlight pulse with retry
+      function attemptHighlight() {
+        let showCard = (showId && showId !== 'undefined') ? document.getElementById(`timetable-card-${showId}`) : null;
+        if (!showCard && showId && showId !== 'undefined') {
+          showCard = document.querySelector(`.timetable-show-card[data-show-id="${showId}"]`);
+        }
+        if (!showCard && artistId) {
+          showCard = document.querySelector(`.timetable-show-card[data-artist-id="${artistId}"]`);
+        }
         if (showCard) {
           showCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
           showCard.classList.remove('highlight-pulse');
           void showCard.offsetWidth; // force reflow to restart animation
           showCard.classList.add('highlight-pulse');
-          setTimeout(() => showCard.classList.remove('highlight-pulse'), 4000);
+          setTimeout(() => showCard.classList.remove('highlight-pulse'), 4500);
+          return true;
         }
-      }, 300);
+        return false;
+      }
+
+      setTimeout(attemptHighlight, 50);
+      setTimeout(attemptHighlight, 200);
+      setTimeout(attemptHighlight, 500);
     }
     window.jumpToTimetableShow = jumpToTimetableShow;
 
@@ -6794,7 +6833,7 @@ function closeWelcomeModal() {
         const displayName = String(rawDisplayName || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
 
         html += `
-          <div class="${cardClass}" id="timetable-card-${s.id}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
+          <div class="${cardClass}" id="timetable-card-${s.id}" data-show-id="${s.id || ''}" data-artist-id="${artist ? artist.id : ''}" ${clickAttr} title="${artist ? 'Click to view full artist profile' : ''}">
             <div class="timetable-time-box">
               ${s.startTime ? `
                 <span class="start-time">${escapeHtml(s.startTime)}</span>
@@ -7455,9 +7494,10 @@ function closeWelcomeModal() {
             switchCategoryTab('artists');
           }
           if (typeof switchArtistsSubTab === 'function') {
-            switchArtistsSubTab('timetable');
+            switchArtistsSubTab('timetable', { skipAutoInit: true });
           }
           if (date && typeof selectTimetableDate === 'function') {
+            timetableDateExplicitlyChosen = true;
             currentTimetableMode = 'all';
             currentSelectedStage = 'All';
             selectTimetableDate(date);
@@ -11061,7 +11101,7 @@ window.dismissPwaBanner = dismissPwaBanner;
 window.closePwaIosModal = closePwaIosModal;
 window.isTimetableShowLive = isTimetableShowLive;
 window.updateLiveBanner = updateLiveBanner;
-window.simulateLiveFestivalTime = simulateLiveFestivalTime;
+if (typeof simulateLiveFestivalTime !== 'undefined') window.simulateLiveFestivalTime = simulateLiveFestivalTime;
 window.getFavoritedShowsList = getFavoritedShowsList;
 window.updateCalendarSyncBadge = updateCalendarSyncBadge;
 window.generateIcsContent = generateIcsContent;
