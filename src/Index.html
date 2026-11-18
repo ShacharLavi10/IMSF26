@@ -1814,7 +1814,12 @@
       nav.style.display = "flex";
       let html = "";
       
-      const todayStr = new Date().toISOString().split('T')[0];
+      let todayStr = "";
+      try {
+        todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+      } catch (e) {
+        todayStr = new Date().toISOString().split('T')[0];
+      }
       let activeDate = dates.includes(todayStr) ? todayStr : dates[0];
       
       dates.forEach(d => {

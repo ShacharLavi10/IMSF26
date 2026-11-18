@@ -632,6 +632,21 @@ function closeWelcomeModal() {
         if (card) {
           card.style.display = (t === tabName) ? 'block' : 'none';
         }
+        if (t === 'schedule' && tabName === 'schedule') {
+          if (scheduleDataCache) {
+            if (!scheduleDateExplicitlyChosen) {
+              renderScheduleTabs();
+            } else {
+              const nav = document.getElementById("schedule-days-nav");
+              const activePill = nav ? nav.querySelector('.schedule-pill.active') : null;
+              if (activePill) {
+                try {
+                  activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                } catch (e) {}
+              }
+            }
+          }
+        }
         if (t === 'admin' && tabName === 'admin') {
           if (hasProductionTabAccess) {
             loadAdminDashboard();
@@ -3079,6 +3094,53 @@ function closeWelcomeModal() {
     /* ================= SCHEDULE ================= */
     let scheduleDataCache = null;
     let currentSelectedScheduleDate = null;
+    let scheduleDateExplicitlyChosen = false;
+    let hasAutoSelectedScheduleToday = false;
+
+    function getIsraelTodayDateStr() {
+      try {
+        const targetDate = (typeof window !== 'undefined' && window.simulatedLiveFestivalTime) || new Date();
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(targetDate);
+      } catch (e) {
+        return new Date().toISOString().split('T')[0];
+      }
+    }
+
+    function isSameDateAsIsraelToday(d, todayIsraelStr) {
+      if (!d || !todayIsraelStr) return false;
+      const cleanD = String(d).trim();
+      if (cleanD === todayIsraelStr) return true;
+      if (cleanD.startsWith(todayIsraelStr)) return true;
+
+      // Check YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD
+      if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(cleanD)) {
+        const parts = cleanD.split(/[-/.]/);
+        const y = parts[0];
+        const m = String(parts[1]).padStart(2, '0');
+        const day = String(parseInt(parts[2], 10)).padStart(2, '0');
+        if (`${y}-${m}-${day}` === todayIsraelStr) return true;
+      }
+
+      // Check DD.MM.YYYY, DD/MM/YYYY, DD-MM-YYYY
+      if (/^\d{1,2}[-/.]\d{1,2}[-/.]\d{4}/.test(cleanD)) {
+        const parts = cleanD.split(/[-/.]/);
+        const day = String(parseInt(parts[0], 10)).padStart(2, '0');
+        const m = String(parseInt(parts[1], 10)).padStart(2, '0');
+        const y = parts[2].slice(0, 4);
+        if (`${y}-${m}-${day}` === todayIsraelStr) return true;
+      }
+
+      // Fallback Date object parsing
+      try {
+        const parsed = new Date(cleanD);
+        if (!isNaN(parsed.getTime())) {
+          const parsedStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(parsed);
+          if (parsedStr === todayIsraelStr) return true;
+        }
+      } catch (e) {}
+
+      return false;
+    }
 
     function renderScheduleTabs() {
       if (!scheduleDataCache) return;
@@ -3095,10 +3157,21 @@ function closeWelcomeModal() {
       if (nav) nav.style.display = "flex";
       let html = "";
       
-      const todayStr = new Date().toISOString().split('T')[0];
-      let activeDate = (currentSelectedScheduleDate && dates.includes(currentSelectedScheduleDate))
-        ? currentSelectedScheduleDate
-        : (dates.includes(todayStr) ? todayStr : dates[0]);
+      const todayIsrael = getIsraelTodayDateStr();
+      const todayDateKey = dates.find(d => isSameDateAsIsraelToday(d, todayIsrael));
+
+      // Auto-select today according to Israel Time unless explicitly chosen by user
+      let activeDate;
+      if (scheduleDateExplicitlyChosen && currentSelectedScheduleDate && dates.includes(currentSelectedScheduleDate)) {
+        activeDate = currentSelectedScheduleDate;
+      } else if (todayDateKey) {
+        activeDate = todayDateKey;
+        hasAutoSelectedScheduleToday = true;
+      } else if (currentSelectedScheduleDate && dates.includes(currentSelectedScheduleDate)) {
+        activeDate = currentSelectedScheduleDate;
+      } else {
+        activeDate = dates[0];
+      }
       currentSelectedScheduleDate = activeDate;
       
       dates.forEach(d => {
@@ -3167,6 +3240,16 @@ function closeWelcomeModal() {
             }
           });
         }
+
+        // Center active pill into view smoothly
+        requestAnimationFrame(() => {
+          const activePill = nav.querySelector('.schedule-pill.active');
+          if (activePill) {
+            try {
+              activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } catch(e) {}
+          }
+        });
       }
       
       renderScheduleForDate(activeDate);
@@ -3174,6 +3257,7 @@ function closeWelcomeModal() {
     
     function selectScheduleDate(dateStr) {
       if (!scheduleDataCache || !scheduleDataCache[dateStr]) return;
+      scheduleDateExplicitlyChosen = true;
       currentSelectedScheduleDate = dateStr;
       const pills = document.querySelectorAll('#schedule-days-nav .schedule-pill');
       
@@ -7010,6 +7094,9 @@ function closeWelcomeModal() {
       }
       renderTimetableShows();
       updateLiveBanner();
+      if (!scheduleDateExplicitlyChosen && scheduleDataCache && typeof renderScheduleTabs === 'function') {
+        renderScheduleTabs();
+      }
       if (typeof updateLiveSimActiveBar === 'function') updateLiveSimActiveBar();
     };
 
@@ -8291,9 +8378,13 @@ function initAdminProductionSchedule() {
 
   // Determine active date
   if (!currentAdminScheduleDate || !adminProductionScheduleData[currentAdminScheduleDate]) {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    if (adminProductionScheduleData[todayStr]) {
-      currentAdminScheduleDate = todayStr;
+    const todayStr = (typeof getIsraelTodayDateStr === 'function') ? getIsraelTodayDateStr() : new Date().toISOString().slice(0, 10);
+    const matchingAdminDate = (typeof isSameDateAsIsraelToday === 'function')
+      ? dates.find(d => isSameDateAsIsraelToday(d, todayStr))
+      : (adminProductionScheduleData[todayStr] ? todayStr : null);
+
+    if (matchingAdminDate) {
+      currentAdminScheduleDate = matchingAdminDate;
     } else {
       currentAdminScheduleDate = dates[0];
     }
@@ -10877,6 +10968,9 @@ function handleAdminResetCache() {
   adminData = null;
   adminDataLoaded = false;
   scheduleDataCache = null;
+  currentSelectedScheduleDate = null;
+  scheduleDateExplicitlyChosen = false;
+  hasAutoSelectedScheduleToday = false;
   guideDataCache = null;
   globalArtistsData = [];
   globalDirectoryData = [];
