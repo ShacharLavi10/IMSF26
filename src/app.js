@@ -5170,8 +5170,8 @@ function closeWelcomeModal() {
         dayNum: '19',
         city: 'Jerusalem',
         venue: 'Museum of Tolerance',
-        meta: 'Doors 18:30 | B2 Main Stage, Grand Hall 1 & 2, Prayer Room, Auditorium, Plaza & Amphi',
-        stages: ['All', 'B2 Main Stage', 'Grand Hall 1', 'Grand Hall 2', 'Grand Hall Full', 'Prayer Room', 'Auditorium 400', 'Plaza Stage', 'Amphi', 'Nocturno Club', 'Swiss Club']
+        meta: 'Doors 18:30 | Antarctica, Europe, Asia, Africa, America, Australia',
+        stages: ['All', 'Antarctica', 'Europe', 'Asia', 'Africa', 'America', 'Australia', 'Africa & America', 'Nocturno Club', 'Swiss Club']
       },
       {
         date: '2026-11-20',
@@ -5487,29 +5487,42 @@ function closeWelcomeModal() {
       {
             "id": "show_3_1",
             "date": "2026-11-19",
-            "stage": "Museum of Tolerance",
+            "stage": "Antarctica",
             "startTime": "18:30",
             "endTime": "19:00",
             "artistName": "Doors Opening",
-            "format": "Museum Complex",
+            "format": "Antarctica Stage",
             "isGeneralEvent": true
+      },
+      {
+            "id": "show_3_1b",
+            "date": "2026-11-19",
+            "stage": "Antarctica",
+            "startTime": "18:30",
+            "endTime": "23:00",
+            "artistName": "SHIWABIWA B2B ISC",
+            "aliases": [
+                  "שיווה ביווה",
+                  "shiwabiwa"
+            ],
+            "format": "Outside DJ Set"
       },
       {
             "id": "show_3_2",
             "date": "2026-11-19",
-            "stage": "Plaza",
+            "stage": "Antarctica",
             "startTime": "19:00",
             "endTime": "19:30",
             "artistName": "Itamar Doari",
             "aliases": [
                   "איתמר דוארי"
             ],
-            "format": "Plaza Stage"
+            "format": "Antarctica Stage"
       },
       {
             "id": "show_3_3",
             "date": "2026-11-19",
-            "stage": "Grand Hall 2",
+            "stage": "Africa",
             "startTime": "19:30",
             "endTime": "20:00",
             "artistName": "Portman-T",
@@ -5517,12 +5530,12 @@ function closeWelcomeModal() {
                   "פורטמן טי",
                   "Portman T"
             ],
-            "format": "Hall Stage"
+            "format": "Africa Stage"
       },
       {
             "id": "show_3_4",
             "date": "2026-11-19",
-            "stage": "B2 Main Stage",
+            "stage": "Australia",
             "startTime": "19:45",
             "endTime": "20:15",
             "artistName": "Deswa",
@@ -5530,12 +5543,12 @@ function closeWelcomeModal() {
                   "דסווה",
                   "Deswa"
             ],
-            "format": "B2 Central"
+            "format": "Australia Central"
       },
       {
             "id": "show_3_5",
             "date": "2026-11-19",
-            "stage": "Grand Hall 1",
+            "stage": "America",
             "startTime": "20:00",
             "endTime": "20:30",
             "artistName": "SHEN",
@@ -5543,12 +5556,12 @@ function closeWelcomeModal() {
                   "שן",
                   "Shen"
             ],
-            "format": "Grand Hall"
+            "format": "America Stage"
       },
       {
             "id": "show_3_6",
             "date": "2026-11-19",
-            "stage": "Auditorium 400",
+            "stage": "Europe",
             "startTime": "20:15",
             "endTime": "20:45",
             "artistName": "The Addis Ken Project",
@@ -5556,12 +5569,12 @@ function closeWelcomeModal() {
                   "פרויקט אדיס קן",
                   "אדיס קן"
             ],
-            "format": "Auditorium"
+            "format": "Europe"
       },
       {
             "id": "show_3_7",
             "date": "2026-11-19",
-            "stage": "Prayer Room",
+            "stage": "Asia",
             "startTime": "20:30",
             "endTime": "21:00",
             "artistName": "GRAPE",
@@ -5569,12 +5582,12 @@ function closeWelcomeModal() {
                   "גרייפ",
                   "חדר תפילה"
             ],
-            "format": "Prayer Room Acoustic"
+            "format": "Asia Acoustic"
       },
       {
             "id": "show_3_8",
             "date": "2026-11-19",
-            "stage": "Plaza",
+            "stage": "Antarctica",
             "startTime": "21:00",
             "endTime": "21:30",
             "artistName": "Joseph E-Shine",
@@ -5582,12 +5595,12 @@ function closeWelcomeModal() {
                   "ג'וזף אי שיין",
                   "Joseph E Shine"
             ],
-            "format": "Plaza Stage"
+            "format": "Antarctica Stage"
       },
       {
             "id": "show_3_9",
             "date": "2026-11-19",
-            "stage": "B2 Main Stage",
+            "stage": "Australia",
             "startTime": "21:15",
             "endTime": "21:45",
             "artistName": "SHIRAN&BAKAL",
@@ -5595,62 +5608,62 @@ function closeWelcomeModal() {
                   "שירן ובקל",
                   "SHIRAN & BAKAL"
             ],
-            "format": "B2 Central"
+            "format": "Australia Central"
       },
       {
             "id": "show_3_10",
             "date": "2026-11-19",
-            "stage": "Grand Hall 2",
+            "stage": "Africa",
             "startTime": "21:30",
             "endTime": "22:00",
             "artistName": "Boogie Balagan",
             "aliases": [
                   "בוגי בלגן"
             ],
-            "format": "Hall Stage"
+            "format": "Africa Stage"
       },
       {
             "id": "show_3_11",
             "date": "2026-11-19",
-            "stage": "Auditorium 400",
+            "stage": "Europe",
             "startTime": "21:45",
             "endTime": "22:15",
             "artistName": "Nigun Quartet",
             "aliases": [
                   "רביעיית ניגון"
             ],
-            "format": "Auditorium"
+            "format": "Europe"
       },
       {
             "id": "show_3_12",
             "date": "2026-11-19",
-            "stage": "Grand Hall 1",
+            "stage": "America",
             "startTime": "22:00",
             "endTime": "22:30",
             "artistName": "The Pretty Please",
             "aliases": [
                   "דה פריטי פליז"
             ],
-            "format": "Grand Hall"
+            "format": "America Stage"
       },
       {
             "id": "show_3_13",
             "date": "2026-11-19",
-            "stage": "B2 Main Stage",
+            "stage": "Australia",
             "startTime": "22:15",
             "endTime": "22:45",
             "artistName": "MAGI",
             "aliases": [
                   "מאגי"
             ],
-            "format": "B2 Central"
+            "format": "Australia Central"
       },
       {
             "id": "show_3_14",
             "date": "2026-11-19",
-            "stage": "Plaza",
+            "stage": "Antarctica",
             "startTime": "22:20",
-            "endTime": "22:50",
+            "endTime": "23:00",
             "artistName": "BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)",
             "aliases": [
                   "BILTEEZ",
@@ -5658,38 +5671,38 @@ function closeWelcomeModal() {
                   "אסתר רדא דניאל זמיר ומיכאל מיטל",
                   "BILTEEZ (אסתר רדא, דניאל זמיר ומיכאל מיטל)"
             ],
-            "format": "Plaza Headline"
+            "format": "Antarctica Headline"
       },
       {
             "id": "show_3_15",
             "date": "2026-11-19",
-            "stage": "Prayer Room",
+            "stage": "Asia",
             "startTime": "22:45",
             "endTime": "23:15",
             "artistName": "Ice Hokku",
             "aliases": [
                   "אייס הוקו"
             ],
-            "format": "Prayer Room Acoustic"
+            "format": "Asia Acoustic"
       },
       {
             "id": "show_3_16",
             "date": "2026-11-19",
-            "stage": "Grand Hall Full",
+            "stage": "Africa & America",
             "startTime": "23:15",
-            "endTime": "23:45",
+            "endTime": "00:00",
             "artistName": "ALAL",
             "aliases": [
                   "עלעל",
                   "אלל"
             ],
-            "format": "Grand Hall Full"
+            "format": "Africa & America"
       },
       {
             "id": "show_3_17",
             "date": "2026-11-19",
             "stage": "Nocturno Club",
-            "startTime": "23:00",
+            "startTime": "00:00",
             "endTime": "01:00",
             "artistName": "Las Piratas Piratas",
             "aliases": [
@@ -6333,19 +6346,158 @@ function closeWelcomeModal() {
       return false;
     }
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v14';
+    const THURSDAY_EXACT_ARTIST_STAGES = {
+      // Australia (B2)
+      'deswa': 'Australia',
+      'דסווה': 'Australia',
+      'shiran&bakal': 'Australia',
+      'shiran & bakal': 'Australia',
+      'שירן ובקל': 'Australia',
+      'magi': 'Australia',
+      'מאגי': 'Australia',
+
+      // America (גראנד הול 2)
+      'shen': 'America',
+      'שן': 'America',
+      'the pretty please': 'America',
+      'דה פריטי פליז': 'America',
+
+      // Africa (גראנד הול 1)
+      'portman-t': 'Africa',
+      'portman t': 'Africa',
+      'פורטמן טי': 'Africa',
+      'boogie balagan': 'Africa',
+      'בוגי בלגן': 'Africa',
+
+      // Asia (חדר תפילה)
+      'grape': 'Asia',
+      'גרייפ': 'Asia',
+      'ice hokku': 'Asia',
+      'אייס הוקו': 'Asia',
+
+      // Europe (אודיטוריום 400)
+      'the addis ken project': 'Europe',
+      'פרויקט אדיס קן': 'Europe',
+      'אדיס קן': 'Europe',
+      'nigun quartet': 'Europe',
+      'רביעיית ניגון': 'Europe',
+
+      // Antarctica (פלאזה / Main Stage / במה מרכזית / חוץ)
+      'itamar doari': 'Antarctica',
+      'איתמר דוארי': 'Antarctica',
+      'joseph e-shine': 'Antarctica',
+      'joseph e shine': 'Antarctica',
+      'ג\'וזף אי שיין': 'Antarctica',
+      'bilteez': 'Antarctica',
+      'בילטיז': 'Antarctica',
+      'shiwabiwa b2b isc': 'Antarctica',
+      'shiwabiwa': 'Antarctica',
+      'שיווה ביווה': 'Antarctica',
+
+      // Africa & America (Grand Hall Full)
+      'alal': 'Africa & America',
+      'אלל': 'Africa & America',
+      'עלעל': 'Africa & America',
+
+      // Aftershows
+      'las piratas piratas': 'Nocturno Club',
+      'הפיראטיות': 'Nocturno Club',
+      'silvi cohen': 'Swiss Club',
+      'סילבי כהן': 'Swiss Club'
+    };
+
+    function normalizeShowStage(show) {
+      if (!show) return show;
+      const date = show.date || '';
+      if (date === '2026-11-19') {
+        const artName = String(show.artistName || '').toLowerCase().trim();
+        
+        // 1. Precise artist lookup for Thursday 19.11
+        for (const [artistKey, exactStage] of Object.entries(THURSDAY_EXACT_ARTIST_STAGES)) {
+          if (artName.includes(artistKey)) {
+            show.stage = exactStage;
+            if (exactStage === 'Australia') show.format = 'Australia Central';
+            else if (exactStage === 'America') show.format = 'America Stage';
+            else if (exactStage === 'Africa') show.format = 'Africa Stage';
+            else if (exactStage === 'Asia') show.format = 'Asia Acoustic';
+            else if (exactStage === 'Europe') show.format = 'Europe';
+            else if (exactStage === 'Africa & America') show.format = 'Africa & America';
+            else if (exactStage === 'Antarctica') {
+              if (artName.includes('shiwabiwa')) show.format = 'Outside DJ Set';
+              else if (artName.includes('bilteez')) show.format = 'Antarctica Headline';
+              else show.format = 'Antarctica Stage';
+            }
+            if (artName.includes('bilteez')) show.endTime = '23:00';
+            if (artName.includes('alal')) show.endTime = '00:00';
+            if (artName.includes('piratas') || artName.includes('פיראטיות')) show.startTime = '00:00';
+            return show;
+          }
+        }
+
+        const rawStage = String(show.stage || '').trim();
+        const stg = rawStage.toLowerCase();
+
+        // 2. Main Stage / במה מרכזית -> Antarctica (User explicit rule: "כשרשום main stage זה גם אנטרטיקה")
+        if (stg === 'main stage' || stg === 'במה מרכזית' || stg === 'מרכזית' || (stg.includes('main stage') && !stg.includes('b2'))) {
+          show.stage = 'Antarctica';
+          show.format = 'Antarctica Stage';
+        }
+        // תפילה - אסיה (Asia)
+        else if (stg.includes('תפילה') || stg.includes('prayer') || stg === 'asia' || stg === 'אסיה') {
+          show.stage = 'Asia';
+          show.format = 'Asia Acoustic';
+        }
+        // פלאזה / חוץ - אנטרטיקה (Antarctica)
+        else if (stg.includes('פלאזה') || stg.includes('plaza') || stg === 'antarctica' || stg === 'אנטרטיקה' || stg === 'אנטארקטיקה' || stg.includes('חוץ')) {
+          show.stage = 'Antarctica';
+          show.format = 'Antarctica Stage';
+        }
+        // אודיטוריום - אירופה (Europe)
+        else if (stg.includes('אודיטוריום') || stg.includes('auditorium') || stg === 'europe' || stg === 'אירופה') {
+          show.stage = 'Europe';
+          show.format = 'Europe';
+        }
+        // b2 - אוסטרליה (Australia)
+        else if (stg.includes('b2') || stg === 'australia' || stg === 'אוסטרליה') {
+          show.stage = 'Australia';
+          show.format = 'Australia Central';
+        }
+        // גראנד הול 1 - אפריקה (Africa)
+        else if (stg.includes('גראנד הול 1') || stg.includes('גראנדהול 1') || stg.includes('grand hall 1') || stg === 'africa' || stg === 'אפריקה') {
+          show.stage = 'Africa';
+          show.format = 'Africa Stage';
+        }
+        // גראנד הול 2 - אמריקה (America)
+        else if (stg.includes('גראנד הול 2') || stg.includes('גראנדהול 2') || stg.includes('grand hall 2') || stg === 'america' || stg === 'אמריקה') {
+          show.stage = 'America';
+          show.format = 'America Stage';
+        }
+        // גראנד הול מלא - אפריקה & אמריקה
+        else if (stg.includes('גראנד הול מלא') || stg.includes('grand hall full') || stg.includes('africa & america')) {
+          show.stage = 'Africa & America';
+          show.format = 'Africa & America';
+        }
+      }
+      return show;
+    }
+    window.normalizeShowStage = normalizeShowStage;
+
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v18';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
+      try {
+        localStorage.removeItem('imsf_timetable_schedule_v14');
+      } catch (e) {}
       try {
         const cached = localStorage.getItem(TIMETABLE_CACHE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed.filter(shouldKeepTimetableItem);
+            return parsed.map(normalizeShowStage).filter(shouldKeepTimetableItem);
           }
         }
       } catch (e) {}
-      return DEFAULT_FESTIVAL_SHOWS_SCHEDULE.filter(shouldKeepTimetableItem);
+      return DEFAULT_FESTIVAL_SHOWS_SCHEDULE.map(normalizeShowStage).filter(shouldKeepTimetableItem);
     })();
     window.FESTIVAL_SHOWS_SCHEDULE = FESTIVAL_SHOWS_SCHEDULE;
 
@@ -6361,7 +6513,7 @@ function closeWelcomeModal() {
         .withSuccessHandler(function(res) {
           isFetchingTimetableSchedule = false;
           if (res && res.success && Array.isArray(res.schedule) && res.schedule.length > 0) {
-            const newSchedule = res.schedule.filter(shouldKeepTimetableItem);
+            const newSchedule = res.schedule.map(normalizeShowStage).filter(shouldKeepTimetableItem);
             const prevSerialized = JSON.stringify(FESTIVAL_SHOWS_SCHEDULE);
             const newSerialized = JSON.stringify(newSchedule);
             
@@ -6583,7 +6735,13 @@ function closeWelcomeModal() {
       let optionsHtml = `<option value="All" ${(!currentSelectedStage || currentSelectedStage === 'All') ? 'selected' : ''}>All Stages (${dayShows.length} shows)</option>`;
       
       allDayStages.forEach(stg => {
-        const stageCount = dayShows.filter(s => s.stage === stg).length;
+        const stageCount = dayShows.filter(s => {
+          if (s.stage === stg) return true;
+          if (s.stage && s.stage.includes('&') && (stg === 'Africa' || stg === 'America')) {
+            return s.stage.includes(stg);
+          }
+          return false;
+        }).length;
         const isSelected = (currentSelectedStage === stg) ? 'selected' : '';
         optionsHtml += `<option value="${escapeHtml(stg)}" ${isSelected}>${escapeHtml(stg)} (${stageCount} shows)</option>`;
       });
@@ -6849,7 +7007,13 @@ function closeWelcomeModal() {
       let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       
       if (currentTimetableMode === 'all' && currentSelectedStage && currentSelectedStage !== 'All') {
-        dayShows = dayShows.filter(s => s.stage === currentSelectedStage);
+        dayShows = dayShows.filter(s => {
+          if (s.stage === currentSelectedStage) return true;
+          if (s.stage && s.stage.includes('&') && (currentSelectedStage === 'Africa' || currentSelectedStage === 'America')) {
+            return s.stage.includes(currentSelectedStage);
+          }
+          return false;
+        });
       }
       
       // Match with globalArtistsData
