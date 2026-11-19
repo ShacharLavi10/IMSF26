@@ -5170,8 +5170,8 @@ function closeWelcomeModal() {
         dayNum: '19',
         city: 'Jerusalem',
         venue: 'Museum of Tolerance',
-        meta: 'Doors 18:30 | Australia, Africa, America, Asia, Europe, Antarctica & Amphi',
-        stages: ['All', 'Australia', 'Africa', 'America', 'Grand Hall Full', 'Asia', 'Europe', 'Antarctica', 'Amphi', 'Nocturno Club', 'Swiss Club']
+        meta: 'Doors 18:30 | Antarctica, Europe, Asia, Africa, America, Australia',
+        stages: ['All', 'Antarctica', 'Europe', 'Asia', 'Africa', 'America', 'Australia', 'Africa & America', 'Nocturno Club', 'Swiss Club']
       },
       {
         date: '2026-11-20',
@@ -5663,7 +5663,7 @@ function closeWelcomeModal() {
             "date": "2026-11-19",
             "stage": "Antarctica",
             "startTime": "22:20",
-            "endTime": "22:50",
+            "endTime": "23:00",
             "artistName": "BILTEEZ (Ester Rada, Daniel Zamir, & Michael Meital)",
             "aliases": [
                   "BILTEEZ",
@@ -5688,15 +5688,15 @@ function closeWelcomeModal() {
       {
             "id": "show_3_16",
             "date": "2026-11-19",
-            "stage": "Grand Hall Full",
+            "stage": "Africa & America",
             "startTime": "23:15",
-            "endTime": "23:45",
+            "endTime": "00:00",
             "artistName": "ALAL",
             "aliases": [
                   "עלעל",
                   "אלל"
             ],
-            "format": "Grand Hall Full"
+            "format": "Africa & America"
       },
       {
             "id": "show_3_17",
@@ -6394,10 +6394,10 @@ function closeWelcomeModal() {
       'shiwabiwa': 'Antarctica',
       'שיווה ביווה': 'Antarctica',
 
-      // Grand Hall Full
-      'alal': 'Grand Hall Full',
-      'אלל': 'Grand Hall Full',
-      'עלעל': 'Grand Hall Full',
+      // Africa & America (Grand Hall Full)
+      'alal': 'Africa & America',
+      'אלל': 'Africa & America',
+      'עלעל': 'Africa & America',
 
       // Aftershows
       'las piratas piratas': 'Nocturno Club',
@@ -6421,11 +6421,14 @@ function closeWelcomeModal() {
             else if (exactStage === 'Africa') show.format = 'Africa Stage';
             else if (exactStage === 'Asia') show.format = 'Asia Acoustic';
             else if (exactStage === 'Europe') show.format = 'Europe';
+            else if (exactStage === 'Africa & America') show.format = 'Africa & America';
             else if (exactStage === 'Antarctica') {
               if (artName.includes('shiwabiwa')) show.format = 'Outside DJ Set';
               else if (artName.includes('bilteez')) show.format = 'Antarctica Headline';
               else show.format = 'Antarctica Stage';
             }
+            if (artName.includes('bilteez')) show.endTime = '23:00';
+            if (artName.includes('alal')) show.endTime = '00:00';
             return show;
           }
         }
@@ -6468,12 +6471,17 @@ function closeWelcomeModal() {
           show.stage = 'America';
           show.format = 'America Stage';
         }
+        // גראנד הול מלא - אפריקה & אמריקה
+        else if (stg.includes('גראנד הול מלא') || stg.includes('grand hall full') || stg.includes('africa & america')) {
+          show.stage = 'Africa & America';
+          show.format = 'Africa & America';
+        }
       }
       return show;
     }
     window.normalizeShowStage = normalizeShowStage;
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v16';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v17';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {
@@ -6726,7 +6734,13 @@ function closeWelcomeModal() {
       let optionsHtml = `<option value="All" ${(!currentSelectedStage || currentSelectedStage === 'All') ? 'selected' : ''}>All Stages (${dayShows.length} shows)</option>`;
       
       allDayStages.forEach(stg => {
-        const stageCount = dayShows.filter(s => s.stage === stg).length;
+        const stageCount = dayShows.filter(s => {
+          if (s.stage === stg) return true;
+          if (s.stage && s.stage.includes('&') && (stg === 'Africa' || stg === 'America')) {
+            return s.stage.includes(stg);
+          }
+          return false;
+        }).length;
         const isSelected = (currentSelectedStage === stg) ? 'selected' : '';
         optionsHtml += `<option value="${escapeHtml(stg)}" ${isSelected}>${escapeHtml(stg)} (${stageCount} shows)</option>`;
       });
@@ -6992,7 +7006,13 @@ function closeWelcomeModal() {
       let dayShows = FESTIVAL_SHOWS_SCHEDULE.filter(s => s.date === currentSelectedTimetableDate && shouldKeepTimetableItem(s));
       
       if (currentTimetableMode === 'all' && currentSelectedStage && currentSelectedStage !== 'All') {
-        dayShows = dayShows.filter(s => s.stage === currentSelectedStage);
+        dayShows = dayShows.filter(s => {
+          if (s.stage === currentSelectedStage) return true;
+          if (s.stage && s.stage.includes('&') && (currentSelectedStage === 'Africa' || currentSelectedStage === 'America')) {
+            return s.stage.includes(currentSelectedStage);
+          }
+          return false;
+        });
       }
       
       // Match with globalArtistsData
