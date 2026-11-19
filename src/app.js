@@ -5702,7 +5702,7 @@ function closeWelcomeModal() {
             "id": "show_3_17",
             "date": "2026-11-19",
             "stage": "Nocturno Club",
-            "startTime": "23:00",
+            "startTime": "00:00",
             "endTime": "01:00",
             "artistName": "Las Piratas Piratas",
             "aliases": [
@@ -6429,6 +6429,7 @@ function closeWelcomeModal() {
             }
             if (artName.includes('bilteez')) show.endTime = '23:00';
             if (artName.includes('alal')) show.endTime = '00:00';
+            if (artName.includes('piratas') || artName.includes('פיראטיות')) show.startTime = '00:00';
             return show;
           }
         }
@@ -6481,7 +6482,7 @@ function closeWelcomeModal() {
     }
     window.normalizeShowStage = normalizeShowStage;
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v17';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v18';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {
