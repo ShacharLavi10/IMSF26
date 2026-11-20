@@ -5735,7 +5735,7 @@ function closeWelcomeModal() {
             "date": "2026-11-20",
             "stage": "Main Plaza",
             "startTime": "18:00",
-            "endTime": "18:45",
+            "endTime": "18:30",
             "artistName": "Shay Hazan - DAWA",
             "aliases": [
                   "שי חזן",
@@ -5749,7 +5749,7 @@ function closeWelcomeModal() {
             "date": "2026-11-20",
             "stage": "Kissa",
             "startTime": "18:30",
-            "endTime": "19:15",
+            "endTime": "19:00",
             "artistName": "Tamar Shawki",
             "aliases": [
                   "תמר שאוקי"
@@ -5761,7 +5761,7 @@ function closeWelcomeModal() {
             "date": "2026-11-20",
             "stage": "Matmon",
             "startTime": "20:30",
-            "endTime": "21:15",
+            "endTime": "21:00",
             "artistName": "Eyal Netzer & Strings",
             "aliases": [
                   "אייל נצר",
@@ -5774,7 +5774,7 @@ function closeWelcomeModal() {
             "date": "2026-11-20",
             "stage": "Matmon",
             "startTime": "21:30",
-            "endTime": "22:15",
+            "endTime": "22:00",
             "artistName": "Floating Sheep",
             "aliases": [
                   "פלואוטינג שיפ",
@@ -5787,7 +5787,7 @@ function closeWelcomeModal() {
             "date": "2026-11-20",
             "stage": "Juanita",
             "startTime": "22:00",
-            "endTime": "22:45",
+            "endTime": "22:30",
             "artistName": "SHALOSH",
             "aliases": [
                   "שלוש"
@@ -5799,7 +5799,7 @@ function closeWelcomeModal() {
             "date": "2026-11-20",
             "stage": "Kissa",
             "startTime": "22:30",
-            "endTime": "23:15",
+            "endTime": "23:00",
             "artistName": "Ariel Bart Trio",
             "aliases": [
                   "שלישיית אריאל ברט",
@@ -5812,7 +5812,7 @@ function closeWelcomeModal() {
             "date": "2026-11-20",
             "stage": "Matmon",
             "startTime": "23:00",
-            "endTime": "23:45",
+            "endTime": "23:30",
             "artistName": "Sandia",
             "aliases": [
                   "סנדיה"
@@ -6406,9 +6406,27 @@ function closeWelcomeModal() {
       'סילבי כהן': 'Swiss Club'
     };
 
+    function addMinutesToTime(timeStr, minsToAdd) {
+      if (!timeStr) return '';
+      const match = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+      if (!match) return '';
+      let hours = parseInt(match[1], 10);
+      let mins = parseInt(match[2], 10);
+      const total = hours * 60 + mins + minsToAdd;
+      const newHours = Math.floor(total / 60) % 24;
+      const newMins = total % 60;
+      return String(newHours).padStart(2, '0') + ':' + String(newMins).padStart(2, '0');
+    }
+    window.addMinutesToTime = addMinutesToTime;
+
     function normalizeShowStage(show) {
       if (!show) return show;
       const date = show.date || '';
+      if (date === '2026-11-20') {
+        if (show.startTime) {
+          show.endTime = addMinutesToTime(show.startTime, 30);
+        }
+      }
       if (date === '2026-11-19') {
         const artName = String(show.artistName || '').toLowerCase().trim();
         
@@ -6482,10 +6500,11 @@ function closeWelcomeModal() {
     }
     window.normalizeShowStage = normalizeShowStage;
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v18';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v19';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {
+        localStorage.removeItem('imsf_timetable_schedule_v18');
         localStorage.removeItem('imsf_timetable_schedule_v14');
       } catch (e) {}
       try {
@@ -7142,8 +7161,9 @@ function closeWelcomeModal() {
         endH = parseInt(matchEnd[1], 10);
         endM = parseInt(matchEnd[2], 10);
       } else {
+        const defaultDuration = (show.date === '2026-11-20') ? 30 : 45;
         endH = startH;
-        endM = startM + 45;
+        endM = startM + defaultDuration;
         if (endM >= 60) {
           endH += Math.floor(endM / 60);
           endM = endM % 60;
