@@ -1108,10 +1108,11 @@ function getFestivalTimetableSchedule(forceRefresh) {
     if (!ssId) return { success: false, message: "Lineup spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v9_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v10_' + ssId;
     if (forceRefresh) {
       try { 
         cache.remove(cacheKey);
+        cache.remove('festival_timetable_schedule_v9_' + ssId);
         cache.remove('festival_timetable_schedule_v8_' + ssId);
         cache.remove('festival_timetable_schedule_v7_' + ssId);
         cache.remove('festival_timetable_schedule_latest');
@@ -1225,6 +1226,7 @@ function clearTimetableCache() {
     ids.forEach(id => {
       if (id) {
         try {
+          cache.remove('festival_timetable_schedule_v10_' + id);
           cache.remove('festival_timetable_schedule_v9_' + id);
           cache.remove('festival_timetable_schedule_v8_' + id);
           cache.remove('festival_timetable_schedule_v7_' + id);
@@ -1290,6 +1292,49 @@ function syncLineupToSandboxSheet() {
   }
 }
 
+/**
+ * Automatically fills missing end times (+30 mins) for Friday 20.11 directly in Google Sheets
+ */
+function autoFillFridayTimetableEndTimesInSheets() {
+  const ssIds = [
+    CONFIG.LINEUP_SPREADSHEET_ID || "13YI3oIHCt2OfIC3K3HyS54u_RrJ-Hii3NZedM3OtqvQ",
+    CONFIG.ARTISTS_SPREADSHEET_ID || "11X8f1o6f5PWVYcNfwEHuvYr2l_-OPEx44riEz3HjbVo"
+  ];
+  const uniqueIds = [...new Set(ssIds.filter(Boolean))];
+  const results = [];
+
+  uniqueIds.forEach(ssId => {
+    try {
+      const ss = SpreadsheetApp.openById(ssId);
+      let sheet = ss.getSheetByName("שיקוף! - מבנה ליינאפ") || ss.getSheetByName("מבנה ליינאפ");
+      if (!sheet) return;
+      const data = sheet.getDataRange().getDisplayValues();
+      let updatedCount = 0;
+      // Friday 20.11: colArtist = 9, colTime = 10 (0-indexed -> Col K = index 10 / col 11)
+      for (let r = 3; r < data.length; r++) {
+        const row = data[r] || [];
+        const artist = (row[9] || '').trim();
+        const timeVal = (row[10] || '').trim();
+        if (!artist) continue;
+        if (timeVal) {
+          const parsed = parseLineupTime(timeVal);
+          if (parsed.start && (!parsed.end || parsed.end === '')) {
+            const calculatedEnd = addMinutesToTime(parsed.start, 30);
+            const newRangeStr = parsed.start + '-' + calculatedEnd;
+            sheet.getRange(r + 1, 11).setValue(newRangeStr);
+            updatedCount++;
+          }
+        }
+      }
+      results.push({ ssId: ssId, updatedCount: updatedCount });
+    } catch(err) {
+      results.push({ ssId: ssId, error: err.toString() });
+    }
+  });
+  clearTimetableCache();
+  return results;
+}
+
 function parseLineupTime(str) {
   if (!str) return { start: '', end: '' };
   const s = String(str).trim();
@@ -1302,6 +1347,18 @@ function parseLineupTime(str) {
     return { start: matchSingle[1].padStart(5, '0'), end: '' };
   }
   return { start: '', end: '' };
+}
+
+function addMinutesToTime(timeStr, minsToAdd) {
+  if (!timeStr) return '';
+  const match = String(timeStr).match(/(\d{1,2}):(\d{2})/);
+  if (!match) return '';
+  let hours = parseInt(match[1], 10);
+  let mins = parseInt(match[2], 10);
+  const total = hours * 60 + mins + minsToAdd;
+  const newHours = Math.floor(total / 60) % 24;
+  const newMins = total % 60;
+  return String(newHours).padStart(2, '0') + ':' + String(newMins).padStart(2, '0');
 }
 
 function getTimetableSortMinutes(timeStr) {
@@ -1766,6 +1823,11 @@ function parseLineupGrid(grid, artistsList) {
         artistName: cellArtist,
         isGeneralEvent: isGeneral
       };
+
+      // On Friday 20.11, each show is 30 minutes
+      if (candidateShow.date === '2026-11-20' && candidateShow.startTime) {
+        candidateShow.endTime = addMinutesToTime(candidateShow.startTime, 30);
+      }
 
       if (cellArtist.includes('נוקטורנו') && (cellArtist.includes('פיראטי') || cellArtist.includes('הפיראטיות'))) {
         candidateShow.stage = 'Nocturno Club';
