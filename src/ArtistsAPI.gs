@@ -1108,10 +1108,11 @@ function getFestivalTimetableSchedule(forceRefresh) {
     if (!ssId) return { success: false, message: "Lineup spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v11_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v12_' + ssId;
     if (forceRefresh) {
       try { 
         cache.remove(cacheKey);
+        cache.remove('festival_timetable_schedule_v11_' + ssId);
         cache.remove('festival_timetable_schedule_v10_' + ssId);
         cache.remove('festival_timetable_schedule_v9_' + ssId);
         cache.remove('festival_timetable_schedule_v8_' + ssId);
@@ -1714,8 +1715,10 @@ function parseLineupGrid(grid, artistsList) {
     'חצר קדמית': 'Front Yard',
     'גלריה': 'Gallery',
     'מרתף': 'Basement',
-    'חצר חצץ': 'Gravel Yard',
-    'חצץ': 'Gravel Yard',
+    'חצר חצץ': 'Backyard',
+    'חצץ': 'Backyard',
+    'חצר': 'Backyard',
+    'backyard': 'Backyard',
     'המרץ2': 'Hameretz 2',
     'המרץ 2': 'Hameretz 2',
     'חניון': 'Parking Lot',
@@ -1868,8 +1871,8 @@ function parseLineupGrid(grid, artistsList) {
           candidateShow.stage = 'Basement';
           candidateShow.format = 'Basement Stage';
         } else if (lowerArt.includes('aviram') || lowerArt.includes('אבירם') || lowerArt.includes('allan tune') || lowerArt.includes('אלן טיון')) {
-          candidateShow.stage = 'Gravel Yard';
-          candidateShow.format = 'Outdoor Gravel Yard';
+          candidateShow.stage = 'Backyard';
+          candidateShow.format = 'Backyard';
         } else if (lowerArt.includes('chen arava') || lowerArt.includes('חן ערבה') || lowerArt.includes('arava')) {
           candidateShow.stage = 'Front Yard';
           candidateShow.format = 'Front Yard DJ Set';
