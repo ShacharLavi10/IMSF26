@@ -5188,8 +5188,8 @@ function closeWelcomeModal() {
         dayNum: '21',
         city: 'Tel Aviv',
         venue: 'Radical Complex & Hameretz 2',
-        meta: 'Doors 14:00 | Grand Hall, The Club, Sculpture Yard, Fish Market, Hameretz 2',
-        stages: ['All', 'Grand Hall', 'The Club', 'Sculpture Yard', 'Fish Market', 'Hameretz 2']
+        meta: 'Doors 14:00 | Gallery, Basement, Gravel Yard, Front Yard, Hameretz 2',
+        stages: ['All', 'Gallery', 'Basement', 'Gravel Yard', 'Front Yard', 'Hameretz 2']
       },
       {
         date: '2026-11-22',
@@ -5832,89 +5832,113 @@ function closeWelcomeModal() {
       {
             "id": "show_5_2",
             "date": "2026-11-21",
-            "stage": "Grand Hall",
+            "stage": "Gallery",
             "startTime": "14:30",
             "endTime": "14:55",
             "artistName": "Meitarai",
             "aliases": [
                   "מיתריי",
-                  "Meitarai"
+                  "Meitarai",
+                  "גלריה"
             ],
-            "format": "Grand Hall"
+            "format": "Gallery"
       },
       {
             "id": "show_5_3",
             "date": "2026-11-21",
-            "stage": "The Club",
+            "stage": "Basement",
             "startTime": "15:15",
             "endTime": "15:40",
             "artistName": "The Minister",
             "aliases": [
                   "דה מיניסטר",
-                  "The Minister"
+                  "The Minister",
+                  "מרתף"
             ],
-            "format": "Club Stage"
+            "format": "Basement Stage"
       },
       {
             "id": "show_5_4",
             "date": "2026-11-21",
-            "stage": "Sculpture Yard",
+            "stage": "Gravel Yard",
             "startTime": "15:45",
             "endTime": "16:10",
             "artistName": "AVIRAM",
             "aliases": [
-                  "אבירם"
+                  "אבירם",
+                  "חצר חצץ"
             ],
-            "format": "Outdoor Yard"
+            "format": "Outdoor Gravel Yard"
       },
       {
             "id": "show_5_5",
             "date": "2026-11-21",
-            "stage": "The Club",
+            "stage": "Basement",
             "startTime": "16:30",
             "endTime": "16:55",
             "artistName": "Tamir Grinberg",
             "aliases": [
-                  "תמיר גרינברג"
+                  "תמיר גרינברג",
+                  "מרתף"
             ],
-            "format": "Club Stage"
+            "format": "Basement Stage"
       },
       {
             "id": "show_5_6",
             "date": "2026-11-21",
-            "stage": "Grand Hall",
+            "stage": "Gallery",
             "startTime": "17:00",
             "endTime": "17:25",
             "artistName": "Maya Belsitzman & Matan Ephrat",
             "aliases": [
                   "מאיה בלזיצמן ומתן אפרת",
-                  "מאיה בלזיצמן"
+                  "מאיה בלזיצמן",
+                  "גלריה"
             ],
-            "format": "Grand Hall"
+            "format": "Gallery"
       },
       {
             "id": "show_5_7",
             "date": "2026-11-21",
-            "stage": "The Club",
+            "stage": "Basement",
             "startTime": "17:30",
             "endTime": "17:55",
             "artistName": "Shir Shani",
             "aliases": [
-                  "שיר שני"
+                  "שיר שני",
+                  "מרתף"
             ],
-            "format": "Club Stage"
+            "format": "Basement Stage"
       },
       {
             "id": "show_5_8",
             "date": "2026-11-21",
-            "stage": "Sculpture Yard",
+            "stage": "Gravel Yard",
             "startTime": "18:05",
             "endTime": "18:30",
             "artistName": "Allan Tune",
             "aliases": [
-                  "אלן טיון"
+                  "אלן טיון",
+                  "חצר חצץ"
             ],
-            "format": "Outdoor Yard"
+            "format": "Outdoor Gravel Yard"
+      },
+      {
+            "id": "show_5_dj_chen_arava",
+            "date": "2026-11-21",
+            "stage": "Front Yard",
+            "startTime": "",
+            "endTime": "",
+            "artistName": "DJ Chen Arava",
+            "aliases": [
+                  "DJ CHEN ARAVA",
+                  "DJ Chen Arava",
+                  "חן ערבה",
+                  "דיג'יי חן ערבה",
+                  "Chen Arava",
+                  "חצר קדמית"
+            ],
+            "format": "Front Yard DJ Set"
       },
       {
             "id": "show_5_9",
@@ -6110,6 +6134,11 @@ function closeWelcomeModal() {
       'דיגיי עדי ברקת': 'DJ Adi Bareket',
       'עדי ברקת': 'DJ Adi Bareket',
       'dj adi bareket': 'DJ Adi Bareket',
+      'חן ערבה': 'DJ Chen Arava',
+      'דיג\'יי חן ערבה': 'DJ Chen Arava',
+      'דיגיי חן ערבה': 'DJ Chen Arava',
+      'chen arava': 'DJ Chen Arava',
+      'dj chen arava': 'DJ Chen Arava',
       'הפיראטיות': 'Las Piratas Piratas',
       'פיראטיות': 'Las Piratas Piratas',
       'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
@@ -6406,6 +6435,52 @@ function closeWelcomeModal() {
       'סילבי כהן': 'Swiss Club'
     };
 
+    const SATURDAY_EXACT_ARTIST_STAGES = {
+      // Gallery (גלריה)
+      'meitarai': 'Gallery',
+      'מיתריי': 'Gallery',
+      'מיתרי': 'Gallery',
+      'maya belsitzman': 'Gallery',
+      'belsitzman': 'Gallery',
+      'בלזיצמן': 'Gallery',
+      'מאיה בלזיצמן': 'Gallery',
+      'מתן אפרת': 'Gallery',
+
+      // Basement (מרתף)
+      'the minister': 'Basement',
+      'minister': 'Basement',
+      'דה מיניסטר': 'Basement',
+      'tamir grinberg': 'Basement',
+      'grinberg': 'Basement',
+      'תמיר גרינברג': 'Basement',
+      'גרינברג': 'Basement',
+      'shir shani': 'Basement',
+      'שיר שני': 'Basement',
+
+      // Gravel Yard (חצר חצץ)
+      'aviram': 'Gravel Yard',
+      'אבירם': 'Gravel Yard',
+      'allan tune': 'Gravel Yard',
+      'אלן טיון': 'Gravel Yard',
+
+      // Front Yard (חצר קדמית)
+      'chen arava': 'Front Yard',
+      'arava': 'Front Yard',
+      'חן ערבה': 'Front Yard',
+      'ערבה': 'Front Yard',
+
+      // Hameretz 2 (המרץ 2)
+      'yuz': 'Hameretz 2',
+      'יוז': 'Hameretz 2',
+      'tapash': 'Hameretz 2',
+      'טאפש': 'Hameretz 2',
+      'eden derso': 'Hameretz 2',
+      'עדן דרסו': 'Hameretz 2',
+      'derso': 'Hameretz 2',
+      'ram malca': 'Hameretz 2',
+      'רם מלכה': 'Hameretz 2'
+    };
+
     function addMinutesToTime(timeStr, minsToAdd) {
       if (!timeStr) return '';
       const match = String(timeStr).match(/(\d{1,2}):(\d{2})/);
@@ -6425,6 +6500,43 @@ function closeWelcomeModal() {
       if (date === '2026-11-20') {
         if (show.startTime) {
           show.endTime = addMinutesToTime(show.startTime, 30);
+        }
+      }
+      if (date === '2026-11-21') {
+        const artName = String(show.artistName || '').toLowerCase().trim();
+
+        // 1. Precise artist lookup for Saturday 21.11 (Radical Complex & Hameretz 2)
+        for (const [artistKey, exactStage] of Object.entries(SATURDAY_EXACT_ARTIST_STAGES)) {
+          if (artName.includes(artistKey)) {
+            show.stage = exactStage;
+            if (exactStage === 'Gallery') show.format = 'Gallery';
+            else if (exactStage === 'Basement') show.format = 'Basement Stage';
+            else if (exactStage === 'Gravel Yard') show.format = 'Outdoor Gravel Yard';
+            else if (exactStage === 'Front Yard') show.format = 'Front Yard DJ Set';
+            else if (exactStage === 'Hameretz 2') show.format = 'Hameretz 2 Stage';
+            return show;
+          }
+        }
+
+        const rawStage = String(show.stage || '').trim();
+        const stg = rawStage.toLowerCase();
+
+        // 2. Stage string-based normalization
+        if (stg.includes('גלריה') || stg.includes('gallery')) {
+          show.stage = 'Gallery';
+          show.format = 'Gallery';
+        } else if (stg.includes('מרתף') || stg.includes('basement')) {
+          show.stage = 'Basement';
+          show.format = 'Basement Stage';
+        } else if (stg.includes('חצץ') || stg.includes('gravel')) {
+          show.stage = 'Gravel Yard';
+          show.format = 'Outdoor Gravel Yard';
+        } else if (stg.includes('קדמית') || stg.includes('front yard')) {
+          show.stage = 'Front Yard';
+          show.format = 'Front Yard DJ Set';
+        } else if (stg.includes('המרץ') || stg.includes('hameretz')) {
+          show.stage = 'Hameretz 2';
+          show.format = 'Hameretz 2 Stage';
         }
       }
       if (date === '2026-11-19') {
@@ -6500,10 +6612,11 @@ function closeWelcomeModal() {
     }
     window.normalizeShowStage = normalizeShowStage;
 
-    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v19';
+    const TIMETABLE_CACHE_KEY = 'imsf_timetable_schedule_v20';
 
     let FESTIVAL_SHOWS_SCHEDULE = (function() {
       try {
+        localStorage.removeItem('imsf_timetable_schedule_v19');
         localStorage.removeItem('imsf_timetable_schedule_v18');
         localStorage.removeItem('imsf_timetable_schedule_v14');
       } catch (e) {}
@@ -6911,9 +7024,12 @@ function closeWelcomeModal() {
         const normMatched = matched ? normalizeArtistString(matched.name) : '';
         const aliasesNorm = (show.aliases || []).map(a => normalizeArtistString(a));
 
+        const normStage = normalizeArtistString(show.stage);
+
         const isMatch = normName.includes(normQ) ||
                         normMatched.includes(normQ) ||
-                        aliasesNorm.some(a => a.includes(normQ));
+                        aliasesNorm.some(a => a.includes(normQ)) ||
+                        normStage.includes(normQ);
 
         if (isMatch) {
           seenShowIds.add(show.id);

@@ -1108,10 +1108,11 @@ function getFestivalTimetableSchedule(forceRefresh) {
     if (!ssId) return { success: false, message: "Lineup spreadsheet not configured." };
 
     const cache = CacheService.getScriptCache();
-    const cacheKey = 'festival_timetable_schedule_v10_' + ssId;
+    const cacheKey = 'festival_timetable_schedule_v11_' + ssId;
     if (forceRefresh) {
       try { 
         cache.remove(cacheKey);
+        cache.remove('festival_timetable_schedule_v10_' + ssId);
         cache.remove('festival_timetable_schedule_v9_' + ssId);
         cache.remove('festival_timetable_schedule_v8_' + ssId);
         cache.remove('festival_timetable_schedule_v7_' + ssId);
@@ -1452,6 +1453,11 @@ const ARTIST_NAME_ALIASES_DICT = {
   'דיגיי עדי ברקת': 'DJ Adi Bareket',
   'עדי ברקת': 'DJ Adi Bareket',
   'dj adi bareket': 'DJ Adi Bareket',
+  'חן ערבה': 'DJ Chen Arava',
+  'דיג\'יי חן ערבה': 'DJ Chen Arava',
+  'דיגיי חן ערבה': 'DJ Chen Arava',
+  'chen arava': 'DJ Chen Arava',
+  'dj chen arava': 'DJ Chen Arava',
   'הפיראטיות': 'Las Piratas Piratas',
   'פיראטיות': 'Las Piratas Piratas',
   'אפטר בנוקטורנו הפיראטיות': 'Las Piratas Piratas',
@@ -1706,6 +1712,10 @@ function parseLineupGrid(grid, artistsList) {
     'קלאב': 'The Club',
     'חצר פסלים': 'Sculpture Yard',
     'חצר קדמית': 'Front Yard',
+    'גלריה': 'Gallery',
+    'מרתף': 'Basement',
+    'חצר חצץ': 'Gravel Yard',
+    'חצץ': 'Gravel Yard',
     'המרץ2': 'Hameretz 2',
     'המרץ 2': 'Hameretz 2',
     'חניון': 'Parking Lot',
@@ -1848,6 +1858,27 @@ function parseLineupGrid(grid, artistsList) {
         if (!candidateShow.endTime) candidateShow.endTime = '18:00';
       }
 
+      // Saturday 21.11 stage normalization (Radical Complex & Hameretz 2)
+      if (candidateShow.date === '2026-11-21') {
+        const lowerArt = candidateShow.artistName.toLowerCase();
+        if (lowerArt.includes('meitarai') || lowerArt.includes('מיתרי') || lowerArt.includes('belsitzman') || lowerArt.includes('בלזיצמן')) {
+          candidateShow.stage = 'Gallery';
+          candidateShow.format = 'Gallery';
+        } else if (lowerArt.includes('minister') || lowerArt.includes('מיניסטר') || lowerArt.includes('grinberg') || lowerArt.includes('גרינברג') || lowerArt.includes('shir shani') || lowerArt.includes('שיר שני')) {
+          candidateShow.stage = 'Basement';
+          candidateShow.format = 'Basement Stage';
+        } else if (lowerArt.includes('aviram') || lowerArt.includes('אבירם') || lowerArt.includes('allan tune') || lowerArt.includes('אלן טיון')) {
+          candidateShow.stage = 'Gravel Yard';
+          candidateShow.format = 'Outdoor Gravel Yard';
+        } else if (lowerArt.includes('chen arava') || lowerArt.includes('חן ערבה') || lowerArt.includes('arava')) {
+          candidateShow.stage = 'Front Yard';
+          candidateShow.format = 'Front Yard DJ Set';
+        } else if (lowerArt.includes('yuz') || lowerArt.includes('יוז') || lowerArt.includes('tapash') || lowerArt.includes('טאפש') || lowerArt.includes('derso') || lowerArt.includes('דרסו') || lowerArt.includes('ram malca') || lowerArt.includes('רם מלכה')) {
+          candidateShow.stage = 'Hameretz 2';
+          candidateShow.format = 'Hameretz 2 Stage';
+        }
+      }
+
       if (shouldKeepTimetableItem(candidateShow, artistsList)) {
         // Translate to clean English (NO HEBREW)
         const matchedArtist = findMatchedArtistBackend(candidateShow.artistName, artistsList);
@@ -1909,6 +1940,21 @@ function parseLineupGrid(grid, artistsList) {
       }
     }
   });
+
+  const hasChenArava = allShows.some(s => s.date === '2026-11-21' && (s.artistName.toLowerCase().includes('chen arava') || (s.aliases && s.aliases.some(a => a.includes('חן ערבה')))));
+  if (!hasChenArava) {
+    allShows.push({
+      id: 'show_2026-11-21_dj_chen_arava',
+      date: '2026-11-21',
+      stage: 'Front Yard',
+      startTime: '',
+      endTime: '',
+      artistName: 'DJ Chen Arava',
+      aliases: ['DJ CHEN ARAVA', 'DJ Chen Arava', 'חן ערבה', 'חצר קדמית'],
+      format: 'Front Yard DJ Set',
+      isGeneralEvent: false
+    });
+  }
 
   allShows.sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
