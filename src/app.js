@@ -679,6 +679,11 @@ function closeWelcomeModal() {
             renderTimetableShows();
           }
         }
+        if (t === 'directory' && tabName === 'directory') {
+          if (typeof updateExportDelegatesVisibility === 'function') {
+            updateExportDelegatesVisibility();
+          }
+        }
       });
     }
 
@@ -2368,6 +2373,7 @@ function closeWelcomeModal() {
       
       if (globalDirectoryData.length === 0) {
         container.innerHTML = `<p class="empty-state">Delegate directory available soon.</p>`;
+        if (typeof updateExportDelegatesVisibility === 'function') updateExportDelegatesVisibility();
         return;
       }
       
@@ -2376,6 +2382,7 @@ function closeWelcomeModal() {
       
       populateCountries(globalDirectoryData);
       filterDirectory();
+      if (typeof updateExportDelegatesVisibility === 'function') updateExportDelegatesVisibility();
     }
 
     function getThumbnailUrl(url) {
@@ -5132,6 +5139,211 @@ function closeWelcomeModal() {
           alert("Error exporting briefcase: " + (err.message || err.toString()));
         })
         .generateAndSendBriefcasePdf(currentGuestEmail, payload, options);
+    }
+
+    /* ==========================================================================
+       INTERNATIONAL DELEGATES DIRECTORY PDF EXPORT CONTROLLER
+       ========================================================================== */
+    function updateExportDelegatesVisibility() {
+      const container = document.getElementById('export-delegates-container');
+      if (!container) return;
+      const count = (globalDirectoryData && globalDirectoryData.length) ? globalDirectoryData.length : 0;
+      container.style.display = count > 0 ? 'block' : 'none';
+
+      const btn = document.getElementById('export-delegates-btn');
+      if (btn) {
+        const span = btn.querySelector('span');
+        if (span) {
+          span.innerText = count > 0 ? `Export Delegates Directory (PDF)` : 'Export Delegates Directory (PDF)';
+        }
+      }
+    }
+
+    function exportDelegatesPdf() {
+      if (!globalDirectoryData || globalDirectoryData.length === 0) {
+        alert("Delegates directory is still loading or currently empty.");
+        return;
+      }
+
+      const modal = document.getElementById('delegates-modal-overlay');
+      if (!modal) return;
+
+      const delegatesCountElem = document.getElementById('delegates-modal-count');
+      const countriesCountElem = document.getElementById('delegates-modal-countries-count');
+      const emailElem = document.getElementById('delegates-modal-email');
+      const statusDiv = document.getElementById('delegates-modal-status');
+      const successDiv = document.getElementById('delegates-modal-success');
+      const actionsDiv = document.getElementById('delegates-modal-actions');
+
+      // Calculate unique countries
+      const countriesSet = new Set();
+      globalDirectoryData.forEach(g => {
+        const c = (g["Country"] || g.country || "").trim();
+        if (c && c !== "N/A") countriesSet.add(c);
+      });
+
+      if (delegatesCountElem) delegatesCountElem.innerText = `${globalDirectoryData.length} Delegates`;
+      if (countriesCountElem) countriesCountElem.innerText = `${countriesSet.size} Countries`;
+      if (emailElem) emailElem.innerText = currentGuestEmail || 'your email';
+
+      if (statusDiv) statusDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+      if (actionsDiv) actionsDiv.style.display = 'flex';
+
+      modal.style.display = 'flex';
+    }
+
+    function closeDelegatesModal() {
+      const modal = document.getElementById('delegates-modal-overlay');
+      if (modal) modal.style.display = 'none';
+    }
+
+    let isExportingDelegates = false;
+    function executeDelegatesExport(actionType) {
+      if (isExportingDelegates) return;
+      if (!currentGuestEmail) {
+        alert("Please make sure you are logged in to export the directory.");
+        return;
+      }
+
+      const actionsDiv = document.getElementById('delegates-modal-actions');
+      const statusDiv = document.getElementById('delegates-modal-status');
+      const statusText = document.getElementById('delegates-status-text');
+      const successDiv = document.getElementById('delegates-modal-success');
+      const successText = document.getElementById('delegates-success-text');
+      const successDetail = document.getElementById('delegates-success-detail');
+
+      if (actionsDiv) actionsDiv.style.display = 'none';
+      if (statusDiv) statusDiv.style.display = 'block';
+      if (successDiv) successDiv.style.display = 'none';
+
+      let previewWindow = null;
+      if (actionType === 'preview') {
+        if (statusText) statusText.innerText = 'Preparing your PDF preview... ⏳';
+        try {
+          previewWindow = window.open('', '_blank');
+          if (previewWindow) {
+            previewWindow.document.write('<html><head><title>Loading Delegates Directory...</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;background:#0a1626;color:#ffffff;"><div style="text-align:center;"><h2>Loading Delegates Directory PDF... ⏳</h2><p>Please wait a moment while the document renders.</p></div></body></html>');
+          }
+        } catch(e) {}
+      } else if (actionType === 'download') {
+        if (statusText) statusText.innerText = 'Generating your PDF file... ⏳';
+      } else {
+        if (statusText) statusText.innerText = 'Generating & emailing your Delegates Directory PDF... ⏳';
+      }
+
+      isExportingDelegates = true;
+      const guestName = (currentGuestData && (currentGuestData.fullName || (currentGuestData.firstName ? (currentGuestData.firstName + ' ' + (currentGuestData.lastName || '')) : ''))) || '';
+
+      const options = {
+        sendEmail: (actionType === 'email'),
+        returnBase64: true,
+        guestName: guestName
+      };
+
+      if (!window.google || !google.script || !google.script.run) {
+        isExportingDelegates = false;
+        if (statusDiv) statusDiv.style.display = 'none';
+        if (actionsDiv) actionsDiv.style.display = 'flex';
+        if (previewWindow) previewWindow.close();
+        alert("Connection unavailable. Please try again shortly.");
+        return;
+      }
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          isExportingDelegates = false;
+          if (statusDiv) statusDiv.style.display = 'none';
+
+          if (!res || !res.success) {
+            if (actionsDiv) actionsDiv.style.display = 'flex';
+            if (previewWindow) previewWindow.close();
+            alert("Could not export delegates directory: " + ((res && res.message) || "Unknown error"));
+            return;
+          }
+
+          if (actionType === 'preview' && res.pdfBase64) {
+            let blobUrl = '';
+            try {
+              const byteCharacters = atob(res.pdfBase64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              blobUrl = URL.createObjectURL(blob);
+              if (previewWindow && !previewWindow.closed) {
+                previewWindow.location.href = blobUrl;
+              } else {
+                window.open(blobUrl, '_blank');
+              }
+            } catch(e) {
+              console.warn("Direct blob preview error, falling back to data URI:", e);
+              blobUrl = 'data:application/pdf;base64,' + res.pdfBase64;
+              if (previewWindow && !previewWindow.closed) {
+                previewWindow.location.href = blobUrl;
+              } else {
+                window.open(blobUrl, '_blank');
+              }
+            }
+
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'PDF Preview Ready!';
+              if (successDetail) {
+                successDetail.innerHTML = `Your delegates directory PDF has opened in a new tab.<br><a href="${blobUrl}" target="_blank" style="color: #0284c7; text-decoration: underline; font-weight: bold; margin-top: 6px; display: inline-block;">Click here if your browser blocked the tab</a>`;
+              }
+            }
+          } else if (actionType === 'download' && res.pdfBase64) {
+            try {
+              const byteCharacters = atob(res.pdfBase64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              const blobUrl = URL.createObjectURL(blob);
+
+              const downloadLink = document.createElement('a');
+              downloadLink.href = blobUrl;
+              downloadLink.download = res.filename || 'IMSF26_Delegates_Directory.pdf';
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            } catch(e) {
+              console.warn("Direct blob download error, falling back to data URI:", e);
+              const downloadLink = document.createElement('a');
+              downloadLink.href = 'data:application/pdf;base64,' + res.pdfBase64;
+              downloadLink.download = res.filename || 'IMSF26_Delegates_Directory.pdf';
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            }
+
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'PDF Downloaded Successfully!';
+              if (successDetail) successDetail.innerText = 'The delegates directory PDF has been downloaded to your device files.';
+            }
+          } else {
+            // Email sent successfully
+            if (successDiv) {
+              successDiv.style.display = 'block';
+              if (successText) successText.innerText = 'Directory Sent to Your Email!';
+              if (successDetail) successDetail.innerText = `We have sent your PDF to ${currentGuestEmail}. Check your inbox and spam folder.`;
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          isExportingDelegates = false;
+          if (statusDiv) statusDiv.style.display = 'none';
+          if (actionsDiv) actionsDiv.style.display = 'flex';
+          if (previewWindow) previewWindow.close();
+          alert("Error exporting delegates directory: " + (err.message || err.toString()));
+        })
+        .generateAndSendDelegatesPdf(currentGuestEmail, { delegates: globalDirectoryData }, options);
     }
 
     /* ==========================================================================
@@ -8022,6 +8234,10 @@ window.closeImageViewer = closeImageViewer;
 window.openGuestSheet = openGuestSheet;
 window.openArtistSheet = openArtistSheet;
 window.updateExportBriefcaseVisibility = updateExportBriefcaseVisibility;
+window.exportDelegatesPdf = exportDelegatesPdf;
+window.closeDelegatesModal = closeDelegatesModal;
+window.executeDelegatesExport = executeDelegatesExport;
+window.updateExportDelegatesVisibility = updateExportDelegatesVisibility;
 
 
 let adminDataLoaded = false;

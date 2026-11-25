@@ -255,6 +255,7 @@
     * **סטטוס תוצאות:** `#directory-status` (מציג `Showing X of Y delegates` וכפתור `Clear` לאיפוס מסננים `resetFilters()`).
     * **גריד כרטיסיות אורחים:** `#directory-container` (`.artists-grid`, `.artist-card`).
     * **לוגיקת התאמת Multi-genre (`filterDirectory()`):** אורחים שמוגדרים בגיליון עם `Multi genre` (או `multi`, `both`, `all`, `מולטי`, `הכל`, או שילוב רוק וג'אז) מוצגים **תמיד בכל סינוני הז'אנר** (גם בסינון רוק וגם בסינון ג'אז) מתוך הבנה שהם רלוונטיים לכלל הז'אנרים בפסטיבל.
+    * **ייצוא ספר אורחים ל-PDF (Delegates Directory PDF Export):** `#export-delegates-container`, `#export-delegates-btn`, מודאל ייצוא `#delegates-modal-overlay` (כולל שליחה למייל `sendDelegatesToEmail`, הורדה ישירה `downloadDelegatesPdf`, וצפייה בדפדפן `previewDelegatesPdf`). מנוהל ע"י `exportDelegatesPdf()`, `closeDelegatesModal()`, ו-`executeDelegatesExport(actionType)`.
     * **משחק Guess the Guest:** הוסר מכותרת הלשונית בפורטל הרשמי ואינו מוצג לאורחים; הגישה למשחק מתבצעת בלעדית דרך הנתיב הישיר `/guess-guest.html`.
 
 15. 🕒 **רכיבי טיימטייבל פסטיבל וקפיצה מהירה (Festival Timetable & Quick Jump Navigation):**
