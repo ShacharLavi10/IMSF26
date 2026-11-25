@@ -186,6 +186,14 @@ The portal follows a specific Indie / Comic / Neo-Brutalist design language insp
   - Terminology updated from "Band Members" to "Band / Team Members" across all briefcase export cards.
   - Includes a dedicated festival recommendation tip for delegates attending showcase concerts.
 
+- **Delegates Directory PDF Export Modal (`#delegates-modal-overlay`, `#export-delegates-btn`, `#export-delegates-container`)**:
+  - Dedicated export dialog in the Delegates Directory tab offering 3 delivery methods for all international delegates:
+    1. `📧 Send to My Email (PDF)`: Generates and emails the full delegates directory PDF with rich cover summary directly via `GmailApp`.
+    2. `📥 Download PDF File`: Direct client download of `IMSF26_Delegates_Directory.pdf`.
+    3. `👁️ Quick Preview (New Tab)`: Opens the PDF blob directly in a new browser tab for instant review.
+  - Full-profile coverage per delegate: High-res Drive thumbnail avatar, Full Name, Country badge (`📍 Country`), Genre/Style tag, Company/Organization, Role/Title, clickable company websites, complete biography, and clickable direct contact details (Email and WhatsApp phone link).
+  - Designed with `page-break-inside: avoid;` and table layouts ensuring clean pagination without card splitting.
+
 - **Global Live Showcase Banner & Timetable Symmetry (`.live-banner`, `.live-show-card`, `.timetable-live-badge`)**:
   - **Compact, Subtle & Elegant Banner**:
     - Replaced heavy double borders and harsh black block shadows with a delicate `1px` border, subtle `3.5px` crimson side accent stripe, and soft drop shadow.
